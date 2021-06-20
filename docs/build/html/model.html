@@ -1,0 +1,325 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Fitting Algorithm &mdash; LUCI v.0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> LUCI
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Fitting Algorithm</a><ul>
+<li><a class="reference internal" href="#id1">Model</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Fitting Algorithm</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/model.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="fitting-algorithm">
+<span id="model"></span><h1>Fitting Algorithm<a class="headerlink" href="#fitting-algorithm" title="Permalink to this headline">¶</a></h1>
+<p>This section contains the functions used to fit emission lines.</p>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="id1">
+<h2>Model<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-model"></span><dl class="py class">
+<dt id="model.Fit">
+<em class="property">class </em><code class="sig-prename descclassname">model.</code><code class="sig-name descname">Fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spectrum</span></em>, <em class="sig-param"><span class="n">axis</span></em>, <em class="sig-param"><span class="n">wavenumbers_syn</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">ML_model</span></em>, <em class="sig-param"><span class="n">Plot_bool</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class that defines the functions necessary for the modelling aspect. This includes
+the gaussian fit functions, the prior definitions, the log likelihood, and the
+definition of the posterior (log likelihood times prior).</p>
+<dl class="py method">
+<dt id="model.Fit.calculate_params">
+<code class="sig-name descname">calculate_params</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit.calculate_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the amplitude, position, and sigma of the line. These values are
+calculated using the scipy.optimize.minimize function. This is called
+on the log likelood previously described. The minimization algorithm uses
+the SLSQP optimization implementation. We have applied standard bounds in order
+to speed up the fitting. We also apply the fit on the normalized spectrum.
+We then correct the flux by un-normalizing the spectrum.
+:param param: lines - List of lines to model.</p>
+<blockquote>
+<div><p>Available options are [‘Halpha’, ‘NII6548’, ‘NII6543’, ‘SII6716’, ‘SII6731’]</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt id="model.Fit.calculate_vel">
+<code class="sig-name descname">calculate_vel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit.calculate_vel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity given the fit of Halpha
+TODO: Test</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="model.Fit.estimate_priors_ML">
+<code class="sig-name descname">estimate_priors_ML</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit.estimate_priors_ML" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Test
+Apply machine learning algorithm on spectrum in order to estimate the velocity.
+The spectrum fed into this method must be interpolated already onto the
+reference spectrum axis AND normalized as described in Rhea et al. 2020a.
+:param param: ml_dir - Relative path to the trained ML Predictor (e.g. R5000-PREDICITOR-I)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="model.Fit.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Primary function call for a spectrum. This will estimate the velocity using
+our machine learning algorithm described in Rhea et al. 2020a. Then we will
+fit our lines using scipy.optimize.minimize.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="model.Fit.gaussian_model">
+<code class="sig-name descname">gaussian_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">theta</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit.gaussian_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit
+:param params: channel - Wavelength Axis in cm-1
+:param params: theta - List of parameters for all the models in the following order</p>
+<blockquote>
+<div><p>[amplitude, line location, sigma]</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>params</strong> – lines - List of lines to model.
+Available options are [‘Halpha’, ‘NII6548’, ‘NII6543’, ‘SII6716’, ‘SII6731’]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="model.Fit.interpolate_spectrum">
+<code class="sig-name descname">interpolate_spectrum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit.interpolate_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate Spectrum given the wavelength axis of reference spectrum.
+Then normalize the spectrum so that the max value equals 1</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="model.Fit.line_vals_estimate">
+<code class="sig-name descname">line_vals_estimate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit.line_vals_estimate" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Test
+Function to estimate the position and amplitude of a given line.
+:param params: spec - Spectrum flux values
+:param params: line_name - Name of model. Available options are ‘Halpha’, ‘NII6548’, ‘NII6543’, ‘SII6716’, ‘SII6731’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="model.Fit.log_likelihood">
+<code class="sig-name descname">log_likelihood</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">yerr</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit.log_likelihood" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate log likelihood function evaluated given parameters on spectral axis
+:param param: theta - List of parameters for all the models in the following order</p>
+<blockquote>
+<div><p>[amplitude, line location, sigma]</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>param</strong> – x - Wavelength Axis in cm-1</p></li>
+<li><p><strong>param</strong> – y - Spectrum Flux values</p></li>
+<li><p><strong>param</strong> – yerr - Error on Spectrum’s flux values (default 1e-2)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>value of log likelihood</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="model.Fit.plot">
+<code class="sig-name descname">plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Fit.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot initial spectrum and fitted spectrum</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Carter L. Rhea.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
