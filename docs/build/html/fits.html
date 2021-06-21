@@ -41,7 +41,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Welcome to LUCI’s documentation!" href="index.html" /> 
+    <link rel="prev" title="MIT License" href="license.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -87,6 +87,11 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fitting Algorithm</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-LuciFit">Fitting Functions</a></li>
@@ -172,6 +177,14 @@
 <dd><p>Class that defines the functions necessary for the modelling aspect. This includes
 the gaussian fit functions, the prior definitions, the log likelihood, and the
 definition of the posterior (log likelihood times prior).</p>
+<p>The initial arguments are as follows:
+:param spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
+:param axis: Wavelength Axis of Spectrum (numpy array)
+:param wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
+:param model_type: Type of model (‘gaussian’)
+:param lines: Lines to fit (must be in line_dict)
+:param ML_model: Tensorflow/keras machine learning model
+:param Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciFit.Fit.calculate_params">
 <span class="sig-name descname"><span class="pre">calculate_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciFit.Fit.calculate_params" title="Permalink to this definition">¶</a></dt>
@@ -216,6 +229,15 @@ reference spectrum axis AND normalized as described in Rhea et al. 2020a.
 <dd><p>Primary function call for a spectrum. This will estimate the velocity using
 our machine learning algorithm described in Rhea et al. 2020a. Then we will
 fit our lines using scipy.optimize.minimize.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>{“fit_sol”: Fitted spectrum, “velocity”: Velocity of the line in km/s (float),
+“broadening”: Velocity Dispersion of the line in km/s (float)}</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dictionary of parameters returned by the fit. The dictionary has the following form</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -300,7 +322,7 @@ Then normalize the spectrum so that the max value equals 1</p>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to LUCI’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="license.html" class="btn btn-neutral float-left" title="MIT License" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

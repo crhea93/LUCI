@@ -22,6 +22,23 @@ class Fit:
     the gaussian fit functions, the prior definitions, the log likelihood, and the
     definition of the posterior (log likelihood times prior).
 
+    The initial arguments are as follows:
+    Args:
+
+        spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
+
+        axis: Wavelength Axis of Spectrum (numpy array)
+
+        wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
+
+        model_type: Type of model ('gaussian')
+
+        lines: Lines to fit (must be in line_dict)
+
+        ML_model: Tensorflow/keras machine learning model
+
+        Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)
+
     """
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines,
                 ML_model, Plot_bool = False):
@@ -202,6 +219,10 @@ class Fit:
         our machine learning algorithm described in Rhea et al. 2020a. Then we will
         fit our lines using scipy.optimize.minimize.
 
+        Return:
+            dictionary of parameters returned by the fit. The dictionary has the following form:
+            {"fit_sol": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
+            "broadening": Velocity Dispersion of the line in km/s (float)}
         """
         # Interpolate Spectrum
         self.interpolate_spectrum()

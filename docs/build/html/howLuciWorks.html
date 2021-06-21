@@ -186,17 +186,34 @@ explain what we are trying to calculate, how it is calculated, and how you can
 personalize the fits.</p>
 <div class="section" id="what-we-calculate">
 <h2>What we calculate<a class="headerlink" href="#what-we-calculate" title="Permalink to this headline">¶</a></h2>
+<p>The three primary quantities of interest are the amplitude of the line, the position
+of the line (often described as the velocity and quoted in km/s), and the broadening
+of the line (often described as the velocity dispersion).</p>
 <div class="section" id="velocity">
 <h3>Velocity<a class="headerlink" href="#velocity" title="Permalink to this headline">¶</a></h3>
+<p>The velocity of a line is calculated using the following equation:</p>
 </div>
 <div class="section" id="velocity-dispersion">
 <h3>Velocity Dispersion<a class="headerlink" href="#velocity-dispersion" title="Permalink to this headline">¶</a></h3>
+<p>The velocity dispersion of a line is calculated using the following equation:</p>
 </div>
 </div>
 <div class="section" id="how-we-calculate">
 <h2>How we calculate<a class="headerlink" href="#how-we-calculate" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="initial-guess">
 <h3>Initial Guess<a class="headerlink" href="#initial-guess" title="Permalink to this headline">¶</a></h3>
+<p>Having a good initial guess is crucial for the success (and speed) of the fitting algorithm.
+In order to obtain a good initial guess for the fit parameters (line amplitude, line position,
+and line broadening), we apply a machine learning technique described in <a class="reference external" href="https://arxiv.org/abs/2008.08093">Rhea et al. 2020a</a>
+(disclosure: the author of this code is also the author of this paper). The method
+uses pre-trained convolutional neural networks to estimate the velocity and broadening
+of the line in km/s. These are then translated into the line position and broadening. Next,
+the amplitude is taken as the height of the line corresponding to the shifted line position.
+We note that the machine learning model has only been trained to obtain velocities
+between -500 and 500 km/s. Similarly, the model was trained to obtain broadening
+values between 10 and 200 km/s.</p>
+<p>Since we understand that machine learning is not everyone’s cup of tea, we have
+an alternative method to calculate the initial guesses.</p>
 </div>
 <div class="section" id="fitting-function">
 <h3>Fitting Function<a class="headerlink" href="#fitting-function" title="Permalink to this headline">¶</a></h3>
