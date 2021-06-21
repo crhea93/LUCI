@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Search &mdash; LUCI v.0.0.1 documentation</title>
+  <title>How LUCI Works &mdash; LUCI v.0.0.1 documentation</title>
   
 
   
@@ -25,7 +25,6 @@
   
 
   
-    
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -40,10 +39,10 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-    <script type="text/javascript" src="_static/searchtools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="#" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MIT License" href="license.html" />
+    <link rel="prev" title="Welcome to LUCI’s documentation!" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -70,7 +69,7 @@
 
           
 <div role="search">
-  <form id="rtd-search-form" class="wy-form" action="#" method="get">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
@@ -89,8 +88,24 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How LUCI Works</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-we-calculate">What we calculate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#velocity">Velocity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#velocity-dispersion">Velocity Dispersion</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#how-we-calculate">How we calculate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#initial-guess">Initial Guess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fitting-function">Fitting Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#available-models">Available Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#uncertainty-estimates">Uncertainty Estimates</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
@@ -144,10 +159,14 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Search</li>
+      <li>How LUCI Works</li>
     
     
       <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/howLuciWorks.rst.txt" rel="nofollow"> View page source</a>
+          
         
       </li>
     
@@ -159,23 +178,49 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <noscript>
-  <div id="fallback" class="admonition warning">
-    <p class="last">
-      Please activate JavaScript to enable the search functionality.
-    </p>
-  </div>
-  </noscript>
+  <div class="section" id="how-luci-works">
+<span id="howluciworks"></span><h1>How LUCI Works<a class="headerlink" href="#how-luci-works" title="Permalink to this headline">¶</a></h1>
+<p>LUCI is a general purpose line fitting pipeline designed to unveil the inner workings
+of how fits of SITELLE IFU datacubes are calculated. In this section, I will
+explain what we are trying to calculate, how it is calculated, and how you can
+personalize the fits.</p>
+<div class="section" id="what-we-calculate">
+<h2>What we calculate<a class="headerlink" href="#what-we-calculate" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="velocity">
+<h3>Velocity<a class="headerlink" href="#velocity" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="velocity-dispersion">
+<h3>Velocity Dispersion<a class="headerlink" href="#velocity-dispersion" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="how-we-calculate">
+<h2>How we calculate<a class="headerlink" href="#how-we-calculate" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="initial-guess">
+<h3>Initial Guess<a class="headerlink" href="#initial-guess" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="fitting-function">
+<h3>Fitting Function<a class="headerlink" href="#fitting-function" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="available-models">
+<h3>Available Models<a class="headerlink" href="#available-models" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="uncertainty-estimates">
+<h3>Uncertainty Estimates<a class="headerlink" href="#uncertainty-estimates" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+</div>
 
-  
-  <div id="search-results">
-  
-  </div>
 
            </div>
            
           </div>
           <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="license.html" class="btn btn-neutral float-right" title="MIT License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to LUCI’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
 
   <hr/>
 
@@ -212,14 +257,7 @@
   
   
     
-  
-  <script type="text/javascript">
-    jQuery(function() { Search.loadIndex("searchindex.js"); });
-  </script>
-  
-  <script type="text/javascript" id="searchindexloader"></script>
    
-
 
 </body>
 </html>

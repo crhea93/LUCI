@@ -1,4 +1,4 @@
-.. _model:
+.. _fits:
 
 Fitting Algorithm
 =================
@@ -9,7 +9,7 @@ This section contains the functions used to fit emission lines.
    :maxdepth: 2
 
 
-Model
---------------
-.. automodule:: model
+Fitting Functions
+-----------------
+.. automodule:: LuciFit
     :members:
