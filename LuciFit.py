@@ -21,18 +21,20 @@ class Fit:
     Class that defines the functions necessary for the modelling aspect. This includes
     the gaussian fit functions, the prior definitions, the log likelihood, and the
     definition of the posterior (log likelihood times prior).
+
     """
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines,
                 ML_model, Plot_bool = False):
         """
         Args:
-            param: spectrum - Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
-            param: axis - Wavelength Axis of Spectrum (numpy array)
-            param: wavenumbers_syn - Wavelength Axis of Reference Spectrum (numpy array)
-            param: model_type - Type of model ('gaussian')
-            param: lines - Lines to fit (must be in line_dict)
-            param: ML_model - Tensorflow/keras machine learning model
-            param: Plot_bool - Boolean to determine whether or not to plot the spectrum (default = False)
+            spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
+            axis: Wavelength Axis of Spectrum (numpy array)
+            wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
+            model_type: Type of model ('gaussian')
+            lines: Lines to fit (must be in line_dict)
+            ML_model: Tensorflow/keras machine learning model
+            Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)
+
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803, 'SII6716': 671.647, 'SII6731': 673.085}
         self.spectrum = spectrum
@@ -62,7 +64,9 @@ class Fit:
         The spectrum fed into this method must be interpolated already onto the
         reference spectrum axis AND normalized as described in Rhea et al. 2020a.
         Args:
-            param: ml_dir - Relative path to the trained ML Predictor (e.g. R5000-PREDICITOR-I)
+            ml_dir: Relative path to the trained ML Predictor (e.g. R5000-PREDICITOR-I)
+        Return:
+            Updates self.vel_ml
         """
         model = keras.models.load_model(self.ML_model)  # Read in
         Spectrum = self.spectrum_interp_norm.reshape(1, self.spectrum_interp_norm.shape[0], 1)
@@ -74,6 +78,10 @@ class Fit:
         """
         Interpolate Spectrum given the wavelength axis of reference spectrum.
         Then normalize the spectrum so that the max value equals 1
+
+        Return:
+            Populates self.spectrum_interpolated, self.spectrum_scale, and self.spectrum_interp_norm.
+
         """
         f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear')
         self.spectrum_interpolated = (f(self.wavenumbers_syn))
@@ -86,10 +94,16 @@ class Fit:
     def line_vals_estimate(self, line_name):
         """
         TODO: Test
+
         Function to estimate the position and amplitude of a given line.
+
         Args:
-            params: spec - Spectrum flux values
-            params: line_name - Name of model. Available options are 'Halpha', 'NII6548', 'NII6543', 'SII6716', 'SII6731'
+            spec: Spectrum flux values
+            line_name: Name of model. Available options are 'Halpha', 'NII6548', 'NII6543', 'SII6716', 'SII6731'
+
+        Return:
+            Estimated line amplitude in units of cm-1 (line_amp_est) and estimate line position in units of cm-1 (line_pos_est)
+
         """
         line_theo = self.line_dict[line_name]
         line_pos_est = 1e7/((self.vel_ml/3e5)*line_theo + line_theo)  # Estimate of position of line in cm-1
@@ -99,14 +113,15 @@ class Fit:
     def gaussian_model(self, channel, theta):
         """
         Function to initiate the correct number of models to fit
+
         Args:
-            params: channel - Wavelength Axis in cm-1
-            params: theta - List of parameters for all the models in the following order
+            channel: Wavelength Axis in cm-1
+            theta: List of parameters for all the models in the following order
                             [amplitude, line location, sigma]
-            params: lines - List of lines to model.
-                            Available options are ['Halpha', 'NII6548', 'NII6543', 'SII6716', 'SII6731']
-        return:
+
+        Return:
             Value of function given input parameters (theta)
+
         """
         f1 = 0.0
         for model_num in range(self.line_num):
@@ -114,19 +129,19 @@ class Fit:
             f1 += Gaussian(channel, params).func
         return f1
 
-    def log_likelihood(self, theta, x, y, yerr):
+    def log_likelihood(self, theta, yerr):
         """
         Calculate log likelihood function evaluated given parameters on spectral axis
+
         Args:
-            param: theta - List of parameters for all the models in the following order
+            theta - List of parameters for all the models in the following order
                             [amplitude, line location, sigma]
-            param: x - Wavelength Axis in cm-1
-            param: y - Spectrum Flux values
-            param: yerr - Error on Spectrum's flux values (default 1e-2)
-        return:
-            value of log likelihood
+            yerr: Error on Spectrum's flux values (default 1e-2)
+        Return:
+            Value of log likelihood
+
         """
-        model = self.gaussian_model(x, theta)
+        model = self.gaussian_model(self.axis, self.spectrum_normalized, theta)
         sigma2 = yerr ** 2
         return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2*np.pi*sigma2))
 
@@ -138,9 +153,7 @@ class Fit:
         the SLSQP optimization implementation. We have applied standard bounds in order
         to speed up the fitting. We also apply the fit on the normalized spectrum.
         We then correct the flux by un-normalizing the spectrum.
-        Args:
-            param: lines - List of lines to model.
-                            Available options are ['Halpha', 'NII6548', 'NII6543', 'SII6716', 'SII6731']
+
         """
         nll = lambda *args: -self.log_likelihood(*args)
         initial = np.ones((3*self.line_num))
@@ -160,7 +173,7 @@ class Fit:
         self.inital_values = initial
         soln = minimize(nll, initial, method='SLSQP',
                 options={'disp': False}, bounds=bounds, tol=1e-16,
-                args=(self.axis, self.spectrum_normalized, 1e-2))#, constraints=cons)
+                args=(1e-2))#, constraints=cons)
         parameters = soln.x
         # We now must unscale the amplitude
         #for i in range(self.line_num):
@@ -174,6 +187,9 @@ class Fit:
         """
         Calculate velocity given the fit of Halpha
         TODO: Test
+
+        Return:
+            Velocity of the Halpha line in units of km/s
         """
         l_calc = 1e7/self.fit_sol[1]  # Halpha
         l_shift = (l_calc - 656.28)/l_calc
@@ -185,6 +201,7 @@ class Fit:
         Primary function call for a spectrum. This will estimate the velocity using
         our machine learning algorithm described in Rhea et al. 2020a. Then we will
         fit our lines using scipy.optimize.minimize.
+
         """
         # Interpolate Spectrum
         self.interpolate_spectrum()
@@ -202,6 +219,7 @@ class Fit:
     def plot(self):
         """
         Plot initial spectrum and fitted spectrum
+
         """
         plt.clf()
         plt.plot(self.axis, self.sky, label='Spectrum')
