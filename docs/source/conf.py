@@ -36,6 +36,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.autosectionlabel',
+    'sphinx.ext.imgmath'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

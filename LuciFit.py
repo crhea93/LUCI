@@ -275,9 +275,15 @@ class Fit:
         self.estimate_priors_ML()
         # Apply Fit
         self.calculate_params()
+        # Collect Amplitudes
+        #ampls_dict = {}  # Create amplitude dictionary for each line
+        ampls = []
+        for line_ct,line_ in enumerate(self.lines):  # Step through each line
+            #ampls[line_] = self.fit_sol[line_ct*3]  # Save amplitude to amplitude dictionary
+            ampls.append(self.fit_sol[line_ct*3])
         # Collect parameters to return in a dictionary
         fit_dict = {'fit_sol':self.fit_vector, 'velocity': self.calculate_vel(),
-                    'broadening': self.calculate_broad()}
+                    'broadening': self.calculate_broad(), 'amplitudes': ampls}
         # Plot
         if self.Plot_bool == True:
             self.plot()

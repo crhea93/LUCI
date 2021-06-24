@@ -98,7 +98,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#how-we-calculate">How we calculate</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#initial-guess">Initial Guess</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fitting-function">Fitting Function</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#available-models">Available Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#available-models">Available Models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gaussian">Gaussian</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#uncertainty-estimates">Uncertainty Estimates</a><ul class="simple">
 </ul>
 </li>
@@ -186,20 +189,154 @@ explain what we are trying to calculate, how it is calculated, and how you can
 personalize the fits.</p>
 <div class="section" id="what-we-calculate">
 <h2>What we calculate<a class="headerlink" href="#what-we-calculate" title="Permalink to this headline">¶</a></h2>
-<p>The three primary quantities of interest are the amplitude of the line, the position
-of the line (often described as the velocity and quoted in km/s), and the broadening
+<p>The three primary quantities of interest are the <strong>amplitude</strong> of the line, the <strong>position</strong>
+of the line (often described as the velocity and quoted in km/s), and the <strong>broadening</strong>
 of the line (often described as the velocity dispersion).</p>
 <div class="section" id="velocity">
 <h3>Velocity<a class="headerlink" href="#velocity" title="Permalink to this headline">¶</a></h3>
-<p>The velocity of a line is calculated using the following equation:</p>
+<p>The velocity of a line is calculated using the following equation:
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">v</span> <span class="p">[</span><span class="n">km</span><span class="o">/</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span> <span class="p">[</span><span class="n">km</span><span class="o">/</span><span class="n">s</span><span class="p">]</span> <span class="o">*</span> \\<span class="n">Delta</span> \\<span class="k">lambda</span>
+</pre></div>
+</div>
+<p><em>c</em> is the speed of light in kilometers per second. \Delta \lambda is the shift of the measured line. Although the line
+position is calculated in units of [cm-1], we translate it into nanometers since <div class="system-message">
+<p class="system-message-title">System Message: WARNING/2 (<span class="docutils literal">\\lambda [nm] = \\frac{1e7}{\\lambda[cm-1]}</span>)</p>
+<p>latex exited with error
+[stdout]
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=latex)
+ restricted \write18 enabled.
+entering extended mode
+(./math.tex
+LaTeX2e &lt;2020-02-02&gt; patch level 2
+L3 programming layer &lt;2020-02-14&gt;
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2019/12/20 v1.4l Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size12.clo))
+(/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+
+! LaTeX Error: File `anyfontsize.sty' not found.
+
+Type X to quit or &lt;RETURN&gt; to proceed,
+or enter new name. (Default extension: sty)
+
+Enter file name: 
+! Emergency stop.
+&lt;read *&gt; 
+         
+l.8 \usepackage
+               {bm}^^M
+No pages of output.
+Transcript written on math.log.
+</p>
+</div>
+.
+At the moment we only calculate the velocity for the Halpha line. Therefore <div class="system-message">
+<p class="system-message-title">System Message: WARNING/2 (<span class="docutils literal">\Delta \lambda = (line_pos[nm]-656.28)/656.28</span>)</p>
+<p>latex exited with error
+[stdout]
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=latex)
+ restricted \write18 enabled.
+entering extended mode
+(./math.tex
+LaTeX2e &lt;2020-02-02&gt; patch level 2
+L3 programming layer &lt;2020-02-14&gt;
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2019/12/20 v1.4l Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size12.clo))
+(/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+
+! LaTeX Error: File `anyfontsize.sty' not found.
+
+Type X to quit or &lt;RETURN&gt; to proceed,
+or enter new name. (Default extension: sty)
+
+Enter file name: 
+! Emergency stop.
+&lt;read *&gt; 
+         
+l.8 \usepackage
+               {bm}^^M
+No pages of output.
+Transcript written on math.log.
+</p>
+</div>
+ where 656.28 nm is the
+natural position of Halpha emission. We plan on extending this to other lines.</p>
 </div>
 <div class="section" id="velocity-dispersion">
 <h3>Velocity Dispersion<a class="headerlink" href="#velocity-dispersion" title="Permalink to this headline">¶</a></h3>
-<p>The velocity dispersion of a line is calculated using the following equation:</p>
+<p>The velocity dispersion of a line is calculated using the following equation:
+.. math:</p>
+<blockquote>
+<div><p>\Delta v = \frac{3e5 [km/s] * sigma}/{v [km/s]}</p>
+</div></blockquote>
+<p>where <div class="system-message">
+<p class="system-message-title">System Message: WARNING/2 (<span class="docutils literal">\sigma</span>)</p>
+<p>latex exited with error
+[stdout]
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=latex)
+ restricted \write18 enabled.
+entering extended mode
+(./math.tex
+LaTeX2e &lt;2020-02-02&gt; patch level 2
+L3 programming layer &lt;2020-02-14&gt;
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2019/12/20 v1.4l Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size12.clo))
+(/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+
+! LaTeX Error: File `anyfontsize.sty' not found.
+
+Type X to quit or &lt;RETURN&gt; to proceed,
+or enter new name. (Default extension: sty)
+
+Enter file name: 
+! Emergency stop.
+&lt;read *&gt; 
+         
+l.8 \usepackage
+               {bm}^^M
+No pages of output.
+Transcript written on math.log.
+</p>
+</div>
+ is the calculated width of a the fitted Gaussian.</p>
 </div>
 </div>
 <div class="section" id="how-we-calculate">
 <h2>How we calculate<a class="headerlink" href="#how-we-calculate" title="Permalink to this headline">¶</a></h2>
+<p>Once we have a spectrum, we do two things: we normalize the spectrum by the maximum amplitude
+and we apply a redshift correction (wavelength = wavelength*(1+redshift)). We do this
+primarily to constrain the velocity to be between -500 and 500 km/s. This allows our
+machine learning technique to obtain better initial guess estimates.</p>
 <div class="section" id="initial-guess">
 <h3>Initial Guess<a class="headerlink" href="#initial-guess" title="Permalink to this headline">¶</a></h3>
 <p>Having a good initial guess is crucial for the success (and speed) of the fitting algorithm.
@@ -217,12 +354,34 @@ an alternative method to calculate the initial guesses.</p>
 </div>
 <div class="section" id="fitting-function">
 <h3>Fitting Function<a class="headerlink" href="#fitting-function" title="Permalink to this headline">¶</a></h3>
+<p>The fitting function utilizes <em>scipy.optimize.minimize</em>. Currently, we are using the <cite>SLSQP &lt;https://docs.scipy.org/doc/scipy/reference/optimize.minimize-slsqp.html&gt;</cite>
+optimization algorithm. Before fitting the spectrum, we normalize the spectrum by the maximum
+amplitude – this makes the fitting process simpler. We also constrain the amplitudes
+to be between 0.001 and 1.1, the position of the line to be between 14700 and 15600 [cm-1],
+and the sigma of the Gaussian to be between 0.001 and 10. By applying these bounds,
+we constrain the optimization problem. The fit returns the amplitude of the line
+(which we then scale to be correct for the un-normalized spectrum), the velocity in km/s,
+and the velocity dispersion in km/s. If the user choses, the line velocities and velocity dispersions
+can be coupled.</p>
 </div>
 <div class="section" id="available-models">
 <h3>Available Models<a class="headerlink" href="#available-models" title="Permalink to this headline">¶</a></h3>
+<p>For the moment, we only have a Gaussian implemented. We plan on adding a sinc and sincgauss.</p>
+<div class="section" id="gaussian">
+<h4>Gaussian<a class="headerlink" href="#gaussian" title="Permalink to this headline">¶</a></h4>
+<p>We assume a standard form of a Gaussian:
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">A</span><span class="o">*</span><span class="n">exp</span><span class="p">{(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">x_0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)}</span>
+</pre></div>
+</div>
+<p>We solve for A, x_0, and sigma (x is the wavelength channel and is thus provided).
+A is the amplitude, x_0 is the position of the line, and sigma is the broadening.</p>
+</div>
 </div>
 <div class="section" id="uncertainty-estimates">
 <h3>Uncertainty Estimates<a class="headerlink" href="#uncertainty-estimates" title="Permalink to this headline">¶</a></h3>
+<p>Since uncertainty estimates are often crucial in astrophysical calculations, we apply
+a full Bayesian MCMC approach (using the python module <em>emcee</em>).</p>
 <div class="toctree-wrapper compound">
 </div>
 </div>
