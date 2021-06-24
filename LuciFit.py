@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 from scipy.optimize import minimize
 from scipy import interpolate
 import keras
 from scipy.optimize import Bounds
+from numdifftools import Jacobian, Hessian
 
 
 
@@ -68,6 +68,7 @@ class Fit:
         self.Plot_bool = Plot_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
+        self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.fit_sol = np.zeros(3*self.line_num)  # Solution to the fit
         # Set bounds
         self.A_min = 0; self.A_max = 1.1; self.x_min = 14700; self.x_max = 15600
@@ -85,10 +86,15 @@ class Fit:
         Return:
             Updates self.vel_ml
         """
-        model = keras.models.load_model(self.ML_model)  # Read in
+        #print(self.spectrum_interp_norm)
+        #print(self.spectrum)
         Spectrum = self.spectrum_interp_norm.reshape(1, self.spectrum_interp_norm.shape[0], 1)
-        predictions = model(Spectrum, training=False)
+        predictions = self.ML_model(Spectrum, training=False)
+        #print(predictions)
+        #exit()
         self.vel_ml = float(predictions[0][0])
+        #print(predictions[0][1])
+        self.broad_ml = float(predictions[0][1])  # Multiply value by FWHM of a gaussian
         return None
 
     def interpolate_spectrum(self):
@@ -123,9 +129,18 @@ class Fit:
 
         """
         line_theo = self.line_dict[line_name]
+        #line_cm1 = 1e7/line_theo
+        #max_flux = np.argmax(self.spectrum)
+        #print(axis[max_flux])
+        #self.vel_ml = np.abs(3e5*((self.axis[max_flux]-line_cm1)/line_cm1))
+        #print(vel_ml)
         line_pos_est = 1e7/((self.vel_ml/3e5)*line_theo + line_theo)  # Estimate of position of line in cm-1
-        line_amp_est = self.spectrum[np.argmin(np.abs(np.array(self.axis)-line_pos_est))]  # Estimate the amplitude in flux units
-        return line_amp_est, line_pos_est
+        line_ind = np.argmin(np.abs(np.array(self.axis)-line_pos_est))
+        line_amp_est = np.max([self.spectrum_normalized[line_ind-2],self.spectrum_normalized[line_ind-1], self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind+1], self.spectrum_normalized[line_ind+2]])
+        line_broad_est = (line_pos_est*self.broad_ml)/3e5
+        #print(line_broad_est)
+        #print(line_amp_est, line_pos_est, line_broad_est)
+        return line_amp_est, line_pos_est, line_broad_est
 
     def gaussian_model(self, channel, theta):
         """
@@ -158,9 +173,12 @@ class Fit:
             Value of log likelihood
 
         """
-        model = self.gaussian_model(self.axis, self.spectrum_normalized, theta)
+        model = self.gaussian_model(self.axis, theta)
         sigma2 = yerr ** 2
-        return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2*np.pi*sigma2))
+        return -0.5 * np.sum((self.spectrum_normalized - model) ** 2 / sigma2 + np.log(2*np.pi*sigma2))
+
+    def fun_der(self, theta, yerr):
+        return Jacobian(lambda theta: self.log_likelihood(theta, yerr))(theta).ravel()
 
     def calculate_params(self):
         """
@@ -177,10 +195,10 @@ class Fit:
         bounds_ = []
         for mod in range(self.line_num):
             val = 3*mod + 1
-            amp_est, vel_est = self.line_vals_estimate(self.lines[mod])
+            amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])
             initial[3*mod] = amp_est
             initial[3*mod + 1] = vel_est
-            initial[3*mod + 2] = 0.5
+            initial[3*mod + 2] = sigma_est
             bounds_.append((self.A_min, self.A_max))
             bounds_.append((self.x_min, self.x_max))
             bounds_.append((self.sigma_min, self.sigma_max))
@@ -188,10 +206,22 @@ class Fit:
         bounds_u = [val[1] for val in bounds_]
         bounds = Bounds(bounds_l, bounds_u)
         self.inital_values = initial
-        soln = minimize(nll, initial, method='SLSQP',
-                options={'disp': False}, bounds=bounds, tol=1e-16,
-                args=(1e-2))#, constraints=cons)
+        if self.line_num == 5:
+            cons = ({'type': 'eq', 'fun': lambda x: 3e5*((1e7/x[4]-self.line_dict['NII6583'])/(1e7/x[4])) - 3e5*((1e7/x[1]-self.line_dict['Halpha'])/(1e7/x[1]))},
+            {'type': 'eq', 'fun': lambda x: x[2] - x[5]},
+            {'type': 'eq', 'fun': lambda x: x[5] - x[8]},
+            {'type': 'eq', 'fun': lambda x: x[5] - x[11]},
+            {'type': 'eq', 'fun': lambda x: x[5] - x[14]},
+            {'type': 'eq', 'fun': lambda x: 3e5*((1e7/x[4]-self.line_dict['NII6583'])/(1e7/x[4])) - 3e5*((1e7/x[7]-self.line_dict['NII6548'])/(1e7/x[7]))},
+            {'type': 'eq', 'fun': lambda x: 3e5*((1e7/x[4]-self.line_dict['NII6583'])/(1e7/x[4])) - 3e5*((1e7/x[10]-self.line_dict['SII6716'])/(1e7/x[10]))},
+            {'type': 'eq', 'fun': lambda x: 3e5*((1e7/x[4]-self.line_dict['NII6583'])/(1e7/x[4])) - 3e5*((1e7/x[13]-self.line_dict['SII6731'])/(1e7/x[13]))})
+        else:
+            cons = ()
+        soln = minimize(nll, initial, method='SLSQP',# jac=self.fun_der(),
+                options={'disp': False}, bounds=bounds, tol=1e-2,
+                args=(1e-2), constraints=cons)
         parameters = soln.x
+        #print(parameters)
         # We now must unscale the amplitude
         #for i in range(self.line_num):
         #    parameters[i*3] *= self.spectrum_scale
@@ -213,6 +243,21 @@ class Fit:
         v = 3e5*l_shift
         return v
 
+
+    def calculate_broad(self):
+        """
+        Calculate velocity dispersion given the fit of Halpha
+        TODO: Test
+
+        Return:
+            Velocity Dispersion of the Halpha line in units of km/s
+        """
+        #print(self.fit_sol[2], self.fit_sol[1])
+        broad = (3e5*self.fit_sol[2])/self.fit_sol[1]
+        #print(broad)
+        return broad
+
+
     def fit(self):
         """
         Primary function call for a spectrum. This will estimate the velocity using
@@ -231,7 +276,8 @@ class Fit:
         # Apply Fit
         self.calculate_params()
         # Collect parameters to return in a dictionary
-        fit_dict = {'fit_sol':self.fit_vector, 'velocity': self.calculate_vel()}
+        fit_dict = {'fit_sol':self.fit_vector, 'velocity': self.calculate_vel(),
+                    'broadening': self.calculate_broad()}
         # Plot
         if self.Plot_bool == True:
             self.plot()
