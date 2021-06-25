@@ -5,7 +5,8 @@ from scipy import interpolate
 import keras
 from scipy.optimize import Bounds
 from numdifftools import Jacobian, Hessian
-
+import warnings
+warnings.filterwarnings("ignore")
 
 
 
@@ -13,7 +14,6 @@ class Gaussian:
     def __init__(self, channel, params):
         A = params[0]; x = params[1]; sigma = params[2]
         self.func = A*np.exp((-(channel-x)**2)/(2*sigma**2))
-
 
 
 class Fit:
@@ -74,6 +74,9 @@ class Fit:
         self.A_min = 0; self.A_max = 1.1; self.x_min = 14700; self.x_max = 15600
         self.sigma_min = 0; self.sigma_max = 10
 
+        # Check that lines inputted by user are in line_dict
+        self.check_lines()
+
 
     def estimate_priors_ML(self):
         """
@@ -107,7 +110,7 @@ class Fit:
 
         """
         f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear')
-        self.spectrum_interpolated = (f(self.wavenumbers_syn))
+        self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated/self.spectrum_scale
         #self.spectrum_interpolated = np.real(sky_corr)
@@ -223,8 +226,8 @@ class Fit:
         parameters = soln.x
         #print(parameters)
         # We now must unscale the amplitude
-        #for i in range(self.line_num):
-        #    parameters[i*3] *= self.spectrum_scale
+        for i in range(self.line_num):
+            parameters[i*3] *= self.spectrum_scale
         self.fit_sol = parameters
         self.fit_vector = self.gaussian_model(self.axis, self.fit_sol)
         return None
@@ -258,6 +261,22 @@ class Fit:
         return broad
 
 
+    def calculate_flux(self, line_amp, line_sigma):
+        """
+        Calculate flux value given fit of line
+        TODO: Test
+
+        Args:
+            line_amp: Amplitude of the line (un-normalized)
+            line_sigma: Sigma of the line fit
+        Return:
+            Flux of the provided line in units of erg/s/cm-2
+        """
+        flux = np.sqrt(2*np.pi)*line_amp*line_sigma
+        return flux
+
+
+
     def fit(self):
         """
         Primary function call for a spectrum. This will estimate the velocity using
@@ -276,14 +295,17 @@ class Fit:
         # Apply Fit
         self.calculate_params()
         # Collect Amplitudes
-        #ampls_dict = {}  # Create amplitude dictionary for each line
         ampls = []
+        fluxes = []
         for line_ct,line_ in enumerate(self.lines):  # Step through each line
-            #ampls[line_] = self.fit_sol[line_ct*3]  # Save amplitude to amplitude dictionary
             ampls.append(self.fit_sol[line_ct*3])
+            # Calculate flux
+            fluxes.append(self.calculate_flux(self.fit_sol[line_ct*3], self.fit_sol[line_ct*3+2]))
+
         # Collect parameters to return in a dictionary
         fit_dict = {'fit_sol':self.fit_vector, 'velocity': self.calculate_vel(),
-                    'broadening': self.calculate_broad(), 'amplitudes': ampls}
+                    'broadening': self.calculate_broad(), 'amplitudes': ampls,
+                    'fluxes': fluxes}
         # Plot
         if self.Plot_bool == True:
             self.plot()
@@ -300,3 +322,15 @@ class Fit:
         plt.legend()
         plt.show()
         return None
+
+    def check_lines(self):
+        """
+        This function checks to see that the lines provided are in the available options
+        Return:
+            Nothing if the user provides appropriate lines
+            Else it will throw an error
+        """
+        if set(self.lines).issubset(self.line_dict):
+            pass
+        else:
+            raise Exception('Please submit a line name in the available list: \n {}'.format(self.line_dict.keys()))

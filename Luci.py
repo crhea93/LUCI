@@ -3,6 +3,9 @@ import h5py
 from astropy.wcs import WCS
 from tqdm import tqdm
 import numpy as np
+import keras
+from LuciFit import Fit
+
 
 class Luci():
     """
@@ -37,8 +40,10 @@ class Luci():
         self.deep_image = None
         self.spectrum_axis = None
         self.wavenumbers_syn = None
+        self.hdr_dict = None
         self.read_in_cube()
         self.spectrum_axis_func()
+        self.read_in_reference_spectrum()
 
 
     def get_quadrant_dims(self, quad_number):
@@ -101,9 +106,10 @@ class Luci():
         # Make WCS
         wcs_data = WCS(hdr_dict, naxis=2)
         self.header = wcs_data.to_header()
+        self.hdr_dict = hdr_dict
 
 
-    def create_deep_image(self):
+    def create_deep_image(self, output_name=None):
         """
         Create deep image fits file of the cube. This takes the cube and averages
         the spectral axis. Then the deep image is saved as a fits file with the following
@@ -111,7 +117,9 @@ class Luci():
         """
         hdu = fits.PrimaryHDU()
         self.deep_image = np.mean(self.cube_final, axis=2)
-        fits.writeto(self.output_dir+'/'+self.object_name+'_deep.fits', self.deep_image.T, self.header, overwrite=True)
+        if output_name == None:
+            output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
+        fits.writeto(output_name, self.deep_image.T, self.header, overwrite=True)
 
     def read_in_cube(self):
         """
@@ -139,11 +147,11 @@ class Luci():
         Create the x-axis for the spectra. We must construct this from header information
         since each pixel only has amplitudes of the spectra at each point.
         """
-        len_wl = cube_final.shape[2]  # Length of Spectral Axis
-        start = hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
-        end = start + (len_wl)*hdr_dict['CDELT3']  # End
+        len_wl = self.cube_final.shape[2]  # Length of Spectral Axis
+        start = self.hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
+        end = start + (len_wl)*self.hdr_dict['CDELT3']  # End
         #step = hdr_dict['CDELT3']  # Step size
-        self.spectrum_axis = np.linspace(start, end, len_wl)*(self.redshift+1)  # Apply redshift correction
+        self.spectrum_axis = np.array(np.linspace(start, end, len_wl)*(self.redshift+1), dtype=np.float32)  # Apply redshift correction
 
 
     def read_in_reference_spectrum(self):
@@ -161,7 +169,7 @@ class Luci():
             counts.append(np.real(chan[1]))
         min_ = np.argmin(np.abs(np.array(channel)-14700))
         max_ = np.argmin(np.abs(np.array(channel)-15600))
-        self.wavenumbers_syn = channel[min_:max_]
+        self.wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
 
     def fit_entire_cube(self, lines, fit_function):
         """
@@ -177,7 +185,7 @@ class Luci():
         self.fit_cube(lines, fit_function, x_min, x_max, y_min, y_max)
 
 
-    def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max):
+    def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max, output_name=None):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -189,6 +197,7 @@ class Luci():
             x_max: Upper bound in x
             y_min: Lower bound in y
             y_max: Upper bound in y
+            output_name: User defined output path/name
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
         """
@@ -198,17 +207,21 @@ class Luci():
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
+        flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
+        if output_name == None:
+            output_name = self.output_dir+'/'+self.object_name
         for i in tqdm(range(x_max-x_min)):
             x_pix = x_min + i
             vel_local = []
             broad_local = []
             ampls_local = []
+            flux_local = []
             for j in range(y_max-y_min):
                 y_pix = y_min+j
                 sky = self.cube_final[x_pix, y_pix, :]
                 good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
                 sky = sky[good_sky_inds]
-                axis = spectrum_axis[good_sky_inds]
+                axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
                 fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
                         self.model_ML, Plot_bool = False)
@@ -216,18 +229,21 @@ class Luci():
                 # Save local list of fit values
                 vel_local.append(fit_dict['velocity'])
                 broad_local.append(fit_dict['broadening'])
-                ampls_local.append(fit_dict['ampls'])
+                ampls_local.append(fit_dict['amplitudes'])
+                flux_local.append(fit_dict['fluxes'])
             # Update global array of fit values
             velocity_fits[i] = vel_local
             broadening_fits[i] = broad_local
             ampls_fits[i] = ampls_local
-            # Write outputs (Velocity, Broadening, and Amplitudes)
-            fits.writeto(self.output_dir+'/'+self.object_name+'_velocity.fits', velocity_fits.T, header, overwrite=True)
-            fits.writeto(self.output_dir+'/'+self.object_name+'_broadening.fits', broadening_fits.T, header, overwrite=True)
-            for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-                fits.writeto(self.output_dir+'/'+self.object_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, header, overwrite=True)
+            flux_fits[i] = flux_local
+        # Write outputs (Velocity, Broadening, and Amplitudes)
+        fits.writeto(output_name+'_velocity.fits', velocity_fits.T, self.header, overwrite=True)
+        fits.writeto(output_name+'_broadening.fits', broadening_fits.T, self.header, overwrite=True)
+        for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
+            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, self.header, overwrite=True)
+            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct].T, self.header, overwrite=True)
 
-        return velocity_fits, broadening_fits, ampls_fits
+        return velocity_fits, broadening_fits, flux_fits
 
         #n_threads = 1
         #for i in range(x_max-x_min):
@@ -235,7 +251,7 @@ class Luci():
         #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
         #Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(VEL, BROAD, i) for i in tqdm(range(x_max-x_min)));
 
-    def fit_region(self, lines, fit_function, region):
+    def fit_region(self, lines, fit_function, region, output_name):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -245,6 +261,7 @@ class Luci():
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
             region: Name of ds9 region file (e.x. 'region.reg')
+            output_name: User defined output path/name
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
         """
@@ -260,14 +277,18 @@ class Luci():
         # Initialize fit solution arrays
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
+        if output_name == None:
+            output_name = self.output_dir+'/'+self.object_name
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
+        flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
         for i in tqdm(range(x_max-x_min)):
             x_pix = x_min + i
             vel_local = []
             broad_local = []
             ampls_local = []
+            flux_local = []
             for j in range(y_max-y_min):
                 y_pix = y_min+j
                 # Check if pixel is in the mask or not
@@ -276,7 +297,7 @@ class Luci():
                     sky = self.cube_final[x_pix, y_pix, :]
                     good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
                     sky = sky[good_sky_inds]
-                    axis = spectrum_axis[good_sky_inds]
+                    axis = self.spectrum_axis[good_sky_inds]
                     # Call fit!
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
                             self.model_ML, Plot_bool = False)
@@ -284,19 +305,23 @@ class Luci():
                     # Save local list of fit values
                     vel_local.append(fit_dict['velocity'])
                     broad_local.append(fit_dict['broadening'])
-                    ampls_local.append(fit_dict['ampls'])
+                    ampls_local.append(fit_dict['amplitudes'])
+                    flux_local.append(fit_dict['fluxes'])
                 else:
                     vel_local.append(0)
                     broad_local.append(0)
                     ampls_local.append(0)
+                    flux_local.append(0)
             # Update global array of fit values
             velocity_fits[i] = vel_local
             broadening_fits[i] = broad_local
             ampls_fits[i] = ampls_local
+            flux_fits[i] = flux_local
             # Write outputs (Velocity, Broadening, and Amplitudes)
-            fits.writeto(self.output_dir+'/'+self.object_name+'_'+region+'_velocity.fits', velocity_fits.T, header, overwrite=True)
-            fits.writeto(self.output_dir+'/'+self.object_name+'_'+region+'_broadening.fits', broadening_fits.T, header, overwrite=True)
-            for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-                fits.writeto(self.output_dir+'/'+self.object_name+'_'+region+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, header, overwrite=True)
+        fits.writeto(output_name+'_'+region+'_velocity.fits', velocity_fits.T, self.header, overwrite=True)
+        fits.writeto(output_name+'_'+region+'_broadening.fits', broadening_fits.T, self.header, overwrite=True)
+        for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
+            fits.writeto(output_name+'_'+region+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, self.header, overwrite=True)
+            fits.writeto(output_name+'_'+region+'_'+line_+'_Flux.fits', flux_fits[:,:,ct].T, self.header, overwrite=True)
 
-        return velocity_fits, broadening_fits, ampls_fits
+        return velocity_fits, broadening_fits, flux_fits
