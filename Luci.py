@@ -201,6 +201,18 @@ class Luci():
         x_max = int(x_max/binning)
         y_min = int(y_min/binning)
         y_max = int(y_max/binning)
+        x_range = np.arange(x_min, x_max, 1)
+        y_range = np.arange(x_min, x_max, 1)
+        binned_cube = np.zeros_like(self.cube_final)
+        # x_bin
+        xslices = np.arange(0, self.cube_final.shape[0]+1, binning).astype(np.int)
+        binned_cube = np.add.reduceat(self.cube_final[0:xslices[-1],:], xslices[:-1], axis=0)
+
+        # y_bin
+        yslices = np.arange(0, self.cube_final.shape[1]+1, binning).astype(np.int)
+        binned_cube = np.add.reduceat(self.cube_final[:,0:yslices[-1]], yslices[:-1], axis=1)
+        print(binned_cube)
+        return binned_cube / (binning**2.)
 
     def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max, binning=None, bayes_bool=False, output_name=None):
         """
@@ -225,6 +237,7 @@ class Luci():
             self.binned_cube = self.bin_cube(binning, x_min, x_max, y_min, y_max)
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
+        chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
@@ -237,6 +250,7 @@ class Luci():
             broad_local = []
             ampls_local = []
             flux_local = []
+            chi2_local = []
             for j in range(y_max-y_min):
                 y_pix = y_min+j
                 sky = self.cube_final[x_pix, y_pix, :]
@@ -252,19 +266,21 @@ class Luci():
                 broad_local.append(fit_dict['broadening'])
                 ampls_local.append(fit_dict['amplitudes'])
                 flux_local.append(fit_dict['fluxes'])
+                chi2_local.append(fit_dict['chi2'])
             # Update global array of fit values
             velocity_fits[i] = vel_local
             broadening_fits[i] = broad_local
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
+            chi2_fits[i] = chi2_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         fits.writeto(output_name+'_velocity.fits', velocity_fits.T, self.header, overwrite=True)
         fits.writeto(output_name+'_broadening.fits', broadening_fits.T, self.header, overwrite=True)
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
             fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, self.header, overwrite=True)
             fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct].T, self.header, overwrite=True)
-
-        return velocity_fits, broadening_fits, flux_fits
+        fits.writeto(output_name+'_Chi2.fits', chi2_fits.T, self.header, overwrite=True)
+        return velocity_fits, broadening_fits, flux_fits, chi2_fits
 
         #n_threads = 1
         #for i in range(x_max-x_min):

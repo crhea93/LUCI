@@ -6,6 +6,7 @@ import keras
 from scipy.optimize import Bounds
 from numdifftools import Jacobian, Hessian
 import emcee
+from scipy.stats import chisquare
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -298,7 +299,7 @@ class Fit:
 
         Return:
             dictionary of parameters returned by the fit. The dictionary has the following form:
-            {"fit_sol": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
+            {"fit_vector": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
         # Interpolate Spectrum
@@ -311,6 +312,8 @@ class Fit:
         # Check if Bayesian approach is required
         if self.bayes_bool == True:
             self.fit_Bayes()
+        # Calculate fit statistic
+        chi_sqr = chisquare(self.fit_vector, self.spectrum)
         # Collect Amplitudes
         ampls = []
         fluxes = []
@@ -322,7 +325,7 @@ class Fit:
         # Collect parameters to return in a dictionary
         fit_dict = {'fit_sol':self.fit_vector, 'velocity': self.calculate_vel(),
                     'broadening': self.calculate_broad(), 'amplitudes': ampls,
-                    'fluxes': fluxes}
+                    'fluxes': fluxes, 'chi2': chi_sqr}
         # Plot
         if self.Plot_bool == True:
             self.plot()
