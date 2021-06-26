@@ -9,22 +9,26 @@ import emcee
 from scipy.stats import chisquare
 
 import warnings
+
 warnings.filterwarnings("ignore")
-
-
 
 
 class Gaussian:
     def __init__(self, channel, params):
-        A = params[0]; x = params[1]; sigma = params[2]
-        self.func = A*np.exp((-(channel-x)**2)/(2*sigma**2))
+        A = params[0];
+        x = params[1];
+        sigma = params[2]
+        self.func = A * np.exp((-(channel - x) ** 2) / (2 * sigma ** 2))
 
 
 class Sinc:
     def __init__(self, channel, params):
-        p0 = params[0]; p1 = params[1]; p2 = params[2]
-        u = (channel-p1)/p2
-        self.func = p0*(np.sin(u)/u)
+        p0 = params[0];
+        p1 = params[1];
+        p2 = params[2]
+        u = (channel - p1) / p2
+        self.func = p0 * (np.sin(u) / u)
+
 
 class Fit:
     """
@@ -50,8 +54,9 @@ class Fit:
         Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)
 
     """
+
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines,
-                ML_model, bayes_bool=False, Plot_bool = False):
+                 ML_model, bayes_bool=False, Plot_bool=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -65,9 +70,9 @@ class Fit:
 
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
-                         'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
-                         'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
-                         'Hbeta': 486.133}
+                          'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
+                          'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
+                          'Hbeta': 486.133}
         self.available_functions = ['gaussian']
         self.spectrum = spectrum
         self.axis = axis
@@ -76,24 +81,27 @@ class Fit:
         self.lines = lines
         self.line_num = len(lines)  # Number of  lines to fit
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
-        self.spectrum_normalized = self.spectrum/np.max(self.spectrum)  # Normalized spectrum
+        self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
-        #ADD ML_MODEL AND PLOT_BOOL
+        # ADD ML_MODEL AND PLOT_BOOL
         self.ML_model = ML_model
         self.bayes_bool = bayes_bool
         self.Plot_bool = Plot_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
-        self.fit_sol = np.zeros(3*self.line_num)  # Solution to the fit
+        self.fit_sol = np.zeros(3 * self.line_num)  # Solution to the fit
         # Set bounds
-        self.A_min = 0; self.A_max = 1.1; self.x_min = 14700; self.x_max = 15600
-        self.sigma_min = 0; self.sigma_max = 10
+        self.A_min = 0;
+        self.A_max = 1.1;
+        self.x_min = 14700;
+        self.x_max = 15600
+        self.sigma_min = 0;
+        self.sigma_max = 10
 
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()
-
 
     def estimate_priors_ML(self):
         """
@@ -124,10 +132,9 @@ class Fit:
         f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_scale = np.max(self.spectrum_interpolated)
-        self.spectrum_interp_norm = self.spectrum_interpolated/self.spectrum_scale
-        #self.spectrum_interpolated = np.real(sky_corr)
+        self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_scale
+        # self.spectrum_interpolated = np.real(sky_corr)
         return None
-
 
     def line_vals_estimate(self, line_name):
         """
@@ -144,16 +151,20 @@ class Fit:
 
         """
         line_theo = self.line_dict[line_name]
-        if self.ML_model == None:
+        if self.ML_model is None or self.model_type == '':
             max_flux = np.argmax(self.spectrum)
-            self.vel_ml = np.abs(3e5*((self.axis[max_flux]-line_theo)/line_theo))
-            self.broad_ml = 1.0  # Best for now
+            print(1e7/self.axis[max_flux], line_theo)
+            self.vel_ml = np.abs(3e5 * ((1e7/self.axis[max_flux] - line_theo) / line_theo))
+            self.broad_ml = 10.0  # Best for now
         else:
             pass  # vel_ml and broad_ml already set using ML algorithm
-        line_pos_est = 1e7/((self.vel_ml/3e5)*line_theo + line_theo)  # Estimate of position of line in cm-1
-        line_ind = np.argmin(np.abs(np.array(self.axis)-line_pos_est))
-        line_amp_est = np.max([self.spectrum_normalized[line_ind-2],self.spectrum_normalized[line_ind-1], self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind+1], self.spectrum_normalized[line_ind+2]])
-        line_broad_est = (line_pos_est*self.broad_ml)/3e5
+        line_pos_est = 1e7 / ((self.vel_ml / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        print(line_pos_est)
+        line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
+        line_amp_est = np.max([self.spectrum_normalized[line_ind - 2], self.spectrum_normalized[line_ind - 1],
+                               self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind + 1],
+                               self.spectrum_normalized[line_ind + 2]])
+        line_broad_est = (line_pos_est * self.broad_ml) / 3e5
         return line_amp_est, line_pos_est, line_broad_est
 
     def gaussian_model(self, channel, theta):
@@ -171,7 +182,7 @@ class Fit:
         """
         f1 = 0.0
         for model_num in range(self.line_num):
-            params = theta[model_num*3:(model_num+1)*3]
+            params = theta[model_num * 3:(model_num + 1) * 3]
             f1 += Gaussian(channel, params).func
         return f1
 
@@ -189,7 +200,7 @@ class Fit:
         """
         model = self.gaussian_model(self.axis, theta)
         sigma2 = yerr ** 2
-        return -0.5 * np.sum((self.spectrum_normalized - model) ** 2 / sigma2 + np.log(2*np.pi*sigma2))
+        return -0.5 * np.sum((self.spectrum_normalized - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
     def fun_der(self, theta, yerr):
         return Jacobian(lambda theta: self.log_likelihood(theta, yerr))(theta).ravel()
@@ -205,14 +216,14 @@ class Fit:
 
         """
         nll = lambda *args: -self.log_likelihood(*args)
-        initial = np.ones((3*self.line_num))
+        initial = np.ones((3 * self.line_num))
         bounds_ = []
         for mod in range(self.line_num):
-            val = 3*mod + 1
+            val = 3 * mod + 1
             amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])
-            initial[3*mod] = amp_est
-            initial[3*mod + 1] = vel_est
-            initial[3*mod + 2] = sigma_est
+            initial[3 * mod] = amp_est
+            initial[3 * mod + 1] = vel_est
+            initial[3 * mod + 2] = sigma_est
             bounds_.append((self.A_min, self.A_max))
             bounds_.append((self.x_min, self.x_max))
             bounds_.append((self.sigma_min, self.sigma_max))
@@ -221,28 +232,35 @@ class Fit:
         bounds = Bounds(bounds_l, bounds_u)
         self.inital_values = initial
         if self.line_num == 5:
-            cons = ({'type': 'eq', 'fun': lambda x: 3e5*((1e7/x[4]-self.line_dict['NII6583'])/(1e7/x[4])) - 3e5*((1e7/x[1]-self.line_dict['Halpha'])/(1e7/x[1]))},
-            {'type': 'eq', 'fun': lambda x: x[2] - x[5]},
-            {'type': 'eq', 'fun': lambda x: x[5] - x[8]},
-            {'type': 'eq', 'fun': lambda x: x[5] - x[11]},
-            {'type': 'eq', 'fun': lambda x: x[5] - x[14]},
-            {'type': 'eq', 'fun': lambda x: 3e5*((1e7/x[4]-self.line_dict['NII6583'])/(1e7/x[4])) - 3e5*((1e7/x[7]-self.line_dict['NII6548'])/(1e7/x[7]))},
-            {'type': 'eq', 'fun': lambda x: 3e5*((1e7/x[4]-self.line_dict['NII6583'])/(1e7/x[4])) - 3e5*((1e7/x[10]-self.line_dict['SII6716'])/(1e7/x[10]))},
-            {'type': 'eq', 'fun': lambda x: 3e5*((1e7/x[4]-self.line_dict['NII6583'])/(1e7/x[4])) - 3e5*((1e7/x[13]-self.line_dict['SII6731'])/(1e7/x[13]))})
+            cons = ({'type': 'eq',
+                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
+                             (1e7 / x[1] - self.line_dict['Halpha']) / (1e7 / x[1]))},
+                    {'type': 'eq', 'fun': lambda x: x[2] - x[5]},
+                    {'type': 'eq', 'fun': lambda x: x[5] - x[8]},
+                    {'type': 'eq', 'fun': lambda x: x[5] - x[11]},
+                    {'type': 'eq', 'fun': lambda x: x[5] - x[14]},
+                    {'type': 'eq',
+                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
+                             (1e7 / x[7] - self.line_dict['NII6548']) / (1e7 / x[7]))},
+                    {'type': 'eq',
+                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
+                             (1e7 / x[10] - self.line_dict['SII6716']) / (1e7 / x[10]))},
+                    {'type': 'eq',
+                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
+                             (1e7 / x[13] - self.line_dict['SII6731']) / (1e7 / x[13]))})
         else:
             cons = ()
-        soln = minimize(nll, initial, method='SLSQP',# jac=self.fun_der(),
-                options={'disp': False, 'maxiter':100}, bounds=bounds, tol=1e-2,
-                args=(1e-2), constraints=cons)
+        soln = minimize(nll, initial, method='SLSQP', # jac=self.fun_der(),
+                        options={'disp': False, 'maxiter': 100}, bounds=bounds, tol=1e-8,
+                        args=(1e-2), constraints=cons)
         parameters = soln.x
-        #print(parameters)
+        # print(parameters)
         # We now must unscale the amplitude
         for i in range(self.line_num):
-            parameters[i*3] *= self.spectrum_scale
+            parameters[i * 3] *= self.spectrum_scale
         self.fit_sol = parameters
         self.fit_vector = self.gaussian_model(self.axis, self.fit_sol)
         return None
-
 
     def calculate_vel(self):
         """
@@ -253,11 +271,10 @@ class Fit:
         Return:
             Velocity of the Halpha line in units of km/s
         """
-        l_calc = 1e7/self.fit_sol[1]  # Halpha
-        l_shift = (l_calc - 656.28)/l_calc
-        v = 3e5*l_shift
+        l_calc = 1e7 / self.fit_sol[1]  # Halpha
+        l_shift = (l_calc - 656.28) / l_calc
+        v = 3e5 * l_shift
         return v
-
 
     def calculate_broad(self):
         """
@@ -268,9 +285,8 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad = (3e5*self.fit_sol[2])/self.fit_sol[1]
+        broad = (3e5 * self.fit_sol[2]) / self.fit_sol[1]
         return broad
-
 
     def calculate_flux(self, line_amp, line_sigma):
         """
@@ -283,13 +299,12 @@ class Fit:
         Return:
             Flux of the provided line in units of erg/s/cm-2
         """
+        flux = 0.0  # Initialize
         if self.model_type == 'gaussian':
-            flux = np.sqrt(2*np.pi)*line_amp*line_sigma
+            flux = np.sqrt(2 * np.pi) * line_amp * line_sigma
         elif self.model_type == 'sinc':
-            flux = np.sqrt(np.pi)*line_amp*line_sigma
-
+            flux = np.sqrt(np.pi) * line_amp * line_sigma
         return flux
-
 
     def fit(self):
         """
@@ -317,22 +332,19 @@ class Fit:
         # Collect Amplitudes
         ampls = []
         fluxes = []
-        for line_ct,line_ in enumerate(self.lines):  # Step through each line
-            ampls.append(self.fit_sol[line_ct*3])
+        for line_ct, line_ in enumerate(self.lines):  # Step through each line
+            ampls.append(self.fit_sol[line_ct * 3])
             # Calculate flux
-            fluxes.append(self.calculate_flux(self.fit_sol[line_ct*3], self.fit_sol[line_ct*3+2]))
+            fluxes.append(self.calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2]))
 
         # Collect parameters to return in a dictionary
-        fit_dict = {'fit_sol':self.fit_vector, 'velocity': self.calculate_vel(),
+        fit_dict = {'fit_sol': self.fit_vector, 'velocity': self.calculate_vel(),
                     'broadening': self.calculate_broad(), 'amplitudes': ampls,
                     'fluxes': fluxes, 'chi2': chi_sqr}
         # Plot
         if self.Plot_bool == True:
             self.plot()
         return fit_dict
-
-
-
 
     def fit_Bayes(self):
         """
@@ -341,7 +353,8 @@ class Fit:
         n_dim = 3 * self.line_num
         n_walkers = n_dim * 2 + 4
         init_ = self.fit_sol + 1 * np.random.randn(n_walkers, n_dim)
-        sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability, args=(self.axis, self.spectrum_normalized, 1e-2, self.lines))
+        sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
+                                        args=(self.axis, self.spectrum_normalized, 1e-2, self.lines))
         sampler.run_mcmc(init_, 100, progress=False)
         flat_samples = sampler.get_chain(discard=20, flat=True)
         parameters = []
@@ -350,39 +363,38 @@ class Fit:
             parameters.append(mcmc[1])
         self.fit_sol = parameters
 
-
     def log_likelihood_bayes(self, theta, x, y, yerr, model__):
         """
         """
-        #model = self.gaussian_model(x, theta, model)
+        # model = self.gaussian_model(x, theta, model)
         model = self.gaussian_model(self.axis, theta)
         sigma2 = yerr ** 2
-        return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2*np.pi*sigma2))
+        return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
     def log_prior(self, theta, model):
-        A_min = 0#1e-19
-        A_max = 1.#1e-15
+        A_min = 0  # 1e-19
+        A_max = 1.  # 1e-15
         x_min = 14700
         x_max = 15400
         sigma_min = 0
         sigma_max = 10
         for model_num in range(len(model)):
-            params = theta[model_num*3:(model_num+1)*3]
+            params = theta[model_num * 3:(model_num + 1) * 3]
         within_bounds = True  # Boolean to determine if parameters are within bounds
         for ct, param in enumerate(params):
-            if ct%3 == 0:  # Amplitude parameter
+            if ct % 3 == 0:  # Amplitude parameter
                 if param > A_min and param < A_max:
                     pass
                 else:
                     within_bounds = False  # Value not in bounds
                     break
-            if ct%3 == 1:  # velocity parameter
+            if ct % 3 == 1:  # velocity parameter
                 if param > x_min and param < x_max:
                     pass
                 else:
                     within_bounds = False  # Value not in bounds
                     break
-            if ct%3 == 2:  # sigma parameter
+            if ct % 3 == 2:  # sigma parameter
                 if param > sigma_min and param < sigma_max:
                     pass
                 else:
@@ -392,20 +404,16 @@ class Fit:
             return 0.0
         else:
             return -np.inf
-        #A_,x_,sigma_ = theta
-        #if A_min < A_ < A_max and x_min < x_ < x_max and sigma_min < sigma_ < sigma_max:
+        # A_,x_,sigma_ = theta
+        # if A_min < A_ < A_max and x_min < x_ < x_max and sigma_min < sigma_ < sigma_max:
         #    return 0.0#np.log(1/((t_max-t_min)*(rp_max-rp_min)*(b_max-b_min)))
-        #return -np.inf
-
-
+        # return -np.inf
 
     def log_probability(self, theta, x, y, yerr, model):
         lp = self.log_prior(theta, model)
         if not np.isfinite(lp):
             return -np.inf
         return lp + self.log_likelihood_bayes(theta, x, y, yerr, model)
-
-
 
     def plot(self):
         """
@@ -431,7 +439,6 @@ class Fit:
         else:
             raise Exception('Please submit a line name in the available list: \n {}'.format(self.line_dict.keys()))
 
-
     def check_fitting_model(self):
         """
         This function checks to see that the model provided is in the available options
@@ -443,4 +450,5 @@ class Fit:
             pass
         else:
             print(self.model_type)
-            raise Exception('Please submit a fitting function name in the available list: \n {}'.format(self.available_functions))
+            raise Exception(
+                'Please submit a fitting function name in the available list: \n {}'.format(self.available_functions))
