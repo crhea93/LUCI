@@ -195,140 +195,17 @@ of the line (often described as the velocity dispersion).</p>
 <div class="section" id="velocity">
 <h3>Velocity<a class="headerlink" href="#velocity" title="Permalink to this headline">¶</a></h3>
 <p>The velocity of a line is calculated using the following equation:
-.. math:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">v</span> <span class="p">[</span><span class="n">km</span><span class="o">/</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span> <span class="p">[</span><span class="n">km</span><span class="o">/</span><span class="n">s</span><span class="p">]</span> <span class="o">*</span> \\<span class="n">Delta</span> \\<span class="k">lambda</span>
-</pre></div>
-</div>
-<p><em>c</em> is the speed of light in kilometers per second. \Delta \lambda is the shift of the measured line. Although the line
-position is calculated in units of [cm-1], we translate it into nanometers since <div class="system-message">
-<p class="system-message-title">System Message: WARNING/2 (<span class="docutils literal">\\lambda [nm] = \\frac{1e7}{\\lambda[cm-1]}</span>)</p>
-<p>latex exited with error
-[stdout]
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=latex)
- restricted \write18 enabled.
-entering extended mode
-(./math.tex
-LaTeX2e &lt;2020-02-02&gt; patch level 2
-L3 programming layer &lt;2020-02-14&gt;
-(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
-Document Class: article 2019/12/20 v1.4l Standard LaTeX document class
-(/usr/share/texlive/texmf-dist/tex/latex/base/size12.clo))
-(/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty)
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
-For additional information on amsmath, use the `?' option.
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty))
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty)
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty))
-(/usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty)
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
-
-! LaTeX Error: File `anyfontsize.sty' not found.
-
-Type X to quit or &lt;RETURN&gt; to proceed,
-or enter new name. (Default extension: sty)
-
-Enter file name: 
-! Emergency stop.
-&lt;read *&gt; 
-         
-l.8 \usepackage
-               {bm}^^M
-No pages of output.
-Transcript written on math.log.
-</p>
-</div>
-.
-At the moment we only calculate the velocity for the Halpha line. Therefore <div class="system-message">
-<p class="system-message-title">System Message: WARNING/2 (<span class="docutils literal">\Delta \lambda = (line_pos[nm]-656.28)/656.28</span>)</p>
-<p>latex exited with error
-[stdout]
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=latex)
- restricted \write18 enabled.
-entering extended mode
-(./math.tex
-LaTeX2e &lt;2020-02-02&gt; patch level 2
-L3 programming layer &lt;2020-02-14&gt;
-(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
-Document Class: article 2019/12/20 v1.4l Standard LaTeX document class
-(/usr/share/texlive/texmf-dist/tex/latex/base/size12.clo))
-(/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty)
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
-For additional information on amsmath, use the `?' option.
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty))
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty)
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty))
-(/usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty)
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
-
-! LaTeX Error: File `anyfontsize.sty' not found.
-
-Type X to quit or &lt;RETURN&gt; to proceed,
-or enter new name. (Default extension: sty)
-
-Enter file name: 
-! Emergency stop.
-&lt;read *&gt; 
-         
-l.8 \usepackage
-               {bm}^^M
-No pages of output.
-Transcript written on math.log.
-</p>
-</div>
- where 656.28 nm is the
+<img class="math" src="_images/math/99ed672d8feffccc820fa5492ab22b3411022b5d.png" alt="v [km/s] = c [km/s] * \Delta \lambda"/></p>
+<p><em>c</em> is the speed of light in kilometers per second. Delta lambda is the shift of the measured line. Although the line
+position is calculated in units of [cm-1], we translate it into nanometers since <img class="math" src="_images/math/47026d06404449de04abb2b421e0508f83e4a21a.png" alt="\lambda [nm] = \frac{1e7}{\lambda[cm-1]}"/>.
+At the moment we only calculate the velocity for the Halpha line. Therefore <img class="math" src="_images/math/1e2a37d1d3cb8b77c0e080770236cd62f266f6bf.png" alt="\Delta \lambda = (line\_pos[nm]-656.28)/656.28"/> where 656.28 nm is the
 natural position of Halpha emission. We plan on extending this to other lines.</p>
 </div>
 <div class="section" id="velocity-dispersion">
 <h3>Velocity Dispersion<a class="headerlink" href="#velocity-dispersion" title="Permalink to this headline">¶</a></h3>
 <p>The velocity dispersion of a line is calculated using the following equation:
-.. math:</p>
-<blockquote>
-<div><p>\Delta v = \frac{3e5 [km/s] * sigma}/{v [km/s]}</p>
-</div></blockquote>
-<p>where <div class="system-message">
-<p class="system-message-title">System Message: WARNING/2 (<span class="docutils literal">\sigma</span>)</p>
-<p>latex exited with error
-[stdout]
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=latex)
- restricted \write18 enabled.
-entering extended mode
-(./math.tex
-LaTeX2e &lt;2020-02-02&gt; patch level 2
-L3 programming layer &lt;2020-02-14&gt;
-(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
-Document Class: article 2019/12/20 v1.4l Standard LaTeX document class
-(/usr/share/texlive/texmf-dist/tex/latex/base/size12.clo))
-(/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty)
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
-For additional information on amsmath, use the `?' option.
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty))
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty)
-(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty))
-(/usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty)
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
-
-! LaTeX Error: File `anyfontsize.sty' not found.
-
-Type X to quit or &lt;RETURN&gt; to proceed,
-or enter new name. (Default extension: sty)
-
-Enter file name: 
-! Emergency stop.
-&lt;read *&gt; 
-         
-l.8 \usepackage
-               {bm}^^M
-No pages of output.
-Transcript written on math.log.
-</p>
-</div>
- is the calculated width of a the fitted Gaussian.</p>
+<img class="math" src="_images/math/8d5dc0611f225ff54bf20292fd90af31d088593b.png" alt="\Delta v = \frac{3e5 [km/s] * \sigma}{v [km/s]}"/></p>
+<p>where <img class="math" src="_images/math/b52df27bfb0b1e3af0c2c68a7b9da459178c2a7d.png" alt="\sigma"/> is the calculated width of a the fitted Gaussian.</p>
 </div>
 </div>
 <div class="section" id="how-we-calculate">
@@ -381,7 +258,9 @@ A is the amplitude, x_0 is the position of the line, and sigma is the broadening
 <div class="section" id="uncertainty-estimates">
 <h3>Uncertainty Estimates<a class="headerlink" href="#uncertainty-estimates" title="Permalink to this headline">¶</a></h3>
 <p>Since uncertainty estimates are often crucial in astrophysical calculations, we apply
-a full Bayesian MCMC approach (using the python module <em>emcee</em>).</p>
+a full Bayesian MCMC approach (using the python module <em>emcee</em>). The likelihood function
+is defined as a standard Gaussian function. Additionally, we employ the same priors described
+above for the fitting function bounds.</p>
 <div class="toctree-wrapper compound">
 </div>
 </div>

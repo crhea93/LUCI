@@ -17,20 +17,18 @@ of the line (often described as the velocity dispersion).
 Velocity
 ^^^^^^^^
 The velocity of a line is calculated using the following equation:
-.. math::
-  v [km/s] = c [km/s] * \\Delta \\lambda
+:math:`v [km/s] = c [km/s] * \Delta \lambda`
 
 
-*c* is the speed of light in kilometers per second. \\Delta \\lambda is the shift of the measured line. Although the line
-position is calculated in units of [cm-1], we translate it into nanometers since :math:`\\lambda [nm] = \\frac{1e7}{\\lambda[cm-1]}`.
-At the moment we only calculate the velocity for the Halpha line. Therefore :math:`\Delta \lambda = (line_pos[nm]-656.28)/656.28` where 656.28 nm is the
+*c* is the speed of light in kilometers per second. \Delta \lambda is the shift of the measured line. Although the line
+position is calculated in units of [cm-1], we translate it into nanometers since :math:`\lambda [nm] = \frac{1e7}{\lambda[cm-1]}`.
+At the moment we only calculate the velocity for the Halpha line. Therefore :math:`\Delta \lambda = (line\_pos[nm]-656.28)/656.28` where 656.28 nm is the
 natural position of Halpha emission. We plan on extending this to other lines.
 
 Velocity Dispersion
 ^^^^^^^^^^^^^^^^^^^
 The velocity dispersion of a line is calculated using the following equation:
-.. math:
-  \\Delta v = \\frac{3e5 [km/s] * \sigma}/{v [km/s]}
+:math:`\Delta v = \frac{3e5 [km/s] * \sigma}{v [km/s]}`
 
 where :math:`\sigma` is the calculated width of a the fitted Gaussian.
 
@@ -79,7 +77,7 @@ Gaussian
 ########
 We assume a standard form of a Gaussian:
 .. math::
-  A*exp{(-(x-x_0)**2)/(2*sigma**2)}
+    A*exp{(-(x-x_0)**2)/(2*sigma**2)}
 
 We solve for A, x_0, and sigma (x is the wavelength channel and is thus provided).
 A is the amplitude, x_0 is the position of the line, and sigma is the broadening.
@@ -87,7 +85,9 @@ A is the amplitude, x_0 is the position of the line, and sigma is the broadening
 Uncertainty Estimates
 ^^^^^^^^^^^^^^^^^^^^^
 Since uncertainty estimates are often crucial in astrophysical calculations, we apply
-a full Bayesian MCMC approach (using the python module *emcee*). 
+a full Bayesian MCMC approach (using the python module *emcee*). The likelihood function
+is defined as a standard Gaussian function. Additionally, we employ the same priors described
+above for the fitting function bounds.
 
 
 .. toctree::
