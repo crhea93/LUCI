@@ -5,8 +5,11 @@ from scipy import interpolate
 import keras
 from scipy.optimize import Bounds
 from numdifftools import Jacobian, Hessian
+import emcee
+
 import warnings
 warnings.filterwarnings("ignore")
+
 
 
 
@@ -15,6 +18,12 @@ class Gaussian:
         A = params[0]; x = params[1]; sigma = params[2]
         self.func = A*np.exp((-(channel-x)**2)/(2*sigma**2))
 
+
+class Sinc:
+    def __init__(self, channel, params):
+        p0 = params[0]; p1 = params[1]; p2 = params[2]
+        u = (channel-p1)/p2
+        self.func = p0*(np.sin(u)/u)
 
 class Fit:
     """
@@ -41,7 +50,7 @@ class Fit:
 
     """
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines,
-                ML_model, Plot_bool = False):
+                ML_model, bayes_bool=False, Plot_bool = False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -50,10 +59,15 @@ class Fit:
             model_type: Type of model ('gaussian')
             lines: Lines to fit (must be in line_dict)
             ML_model: Tensorflow/keras machine learning model
+            bayes_bool:
             Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)
 
         """
-        self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803, 'SII6716': 671.647, 'SII6731': 673.085}
+        self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
+                         'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
+                         'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
+                         'Hbeta': 486.133}
+        self.available_functions = ['gaussian']
         self.spectrum = spectrum
         self.axis = axis
         self.wavenumbers_syn = wavenumbers_syn
@@ -65,6 +79,7 @@ class Fit:
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
         #ADD ML_MODEL AND PLOT_BOOL
         self.ML_model = ML_model
+        self.bayes_bool = bayes_bool
         self.Plot_bool = Plot_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
@@ -76,6 +91,7 @@ class Fit:
 
         # Check that lines inputted by user are in line_dict
         self.check_lines()
+        self.check_fitting_model()
 
 
     def estimate_priors_ML(self):
@@ -89,14 +105,9 @@ class Fit:
         Return:
             Updates self.vel_ml
         """
-        #print(self.spectrum_interp_norm)
-        #print(self.spectrum)
         Spectrum = self.spectrum_interp_norm.reshape(1, self.spectrum_interp_norm.shape[0], 1)
         predictions = self.ML_model(Spectrum, training=False)
-        #print(predictions)
-        #exit()
         self.vel_ml = float(predictions[0][0])
-        #print(predictions[0][1])
         self.broad_ml = float(predictions[0][1])  # Multiply value by FWHM of a gaussian
         return None
 
@@ -132,17 +143,16 @@ class Fit:
 
         """
         line_theo = self.line_dict[line_name]
-        #line_cm1 = 1e7/line_theo
-        #max_flux = np.argmax(self.spectrum)
-        #print(axis[max_flux])
-        #self.vel_ml = np.abs(3e5*((self.axis[max_flux]-line_cm1)/line_cm1))
-        #print(vel_ml)
+        if self.ML_model == None:
+            max_flux = np.argmax(self.spectrum)
+            self.vel_ml = np.abs(3e5*((self.axis[max_flux]-line_theo)/line_theo))
+            self.broad_ml = 1.0  # Best for now
+        else:
+            pass  # vel_ml and broad_ml already set using ML algorithm
         line_pos_est = 1e7/((self.vel_ml/3e5)*line_theo + line_theo)  # Estimate of position of line in cm-1
         line_ind = np.argmin(np.abs(np.array(self.axis)-line_pos_est))
         line_amp_est = np.max([self.spectrum_normalized[line_ind-2],self.spectrum_normalized[line_ind-1], self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind+1], self.spectrum_normalized[line_ind+2]])
         line_broad_est = (line_pos_est*self.broad_ml)/3e5
-        #print(line_broad_est)
-        #print(line_amp_est, line_pos_est, line_broad_est)
         return line_amp_est, line_pos_est, line_broad_est
 
     def gaussian_model(self, channel, theta):
@@ -221,7 +231,7 @@ class Fit:
         else:
             cons = ()
         soln = minimize(nll, initial, method='SLSQP',# jac=self.fun_der(),
-                options={'disp': False}, bounds=bounds, tol=1e-2,
+                options={'disp': False, 'maxiter':100}, bounds=bounds, tol=1e-2,
                 args=(1e-2), constraints=cons)
         parameters = soln.x
         #print(parameters)
@@ -237,6 +247,7 @@ class Fit:
         """
         Calculate velocity given the fit of Halpha
         TODO: Test
+        TODO: Add other lines
 
         Return:
             Velocity of the Halpha line in units of km/s
@@ -251,13 +262,12 @@ class Fit:
         """
         Calculate velocity dispersion given the fit of Halpha
         TODO: Test
+        TODO: Add other lines
 
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        #print(self.fit_sol[2], self.fit_sol[1])
         broad = (3e5*self.fit_sol[2])/self.fit_sol[1]
-        #print(broad)
         return broad
 
 
@@ -272,9 +282,12 @@ class Fit:
         Return:
             Flux of the provided line in units of erg/s/cm-2
         """
-        flux = np.sqrt(2*np.pi)*line_amp*line_sigma
-        return flux
+        if self.model_type == 'gaussian':
+            flux = np.sqrt(2*np.pi)*line_amp*line_sigma
+        elif self.model_type == 'sinc':
+            flux = np.sqrt(np.pi)*line_amp*line_sigma
 
+        return flux
 
 
     def fit(self):
@@ -291,9 +304,13 @@ class Fit:
         # Interpolate Spectrum
         self.interpolate_spectrum()
         # Estimate the priors using machine learning algorithm
-        self.estimate_priors_ML()
+        if self.ML_model != None:
+            self.estimate_priors_ML()
         # Apply Fit
         self.calculate_params()
+        # Check if Bayesian approach is required
+        if self.bayes_bool == True:
+            self.fit_Bayes()
         # Collect Amplitudes
         ampls = []
         fluxes = []
@@ -310,6 +327,82 @@ class Fit:
         if self.Plot_bool == True:
             self.plot()
         return fit_dict
+
+
+
+
+    def fit_Bayes(self):
+        """
+        Apply Bayesian MCMC run to constrain the parameters after solving
+        """
+        n_dim = 3 * self.line_num
+        n_walkers = n_dim * 2 + 4
+        init_ = self.fit_sol + 1 * np.random.randn(n_walkers, n_dim)
+        sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability, args=(self.axis, self.spectrum_normalized, 1e-2, self.lines))
+        sampler.run_mcmc(init_, 100, progress=False)
+        flat_samples = sampler.get_chain(discard=20, flat=True)
+        parameters = []
+        for i in range(n_dim):
+            mcmc = np.percentile(flat_samples[:, i], [16, 50, 84])
+            parameters.append(mcmc[1])
+        self.fit_sol = parameters
+
+
+    def log_likelihood_bayes(self, theta, x, y, yerr, model__):
+        """
+        """
+        #model = self.gaussian_model(x, theta, model)
+        model = self.gaussian_model(self.axis, theta)
+        sigma2 = yerr ** 2
+        return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2*np.pi*sigma2))
+
+    def log_prior(self, theta, model):
+        A_min = 0#1e-19
+        A_max = 1.#1e-15
+        x_min = 14700
+        x_max = 15400
+        sigma_min = 0
+        sigma_max = 10
+        for model_num in range(len(model)):
+            params = theta[model_num*3:(model_num+1)*3]
+        within_bounds = True  # Boolean to determine if parameters are within bounds
+        for ct, param in enumerate(params):
+            if ct%3 == 0:  # Amplitude parameter
+                if param > A_min and param < A_max:
+                    pass
+                else:
+                    within_bounds = False  # Value not in bounds
+                    break
+            if ct%3 == 1:  # velocity parameter
+                if param > x_min and param < x_max:
+                    pass
+                else:
+                    within_bounds = False  # Value not in bounds
+                    break
+            if ct%3 == 2:  # sigma parameter
+                if param > sigma_min and param < sigma_max:
+                    pass
+                else:
+                    within_bounds = False  # Value not in bounds
+                    break
+        if within_bounds:
+            return 0.0
+        else:
+            return -np.inf
+        #A_,x_,sigma_ = theta
+        #if A_min < A_ < A_max and x_min < x_ < x_max and sigma_min < sigma_ < sigma_max:
+        #    return 0.0#np.log(1/((t_max-t_min)*(rp_max-rp_min)*(b_max-b_min)))
+        #return -np.inf
+
+
+
+    def log_probability(self, theta, x, y, yerr, model):
+        lp = self.log_prior(theta, model)
+        if not np.isfinite(lp):
+            return -np.inf
+        return lp + self.log_likelihood_bayes(theta, x, y, yerr, model)
+
+
 
     def plot(self):
         """
@@ -334,3 +427,17 @@ class Fit:
             pass
         else:
             raise Exception('Please submit a line name in the available list: \n {}'.format(self.line_dict.keys()))
+
+
+    def check_fitting_model(self):
+        """
+        This function checks to see that the model provided is in the available options
+        Return:
+            Nothing if the user provides an appropriate fitting model
+            Else it will throw an error
+        """
+        if self.model_type in self.available_functions:
+            pass
+        else:
+            print(self.model_type)
+            raise Exception('Please submit a fitting function name in the available list: \n {}'.format(self.available_functions))

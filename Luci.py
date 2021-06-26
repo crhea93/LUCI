@@ -13,7 +13,7 @@ class Luci():
     all io/administrative functionality. The fitting functionality can be found in the
     Fit class (Lucifit.py).
     """
-    def __init__(self, cube_path, output_dir, object_name, redshift, ref_spec, model_ML_name):
+    def __init__(self, cube_path, output_dir, object_name, redshift, ref_spec=None, model_ML_name=None):
         """
         Initialize our Luci class -- this acts similar to the SpectralCube class
         of astropy or spectral-cube.
@@ -30,12 +30,16 @@ class Luci():
         self.object_name = object_name
         self.redshift = redshift
         self.ref_spec = ref_spec+'.fits'
-        self.model_ML = keras.models.load_model(model_ML_name)
+        if model_ML_name != None or '':
+            self.model_ML = keras.models.load_model(model_ML_name)
+        else:
+            self.model_ML = model_ML_name
         self.quad_nb = 0  # Number of quadrants in Hdf5
         self.dimx = 0  # X dimension of cube
         self.dimy = 0  # Y dimension of cube
         self.dimz = 0  # Z dimension of cube
         self.cube_final = None  # Complete data cube
+        self.cube_binned = None  # Binned data cube
         self.header = None
         self.deep_image = None
         self.spectrum_axis = None
@@ -185,7 +189,20 @@ class Luci():
         self.fit_cube(lines, fit_function, x_min, x_max, y_min, y_max)
 
 
-    def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max, output_name=None):
+    def bin_cube(self, binning):
+        """
+        Function to bin cube into bin x bin sub cubes
+        Args:
+            binning: Size of binning (equal in x and y direction)
+        Return:
+            Binned cubed called self.cube_binned and new spatial limits
+        """
+        x_min = int(x_min/binning)
+        x_max = int(x_max/binning)
+        y_min = int(y_min/binning)
+        y_max = int(y_max/binning)
+
+    def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max, binning=None, bayes_bool=False, output_name=None):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -197,11 +214,15 @@ class Luci():
             x_max: Upper bound in x
             y_min: Lower bound in y
             y_max: Upper bound in y
+            binning:  Value by which to bin (default None)
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis
             output_name: User defined output path/name
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
         """
         # Initialize fit solution arrays
+        if binning != None:
+            self.binned_cube = self.bin_cube(binning, x_min, x_max, y_min, y_max)
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         # First two dimensions are the X and Y dimensions.
@@ -224,7 +245,7 @@ class Luci():
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
                 fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
-                        self.model_ML, Plot_bool = False)
+                        self.model_ML, Plot_bool = False, bayes_bool=bayes_bool)
                 fit_dict = fit.fit()
                 # Save local list of fit values
                 vel_local.append(fit_dict['velocity'])
@@ -251,7 +272,7 @@ class Luci():
         #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
         #Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(VEL, BROAD, i) for i in tqdm(range(x_max-x_min)));
 
-    def fit_region(self, lines, fit_function, region, output_name):
+    def fit_region(self, lines, fit_function, region, bayes_bool=False, output_name=None):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -260,20 +281,25 @@ class Luci():
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
-            region: Name of ds9 region file (e.x. 'region.reg')
+            region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis
             output_name: User defined output path/name
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
         """
         # Create mask
-        shape = (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
-        r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-        mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
+        if '.reg' in region:
+            shape = (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
+            mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
+        else:
+            mask = region
         # Set spatial bounds for entire cube
-        x_min = 0
-        x_max = cube.shape[0]
-        y_min = 0
-        y_max = cube.shape[1]
+        if binning == None:
+            x_min = 0
+            x_max = cube.shape[0]
+            y_min = 0
+            y_max = cube.shape[1]
         # Initialize fit solution arrays
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
@@ -300,7 +326,7 @@ class Luci():
                     axis = self.spectrum_axis[good_sky_inds]
                     # Call fit!
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
-                            self.model_ML, Plot_bool = False)
+                            self.model_ML, Plot_bool = False, bayes_bool=bayes_bool)
                     fit_dict = fit.fit()
                     # Save local list of fit values
                     vel_local.append(fit_dict['velocity'])
