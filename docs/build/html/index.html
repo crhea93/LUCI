@@ -13,8 +13,6 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
@@ -31,10 +29,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -90,6 +88,10 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -179,8 +181,64 @@ data cubes in mind; however, if you need to fit any emission line spectra, LUCI
 will be able to help!</p>
 <p>Please note that this documentation is not exhaustive. If you have any questions or
 wish to see any new implementation, please send a message to <a class="reference external" href="mailto:carter&#46;rhea&#37;&#52;&#48;umontreal&#46;ca">carter<span>&#46;</span>rhea<span>&#64;</span>umontreal<span>&#46;</span>ca</a>.</p>
+<div class="section" id="lines-available">
+<h2>Lines Available<a class="headerlink" href="#lines-available" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 39%" />
+<col style="width: 61%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Line Name</p></td>
+<td><p>Wavelength (nm)</p></td>
+</tr>
+<tr class="row-even"><td><p>Halpha</p></td>
+<td><p>656.280</p></td>
+</tr>
+<tr class="row-odd"><td><p>NII6548</p></td>
+<td><p>654.803</p></td>
+</tr>
+<tr class="row-even"><td><p>NII6583</p></td>
+<td><p>658.341</p></td>
+</tr>
+<tr class="row-odd"><td><p>SII6716</p></td>
+<td><p>671.647</p></td>
+</tr>
+<tr class="row-even"><td><p>SII6731</p></td>
+<td><p>673.085</p></td>
+</tr>
+<tr class="row-odd"><td><p>OII3726</p></td>
+<td><p>372.603</p></td>
+</tr>
+<tr class="row-even"><td><p>OII3729</p></td>
+<td><p>372.882</p></td>
+</tr>
+<tr class="row-odd"><td><p>OIII4959</p></td>
+<td><p>495.891</p></td>
+</tr>
+<tr class="row-even"><td><p>OII5007</p></td>
+<td><p>500.684</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hbeta</p></td>
+<td><p>486.133</p></td>
+</tr>
+</tbody>
+</table>
+<p>The available fitting functions are as follows:
+‘gaussian’, ‘sinc’, ‘sincgauss’</p>
+<div class="section" id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+</ul>
+</div>
+</div></blockquote>
+</div>
 <div class="section" id="pipeline">
-<h2>Pipeline<a class="headerlink" href="#pipeline" title="Permalink to this headline">¶</a></h2>
+<h3>Pipeline<a class="headerlink" href="#pipeline" title="Permalink to this headline">¶</a></h3>
 <blockquote>
 <div><div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
@@ -189,6 +247,8 @@ wish to see any new implementation, please send a message to <a class="reference
 </ul>
 </div>
 </div></blockquote>
+<a class="reference internal image-reference" href="_images/Luci-Prancing.jpg"><img alt="Alternative text" src="_images/Luci-Prancing.jpg" style="width: 400px;" /></a>
+</div>
 </div>
 </div>
 <div class="section" id="indices-and-tables">

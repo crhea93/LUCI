@@ -11,5 +11,5 @@ This section contains the functions used to fit emission lines.
 
 Fitting Functions
 -----------------
-.. automodule:: LuciFit
+.. automodule:: LUCI.LuciFit
     :members:

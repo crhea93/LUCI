@@ -52,7 +52,8 @@ of the line in km/s. These are then translated into the line position and broade
 the amplitude is taken as the height of the line corresponding to the shifted line position.
 We note that the machine learning model has only been trained to obtain velocities
 between -500 and 500 km/s. Similarly, the model was trained to obtain broadening
-values between 10 and 200 km/s.
+values between 10 and 200 km/s. You can find more information on this at
+`https://sitelle-signals.github.io/Pamplemousse/index.html <https://sitelle-signals.github.io/Pamplemousse/index.html>`
 
 Since we understand that machine learning is not everyone's cup of tea, we have
 an alternative method to calculate the initial guesses.
