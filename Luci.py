@@ -1,10 +1,12 @@
 from astropy.io import fits
 import h5py
+import os
 from astropy.wcs import WCS
 from tqdm import tqdm
 import numpy as np
 import keras
-from LuciFit import Fit
+import pyregion
+from Luci.LuciFit import Fit
 
 
 class Luci():
@@ -26,7 +28,9 @@ class Luci():
             model_ML_name: Name of pretrained machine learning model
         """
         self.cube_path = cube_path
-        self.output_dir = output_dir
+        self.output_dir = output_dir+'/Luci'
+        if not os.path.exists(self.output_dir):
+            os.mkdir(self.output_dir)
         self.object_name = object_name
         self.redshift = redshift
         self.ref_spec = ref_spec+'.fits'
@@ -197,24 +201,30 @@ class Luci():
         Return:
             Binned cubed called self.cube_binned and new spatial limits
         """
-        x_min = int(x_min/binning)
-        x_max = int(x_max/binning)
-        y_min = int(y_min/binning)
-        y_max = int(y_max/binning)
-        x_range = np.arange(x_min, x_max, 1)
-        y_range = np.arange(x_min, x_max, 1)
-        binned_cube = np.zeros_like(self.cube_final)
-        # x_bin
-        xslices = np.arange(0, self.cube_final.shape[0]+1, binning).astype(np.int)
-        binned_cube = np.add.reduceat(self.cube_final[0:xslices[-1],:], xslices[:-1], axis=0)
+        binned_cube = np.zeros((int(self.cube_final.shape[0]/binning), int(self.cube_final.shape[1]/binning), self.cube_final.shape[2]))
+        for i,j in zip(range(int(self.cube_final.shape[0]/binning)), range(int(self.cube_final.shape[1]/binning))):
+            summed_spec = self.cube_final[int(i*binning):int((i+1)*binning), int(j*binning):int((j+1)*binning), :]
+            summed_spec = np.sum(summed_spec, axis=1)
+            summed_spec = np.sum(summed_spec, axis=0)
+            binned_cube[i,j] = summed_spec
+        self.header_binned = self.header
+        self.header_binned['CDELT1'] = self.header_binned['CDELT1']/binning
+        self.header_binned['CDELT2'] = self.header_binned['CDELT2']/binning
+        return binned_cube #/ (binning**2)
 
-        # y_bin
-        yslices = np.arange(0, self.cube_final.shape[1]+1, binning).astype(np.int)
-        binned_cube = np.add.reduceat(self.cube_final[:,0:yslices[-1]], yslices[:-1], axis=1)
-        print(binned_cube)
-        return binned_cube / (binning**2.)
 
-    def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max, binning=None, bayes_bool=False, output_name=None):
+    def save_fits(self, lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, header, output_name, binning):
+        if binning is not None:
+            output_name = output_name + "_" + str(binning)
+        fits.writeto(output_name+'_velocity.fits', velocity_fits.T, header, overwrite=True)
+        fits.writeto(output_name+'_broadening.fits', broadening_fits.T, header, overwrite=True)
+        for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
+            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, header, overwrite=True)
+            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct].T, header, overwrite=True)
+        fits.writeto(output_name+'_Chi2.fits', chi2_fits.T, header, overwrite=True)
+
+
+    def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -226,15 +236,17 @@ class Luci():
             x_max: Upper bound in x
             y_min: Lower bound in y
             y_max: Upper bound in y
+            bkg: Background Spectrum (1D numpy array; default None)
             binning:  Value by which to bin (default None)
-            bayes_bool: Boolean to determine whether or not to run Bayesian analysis
-            output_name: User defined output path/name
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default None)
+            output_name: User defined output path/name (default None)
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
         """
         # Initialize fit solution arrays
         if binning != None:
-            self.binned_cube = self.bin_cube(binning, x_min, x_max, y_min, y_max)
+            self.cube_binned = self.bin_cube(binning)
+            x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
@@ -253,7 +265,12 @@ class Luci():
             chi2_local = []
             for j in range(y_max-y_min):
                 y_pix = y_min+j
-                sky = self.cube_final[x_pix, y_pix, :]
+                if binning is not None:
+                    sky = self.cube_binned[y_pix, x_pix, :]
+                else:
+                    sky = self.cube_final[y_pix, x_pix, :]
+                if bkg is not None:
+                    sky -= bkg  # Subtract background spectrum
                 good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
                 sky = sky[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
@@ -274,12 +291,11 @@ class Luci():
             flux_fits[i] = flux_local
             chi2_fits[i] = chi2_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
-        fits.writeto(output_name+'_velocity.fits', velocity_fits.T, self.header, overwrite=True)
-        fits.writeto(output_name+'_broadening.fits', broadening_fits.T, self.header, overwrite=True)
-        for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, self.header, overwrite=True)
-            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct].T, self.header, overwrite=True)
-        fits.writeto(output_name+'_Chi2.fits', chi2_fits.T, self.header, overwrite=True)
+        if binning is not None:
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
+            fits.writeto(output_name+'_velocity.fits', velocity_fits.T,  self.header, overwrite=True)
+        else:
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
         return velocity_fits, broadening_fits, flux_fits, chi2_fits
 
         #n_threads = 1
@@ -288,7 +304,7 @@ class Luci():
         #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
         #Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(VEL, BROAD, i) for i in tqdm(range(x_max-x_min)));
 
-    def fit_region(self, lines, fit_function, region, bayes_bool=False, output_name=None):
+    def fit_region(self, lines, fit_function, region, bkg= None, bayes_bool=False, output_name=None):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -298,6 +314,7 @@ class Luci():
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
+            bkg: Background Spectrum (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
             output_name: User defined output path/name
         Return:
@@ -305,22 +322,23 @@ class Luci():
         """
         # Create mask
         if '.reg' in region:
-            shape = (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            shape = (2048, 2064)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
             mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
         else:
-            mask = region
+            mask = np.load(region)
         # Set spatial bounds for entire cube
-        if binning == None:
-            x_min = 0
-            x_max = cube.shape[0]
-            y_min = 0
-            y_max = cube.shape[1]
+        x_min = 0
+        x_max = self.cube_final.shape[0]
+        y_min = 0
+        y_max = self.cube_final.shape[1]
         # Initialize fit solution arrays
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
+        if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
+            region = region.split('/')[-1]
         if output_name == None:
-            output_name = self.output_dir+'/'+self.object_name
+            output_name = self.output_dir+'/'+self.object_name+'_'+region.split('.')[0]
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
@@ -337,6 +355,8 @@ class Luci():
                 # If so, fit as normal. Else, set values to zero
                 if mask[x_pix, y_pix] == True:
                     sky = self.cube_final[x_pix, y_pix, :]
+                    if bkg is not None:
+                        sky -= bkg
                     good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
                     sky = sky[good_sky_inds]
                     axis = self.spectrum_axis[good_sky_inds]
@@ -352,18 +372,97 @@ class Luci():
                 else:
                     vel_local.append(0)
                     broad_local.append(0)
-                    ampls_local.append(0)
-                    flux_local.append(0)
+                    ampls_local.append([0]*len(lines))
+                    flux_local.append([0]*len(lines))
             # Update global array of fit values
             velocity_fits[i] = vel_local
             broadening_fits[i] = broad_local
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
             # Write outputs (Velocity, Broadening, and Amplitudes)
-        fits.writeto(output_name+'_'+region+'_velocity.fits', velocity_fits.T, self.header, overwrite=True)
-        fits.writeto(output_name+'_'+region+'_broadening.fits', broadening_fits.T, self.header, overwrite=True)
+        fits.writeto(output_name+'_velocity.fits', velocity_fits.T, self.header, overwrite=True)
+        fits.writeto(output_name+'_broadening.fits', broadening_fits.T, self.header, overwrite=True)
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-            fits.writeto(output_name+'_'+region+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, self.header, overwrite=True)
-            fits.writeto(output_name+'_'+region+'_'+line_+'_Flux.fits', flux_fits[:,:,ct].T, self.header, overwrite=True)
+            fits.writeto(output_name+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, self.header, overwrite=True)
+            fits.writeto(output_name+line_+'_Flux.fits', flux_fits[:,:,ct].T, self.header, overwrite=True)
 
         return velocity_fits, broadening_fits, flux_fits
+
+
+    def extract_spectrum_region(self, region, mean=False):
+        """
+        Extract spectrum in region. This is primarily used to extract background regions.
+        The spectra in the region are summed and then averaged (if mean is selected).
+        Using the 'mean' argument, we can either calculate the total summed spectrum (False)
+        or the averaged spectrum for background spectra (True).
+        Args:
+            region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
+            mean: Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.
+        Return:
+            X-axis and spectral axis of region.
+        """
+        # Create mask
+        if '.reg' in region:
+            shape = (2048, 2064)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
+            mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
+        else:
+            mask = region
+        # Set spatial bounds for entire cube
+        x_min = 0
+        x_max = self.cube_final.shape[0]
+        y_min = 0
+        y_max = self.cube_final.shape[1]
+        integrated_spectrum = np.zeros(self.cube_final.shape[2])
+        spec_ct = 0
+        for i in tqdm(range(x_max-x_min)):
+            x_pix = x_min + i
+            for j in range(y_max-y_min):
+                y_pix = y_min+j
+                # Check if pixel is in the mask or not
+                if mask[x_pix, y_pix] == True:
+                    integrated_spectrum += self.cube_final[y_pix, x_pix, :]
+                    spec_ct += 1
+                else:
+                    pass
+        if mean == True:
+            integrated_spectrum /= spec_ct
+        return self.spectrum_axis, integrated_spectrum
+
+
+    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064):
+        """
+        Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
+        a map of the entire cube is calculated.
+        Args:
+            x_min: Minimal X value (default 0)
+            x_max: Maximal X value (default 2048)
+            y_min: Minimal Y value (default 0)
+            y_max: Maximal Y value (default 2064)
+        Return:
+            snr_map: Signal-to-Noise ratio map
+        """
+        # Calculate bounds for SNR calculation
+        # Step through spectra
+        SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
+        start = time.time()
+        def SNR_calc(SNR, i):
+            x_pix = x_min + i
+            snr_local = []
+            for j in range(y_max-y_min):
+                y_pix = y_min+j
+                # Calculate SNR
+                flux = np.real(self.cube_final[x_pix, y_pix])
+                flux = flux[np.where(flux != 0.0)]
+                n = len(flux)
+                signal = np.max(flux)-np.median(flux)
+                noise = np.std(flux)
+                snr = float(signal / np.sqrt(noise))
+                snr = snr/(np.sqrt(np.mean(flux)))
+                snr_local.append(snr)
+            SNR[i] = snr_local
+        n_threads = 16
+        Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(SNR,i) for i in tqdm(range(x_max-x_min)));
+        end = time.time()
+        # Save
+        fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR.T, self.header, overwrite=True)
