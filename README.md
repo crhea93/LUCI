@@ -34,8 +34,12 @@ import Luci
 You can also access the fitting directly by circumventing the `LUCI` wrappers and directly accesing the fitting algorithms (`Luci.LuciFitting`). With this, you can fit any spectrum using the `Luci.LuciFitting.fit` and `Luci.LuciFitting.bayes_fit` algorithms. We also provide basic plotting functionality which can be found in `Luci.LuciPlotting`.
 
 ### Where to find examples
+Examples are paramount to the success of any open source code. Therefore, we have tried to make our examples as complete as possible. That said, we surely have forgotten something! If you wish to see an example that does not exist (or for an example to be better explained), please shoot us an email or open up an issue!
+
+All examples can be found in two locations. Read-through examples can be found on our [read the docs (https://luci-fitting.readthedocs.io/en/latest/)](https://luci-fitting.readthedocs.io/en/latest/) page while jupyter notebooks can be found in the **Examples** folder.
 
 ### Where to find documentation
+Documentation can also be found on our [read the docs (https://luci-fitting.readthedocs.io/en/latest/)](https://luci-fitting.readthedocs.io/en/latest/) page. In addition to documentation on each function in `LUCI`, you can also find a description of what `LUCI` calculates and how she does what she does!
 
 ### Pictures of Luci herself!
 
