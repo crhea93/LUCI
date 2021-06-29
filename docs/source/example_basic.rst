@@ -6,13 +6,16 @@ Basic Example
 The most fundamental use for `LUCI` is to read in an HDF5 file and fit a
 region of the data cube. In this tutorial, we will outline how to do just that.
 
+If you want to see the complete example code, please see the bottom of the page.
+This is also available as a jupyter notebook (complete with output) under *Exmples/BasicExamples.ipynb* in the main Luci repository.
+
 We should start by import the appropriate modules.
 
 .. code-block:: python
 
     import sys
     sys.path.insert(0, '/the/path/to/LUCI/')
-    import Luci
+    import LuciBase as Luci
 
 
 Remember that '/the/path/to/LUCI/' is the full path to the directory where you cloned
@@ -36,11 +39,11 @@ For example:
 
     # Using Machine Learning Algorithm for Initial Guess
     cube_dir = '/home/carterrhea/Documents'  # Path to data cube
-    cube_name = 'NGC1275-LowRes'  # don't add .hdf5 extension
+    cube_name = 'A0426_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'NGC1275'
     redshift = 0.017284  # Redshift of NGC 1275
-    ML_ref = 'ML/Reference-Spectrum-R5000'
-    ML_model = 'ML/R5000-PREDICTOR-I'
+    ML_ref = 'ML/Reference-Spectrum-R1800'
+    ML_model = 'ML/R1800-PREDICTOR-I'
 
 Although the first three arguments are rather self explanatory, it is worth discussing the others.
 The redshift is provided so that we can shift x-axis of the spectra to the rest-frame.

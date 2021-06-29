@@ -27,6 +27,38 @@ def plot_spectrum(axis, spectrum, units='cm-1', output_name = None, fig_size=(10
     return ax
 
 
+def plot_map(quantity_map, quantity_name, output_dir):
+    """
+    Function to plot fit map
+    Args:
+        quantity_map: 2d numpy array from fit
+        quantity_name: Name of quantity (e.x. 'flux')
+    """
+    if quantity_name == 'broadening' or quantity_name == 'velocity':
+        quantity_name = 'velocity'  # The quantities are the same
+    elif quantity_name != 'flux':
+        quantity_map = np.log10(quantity_map)
+        print('Please enter either flux, velocity, or broadening')
+    units = {'flux':'ergs/s/cm^2/A','velocity':'km/s'}
+    #Plot
+    #hdu = fits.open(Name+'_SN3.1.0.ORCS/MAPS/'+Name+'_SN3.1.0.LineMaps.map.all.'+Bin+'.rchi2.fits')[0]
+    #wcs = WCS(hdu.header)
+    fig = plt.figure(figsize=(16,8))
+    ax = plt.subplot()#projection=wcs)
+    #ax.coords[0].set_major_formatter('hh:mm:ss')
+    #ax.coords[1].set_major_formatter('dd:mm:ss')
+    plt.imshow(quantity_map, cmap='jet')
+    plt.title(quantity_name +' Map')
+    plt.xlabel("RA")
+    plt.ylabel("DEC")
+    plt.xlim(0,quantity_map.shape[0])
+    plt.ylim(0,quantity_map.shape[1])
+    cbar = plt.colorbar(fraction=0.046, pad=0.04)
+    plt.clim(np.min(quantity_map), 0.95*np.max(quantity_map))
+    cbar.ax.set_ylabel(units[quantity_name], rotation=270, labelpad=25)
+    plt.savefig(output_dir+'/'+quantity_name+'_map.png')
+
+
 def check_units(unit):
     """
     This function checks to see that the unit provided is in the available options

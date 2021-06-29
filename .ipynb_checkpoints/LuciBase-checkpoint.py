@@ -6,7 +6,7 @@ from tqdm import tqdm
 import numpy as np
 import keras
 import pyregion
-from Luci.LuciFit import Fit
+from LUCI.LuciFit import Fit
 
 
 class Luci():
@@ -430,7 +430,7 @@ class Luci():
         return self.spectrum_axis, integrated_spectrum
 
 
-    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064):
+    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1):
         """
         Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
         a map of the entire cube is calculated.
@@ -439,6 +439,7 @@ class Luci():
             x_max: Maximal X value (default 2048)
             y_min: Minimal Y value (default 0)
             y_max: Maximal Y value (default 2064)
+            method: Method used to calculate SNR (default 1; options 1 or 2)
         Return:
             snr_map: Signal-to-Noise ratio map
         """
@@ -455,10 +456,20 @@ class Luci():
                 flux = np.real(self.cube_final[x_pix, y_pix])
                 flux = flux[np.where(flux != 0.0)]
                 n = len(flux)
-                signal = np.max(flux)-np.median(flux)
-                noise = np.std(flux)
-                snr = float(signal / np.sqrt(noise))
-                snr = snr/(np.sqrt(np.mean(flux)))
+                if method == 1:
+                    signal = np.max(flux)-np.median(flux)
+                    noise = np.std(flux)
+                    snr = float(signal / np.sqrt(noise))
+                    snr = snr/(np.sqrt(np.mean(flux)))
+                else:
+                    # Select spectral region around Halpha and NII complex
+                    min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-15150))
+                    max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-15300))
+                    flux_in_region = np.sum(self.cube_final[x_pix, y_pix, min_:max_])
+                    # Select distance region
+                    std_out_region = np.std(self.cube_final[x_pix, y_pix, 10:20])
+                    snr = float(flux_in_region/std_out_region)
+                    snr = snr/(np.sqrt(np.mean(flux)))
                 snr_local.append(snr)
             SNR[i] = snr_local
         n_threads = 16
