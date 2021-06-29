@@ -120,6 +120,7 @@ To fit the entire cube, we would simply run the following instead:
 
 
 Or we can fit an entire region
+
 .. code-block:: python
 
     vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(line_list, fit_function, region_file)
@@ -128,6 +129,12 @@ where `region_file` is the path to the ds9 region file save in **fk5** coordinat
 
 If you wish to activate the Bayesian MCMC implementation, simply add `bayes_bool=True` to any of the fit functions described above.
 
+Additionally, **binning** can be applied by adding the `binning` argument to any of the above fit functions. For example, we
+can bin 2x2 regions as such:
+
+.. code-block:: python
+
+    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha'], 'gaussian', 1300, 1400, 550, 650, binning=2)
 
 And with those few lines, we have read in our data cube, created a *deep image* and fit the cube.
 
