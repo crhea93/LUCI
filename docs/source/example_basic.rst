@@ -9,6 +9,8 @@ region of the data cube. In this tutorial, we will outline how to do just that.
 If you want to see the complete example code, please see the bottom of the page.
 This is also available as a jupyter notebook (complete with output) under *Exmples/BasicExamples.ipynb* in the main Luci repository.
 
+I am working on making the import easier (BTW).
+
 We should start by import the appropriate modules.
 
 .. code-block:: python
@@ -16,10 +18,12 @@ We should start by import the appropriate modules.
     import sys
     sys.path.insert(0, '/the/path/to/LUCI/')
     import LuciBase as Luci
+    import LUCI.LuciPlotting as lplt
 
 
 Remember that '/the/path/to/LUCI/' is the full path to the directory where you cloned
 LUCI from github. For example, yours may look like '/home/carterrhea/LUCI/'.
+We will also be highlighting the built in plotting functions found in `LUCI/LuciPlotting.py`.
 
 The next step is to load/read the HDF5 data cube. To do this we **invoke** LUCI
 by initiating an instance of her along with the proper parameters. First we
@@ -29,8 +33,8 @@ define the correct parameters:
 2. cube_name = 'name_of_data_cube'  # don't add .hdf5 extension
 3. object_name = 'name_of_object'
 4. redshift = 0.01  # Redshift of object
-5. ML_ref = 'ML/Reference-Spectrum-R5000'  # Relative path to reference spectrum
-6. ML_model = 'ML/R5000-PREDICTOR-I'  # Relative path to train ML algorithm
+5. ML_ref = '/the/path/to/LUCI/ML/Reference-Spectrum-R5000'  # Relative path to reference spectrum
+6. ML_model = '/the/path/to/LUCI/ML/R5000-PREDICTOR-I'  # Relative path to train ML algorithm
 
 
 For example:
@@ -42,8 +46,8 @@ For example:
     cube_name = 'A0426_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'NGC1275'
     redshift = 0.017284  # Redshift of NGC 1275
-    ML_ref = 'ML/Reference-Spectrum-R1800'
-    ML_model = 'ML/R1800-PREDICTOR-I'
+    ML_ref = '/the/path/to/LUCI/ML/Reference-Spectrum-R1800'
+    ML_model = '/the/path/to/LUCI/ML/R1800-PREDICTOR-I'
 
 Although the first three arguments are rather self explanatory, it is worth discussing the others.
 The redshift is provided so that we can shift x-axis of the spectra to the rest-frame.
@@ -138,16 +142,26 @@ can bin 2x2 regions as such:
 
 And with those few lines, we have read in our data cube, created a *deep image* and fit the cube.
 
+We can now visualize our fits with our specialized plotting functionality:
+
+.. code-block:: python
+
+    lplt.plot_map(vel_map, 'velocity', cube_dir)
+
+
+The `LUCI.LuciPlotting.plot_map` function takes the map of interest, the name of the map (either 'velocity', 'broadening', or 'flux'),
+and the output directory as arguments. Of course, we can also use simply `matplotlib` plotting functionality as well.
+
 For clarity, we reproduce the commands required to obtain fits here:
 
 .. code-block:: python
 
     cube_dir = '/home/carterrhea/Documents'  # Path to data cube
-    cube_name = 'NGC1275-LowRes'  # don't add .hdf5 extension
+    cube_name = 'A0426_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'NGC1275'
     redshift = 0.017284  # Redshift of NGC 1275
-    ML_ref = 'ML/Reference-Spectrum-R5000'
-    ML_model = 'ML/R5000-PREDICTOR-I'
+    ML_ref = '/the/path/to/LUCI/ML/Reference-Spectrum-R1800'
+    ML_model = '/the/path/to/LUCI/ML/R1800-PREDICTOR-I'
 
     cube = Luci(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
 
