@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Examples &mdash; LUCI v.0.0.1 documentation</title>
+  <title>Basic Example Lite &mdash; LUCI v.0.0.1 documentation</title>
   
 
   
@@ -88,6 +88,10 @@
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+</ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
@@ -139,13 +143,13 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Examples</li>
+      <li>Basic Example Lite</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/Examples.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/example_basic_light.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -158,15 +162,34 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="examples">
-<span id="id1"></span><h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
-<p>You have found your way to the landing page for examples of how to use Luci!</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
-</ul>
+  <div class="section" id="basic-example-lite">
+<span id="example-basic-lite"></span><h1>Basic Example Lite<a class="headerlink" href="#basic-example-lite" title="Permalink to this headline">¶</a></h1>
+<p>This example is the much condensed version of our basic example for those of us
+already familiar with the parameters and how <cite>LUCI</cite> works. Let’s get started!</p>
+<p>Let’s start with importing <cite>LUCI</cite>. Just as descsribed on the <em>readthedocs</em> page, we need to point our system path to our install location of the <strong>LUCI</strong> folder.
+We will additionally import the Luci plotting functions :)</p>
+<p># Imports
+import sys
+sys.path.insert(0, ‘/media/carterrhea/carterrhea/SIGNALS/LUCI/’)  # Location of Luci
+from LuciBase import Luci
+import LUCI.LuciPlotting as lplt</p>
+<p>We now will set the required parameters. We are also going to be using our machine learning algorithm to get the initial guesses.</p>
+<p>#Set Parameters
+# Using Machine Learning Algorithm for Initial Guess
+cube_dir = ‘/media/carterrhea/carterrhea/Benjamin’  # Path to data cube
+cube_name = ‘A0426_SN3.merged.cm1.1.0’  # don’t add .hdf5 extension
+object_name = ‘NGC1275’
+redshift = 0.017284  # Redshift of NGC 1275
+ML_ref = ‘/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R1800’
+ML_model = ‘/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R1800-PREDICTOR-I’</p>
+<p>We intialize our LUCI object</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
 </div>
+<p># Create Luci object
+cube = Luci(cube_dir+’/’+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)</p>
+<p>The output will look something like this:</p>
+<img alt="Luci Initialization Output" src="_images/ReadingIn.png" />
 </div>
 
 

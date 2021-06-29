@@ -58,10 +58,13 @@ The available fitting functions are as follows:
 Examples
 ^^^^^^^^
     .. toctree::
-       :maxdepth: 1
+       :maxdepth: 2
        :caption: Example Modules:
 
        example_basic
+       example_basic_lite
+
+
 
 Pipeline
 ^^^^^^^^

@@ -269,7 +269,6 @@ class Luci():
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
         flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
-        print(y_max-y_min)
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name
         for i in tqdm(range(x_max-x_min)):
@@ -281,18 +280,10 @@ class Luci():
             chi2_local = []
             for j in range(y_max-y_min):
                 y_pix = y_min+j
-                #print(y_pix)
                 if binning is not None:
-                    #print(x_pix, y_pix)
-                    sky = self.cube_binned[x_pix, y_pix, :]
-                    #print(sky)
-                    #plt.plot(self.spectrum_axis, sky)
-                    #exit()
+                    sky = self.cube_binned[y_pix, x_pix, :]
                 else:
-                    sky = self.cube_final[x_pix, y_pix, :]
-                    #print(sky)
-                    #plt.plot(self.spectrum_axis, sky)
-                    #exit()
+                    sky = self.cube_final[y_pix, x_pix, :]
                 if bkg is not None:
                     sky -= bkg  # Subtract background spectrum
                 good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
