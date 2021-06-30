@@ -22,6 +22,7 @@ class Luci():
         """
         Initialize our Luci class -- this acts similar to the SpectralCube class
         of astropy or spectral-cube.
+
         Args:
             cube_path: Full path to hdf5 cube with the hdf5 extension (e.x. '/user/home/M87.hdf5')
             output_dir: Full path to output directory
@@ -63,6 +64,7 @@ class Luci():
         Calculate the x and y limits of a given quadrant in the HDF5 file. The
         data cube is saved in 9 individual arrays in the original HDF5 cube. This
         function gets the bouunds for each quadrant.
+
         Args:
             quad_number: Quadrant Number
         Return:
@@ -96,6 +98,7 @@ class Luci():
         the following equation:
         cos(theta) = lambda_ref/lambda
         where lambda_ref is the reference laser wavelength and lambda is the measured calibration laser wavelength.
+
         Args:
             file: hdf5 File object containing HDF5 file
         """
@@ -107,7 +110,13 @@ class Luci():
 
     def update_header(self, file):
         """
-        Create a standard WCS header from the HDF5 header
+        Create a standard WCS header from the HDF5 header. To do this we clean up the
+        header data (which is initially stored in individual arrays). We then create
+        a new header dictionary with the old cleaned header info. Finally, we use
+        astropy.wcs.WCS to create an updated WCS header for the 2 spatial dimensions.
+        This is then saved to self.header while the header dictionary is saved
+        as self.hdr_dict.
+
         Args:
             file: hdf5 File object containing HDF5 file
         """
@@ -216,8 +225,13 @@ class Luci():
     def bin_cube(self, binning, x_min, x_max, y_min, y_max):
         """
         Function to bin cube into bin x bin sub cubes
+
         Args:
             binning: Size of binning (equal in x and y direction)
+            x_min: Lower bound in x
+            x_max: Upper bound in x
+            y_min: Lower bound in y
+            y_max: Upper bound in y
         Return:
             Binned cubed called self.cube_binned and new spatial limits
         """
@@ -227,23 +241,35 @@ class Luci():
         for i in range(x_shape_new):
             for j in range(y_shape_new):
                 summed_spec = self.cube_final[x_min+int(i*binning):x_min+int((i+1)*binning), y_min+int(j*binning):y_min+int((j+1)*binning), :]
-                #print(summed_spec[-1])
                 summed_spec = np.nansum(summed_spec, axis=0)
-                #print(summed_spec[-1])
                 summed_spec = np.nansum(summed_spec, axis=0)
-                #print(summed_spec)
                 binned_cube[i,j] = summed_spec[:]
         self.header_binned = self.header
         self.header_binned['CRPIX1'] = self.header_binned['CRPIX1']/binning
         self.header_binned['CRPIX2'] = self.header_binned['CRPIX2']/binning
         self.header_binned['CDELT1'] = self.header_binned['CDELT1']/binning
         self.header_binned['CDELT2'] = self.header_binned['CDELT2']/binning
-        #print(binned_cube.shape)
         self.cube_binned = binned_cube / (binning**2)
-        #return binned_cube / (binning**2)
 
 
     def save_fits(self, lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, header, output_name, binning):
+        """
+        Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
+        amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
+        defined when the cube is initiated.
+
+        Args:
+            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
+            velocity_fits: 2D Numpy array of velocity values
+            broadening_fits: 2D Numpy array of broadening values
+            ampls_fits: 2D Numpy array of amplitude values
+            flux_fis: 2D Numpy array of flux values
+            chi2_fits: 2D Numpy array of chi-squared values
+            header: Header object (either binned or unbinned)
+            output_name: Output directory and naming convention
+            binning: Value by which to bin (default None)
+
+        """
         if binning is not None:
             output_name = output_name + "_" + str(binning)
         fits.writeto(output_name+'_velocity.fits', velocity_fits, header, overwrite=True)
@@ -259,6 +285,7 @@ class Luci():
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
         saves the velocity and broadening fits files.
+
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
@@ -272,6 +299,16 @@ class Luci():
             output_name: User defined output path/name (default None)
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
+
+        Examples:
+            As always, we must first have the cube initialized (see basic example).
+
+            If we want to fit all five lines in SN3 with a sincgauss function and binning of 2
+            over a rectangular region defined in image coordinates as 800<x<1500; 250<y<1250,
+            we would run the following:
+
+            >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'sincgauss', 800, 1500, 250, 750, binning=2)
+            
         """
         # Initialize fit solution arrays
         if binning != None:
@@ -342,6 +379,7 @@ class Luci():
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
         we step through the cube and only fit the unmasked pixels. Although this may not
         be the most efficient method, it does ensure the fidelity of the wcs system.
+
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
@@ -352,6 +390,7 @@ class Luci():
             output_name: User defined output path/name
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
+
         """
         # Create mask
         if '.reg' in region:
@@ -436,11 +475,13 @@ class Luci():
         The spectra in the region are summed and then averaged (if mean is selected).
         Using the 'mean' argument, we can either calculate the total summed spectrum (False)
         or the averaged spectrum for background spectra (True).
+
         Args:
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             mean: Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.
         Return:
             X-axis and spectral axis of region.
+
         """
         # Create mask
         if '.reg' in region:
@@ -475,6 +516,7 @@ class Luci():
         """
         Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
         a map of the entire cube is calculated.
+
         Args:
             x_min: Minimal X value (default 0)
             x_max: Maximal X value (default 2048)
@@ -483,6 +525,7 @@ class Luci():
             method: Method used to calculate SNR (default 1; options 1 or 2)
         Return:
             snr_map: Signal-to-Noise ratio map
+
         """
         # Calculate bounds for SNR calculation
         # Step through spectra

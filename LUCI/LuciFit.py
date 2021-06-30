@@ -125,7 +125,8 @@ class Fit:
         Calculate sinc width of the sincgauss function
         Args:
             sincgauss_args: Additional arguments required for sincgauss function in a list:
-                [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
+            [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
+
         """
         MPD = sincgauss_args[0]*sincgauss_args[1]*sincgauss_args[2]
         self.sinc_width = 1/(2*MPD)
@@ -510,8 +511,9 @@ class Fit:
         """
         This function checks to see that the lines provided are in the available options
         Return:
-            Nothing if the user provides appropriate lines
-            Else it will throw an error
+        Nothing if the user provides appropriate lines
+        Else it will throw an error
+
         """
         if set(self.lines).issubset(self.line_dict):
             pass
@@ -522,8 +524,9 @@ class Fit:
         """
         This function checks to see that the model provided is in the available options
         Return:
-            Nothing if the user provides an appropriate fitting model
-            Else it will throw an error
+        Nothing if the user provides an appropriate fitting model
+        Else it will throw an error
+
         """
         if self.model_type in self.available_functions:
             pass
