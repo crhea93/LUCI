@@ -308,7 +308,7 @@ class Luci():
             we would run the following:
 
             >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'sincgauss', 800, 1500, 250, 750, binning=2)
-            
+
         """
         # Initialize fit solution arrays
         if binning != None:
@@ -390,6 +390,14 @@ class Luci():
             output_name: User defined output path/name
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
+
+        Examples:
+            As always, we must first have the cube initialized (see basic example).
+
+            If we want to fit all five lines in SN3 with a gaussian function and no binning
+            over a ds9 region called main.reg, we would run the following:
+
+            >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', region='main.reg')
 
         """
         # Create mask
