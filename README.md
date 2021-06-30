@@ -17,8 +17,7 @@ Below are our instructions for installing on a linux/MacOS-based distribution.
     ```git clone https://github.com/crhea93/LUCI.git```
 2. **Enter repository** wherever you cloned it.
     ```cd LUCI```
-3. **Install** python requirements using the requirements.txt file provided. This will ensure that your distribution has all the python modules required to run `LUCI`. It isn't a bad idea to create a clean conda environment to use with `LUCI`. That can be done easily with `conda create -n luci`. If you do this, remember to always activate your conda environment before using `LUCI` with `conda activate luci`.
-    ```pip install -r requirements.txt```
+3. **Create** luci environment using the following command: 'conda env create -f luci.yml`. Now, whenever you wish to use `LUCI`, you can load the environment by simply typing the following into your terminal: `conda activate luci`.  
 
 Now you are all set to use Luci! To load the module into a python file or jupyter notebook simply add the following lines:
 ```

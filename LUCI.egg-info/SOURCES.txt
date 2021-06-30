@@ -1,0 +1,8 @@
+README.md
+setup.py
+LUCI.egg-info/PKG-INFO
+LUCI.egg-info/SOURCES.txt
+LUCI.egg-info/dependency_links.txt
+LUCI.egg-info/top_level.txt
+tests/__init__.py
+tests/test_fit.py
