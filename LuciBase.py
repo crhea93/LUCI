@@ -52,6 +52,7 @@ class Luci():
         self.spectrum_axis = None
         self.wavenumbers_syn = None
         self.hdr_dict = None
+        self.interferometer_cos_theta = None
         self.read_in_cube()
         self.spectrum_axis_func()
         self.read_in_reference_spectrum()
@@ -87,6 +88,21 @@ class Luci():
         else:
             y_max = self.dimy
         return int(x_min), int(x_max), int(y_min), int(y_max)
+
+
+    def get_interferometer_angles(self, file):
+        """
+        Calculate the interferometer angle 2d array for the entire cube. We use
+        the following equation:
+        cos(theta) = lambda_ref/lambda
+        where lambda_ref is the reference laser wavelength and lambda is the measured calibration laser wavelength.
+        Args:
+            file: hdf5 File object containing HDF5 file
+        """
+        calib_map = file['calib_map'][()]
+        calib_ref = self.hdr_dict['CALIBNM']
+        self.interferometer_cos_theta = calib_ref/calib_map
+
 
 
     def update_header(self, file):
@@ -152,6 +168,7 @@ class Luci():
             iquad_data[(iquad_data > 1e-9)]= 1e-22 # Modifs
             self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
         self.update_header(file)
+        self.get_interferometer_angles(file)
 
     def spectrum_axis_func(self):
         """
@@ -217,8 +234,8 @@ class Luci():
                 #print(summed_spec)
                 binned_cube[i,j] = summed_spec[:]
         self.header_binned = self.header
-        self.header_binned['CRVAL1'] = self.header_binned['CRVAL1']/binning
-        self.header_binned['CRVAL2'] = self.header_binned['CRVAL2']/binning
+        self.header_binned['CRPIX1'] = self.header_binned['CRPIX1']/binning
+        self.header_binned['CRPIX2'] = self.header_binned['CRPIX2']/binning
         self.header_binned['CDELT1'] = self.header_binned['CDELT1']/binning
         self.header_binned['CDELT2'] = self.header_binned['CDELT2']/binning
         #print(binned_cube.shape)
@@ -229,12 +246,12 @@ class Luci():
     def save_fits(self, lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, header, output_name, binning):
         if binning is not None:
             output_name = output_name + "_" + str(binning)
-        fits.writeto(output_name+'_velocity.fits', velocity_fits.T, header, overwrite=True)
-        fits.writeto(output_name+'_broadening.fits', broadening_fits.T, header, overwrite=True)
+        fits.writeto(output_name+'_velocity.fits', velocity_fits, header, overwrite=True)
+        fits.writeto(output_name+'_broadening.fits', broadening_fits, header, overwrite=True)
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, header, overwrite=True)
-            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct].T, header, overwrite=True)
-        fits.writeto(output_name+'_Chi2.fits', chi2_fits.T, header, overwrite=True)
+            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
+            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
+        fits.writeto(output_name+'_Chi2.fits', chi2_fits, header, overwrite=True)
 
 
     def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None):
@@ -281,9 +298,9 @@ class Luci():
             for j in range(y_max-y_min):
                 y_pix = y_min+j
                 if binning is not None:
-                    sky = self.cube_binned[y_pix, x_pix, :]
+                    sky = self.cube_binned[x_pix, y_pix, :]
                 else:
-                    sky = self.cube_final[y_pix, x_pix, :]
+                    sky = self.cube_final[x_pix, y_pix, :]
                 if bkg is not None:
                     sky -= bkg  # Subtract background spectrum
                 good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
@@ -291,7 +308,8 @@ class Luci():
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
                 fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
-                        self.model_ML, Plot_bool = False, bayes_bool=bayes_bool)
+                        self.model_ML, sincgauss_args=[self.interferometer_cos_theta[x_pix, y_pix], self.hdr_dict['CDELT3'], self.hdr_dict['STEPNB']]
+                        , Plot_bool = False, bayes_bool=bayes_bool)
                 fit_dict = fit.fit()
                 # Save local list of fit values
                 vel_local.append(fit_dict['velocity'])
@@ -308,7 +326,6 @@ class Luci():
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
             self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
-            fits.writeto(output_name+'_velocity.fits', velocity_fits.T,  self.header, overwrite=True)
         else:
             self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
         return velocity_fits, broadening_fits, flux_fits, chi2_fits
@@ -319,7 +336,7 @@ class Luci():
         #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
         #Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(VEL, BROAD, i) for i in tqdm(range(x_max-x_min)));
 
-    def fit_region(self, lines, fit_function, region, bkg= None, bayes_bool=False, output_name=None):
+    def fit_region(self, lines, fit_function, region, bkg= None, binning=None, bayes_bool=False, output_name=None):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -330,6 +347,7 @@ class Luci():
             fit_function: Fitting function to use (e.x. 'gaussian')
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             bkg: Background Spectrum (1D numpy array; default None)
+            binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
             output_name: User defined output path/name
         Return:
@@ -348,6 +366,11 @@ class Luci():
         y_min = 0
         y_max = self.cube_final.shape[1]
         # Initialize fit solution arrays
+        if binning != None:
+            self.bin_cube(binning, x_min, x_max, y_min, y_max)
+            #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
+            x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
+            x_min = 0 ; y_min = 0
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
@@ -369,7 +392,10 @@ class Luci():
                 # Check if pixel is in the mask or not
                 # If so, fit as normal. Else, set values to zero
                 if mask[x_pix, y_pix] == True:
-                    sky = self.cube_final[x_pix, y_pix, :]
+                    if binning is not None:
+                        sky = self.cube_binned[x_pix, y_pix, :]
+                    else:
+                        sky = self.cube_final[x_pix, y_pix, :]
                     if bkg is not None:
                         sky -= bkg
                     good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
@@ -377,7 +403,8 @@ class Luci():
                     axis = self.spectrum_axis[good_sky_inds]
                     # Call fit!
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
-                            self.model_ML, Plot_bool = False, bayes_bool=bayes_bool)
+                            self.model_ML, sincgauss_args=[self.interferometer_cos_theta[x_pix, y_pix], self.hdr_dict['CDELT3'], self.hdr_dict['STEPNB']],
+                             Plot_bool = False, bayes_bool=bayes_bool)
                     fit_dict = fit.fit()
                     # Save local list of fit values
                     vel_local.append(fit_dict['velocity'])
@@ -394,12 +421,11 @@ class Luci():
             broadening_fits[i] = broad_local
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
-            # Write outputs (Velocity, Broadening, and Amplitudes)
-        fits.writeto(output_name+'_velocity.fits', velocity_fits.T, self.header, overwrite=True)
-        fits.writeto(output_name+'_broadening.fits', broadening_fits.T, self.header, overwrite=True)
-        for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-            fits.writeto(output_name+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, self.header, overwrite=True)
-            fits.writeto(output_name+line_+'_Flux.fits', flux_fits[:,:,ct].T, self.header, overwrite=True)
+        # Write outputs (Velocity, Broadening, and Amplitudes)
+        if binning is not None:
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
+        else:
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
 
         return velocity_fits, broadening_fits, flux_fits
 

@@ -7,7 +7,7 @@ from scipy.optimize import Bounds
 from numdifftools import Jacobian, Hessian
 import emcee
 from scipy.stats import chisquare
-
+from scipy import special as sps
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -28,6 +28,17 @@ class Sinc:
         p2 = params[2]
         u = (channel - p1) / p2
         self.func = p0 * (np.sin(u) / u)
+
+
+class SincGauss:
+    def __init__(self, channel, params, sinc_width):
+        p0 = params[0]
+        p1 = params[1]
+        p2 = sinc_width
+        p3 = params[2]
+        a = p3/(np.sqrt(2)*p2)
+        b = (channel-p1)/(np.sqrt(2)*p3)
+        self.func = p0*np.exp(-b**2)*((sps.erf(a-1j*b)+sps.erf(a+1j*b))/(2*sps.erf(a)))
 
 
 class Fit:
@@ -56,7 +67,7 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines,
-                 ML_model, bayes_bool=False, Plot_bool=False):
+                 ML_model, sincgauss_args=None, bayes_bool=False, Plot_bool=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -65,6 +76,8 @@ class Fit:
             model_type: Type of model ('gaussian')
             lines: Lines to fit (must be in line_dict)
             ML_model: Tensorflow/keras machine learning model
+            sincgauss_args: Additional arguments required for sincgauss function in a list:
+                [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
             bayes_bool:
             Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)
 
@@ -73,7 +86,7 @@ class Fit:
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
                           'Hbeta': 486.133}
-        self.available_functions = ['gaussian']
+        self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.spectrum = spectrum
         self.axis = axis
         self.wavenumbers_syn = wavenumbers_syn
@@ -88,6 +101,9 @@ class Fit:
         self.bayes_bool = bayes_bool
         self.Plot_bool = Plot_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
+        self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
+        if sincgauss_args is not None:
+            self.calc_sinc_width(sincgauss_args)
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.fit_sol = np.zeros(3 * self.line_num)  # Solution to the fit
@@ -102,6 +118,18 @@ class Fit:
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()
+
+
+    def calc_sinc_width(self, sincgauss_args):
+        """
+        Calculate sinc width of the sincgauss function
+        Args:
+            sincgauss_args: Additional arguments required for sincgauss function in a list:
+                [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
+        """
+        MPD = sincgauss_args[0]*sincgauss_args[1]*sincgauss_args[2]
+        self.sinc_width = 1/(2*MPD)
+
 
     def estimate_priors_ML(self):
         """
@@ -184,6 +212,47 @@ class Fit:
             f1 += Gaussian(channel, params).func
         return f1
 
+
+    def sinc_model(self, channel, theta):
+        """
+        Function to initiate the correct number of models to fit
+
+        Args:
+            channel: Wavelength Axis in cm-1
+            theta: List of parameters for all the models in the following order
+                            [amplitude, line location, sigma]
+
+        Return:
+            Value of function given input parameters (theta)
+
+        """
+        f1 = 0.0
+        for model_num in range(self.line_num):
+            params = theta[model_num * 3:(model_num + 1) * 3]
+            f1 += Sinc(channel, params).func
+        return f1
+
+
+    def sincgauss_model(self, channel, theta):
+        """
+        Function to initiate the correct number of models to fit
+
+        Args:
+            channel: Wavelength Axis in cm-1
+            theta: List of parameters for all the models in the following order
+                            [amplitude, line location, sigma]
+
+        Return:
+            Value of function given input parameters (theta)
+
+        """
+        f1 = 0.0
+        for model_num in range(self.line_num):
+            params = theta[model_num * 3:(model_num + 1) * 3]
+            f1 += SincGauss(channel, params, self.sinc_width).func
+        return np.real(f1)
+
+
     def log_likelihood(self, theta, yerr):
         """
         Calculate log likelihood function evaluated given parameters on spectral axis
@@ -196,7 +265,12 @@ class Fit:
             Value of log likelihood
 
         """
-        model = self.gaussian_model(self.axis, theta)
+        if self.model_type == 'gaussian':
+            model = self.gaussian_model(self.axis, theta)
+        elif self.model_type == 'sinc':
+            model = self.sinc_model(self.axis, theta)
+        elif self.model_type == 'sincgauss':
+            model = self.sincgauss_model(self.axis, theta)
         sigma2 = yerr ** 2
         return -0.5 * np.sum((self.spectrum_normalized - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
@@ -301,6 +375,8 @@ class Fit:
             flux = np.sqrt(2 * np.pi) * line_amp * line_sigma
         elif self.model_type == 'sinc':
             flux = np.sqrt(np.pi) * line_amp * line_sigma
+        if self.model_type == 'sincgauss':
+            flux = line_amp * ((np.sqrt(2*np.pi)*line_sigma)/(sps.erf((line_sigma)/(np.sqrt(2)*self.sinc_width))))
         return flux
 
     def fit(self):
