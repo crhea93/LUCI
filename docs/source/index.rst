@@ -73,7 +73,7 @@ Pipeline
       :caption: Python Modules:
 
       fits
-
+      luci
 
 .. image:: Luci-Prancing.jpg
     :width: 400

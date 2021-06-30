@@ -1,0 +1,474 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Core Functionality &mdash; LUCI v.0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Fitting Algorithm" href="fits.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> LUCI
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Core Functionality</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-LuciBase">Core Functions</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Core Functionality</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/luci.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="core-functionality">
+<span id="luci"></span><h1>Core Functionality<a class="headerlink" href="#core-functionality" title="Permalink to this headline">¶</a></h1>
+<p>This section contains the wrapper for reading datacubes and fitting them using the
+functions in <cite>LuciFit.py</cite>.</p>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="module-LuciBase">
+<span id="core-functions"></span><h2>Core Functions<a class="headerlink" href="#module-LuciBase" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="LuciBase.Luci">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LuciBase.</span></span><span class="sig-name descname"><span class="pre">Luci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cube_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_spec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_ML_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the primary class for the general purpose line fitting code LUCI. This contains
+all io/administrative functionality. The fitting functionality can be found in the
+Fit class (Lucifit.py).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.bin_cube">
+<span class="sig-name descname"><span class="pre">bin_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.bin_cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to bin cube into bin x bin sub cubes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>binning</strong> – Size of binning (equal in x and y direction)</p></li>
+<li><p><strong>x_min</strong> – Lower bound in x</p></li>
+<li><p><strong>x_max</strong> – Upper bound in x</p></li>
+<li><p><strong>y_min</strong> – Lower bound in y</p></li>
+<li><p><strong>y_max</strong> – Upper bound in y</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Binned cubed called self.cube_binned and new spatial limits</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.create_deep_image">
+<span class="sig-name descname"><span class="pre">create_deep_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_deep_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create deep image fits file of the cube. This takes the cube and averages
+the spectral axis. Then the deep image is saved as a fits file with the following
+naming convention: output_dir+’/’+object_name+’_deep.fits’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.create_snr_map">
+<span class="sig-name descname"><span class="pre">create_snr_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2064</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_snr_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
+a map of the entire cube is calculated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min</strong> – Minimal X value (default 0)</p></li>
+<li><p><strong>x_max</strong> – Maximal X value (default 2048)</p></li>
+<li><p><strong>y_min</strong> – Minimal Y value (default 0)</p></li>
+<li><p><strong>y_max</strong> – Maximal Y value (default 2064)</p></li>
+<li><p><strong>method</strong> – Method used to calculate SNR (default 1; options 1 or 2)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Signal-to-Noise ratio map</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>snr_map</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.extract_spectrum_region">
+<span class="sig-name descname"><span class="pre">extract_spectrum_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.extract_spectrum_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract spectrum in region. This is primarily used to extract background regions.
+The spectra in the region are summed and then averaged (if mean is selected).
+Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
+or the averaged spectrum for background spectra (True).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>region</strong> – Name of ds9 region file (e.x. ‘region.reg’). You can also pass a boolean mask array.</p></li>
+<li><p><strong>mean</strong> – Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>X-axis and spectral axis of region.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.fit_cube">
+<span class="sig-name descname"><span class="pre">fit_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Primary fit call to fit rectangular regions in the data cube. This wraps the
+LuciFits.FIT().fit() call which applies all the fitting steps. This also
+saves the velocity and broadening fits files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
+<li><p><strong>x_min</strong> – Lower bound in x</p></li>
+<li><p><strong>x_max</strong> – Upper bound in x</p></li>
+<li><p><strong>y_min</strong> – Lower bound in y</p></li>
+<li><p><strong>y_max</strong> – Upper bound in y</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+<li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default None)</p></li>
+<li><p><strong>output_name</strong> – User defined output path/name (default None)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity and Broadening arrays (2d). Also return amplitudes array (3D).</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>As always, we must first have the cube initialized (see basic example).</p>
+<p>If we want to fit all five lines in SN3 with a sincgauss function and binning of 2
+over a rectangular region defined in image coordinates as 800&lt;x&lt;1500; 250&lt;y&lt;1250,
+we would run the following:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span> <span class="mi">1500</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">750</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.fit_entire_cube">
+<span class="sig-name descname"><span class="pre">fit_entire_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_entire_cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the entire cube (all spatial dimensions)
+:param lines: Lines to fit (e.x. [‘Halpha’, ‘NII6583’])
+:param fit_function: Fitting function to use (e.x. ‘gaussian’)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.fit_region">
+<span class="sig-name descname"><span class="pre">fit_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the spectrum in a region. This is an extremely similar command to fit_cube except
+it works for ds9 regions. We first create a mask from the ds9 region file. Then
+we step through the cube and only fit the unmasked pixels. Although this may not
+be the most efficient method, it does ensure the fidelity of the wcs system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
+<li><p><strong>region</strong> – Name of ds9 region file (e.x. ‘region.reg’). You can also pass a boolean mask array.</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+<li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis</p></li>
+<li><p><strong>output_name</strong> – User defined output path/name</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity and Broadening arrays (2d). Also return amplitudes array (3D).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.get_interferometer_angles">
+<span class="sig-name descname"><span class="pre">get_interferometer_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.get_interferometer_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the interferometer angle 2d array for the entire cube. We use
+the following equation:
+cos(theta) = lambda_ref/lambda
+where lambda_ref is the reference laser wavelength and lambda is the measured calibration laser wavelength.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>file</strong> – hdf5 File object containing HDF5 file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.get_quadrant_dims">
+<span class="sig-name descname"><span class="pre">get_quadrant_dims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quad_number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.get_quadrant_dims" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the x and y limits of a given quadrant in the HDF5 file. The
+data cube is saved in 9 individual arrays in the original HDF5 cube. This
+function gets the bouunds for each quadrant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>quad_number</strong> – Quadrant Number</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Spatial bounds of quadrant</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>x_min, x_max, y_min, y_max</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.read_in_cube">
+<span class="sig-name descname"><span class="pre">read_in_cube</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to read the hdf5 data into a 3d numpy array (data cube). We also
+translate the header to standard wcs format by calling the update_header function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.read_in_reference_spectrum">
+<span class="sig-name descname"><span class="pre">read_in_reference_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_reference_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read in the reference spectrum that will be used in the machine learning
+algorithm to interpolate the true spectra so that they
+wil all have the same size (required for our CNN). The reference spectrum
+will be saved as self.wavenumbers_syn [cm-1].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.save_fits">
+<span class="sig-name descname"><span class="pre">save_fits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadening_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.save_fits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
+amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
+defined when the cube is initiated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>velocity_fits</strong> – 2D Numpy array of velocity values</p></li>
+<li><p><strong>broadening_fits</strong> – 2D Numpy array of broadening values</p></li>
+<li><p><strong>ampls_fits</strong> – 2D Numpy array of amplitude values</p></li>
+<li><p><strong>flux_fis</strong> – 2D Numpy array of flux values</p></li>
+<li><p><strong>chi2_fits</strong> – 2D Numpy array of chi-squared values</p></li>
+<li><p><strong>header</strong> – Header object (either binned or unbinned)</p></li>
+<li><p><strong>output_name</strong> – Output directory and naming convention</p></li>
+<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.spectrum_axis_func">
+<span class="sig-name descname"><span class="pre">spectrum_axis_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.spectrum_axis_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the x-axis for the spectra. We must construct this from header information
+since each pixel only has amplitudes of the spectra at each point.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.update_header">
+<span class="sig-name descname"><span class="pre">update_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.update_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a standard WCS header from the HDF5 header. To do this we clean up the
+header data (which is initially stored in individual arrays). We then create
+a new header dictionary with the old cleaned header info. Finally, we use
+astropy.wcs.WCS to create an updated WCS header for the 2 spatial dimensions.
+This is then saved to self.header while the header dictionary is saved
+as self.hdr_dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>file</strong> – hdf5 File object containing HDF5 file</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="fits.html" class="btn btn-neutral float-left" title="Fitting Algorithm" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Carter L. Rhea.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
