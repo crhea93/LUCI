@@ -272,12 +272,12 @@ class Luci():
         """
         if binning is not None:
             output_name = output_name + "_" + str(binning)
-        fits.writeto(output_name+'_velocity.fits', velocity_fits, header, overwrite=True)
-        fits.writeto(output_name+'_broadening.fits', broadening_fits, header, overwrite=True)
+        fits.writeto(output_name+'_velocity.fits', velocity_fits.T, header, overwrite=True)
+        fits.writeto(output_name+'_broadening.fits', broadening_fits.T, header, overwrite=True)
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
-            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
-        fits.writeto(output_name+'_Chi2.fits', chi2_fits, header, overwrite=True)
+            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, header, overwrite=True)
+            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct].T, header, overwrite=True)
+        fits.writeto(output_name+'_Chi2.fits', chi2_fits.T, header, overwrite=True)
 
 
     def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None):
@@ -339,7 +339,10 @@ class Luci():
                 else:
                     sky = self.cube_final[x_pix, y_pix, :]
                 if bkg is not None:
-                    sky -= bkg  # Subtract background spectrum
+                    if binning:
+                        sky -= bkg * binning**2  # Subtract background spectrum
+                    else:
+                        sky -= bkg  # Subtract background spectrum
                 good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
                 sky = sky[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
@@ -444,7 +447,10 @@ class Luci():
                     else:
                         sky = self.cube_final[x_pix, y_pix, :]
                     if bkg is not None:
-                        sky -= bkg
+                        if binning:
+                            sky -= bkg * binning**2  # Subtract background spectrum
+                        else:
+                            sky -= bkg  # Subtract background spectrum
                     good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
                     sky = sky[good_sky_inds]
                     axis = self.spectrum_axis[good_sky_inds]
@@ -475,6 +481,61 @@ class Luci():
             self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
 
         return velocity_fits, broadening_fits, flux_fits
+
+
+    def extract_spectrum(self, x_min, x_max, y_min, y_max, bkg=None, binning=None, mean=False):
+        """
+        Extract spectrum in region. This is primarily used to extract background regions.
+        The spectra in the region are summed and then averaged (if mean is selected).
+        Using the 'mean' argument, we can either calculate the total summed spectrum (False)
+        or the averaged spectrum for background spectra (True).
+
+        Args:
+            x_min: Lower bound in x
+            x_max: Upper bound in x
+            y_min: Lower bound in y
+            y_max: Upper bound in y
+            bkg: Background Spectrum (1D numpy array; default None)
+            binning:  Value by which to bin (default None)
+            mean: Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.
+        Return:
+            X-axis and spectral axis of region.
+
+        """
+        integrated_spectrum = np.zeros(self.cube_final.shape[2])
+        spec_ct = 0
+        # Initialize fit solution arrays
+        if binning != None:
+            self.bin_cube(binning, x_min, x_max, y_min, y_max)
+            #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
+            x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
+            x_min = 0 ; y_min = 0
+        for i in tqdm(range(x_max-x_min)):
+            x_pix = x_min + i
+            vel_local = []
+            broad_local = []
+            ampls_local = []
+            flux_local = []
+            chi2_local = []
+            for j in range(y_max-y_min):
+                y_pix = y_min+j
+                if binning is not None:
+                    sky = self.cube_binned[x_pix, y_pix, :]
+                else:
+                    sky = self.cube_final[x_pix, y_pix, :]
+                if bkg is not None:
+                    if binning:
+                        sky -= bkg * binning**2  # Subtract background spectrum
+                    else:
+                        sky -= bkg  # Subtract background spectrum
+                good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
+                integrated_spectrum += sky[good_sky_inds]
+                if spec_ct == 0:
+                    axis = self.spectrum_axis[good_sky_inds]
+                    spec_ct +=1
+        if mean == True:
+            integrated_spectrum /= spec_ct
+        return axis, integrated_spectrum
 
 
     def extract_spectrum_region(self, region, mean=False):
@@ -511,13 +572,72 @@ class Luci():
                 y_pix = y_min+j
                 # Check if pixel is in the mask or not
                 if mask[x_pix, y_pix] == True:
-                    integrated_spectrum += self.cube_final[y_pix, x_pix, :]
+                    integrated_spectrum += self.cube_final[x_pix, y_pix, :]
                     spec_ct += 1
                 else:
                     pass
         if mean == True:
             integrated_spectrum /= spec_ct
         return self.spectrum_axis, integrated_spectrum
+
+
+
+    def fit_spectrum_region(self, lines, fit_function, region, bkg=None, bayes_bool=False, mean=False):
+        """
+        Fit spectrum in region.
+        The spectra in the region are summed and then averaged (if mean is selected).
+        Using the 'mean' argument, we can either calculate the total summed spectrum (False)
+        or the averaged spectrum for background spectra (True).
+
+        Args:
+            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
+            fit_function: Fitting function to use (e.x. 'gaussian')
+            region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
+            bkg: Background Spectrum (1D numpy array; default None)
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis
+
+        Return:
+            X-axis and spectral axis of region.
+
+        """
+        # Create mask
+        if '.reg' in region:
+            shape = (2048, 2064)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
+            mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
+        else:
+            mask = region
+        # Set spatial bounds for entire cube
+        x_min = 0
+        x_max = self.cube_final.shape[0]
+        y_min = 0
+        y_max = self.cube_final.shape[1]
+        integrated_spectrum = np.zeros(self.cube_final.shape[2])
+        spec_ct = 0
+        for i in tqdm(range(x_max-x_min)):
+            x_pix = x_min + i
+            for j in range(y_max-y_min):
+                y_pix = y_min+j
+                # Check if pixel is in the mask or not
+                if mask[x_pix, y_pix] == True:
+                    integrated_spectrum += self.cube_final[x_pix, y_pix, :]
+                    spec_ct += 1
+                else:
+                    pass
+        if mean == True:
+            integrated_spectrum /= spec_ct
+        if bkg is not None:
+            integrated_spectrum -= bkg  # Subtract background spectrum
+        good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
+        sky = integrated_spectrum[good_sky_inds]
+        axis = self.spectrum_axis[good_sky_inds]
+        # Call fit!
+        fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
+                self.model_ML, sincgauss_args=[self.interferometer_cos_theta[x_pix, y_pix], self.hdr_dict['CDELT3'], self.hdr_dict['STEPNB']],
+                 Plot_bool = False, bayes_bool=bayes_bool)
+        fit_dict = fit.fit()
+        return fit_dict
+
 
 
     def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1):
@@ -538,8 +658,9 @@ class Luci():
         # Calculate bounds for SNR calculation
         # Step through spectra
         SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
-        start = time.time()
-        def SNR_calc(SNR, i):
+        #start = time.time()
+        #def SNR_calc(SNR, i):
+        for i in range(x_max-x_min):
             x_pix = x_min + i
             snr_local = []
             for j in range(y_max-y_min):
@@ -562,12 +683,12 @@ class Luci():
                     min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-14800))
                     max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-14850))
                     std_out_region = np.std(self.cube_final[x_pix, y_pix, min_:max_])
-                    snr = float(flux_in_region/np.sqrt(std_out_region))
-                    snr = snr#/(np.sqrt(np.mean(flux_in_region)))
+                    snr = float(flux_in_region/std_out_region)
+                    snr = snr/np.mean(flux_in_region)
                 snr_local.append(snr)
             SNR[i] = snr_local
-        n_threads = 16
-        Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(SNR,i) for i in tqdm(range(x_max-x_min)));
-        end = time.time()
+        #n_threads = 2
+        #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(SNR,i) for i in tqdm(range(x_max-x_min)));
+        #end = time.time()
         # Save
         fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR.T, self.header, overwrite=True)

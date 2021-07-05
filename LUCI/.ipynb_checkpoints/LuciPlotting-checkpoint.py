@@ -42,9 +42,9 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None):
         output_dit: Path (absolute or partial) to output directory
         clims: List containing lower and upper limits of colorbar (e.x. [-500, 500])
     """
-    #if quantity_name == 'broadening' or quantity_name == 'velocity':
-    #    quantity_name = 'velocity'  # The quantities are the same
-    if quantity_name != 'flux':
+    if quantity_name == 'broadening' or quantity_name == 'velocity':
+        quantity_name = 'velocity'  # The quantities are the same
+    elif quantity_name != 'flux':
         quantity_map = np.log10(quantity_map)
         print('Please enter either flux, velocity, or broadening')
     units = {'flux':'ergs/s/cm^2/A','velocity':'km/s'}
@@ -57,7 +57,7 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None):
     #Plot
     #hdu = fits.open(Name+'_SN3.1.0.ORCS/MAPS/'+Name+'_SN3.1.0.LineMaps.map.all.'+Bin+'.rchi2.fits')[0]
     wcs = WCS(header)
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8,10))
     ax = plt.subplot(projection=wcs)
     ax.coords[0].set_major_formatter('hh:mm:ss')
     ax.coords[1].set_major_formatter('dd:mm:ss')

@@ -112,7 +112,7 @@ class Fit:
         self.A_max = 1.1;
         self.x_min = 14700;
         self.x_max = 15600
-        self.sigma_min = 0;
+        self.sigma_min = 0.01;
         self.sigma_max = 10
 
         # Check that lines inputted by user are in line_dict
@@ -323,8 +323,8 @@ class Fit:
                              (1e7 / x[13] - self.line_dict['SII6731']) / (1e7 / x[13]))})
         else:
             cons = ()
-        soln = minimize(nll, initial, method='SLSQP', # jac=self.fun_der(),
-                        options={'disp': False, 'maxiter': 100}, bounds=bounds, tol=1e-8,
+        soln = minimize(nll, initial, method='SLSQP',# jac=self.fun_der(),
+                        options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
                         args=(1e-2), constraints=cons)
         parameters = soln.x
         # We now must unscale the amplitude
@@ -453,7 +453,7 @@ class Fit:
 
     def log_prior(self, theta, model):
         A_min = 0  # 1e-19
-        A_max = 1.  # 1e-15
+        A_max = 1.1  # 1e-15
         x_min = 14700
         x_max = 15400
         sigma_min = 0
