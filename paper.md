@@ -58,13 +58,25 @@ the SN1 filter ([OII3626] & [OII3629]), SN2 filter ([OIII4959], [OIII5007], & Hb
 The user also must chose between three fitting functions: a pure Gaussian, and pure sinc function, or a sinc function convolved with a Gaussian.
 In either case, `LUCI` will solve for the three primary quantities of interest which are the **amplitude** of the line, the **position** of the line (often described as the velocity and quoted in km/s), and the **broadening** of the line (often described as the velocity dispersion and quoted in units of km/s
 
-The three fitting functions are mathematically described below where p0 corresponds to the **amplitude**, p1 corresponds to the **position**, and p2 corresponds ot the **broadening**.
+The three fitting functions are mathematically described below where p0 corresponds to the **amplitude**, p1 corresponds to the **position**, and p2 corresponds of the **broadening**.
 
+The pure Gaussian function is expressed as
 \begin{equation}
     f(x) = p0*exp(-(x-p1)^2/(2*p2^2))
 \end{equation}
 
-where *x* represents a given spectral channel.
+The pure since function is expressed as
+\begin{equation}
+    p0*(\frac{(x-p1)/p2}{(x-p1)/p2})
+\end{equation}
+
+The convolved sincgauss function is expressed as
+\begin{equation}
+    p0*exp(-b*^2)*((sps.erf(a-i*b)+erf(a+i*b))/(2*erf(a)))
+\end{equation}
+
+where *x* represents a given spectral channel, `a = p2/(\sqrt{2}*\sigma)`, `b=(x-p1)/(\sqrt(2)*\sigma)`, where `\sigma` is the
+pre-defined width of the sinc function (see paper for details).
 
 In each case, after solving for these values, the velocity and velocity dispersion are calculated using the following equations.
 
