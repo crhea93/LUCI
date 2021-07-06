@@ -8,9 +8,11 @@ tags:
   - IFU
 authors:
   - name: Carter L. Rhea
-    orcid: 0000-0003-0872-7098
+    orcid: 0000-0003-2001-1076
     affiliation: "1, 2"
   - name: Julie Hlavacek-Larrondo
+    affiliation: 1
+  - name: Benjamin Vigneron
     affiliation: 1
 affiliations:
  - name: Département de Physique, Université de Montréal, Succ. Centre-Ville, Montréal, Québec, H3C 3J7, Canada
@@ -72,14 +74,22 @@ The pure since function is expressed as
 
 The convolved sincgauss function is expressed as
 \begin{equation}
-    p0*exp(-b*^2)*((sps.erf(a-i*b)+erf(a+i*b))/(2*erf(a)))
+    p0*exp(-b*^2)*((erf(a-i*b)+erf(a+i*b))/(2*erf(a)))
 \end{equation}
 
-where *x* represents a given spectral channel, `a = p2/(\sqrt{2}*\sigma)`, `b=(x-p1)/(\sqrt(2)*\sigma)`, where `\sigma` is the
-pre-defined width of the sinc function (see paper for details).
+where *x* represents a given spectral channel, $a = p2/(\sqrt{2}*\sigma)$, $b=(x-p1)/(\sqrt(2)*\sigma)$, where $\sigma$ is the
+pre-defined width of the sinc function. We define this following (REF) as $\sigma = \frac{1}{2*MPD}$ where **MPD** is the maximum path difference.
 
-In each case, after solving for these values, the velocity and velocity dispersion are calculated using the following equations.
+In each case, after solving for these values, the velocity and velocity dispersion are calculated using the following equations:
 
+\begin{equation}
+    v [km/s] = 3e5*((p1' - v_0)/v_0)
+\end{equation}
+where $3e5$ represents the speed of light in kilometers per second, p1' is p1 in nanometers, and $v_0$ is the reference wavelength of the line in nanometers.
+\begin{equation}
+    \sigma [km/s] = 3e5*(p2/p1)
+\end{equation}
+where again $3e5$ represents the speed of light in kilometers per second.
 
 
 # Other Software
