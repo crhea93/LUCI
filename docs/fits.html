@@ -1,0 +1,480 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Fitting Algorithm &mdash; LUCI v.0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Core Functionality" href="luci.html" />
+    <link rel="prev" title="Fit Single Spectrum" href="example_fit_single.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> LUCI
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single.html">Fit Single Spectrum</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Fitting Algorithm</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-LUCI.LuciFit">Fitting Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Fitting Algorithm</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/fits.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="fitting-algorithm">
+<span id="fits"></span><h1>Fitting Algorithm<a class="headerlink" href="#fitting-algorithm" title="Permalink to this headline">¶</a></h1>
+<p>This section contains the functions used to fit emission lines.</p>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="module-LUCI.LuciFit">
+<span id="fitting-functions"></span><h2>Fitting Functions<a class="headerlink" href="#module-LUCI.LuciFit" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="LUCI.LuciFit.Fit">
+<em class="property">class </em><code class="sig-prename descclassname">LUCI.LuciFit.</code><code class="sig-name descname">Fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spectrum</span></em>, <em class="sig-param"><span class="n">axis</span></em>, <em class="sig-param"><span class="n">wavenumbers_syn</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">ML_model</span></em>, <em class="sig-param"><span class="n">sincgauss_args</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bayes_bool</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">Plot_bool</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class that defines the functions necessary for the modelling aspect. This includes
+the gaussian fit functions, the prior definitions, the log likelihood, and the
+definition of the posterior (log likelihood times prior).</p>
+<p>The initial arguments are as follows:
+:param spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
+:param axis: Wavelength Axis of Spectrum (numpy array)
+:param wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
+:param model_type: Type of model (‘gaussian’)
+:param lines: Lines to fit (must be in line_dict)
+:param ML_model: Tensorflow/keras machine learning model
+:param Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)</p>
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.calc_sinc_width">
+<code class="sig-name descname">calc_sinc_width</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sincgauss_args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calc_sinc_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate sinc width of the sincgauss function
+:param sincgauss_args: Additional arguments required for sincgauss function in a list:
+:param [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle():
+:param step_delta:
+:param n_steps]:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.calculate_broad">
+<code class="sig-name descname">calculate_broad</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_broad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity dispersion given the fit of Halpha
+TODO: Test
+TODO: Add other lines</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.calculate_flux">
+<code class="sig-name descname">calculate_flux</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line_amp</span></em>, <em class="sig-param"><span class="n">line_sigma</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate flux value given fit of line
+TODO: Test</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>line_amp</strong> – Amplitude of the line (un-normalized)</p></li>
+<li><p><strong>line_sigma</strong> – Sigma of the line fit</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Flux of the provided line in units of erg/s/cm-2</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.calculate_params">
+<code class="sig-name descname">calculate_params</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the amplitude, position, and sigma of the line. These values are
+calculated using the scipy.optimize.minimize function. This is called
+on the log likelood previously described. The minimization algorithm uses
+the SLSQP optimization implementation. We have applied standard bounds in order
+to speed up the fitting. We also apply the fit on the normalized spectrum.
+We then correct the flux by un-normalizing the spectrum.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.calculate_vel">
+<code class="sig-name descname">calculate_vel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_vel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity given the fit of Halpha
+TODO: Test
+TODO: Add other lines</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Velocity of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.check_fitting_model">
+<code class="sig-name descname">check_fitting_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.check_fitting_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function checks to see that the model provided is in the available options
+Return:
+Nothing if the user provides an appropriate fitting model
+Else it will throw an error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.check_lines">
+<code class="sig-name descname">check_lines</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.check_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function checks to see that the lines provided are in the available options
+Return:
+Nothing if the user provides appropriate lines
+Else it will throw an error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.estimate_priors_ML">
+<code class="sig-name descname">estimate_priors_ML</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.estimate_priors_ML" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Test
+Apply machine learning algorithm on spectrum in order to estimate the velocity.
+The spectrum fed into this method must be interpolated already onto the
+reference spectrum axis AND normalized as described in Rhea et al. 2020a.
+:param ml_dir: Relative path to the trained ML Predictor (e.g. R5000-PREDICITOR-I)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Updates self.vel_ml</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Primary function call for a spectrum. This will estimate the velocity using
+our machine learning algorithm described in Rhea et al. 2020a. Then we will
+fit our lines using scipy.optimize.minimize.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>{“fit_vector”: Fitted spectrum, “velocity”: Velocity of the line in km/s (float),
+“broadening”: Velocity Dispersion of the line in km/s (float)}</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dictionary of parameters returned by the fit. The dictionary has the following form</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.fit_Bayes">
+<code class="sig-name descname">fit_Bayes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.fit_Bayes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply Bayesian MCMC run to constrain the parameters after solving</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.gaussian_model">
+<code class="sig-name descname">gaussian_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">theta</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.gaussian_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>theta</strong> – List of parameters for all the models in the following order
+[amplitude, line location, sigma]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.interpolate_spectrum">
+<code class="sig-name descname">interpolate_spectrum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.interpolate_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate Spectrum given the wavelength axis of reference spectrum.
+Then normalize the spectrum so that the max value equals 1</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Populates self.spectrum_interpolated, self.spectrum_scale, and self.spectrum_interp_norm.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.line_vals_estimate">
+<code class="sig-name descname">line_vals_estimate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.line_vals_estimate" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Test</p>
+<p>Function to estimate the position and amplitude of a given line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spec</strong> – Spectrum flux values</p></li>
+<li><p><strong>line_name</strong> – Name of model. Available options are ‘Halpha’, ‘NII6548’, ‘NII6543’, ‘SII6716’, ‘SII6731’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Estimated line amplitude in units of cm-1 (line_amp_est) and estimate line position in units of cm-1 (line_pos_est)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.log_likelihood">
+<code class="sig-name descname">log_likelihood</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">yerr</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.log_likelihood" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate log likelihood function evaluated given parameters on spectral axis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>- List of parameters for all the models in the following order</strong> (<em>theta</em>) – [amplitude, line location, sigma]</p></li>
+<li><p><strong>yerr</strong> – Error on Spectrum’s flux values (default 1e-2)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of log likelihood</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.log_likelihood_bayes">
+<code class="sig-name descname">log_likelihood_bayes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">yerr</span></em>, <em class="sig-param"><span class="n">model__</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.log_likelihood_bayes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.plot">
+<code class="sig-name descname">plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot initial spectrum and fitted spectrum</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.sinc_model">
+<code class="sig-name descname">sinc_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">theta</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.sinc_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>theta</strong> – List of parameters for all the models in the following order
+[amplitude, line location, sigma]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.sincgauss_model">
+<code class="sig-name descname">sincgauss_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">theta</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.sincgauss_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>theta</strong> – List of parameters for all the models in the following order
+[amplitude, line location, sigma]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="luci.html" class="btn btn-neutral float-right" title="Core Functionality" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="example_fit_single.html" class="btn btn-neutral float-left" title="Fit Single Spectrum" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Carter L. Rhea.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

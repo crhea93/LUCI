@@ -1,0 +1,339 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Basic Example &mdash; LUCI v.0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> LUCI
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Basic Example</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/example_extract_single.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="basic-example">
+<span id="example-basic"></span><h1>Basic Example<a class="headerlink" href="#basic-example" title="Permalink to this headline">¶</a></h1>
+<p>The most fundamental use for <cite>LUCI</cite> is to read in an HDF5 file and fit a
+region of the data cube. In this tutorial, we will outline how to do just that.</p>
+<p>If you want to see the complete example code, please see the bottom of the page.
+This is also available as a jupyter notebook (complete with output) under <em>Exmples/BasicExamples.ipynb</em> in the main Luci repository.</p>
+<p>I am working on making the import easier (BTW).</p>
+<p>We should start by import the appropriate modules.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;/the/path/to/LUCI/&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">LuciBase</span> <span class="k">as</span> <span class="nn">Luci</span>
+<span class="kn">import</span> <span class="nn">LUCI.LuciPlotting</span> <span class="k">as</span> <span class="nn">lplt</span>
+</pre></div>
+</div>
+<p>Remember that ‘/the/path/to/LUCI/’ is the full path to the directory where you cloned
+LUCI from github. For example, yours may look like ‘/home/carterrhea/LUCI/’.
+We will also be highlighting the built in plotting functions found in <cite>LUCI/LuciPlotting.py</cite>.</p>
+<p>The next step is to load/read the HDF5 data cube. To do this we <strong>invoke</strong> LUCI
+by initiating an instance of her along with the proper parameters. First we
+define the correct parameters:</p>
+<ol class="arabic simple">
+<li><p>cube_dir = ‘/path/to/data/cube’  # Path to data cube</p></li>
+<li><p>cube_name = ‘name_of_data_cube’  # don’t add .hdf5 extension</p></li>
+<li><p>object_name = ‘name_of_object’</p></li>
+<li><p>redshift = 0.01  # Redshift of object</p></li>
+<li><p>ML_ref = ‘/the/path/to/LUCI/ML/Reference-Spectrum-R5000’  # Relative path to reference spectrum</p></li>
+<li><p>ML_model = ‘/the/path/to/LUCI/ML/R5000-PREDICTOR-I’  # Relative path to train ML algorithm</p></li>
+</ol>
+<p>For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Using Machine Learning Algorithm for Initial Guess</span>
+<span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents&#39;</span>  <span class="c1"># Path to data cube</span>
+<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;A0426_SN3.merged.cm1.1.0&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
+<span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;NGC1275&#39;</span>
+<span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.017284</span>  <span class="c1"># Redshift of NGC 1275</span>
+<span class="n">ML_ref</span> <span class="o">=</span> <span class="s1">&#39;/the/path/to/LUCI/ML/Reference-Spectrum-R1800&#39;</span>
+<span class="n">ML_model</span> <span class="o">=</span> <span class="s1">&#39;/the/path/to/LUCI/ML/R1800-PREDICTOR-I&#39;</span>
+</pre></div>
+</div>
+<p>Although the first three arguments are rather self explanatory, it is worth discussing the others.
+The redshift is provided so that we can shift x-axis of the spectra to the rest-frame.
+As discussed in <a href="#id1"><span class="problematic" id="id2">`howLuciWorks`_</span></a>, this enables better fitting. The redshift of an object
+can be found at <a class="reference external" href="http://cdsportal.u-strasbg.fr/">http://cdsportal.u-strasbg.fr/</a> .</p>
+<p>The <cite>ML_ref</cite> argument contains the path to the reference spectrum with the appropriate resolution
+that will be used for the initial fit estimates. Although this was previously described, I’ll remind
+you that you can find more information at <a class="reference external" href="https://sitelle-signals.github.io/Pamplemousse/index.html">https://sitelle-signals.github.io/Pamplemousse/index.html</a>.
+The Luci directory contains already a handful differing resolutions (R ~ 1800, 2000, 2500, 3000, 3500, 4000 ,4500, 5000, 7000).
+If you require a different resolution for your work, please send me an email at <a class="reference external" href="mailto:carter&#46;rhea&#37;&#52;&#48;umontreal&#46;ca">carter<span>&#46;</span>rhea<span>&#64;</span>umontreal<span>&#46;</span>ca</a>.
+Similarly, the <cite>ML_model</cite> argument contains the path to the trained network corresponding to the same
+resolutions available for the <cite>ML_ref</cite> argument. Note that the naming conventions
+follow the same structure as is indicated in the example. Therefore, for a resolution 2000
+cube, we would set <cite>ML_ref=’ML/Reference-Spectrum-R2000’</cite> and <cite>ML_model=’ML/R5000-PREDICTOR-I’</cite>.</p>
+<p>If you do not wish to use the machine learning methodology to estimate the initial values for
+the velocity, broadening, and amplitude of the line, please simply set both parameters equal to <strong>None</strong>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Not Using Machine Learning Algorithm for Initial Guess</span>
+<span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents&#39;</span>  <span class="c1"># Path to data cube</span>
+<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;NGC1275-LowRes&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
+<span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;NGC1275&#39;</span>
+<span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.017284</span>  <span class="c1"># Redshift of NGC 1275</span>
+<span class="n">ML_ref</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">ML_model</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>With these parameters set, we can invoke <cite>LUCI</cite> with the following command:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span> <span class="o">=</span> <span class="n">Luci</span><span class="p">(</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">cube_name</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">object_name</span><span class="p">,</span> <span class="n">redshift</span><span class="p">,</span> <span class="n">ML_ref</span><span class="p">,</span> <span class="n">ML_model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This reads the HDF5 file, transforms the data cube into a 3d numpy array, and updates the header to be of an appropriate form.
+It also reads in the machine learning reference spectrum (we need the x-axis for interpolation purposes) and
+creates the x-axis for the uninterpolated cube. Note that the first argument is the full path to the cube
+and the second argument is the full path to the output directory (i.e. the output files will be located at cube_dir+’/Luci/’; the ‘Luci’ at the end is appended by the code itself).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span><span class="o">.</span><span class="n">create_deep_image</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>We can quickly make a <em>deep image</em> by collapsing (summing) the spectral axis.</p>
+<p>At last, we can fit a region of the cube. There are three functions for fitting the cube: <cite>fit_cube</cite>, <cite>fit_entire_cube</cite>, and <cite>fit_region</cite>.
+The first option, <cite>fit_cube</cite>, fits a rectangular region of the cube and is invoked by calling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">(</span><span class="n">line_list</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_min</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>line_list is a list of lines to fit (e.x. [‘Halpha’]), fit function is the fitting function to be used (e.x. ‘gaussian’), and the remaining
+arguments are the x and y bounds (respectively) of the bounding box.</p>
+<p>For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="mi">1400</span><span class="p">,</span> <span class="mi">550</span><span class="p">,</span> <span class="mi">650</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This final command fits the regions and saves the velocity, velocity dispersion (broadening), amplitude, flux, and fit statistic (chi-squared)
+maps in the output directory defined above. Additionally, it returns the velocity, velocity dispersion, flux, and fit statistics maps for plotting purposes.</p>
+<p>To fit the entire cube, we would simply run the following instead:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_entire_cube</span><span class="p">(</span><span class="n">line_list</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Or we can fit an entire region</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_region</span><span class="p">(</span><span class="n">line_list</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">region_file</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <cite>region_file</cite> is the path to the ds9 region file save in <strong>fk5</strong> coordinates.</p>
+<p>If you wish to activate the Bayesian MCMC implementation, simply add <cite>bayes_bool=True</cite> to any of the fit functions described above.</p>
+<p>Additionally, <strong>binning</strong> can be applied by adding the <cite>binning</cite> argument to any of the above fit functions. For example, we
+can bin 2x2 regions as such:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="mi">1400</span><span class="p">,</span> <span class="mi">550</span><span class="p">,</span> <span class="mi">650</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And with those few lines, we have read in our data cube, created a <em>deep image</em> and fit the cube.</p>
+<p>We can now visualize our fits with our specialized plotting functionality:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">vel_map</span><span class="p">,</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <cite>LUCI.LuciPlotting.plot_map</cite> function takes the map of interest, the name of the map (either ‘velocity’, ‘broadening’, or ‘flux’),
+and the output directory as arguments. Of course, we can also use simply <cite>matplotlib</cite> plotting functionality as well.</p>
+<p>For clarity, we reproduce the commands required to obtain fits here:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents&#39;</span>  <span class="c1"># Path to data cube</span>
+<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;A0426_SN3.merged.cm1.1.0&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
+<span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;NGC1275&#39;</span>
+<span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.017284</span>  <span class="c1"># Redshift of NGC 1275</span>
+<span class="n">ML_ref</span> <span class="o">=</span> <span class="s1">&#39;/the/path/to/LUCI/ML/Reference-Spectrum-R1800&#39;</span>
+<span class="n">ML_model</span> <span class="o">=</span> <span class="s1">&#39;/the/path/to/LUCI/ML/R1800-PREDICTOR-I&#39;</span>
+
+<span class="n">cube</span> <span class="o">=</span> <span class="n">Luci</span><span class="p">(</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">cube_name</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">object_name</span><span class="p">,</span> <span class="n">redshift</span><span class="p">,</span> <span class="n">ML_ref</span><span class="p">,</span> <span class="n">ML_model</span><span class="p">)</span>
+
+<span class="n">cube</span><span class="o">.</span><span class="n">create_deep_image</span><span class="p">()</span>
+
+<span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="mi">1400</span><span class="p">,</span> <span class="mi">550</span><span class="p">,</span> <span class="mi">650</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Carter L. Rhea.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

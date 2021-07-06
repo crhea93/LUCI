@@ -1,0 +1,324 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>How LUCI Works &mdash; LUCI v.0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MIT License" href="license.html" />
+    <link rel="prev" title="Welcome to LUCI’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> LUCI
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How LUCI Works</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-we-calculate">What we calculate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#velocity">Velocity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#velocity-dispersion">Velocity Dispersion</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#how-we-calculate">How we calculate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#initial-guess">Initial Guess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fitting-function">Fitting Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#available-models">Available Models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gaussian">Gaussian</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#uncertainty-estimates">Uncertainty Estimates</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single.html">Fit Single Spectrum</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>How LUCI Works</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/howLuciWorks.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="how-luci-works">
+<span id="howluciworks"></span><h1>How LUCI Works<a class="headerlink" href="#how-luci-works" title="Permalink to this headline">¶</a></h1>
+<p>LUCI is a general purpose line fitting pipeline designed to unveil the inner workings
+of how fits of SITELLE IFU datacubes are calculated. In this section, I will
+explain what we are trying to calculate, how it is calculated, and how you can
+personalize the fits.</p>
+<div class="section" id="what-we-calculate">
+<h2>What we calculate<a class="headerlink" href="#what-we-calculate" title="Permalink to this headline">¶</a></h2>
+<p>The three primary quantities of interest are the <strong>amplitude</strong> of the line, the <strong>position</strong>
+of the line (often described as the velocity and quoted in km/s), and the <strong>broadening</strong>
+of the line (often described as the velocity dispersion).</p>
+<div class="section" id="velocity">
+<h3>Velocity<a class="headerlink" href="#velocity" title="Permalink to this headline">¶</a></h3>
+<p>The velocity of a line is calculated using the following equation:
+<img class="math" src="_images/math/99ed672d8feffccc820fa5492ab22b3411022b5d.png" alt="v [km/s] = c [km/s] * \Delta \lambda"/></p>
+<p><em>c</em> is the speed of light in kilometers per second. Delta lambda is the shift of the measured line. Although the line
+position is calculated in units of [cm-1], we translate it into nanometers since <img class="math" src="_images/math/47026d06404449de04abb2b421e0508f83e4a21a.png" alt="\lambda [nm] = \frac{1e7}{\lambda[cm-1]}"/>.
+At the moment we only calculate the velocity for the Halpha line. Therefore <img class="math" src="_images/math/1e2a37d1d3cb8b77c0e080770236cd62f266f6bf.png" alt="\Delta \lambda = (line\_pos[nm]-656.28)/656.28"/> where 656.28 nm is the
+natural position of Halpha emission. We plan on extending this to other lines.</p>
+</div>
+<div class="section" id="velocity-dispersion">
+<h3>Velocity Dispersion<a class="headerlink" href="#velocity-dispersion" title="Permalink to this headline">¶</a></h3>
+<p>The velocity dispersion of a line is calculated using the following equation:
+<img class="math" src="_images/math/8d5dc0611f225ff54bf20292fd90af31d088593b.png" alt="\Delta v = \frac{3e5 [km/s] * \sigma}{v [km/s]}"/></p>
+<p>where <img class="math" src="_images/math/b52df27bfb0b1e3af0c2c68a7b9da459178c2a7d.png" alt="\sigma"/> is the calculated width of a the fitted Gaussian.</p>
+</div>
+</div>
+<div class="section" id="how-we-calculate">
+<h2>How we calculate<a class="headerlink" href="#how-we-calculate" title="Permalink to this headline">¶</a></h2>
+<p>Once we have a spectrum, we do two things: we normalize the spectrum by the maximum amplitude
+and we apply a redshift correction (wavelength = wavelength*(1+redshift)). We do this
+primarily to constrain the velocity to be between -500 and 500 km/s. This allows our
+machine learning technique to obtain better initial guess estimates.</p>
+<div class="section" id="initial-guess">
+<h3>Initial Guess<a class="headerlink" href="#initial-guess" title="Permalink to this headline">¶</a></h3>
+<p>Having a good initial guess is crucial for the success (and speed) of the fitting algorithm.
+In order to obtain a good initial guess for the fit parameters (line amplitude, line position,
+and line broadening), we apply a machine learning technique described in <a class="reference external" href="https://arxiv.org/abs/2008.08093">Rhea et al. 2020a</a>
+(disclosure: the author of this code is also the author of this paper). The method
+uses pre-trained convolutional neural networks to estimate the velocity and broadening
+of the line in km/s. These are then translated into the line position and broadening. Next,
+the amplitude is taken as the height of the line corresponding to the shifted line position.
+We note that the machine learning model has only been trained to obtain velocities
+between -500 and 500 km/s. Similarly, the model was trained to obtain broadening
+values between 10 and 200 km/s. You can find more information on this at
+<cite>https://sitelle-signals.github.io/Pamplemousse/index.html &lt;https://sitelle-signals.github.io/Pamplemousse/index.html&gt;</cite></p>
+<p>Since we understand that machine learning is not everyone’s cup of tea, we have
+an alternative method to calculate the initial guesses.</p>
+</div>
+<div class="section" id="fitting-function">
+<h3>Fitting Function<a class="headerlink" href="#fitting-function" title="Permalink to this headline">¶</a></h3>
+<p>The fitting function utilizes <em>scipy.optimize.minimize</em>. Currently, we are using the <cite>SLSQP &lt;https://docs.scipy.org/doc/scipy/reference/optimize.minimize-slsqp.html&gt;</cite>
+optimization algorithm. Before fitting the spectrum, we normalize the spectrum by the maximum
+amplitude – this makes the fitting process simpler. We also constrain the amplitudes
+to be between 0.001 and 1.1, the position of the line to be between 14700 and 15600 [cm-1],
+and the sigma of the Gaussian to be between 0.001 and 10. By applying these bounds,
+we constrain the optimization problem. The fit returns the amplitude of the line
+(which we then scale to be correct for the un-normalized spectrum), the velocity in km/s,
+and the velocity dispersion in km/s. If the user choses, the line velocities and velocity dispersions
+can be coupled.</p>
+</div>
+<div class="section" id="available-models">
+<h3>Available Models<a class="headerlink" href="#available-models" title="Permalink to this headline">¶</a></h3>
+<p>For the moment, we only have a Gaussian implemented. We plan on adding a sinc and sincgauss.</p>
+<div class="section" id="gaussian">
+<h4>Gaussian<a class="headerlink" href="#gaussian" title="Permalink to this headline">¶</a></h4>
+<p>We assume a standard form of a Gaussian:
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">A</span><span class="o">*</span><span class="n">exp</span><span class="p">{(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">x_0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)}</span>
+</pre></div>
+</div>
+<p>We solve for A, x_0, and sigma (x is the wavelength channel and is thus provided).
+A is the amplitude, x_0 is the position of the line, and sigma is the broadening.</p>
+</div>
+</div>
+<div class="section" id="uncertainty-estimates">
+<h3>Uncertainty Estimates<a class="headerlink" href="#uncertainty-estimates" title="Permalink to this headline">¶</a></h3>
+<p>Since uncertainty estimates are often crucial in astrophysical calculations, we apply
+a full Bayesian MCMC approach (using the python module <em>emcee</em>). The likelihood function
+is defined as a standard Gaussian function. Additionally, we employ the same priors described
+above for the fitting function bounds.</p>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="license.html" class="btn btn-neutral float-right" title="MIT License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to LUCI’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Carter L. Rhea.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
