@@ -17,6 +17,10 @@ sphinx:
 formats:
   - pdf
 
+conda:
+    version: 4.10.1
+    environment: luci.yml
+
 # Optionally set the version of Python and requirements required to build your docs
 python:
   version: 3.7
