@@ -68,7 +68,7 @@ class Fit:
 
     """
 
-    def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines,
+    def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
                  ML_model, sincgauss_args=None, bayes_bool=False, Plot_bool=False):
         """
         Args:
@@ -100,8 +100,8 @@ class Fit:
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
-        #self.sigma_rel = sigma_rel
-        #self.vel_rel = vel_rel
+        self.sigma_rel = sigma_rel
+        self.vel_rel = vel_rel
         # ADD ML_MODEL AND PLOT_BOOL
         self.ML_model = ML_model
         self.bayes_bool = bayes_bool
@@ -346,29 +346,9 @@ class Fit:
         bounds_u = [val[1] for val in bounds_]
         bounds = Bounds(bounds_l, bounds_u)
         self.inital_values = initial
-        if self.line_num == 5:
-            cons = ({'type': 'eq',
-                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
-                             (1e7 / x[1] - self.line_dict['Halpha']) / (1e7 / x[1]))},
-                    {'type': 'eq', 'fun': lambda x: x[2] - x[5]},
-                    {'type': 'eq', 'fun': lambda x: x[5] - x[8]},
-                    {'type': 'eq', 'fun': lambda x: x[5] - x[11]},
-                    {'type': 'eq', 'fun': lambda x: x[5] - x[14]},
-                    {'type': 'eq',
-                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
-                             (1e7 / x[7] - self.line_dict['NII6548']) / (1e7 / x[7]))},
-                    {'type': 'eq',
-                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
-                             (1e7 / x[10] - self.line_dict['SII6716']) / (1e7 / x[10]))},
-                    {'type': 'eq',
-                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
-                             (1e7 / x[13] - self.line_dict['SII6731']) / (1e7 / x[13]))})
-        else:
-            cons = ()
-        #sigma_cons = self.sigma_constraints()
-        #vel_cons = self.vel_constraints()
-        #cons = (sigma_cons + vel_cons)
-        #print(cons)
+        sigma_cons = self.sigma_constraints()
+        vel_cons = self.vel_constraints()
+        cons = (sigma_cons + vel_cons)
         soln = minimize(nll, initial, method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
                         args=(1e-2), constraints=cons)
@@ -380,21 +360,26 @@ class Fit:
         self.fit_vector = self.gaussian_model(self.axis, self.fit_sol)
         return None
 
-    def calculate_vel(self):
+
+    def calculate_vel(self, ind):
         """
         Calculate velocity given the fit of Halpha
         TODO: Test
         TODO: Add other lines
 
+        Args:
+            ind: Index of line in lines
         Return:
             Velocity of the Halpha line in units of km/s
         """
-        l_calc = 1e7 / self.fit_sol[1]  # Halpha
-        l_shift = (l_calc - 656.28) / l_calc
+        line_name = self.lines[ind]
+        print(line_name)
+        l_calc = 1e7 / self.fit_sol[3*ind+1]  # Halpha
+        l_shift = (l_calc - self.line_dict[line_name]) / l_calc
         v = 3e5 * l_shift
         return v
 
-    def calculate_broad(self):
+    def calculate_broad(self, ind):
         """
         Calculate velocity dispersion given the fit of Halpha
         TODO: Test
@@ -403,7 +388,7 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad = (3e5 * self.fit_sol[2]) / self.fit_sol[1]
+        broad = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
         return broad
 
     def calculate_flux(self, line_amp, line_sigma):
@@ -452,15 +437,18 @@ class Fit:
         # Collect Amplitudes
         ampls = []
         fluxes = []
+        vels = []
+        sigmas = []
         for line_ct, line_ in enumerate(self.lines):  # Step through each line
             ampls.append(self.fit_sol[line_ct * 3])
             # Calculate flux
             fluxes.append(self.calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2]))
-
+            vels.append(self.calculate_vel(line_ct))
         # Collect parameters to return in a dictionary
-        fit_dict = {'fit_sol': self.fit_vector, 'velocity': self.calculate_vel(),
-                    'broadening': self.calculate_broad(), 'amplitudes': ampls,
-                    'fluxes': fluxes, 'chi2': chi_sqr}
+        fit_dict = {'fit_sol': self.fit_sol, 'fit_vector': self.fit_vector,
+                    'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
+                    'amplitudes': ampls, 'fluxes': fluxes, 'chi2': chi_sqr, 'velocities': vels,
+                    'sigmas': sigmas}
         # Plot
         if self.Plot_bool == True:
             self.plot()
