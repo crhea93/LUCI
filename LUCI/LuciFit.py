@@ -68,7 +68,7 @@ class Fit:
 
     """
 
-    def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, sigma_rel,
+    def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines,
                  ML_model, sincgauss_args=None, bayes_bool=False, Plot_bool=False):
         """
         Args:
@@ -77,7 +77,8 @@ class Fit:
             wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
             model_type: Type of model ('gaussian')
             lines: Lines to fit (must be in line_dict)
-            sigma_rel: Constraints on sigma (must be list)
+            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             ML_model: Tensorflow/keras machine learning model
             sincgauss_args: Additional arguments required for sincgauss function in a list:
                 [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
@@ -99,7 +100,8 @@ class Fit:
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
-        self.sigma_rel = sigma_rel
+        #self.sigma_rel = sigma_rel
+        #self.vel_rel = vel_rel
         # ADD ML_MODEL AND PLOT_BOOL
         self.ML_model = ML_model
         self.bayes_bool = bayes_bool
@@ -296,17 +298,26 @@ class Fit:
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x: x[ind_0] - x[ind_unique]})
+                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x: x[3*ind_0+2] - x[3*ind_unique+2]})
         return sigma_dict_list
 
-
-
-
-
-
-
-
-
+    def vel_constraints(self):
+        """
+        Set up constraints for velocity values before fitting line
+        Return:
+            Dictionary describing constraints
+        """
+        vel_dict_list = []
+        unique_rels = np.unique(self.vel_rel)  # List of unique groups
+        for unique_ in unique_rels:  # Step through each unique group
+            inds_unique = [i for i, e in enumerate(self.vel_rel) if e == unique_]  # Obtain line indices in group
+            if len(inds_unique) > 1:  # If there is more than one element in the group
+                ind_0 = inds_unique[0]  # Get first element
+                for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
+                    expr_dict = {'type': 'eq',
+                             'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - self.line_dict.values()[3*ind_unique+1]) / (1e7 / x[3*ind_unique+1])) - 3e5 * (
+                                     (1e7 / x[3*ind_0+1] - self.line_dict.values()[3*ind_0+1]) / (1e7 / x[3*ind_0+1]))}
+        return vel_dict_list
 
 
     def calculate_params(self):
@@ -354,6 +365,10 @@ class Fit:
                              (1e7 / x[13] - self.line_dict['SII6731']) / (1e7 / x[13]))})
         else:
             cons = ()
+        #sigma_cons = self.sigma_constraints()
+        #vel_cons = self.vel_constraints()
+        #cons = (sigma_cons + vel_cons)
+        #print(cons)
         soln = minimize(nll, initial, method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
                         args=(1e-2), constraints=cons)

@@ -289,6 +289,8 @@ class Luci():
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
+            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             x_min: Lower bound in x
             x_max: Upper bound in x
             y_min: Lower bound in y
