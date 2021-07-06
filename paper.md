@@ -20,7 +20,7 @@ affiliations:
  - name: Centre de Recherche en Astrophysique du Québec (CRAQ), Québec, QC, G1V 0A6, Canada
    index: 2
 date: 5 July 2021
-bibliography: paper.bib
+bibliography: Luci.bib
 
 ---
 
@@ -30,7 +30,7 @@ High-resolution optical integral field units (IFUs) are rapidly expanding our kn
 of extragalactic emission nebulae in galaxies and galaxy clusters. By studying the spectra
 of these objects -- which include classic HII regions, supernova remnants, planetary nebulae,
 and cluster filaments -- we are able to constrain their kinematics (velocity and velocity dispersion).
-In conjunction with additional tools, such as the BPT diagram (REF), we can further classify
+In conjunction with additional tools, such as the BPT diagram (`@baldwin_classification_1981`), we can further classify
 emission regions based on strong emission-line flux ratios. `LUCI` is a simple-to-use python module
 intended to facilitate the rapid analysis of IFU spectra. `LUCI` does this by integrating
 well-developed pre-existing python tools such as `astropy` and `scipy` with new
