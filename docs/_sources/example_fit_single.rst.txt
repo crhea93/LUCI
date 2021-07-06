@@ -73,7 +73,7 @@ The output should look something like this:
 
 We now load the reference spectrum
 
-..code-block:: python
+.. code-block:: python
 
     # Machine Learning Reference Spectrum
     ref_spec = fits.open(ML_ref+'.fits')[1].data

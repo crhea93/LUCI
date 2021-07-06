@@ -60,13 +60,15 @@ class Fit:
 
         lines: Lines to fit (must be in line_dict)
 
+        sigma_rel: Constraints on sigma (must be list)
+
         ML_model: Tensorflow/keras machine learning model
 
         Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)
 
     """
 
-    def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines,
+    def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, sigma_rel,
                  ML_model, sincgauss_args=None, bayes_bool=False, Plot_bool=False):
         """
         Args:
@@ -75,6 +77,7 @@ class Fit:
             wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
             model_type: Type of model ('gaussian')
             lines: Lines to fit (must be in line_dict)
+            sigma_rel: Constraints on sigma (must be list)
             ML_model: Tensorflow/keras machine learning model
             sincgauss_args: Additional arguments required for sincgauss function in a list:
                 [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
@@ -96,6 +99,7 @@ class Fit:
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
+        self.sigma_rel = sigma_rel
         # ADD ML_MODEL AND PLOT_BOOL
         self.ML_model = ML_model
         self.bayes_bool = bayes_bool
@@ -277,6 +281,33 @@ class Fit:
 
     def fun_der(self, theta, yerr):
         return Jacobian(lambda theta: self.log_likelihood(theta, yerr))(theta).ravel()
+
+
+    def sigma_constraints(self):
+        """
+        Set up constraints for sigma values before fitting line
+        Return:
+            Dictionary describing constraints
+        """
+        sigma_dict_list = []
+        unique_rels = np.unique(self.sigma_rel)  # List of unique groups
+        for unique_ in unique_rels:  # Step through each unique group
+            inds_unique = [i for i, e in enumerate(self.sigma_rel) if e == unique_]  # Obtain line indices in group
+            if len(inds_unique) > 1:  # If there is more than one element in the group
+                ind_0 = inds_unique[0]  # Get first element
+                for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
+                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x: x[ind_0] - x[ind_unique]})
+        return sigma_dict_list
+
+
+
+
+
+
+
+
+
+
 
     def calculate_params(self):
         """

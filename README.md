@@ -35,8 +35,8 @@ You can also access the fitting directly by circumventing the `LUCI` wrappers an
 ### Where to find examples
 Examples are paramount to the success of any open source code. Therefore, we have tried to make our examples as complete as possible. That said, we surely have forgotten something! If you wish to see an example that does not exist (or for an example to be better explained), please shoot us an email or open up an issue!
 
-All examples can be found in two locations. Read-through examples can be found on our [read the docs (https://luci-fitting.readthedocs.io/en/latest/)](https://luci-fitting.readthedocs.io/en/latest/) page while jupyter notebooks can be found in the **Examples** folder.
-I suggest starting with [https://luci-fitting.readthedocs.io/en/latest/example_basic_lite.html](https://luci-fitting.readthedocs.io/en/latest/example_basic_lite.html).
+All examples can be found in two locations. Read-through examples can be found on our [read the docs (https://crhea93.github.io/LUCI/index.html)](https://crhea93.github.io/LUCI/index.html) page while jupyter notebooks can be found in the **Examples** folder.
+I suggest starting with [https://crhea93.github.io/LUCI/example_basic_lite.html](https://crhea93.github.io/LUCI/example_basic_lite.html).
 
 ### Where to find documentation
 Documentation can also be found on our [read the docs (https://luci-fitting.readthedocs.io/en/latest/)](https://luci-fitting.readthedocs.io/en/latest/) page. In addition to documentation on each function in `LUCI`, you can also find a description of what `LUCI` calculates and how she does what she does!

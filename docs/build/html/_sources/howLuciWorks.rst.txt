@@ -34,6 +34,22 @@ where :math:`\sigma` is the calculated width of a the fitted Gaussian.
 
 
 
+Similarly, we define the flux for each fitting function as the following:
+
+*Flux for a Gaussian Function*:
+
+:math:`Flux [erg/s/cm^2/Ang] = \sqrt{2\pi}p_0p_2`
+
+*Flux for a Sinc Function*:
+
+:math:`Flux [erg/s/cm^2/Ang] = \pi p_0p_2`
+
+*Flux for a SincGauss Function*:
+
+:math:`Flux [erg/s/cm^2/Ang] = p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}`
+
+
+
 How we calculate
 ----------------
 Once we have a spectrum, we do two things: we normalize the spectrum by the maximum amplitude
@@ -53,7 +69,9 @@ the amplitude is taken as the height of the line corresponding to the shifted li
 We note that the machine learning model has only been trained to obtain velocities
 between -500 and 500 km/s. Similarly, the model was trained to obtain broadening
 values between 10 and 200 km/s. You can find more information on this at
-`https://sitelle-signals.github.io/Pamplemousse/index.html <https://sitelle-signals.github.io/Pamplemousse/index.html>`
+`https://sitelle-signals.github.io/Pamplemousse/index.html <https://sitelle-signals.github.io/Pamplemousse/index.html>`.
+We estimate the amplitude by taking the maximum value of spectrum corresponding to the
+estimated position plus or minus 2 channels.
 
 Since we understand that machine learning is not everyone's cup of tea, we have
 an alternative method to calculate the initial guesses.
@@ -77,11 +95,32 @@ For the moment, we only have a Gaussian implemented. We plan on adding a sinc an
 Gaussian
 ########
 We assume a standard form of a Gaussian:
-.. math::
-    A*exp{(-(x-x_0)**2)/(2*sigma**2)}
+:math:`p_0*exp{(-(x-p_1)**2)/(2*p_2**2)}`
 
-We solve for A, x_0, and sigma (x is the wavelength channel and is thus provided).
-A is the amplitude, x_0 is the position of the line, and sigma is the broadening.
+We solve for p_0, p_1, and p_2 (x is the wavelength channel and is thus provided).
+:math:`p_0` is the amplitude, :math:`p_1` is the position of the line, and :math:`p_2` is the broadening.
+
+Sinc
+####
+We adopt the following form
+:math:`p_0*((x-p_1)/p_2)/(x-p_1)/p_2)`
+
+
+SincGauss
+#########
+:math:`p_0*exp(-b*^2)*((erf(a-i*b)+erf(a+i*b))/(2*erf(a)))`
+
+where
+:math:`a = p_2/(\sqrt{2}*\sigma)`
+:math:`b = (x-p_1)/(\sqrt{2}*\sigma)`
+
+where sigma is 1/(2*MPD) (where **MPD** is the maximum path difference).
+
+Therefore, when using a **sincgauss**, we have to calculate the **MPD**. We can
+adopt the following definition: :math:`MPD = \cos{\theta}\delta_x N` where :math:`\cos{\theta}`
+is the cosine angle defined as :math:`\cos{\theta} = \frac{\lambda_{ref}}{\lambda_{ij}}`.
+:math:`\lambda_{ref}` is the wavelength of the calibration laser and :math:`\lambda_{ij}` is
+the measured calibration wavelength of a given pixel (thus :math:`\theta` is a function of the pixel).
 
 Uncertainty Estimates
 ^^^^^^^^^^^^^^^^^^^^^
@@ -89,6 +128,14 @@ Since uncertainty estimates are often crucial in astrophysical calculations, we 
 a full Bayesian MCMC approach (using the python module *emcee*). The likelihood function
 is defined as a standard Gaussian function. Additionally, we employ the same priors described
 above for the fitting function bounds.
+
+Likelihood Function
+###################
+We assume a standard Gaussian likelihood function. We assume standard normalized errors
+of 0.01 for each point in the spectrum.
+
+.. math::
+    LL = -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
 
 .. toctree::

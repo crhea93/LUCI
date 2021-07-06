@@ -98,9 +98,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#fitting-function">Fitting Function</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#available-models">Available Models</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#gaussian">Gaussian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sinc">Sinc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sincgauss">SincGauss</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#uncertainty-estimates">Uncertainty Estimates</a><ul class="simple">
+<li class="toctree-l3"><a class="reference internal" href="#uncertainty-estimates">Uncertainty Estimates</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#likelihood-function">Likelihood Function</a></li>
 </ul>
 </li>
 </ul>
@@ -211,6 +214,13 @@ natural position of Halpha emission. We plan on extending this to other lines.</
 <p>The velocity dispersion of a line is calculated using the following equation:
 <img class="math" src="_images/math/8d5dc0611f225ff54bf20292fd90af31d088593b.png" alt="\Delta v = \frac{3e5 [km/s] * \sigma}{v [km/s]}"/></p>
 <p>where <img class="math" src="_images/math/b52df27bfb0b1e3af0c2c68a7b9da459178c2a7d.png" alt="\sigma"/> is the calculated width of a the fitted Gaussian.</p>
+<p>Similarly, we define the flux for each fitting function as the following:</p>
+<p><em>Flux for a Gaussian Function</em>:</p>
+<p><img class="math" src="_images/math/c48a9264cb986ec2d84d77058f6c7d5f387b237f.png" alt="Flux [erg/s/cm^2/Ang] = \sqrt{2\pi}p_0p_2"/></p>
+<p><em>Flux for a Sinc Function</em>:</p>
+<p><img class="math" src="_images/math/4492ab0988f66cf485ba298f581b522d998d467e.png" alt="Flux [erg/s/cm^2/Ang] = \pi p_0p_2"/></p>
+<p><em>Flux for a SincGauss Function</em>:</p>
+<p><img class="math" src="_images/math/c9f8f1b720f3632af8b1bf785a686f0a9216c130.png" alt="Flux [erg/s/cm^2/Ang] = p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}"/></p>
 </div>
 </div>
 <div class="section" id="how-we-calculate">
@@ -231,7 +241,9 @@ the amplitude is taken as the height of the line corresponding to the shifted li
 We note that the machine learning model has only been trained to obtain velocities
 between -500 and 500 km/s. Similarly, the model was trained to obtain broadening
 values between 10 and 200 km/s. You can find more information on this at
-<cite>https://sitelle-signals.github.io/Pamplemousse/index.html &lt;https://sitelle-signals.github.io/Pamplemousse/index.html&gt;</cite></p>
+<cite>https://sitelle-signals.github.io/Pamplemousse/index.html &lt;https://sitelle-signals.github.io/Pamplemousse/index.html&gt;</cite>.
+We estimate the amplitude by taking the maximum value of spectrum corresponding to the
+estimated position plus or minus 2 channels.</p>
 <p>Since we understand that machine learning is not everyone’s cup of tea, we have
 an alternative method to calculate the initial guesses.</p>
 </div>
@@ -253,12 +265,27 @@ can be coupled.</p>
 <div class="section" id="gaussian">
 <h4>Gaussian<a class="headerlink" href="#gaussian" title="Permalink to this headline">¶</a></h4>
 <p>We assume a standard form of a Gaussian:
-.. math:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">A</span><span class="o">*</span><span class="n">exp</span><span class="p">{(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">x_0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)}</span>
-</pre></div>
+<img class="math" src="_images/math/8ffc4c0cb7a274c543050a5710c4817ab3fb76ad.png" alt="p_0*exp{(-(x-p_1)**2)/(2*p_2**2)}"/></p>
+<p>We solve for p_0, p_1, and p_2 (x is the wavelength channel and is thus provided).
+<img class="math" src="_images/math/8968e4fd6ebe2d668010ed37e2172340daaefa2d.png" alt="p_0"/> is the amplitude, <img class="math" src="_images/math/48633556290f50fdc8d2ff3eb6ff99ad557327e5.png" alt="p_1"/> is the position of the line, and <img class="math" src="_images/math/0ba5a12df77ecc7e17158f419025b5acca993472.png" alt="p_2"/> is the broadening.</p>
 </div>
-<p>We solve for A, x_0, and sigma (x is the wavelength channel and is thus provided).
-A is the amplitude, x_0 is the position of the line, and sigma is the broadening.</p>
+<div class="section" id="sinc">
+<h4>Sinc<a class="headerlink" href="#sinc" title="Permalink to this headline">¶</a></h4>
+<p>We adopt the following form
+<img class="math" src="_images/math/7dffed85f9a14850f39c29bd84b313491c9f27ca.png" alt="p_0*((x-p_1)/p_2)/(x-p_1)/p_2)"/></p>
+</div>
+<div class="section" id="sincgauss">
+<h4>SincGauss<a class="headerlink" href="#sincgauss" title="Permalink to this headline">¶</a></h4>
+<p><img class="math" src="_images/math/8424329dfbcad8634b81da7d0f7ce2de477d441f.png" alt="p_0*exp(-b*^2)*((erf(a-i*b)+erf(a+i*b))/(2*erf(a)))"/></p>
+<p>where
+<img class="math" src="_images/math/a6aefce2dd21aeffb0728e759e2cc633eaeb2190.png" alt="a = p_2/(\sqrt{2}*\sigma)"/>
+<img class="math" src="_images/math/226d01e1feb29f5d38d1088c16211ada23093076.png" alt="b = (x-p_1)/(\sqrt{2}*\sigma)"/></p>
+<p>where sigma is 1/(2*MPD) (where <strong>MPD</strong> is the maximum path difference).</p>
+<p>Therefore, when using a <strong>sincgauss</strong>, we have to calculate the <strong>MPD</strong>. We can
+adopt the following definition: <img class="math" src="_images/math/a23cbb309bf3f6c43d9219bbe6d83177264f18ce.png" alt="MPD = \cos{\theta}\delta_x N"/> where <img class="math" src="_images/math/06a6ab4f18196f743558d92f701b0dac2211eb37.png" alt="\cos{\theta}"/>
+is the cosine angle defined as <img class="math" src="_images/math/013521e12f828ad7c4f7b905cd3f3f7268d2ad4c.png" alt="\cos{\theta} = \frac{\lambda_{ref}}{\lambda_{ij}}"/>.
+<img class="math" src="_images/math/2b899994ef65e5177b3c166379e701041dbf2dcb.png" alt="\lambda_{ref}"/> is the wavelength of the calibration laser and <img class="math" src="_images/math/4ac0de4c00ba1f6a2ce1ab3214cdbc33cb05d40c.png" alt="\lambda_{ij}"/> is
+the measured calibration wavelength of a given pixel (thus <img class="math" src="_images/math/8a87f04e7d7cca18343c084cceca5237fae62491.png" alt="\theta"/> is a function of the pixel).</p>
 </div>
 </div>
 <div class="section" id="uncertainty-estimates">
@@ -267,7 +294,14 @@ A is the amplitude, x_0 is the position of the line, and sigma is the broadening
 a full Bayesian MCMC approach (using the python module <em>emcee</em>). The likelihood function
 is defined as a standard Gaussian function. Additionally, we employ the same priors described
 above for the fitting function bounds.</p>
-<div class="toctree-wrapper compound">
+<div class="section" id="likelihood-function">
+<h4>Likelihood Function<a class="headerlink" href="#likelihood-function" title="Permalink to this headline">¶</a></h4>
+<p>We assume a standard Gaussian likelihood function. We assume standard normalized errors
+of 0.01 for each point in the spectrum.</p>
+<div class="math">
+<p><img src="_images/math/4244f7bc1b04936c4211c463181d4518c2a44a6f.png" alt="LL = -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))"/></p>
+</div><div class="toctree-wrapper compound">
+</div>
 </div>
 </div>
 </div>

@@ -684,7 +684,7 @@ class Luci():
                     max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-14850))
                     std_out_region = np.std(self.cube_final[x_pix, y_pix, min_:max_])
                     snr = float(flux_in_region/std_out_region)
-                    snr = snr/np.mean(flux_in_region)
+                    snr = snr
                 snr_local.append(snr)
             SNR[i] = snr_local
         #n_threads = 2

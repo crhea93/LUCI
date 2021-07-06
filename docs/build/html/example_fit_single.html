@@ -219,19 +219,18 @@ These values were chosen to correspond with the brightest region of the horsesho
 <p>The output should look something like this:</p>
 <img alt="Spectrum" src="_images/example-single-fit-spectrum.png" />
 <p>We now load the reference spectrum</p>
-<p>..code-block:: python</p>
-<blockquote>
-<div><p># Machine Learning Reference Spectrum
-ref_spec = fits.open(ML_ref+’.fits’)[1].data
-channel = []
-counts = []
-for chan in ref_spec:  # Only want SN3 region
-channel.append(chan[0])
-counts.append(np.real(chan[1]))
-<a href="#id1"><span class="problematic" id="id2">min_</span></a> = np.argmin(np.abs(np.array(channel)-14700))
-<a href="#id3"><span class="problematic" id="id4">max_</span></a> = np.argmin(np.abs(np.array(channel)-15600))
-wavenumbers_syn = channel[<a href="#id5"><span class="problematic" id="id6">min_</span></a>:<a href="#id7"><span class="problematic" id="id8">max_</span></a>]</p>
-</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Machine Learning Reference Spectrum</span>
+<span class="n">ref_spec</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">ML_ref</span><span class="o">+</span><span class="s1">&#39;.fits&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+<span class="n">channel</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">chan</span> <span class="ow">in</span> <span class="n">ref_spec</span><span class="p">:</span>  <span class="c1"># Only want SN3 region</span>
+<span class="n">channel</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chan</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">chan</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">min_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span><span class="o">-</span><span class="mi">14700</span><span class="p">))</span>
+<span class="n">max_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span><span class="o">-</span><span class="mi">15600</span><span class="p">))</span>
+<span class="n">wavenumbers_syn</span> <span class="o">=</span> <span class="n">channel</span><span class="p">[</span><span class="n">min_</span><span class="p">:</span><span class="n">max_</span><span class="p">]</span>
+</pre></div>
+</div>
 <p>Finally, we fit!</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fit</span> <span class="o">=</span> <span class="n">lfit</span><span class="o">.</span><span class="n">Fit</span><span class="p">(</span><span class="n">sky</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">wavenumbers_syn</span><span class="p">,</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">],</span>
                 <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="n">ML_model</span><span class="p">),</span>

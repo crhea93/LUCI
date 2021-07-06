@@ -179,7 +179,7 @@
 <span id="fitting-functions"></span><h2>Fitting Functions<a class="headerlink" href="#module-LUCI.LuciFit" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="LUCI.LuciFit.Fit">
-<em class="property">class </em><code class="sig-prename descclassname">LUCI.LuciFit.</code><code class="sig-name descname">Fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spectrum</span></em>, <em class="sig-param"><span class="n">axis</span></em>, <em class="sig-param"><span class="n">wavenumbers_syn</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">ML_model</span></em>, <em class="sig-param"><span class="n">sincgauss_args</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bayes_bool</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">Plot_bool</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">LUCI.LuciFit.</code><code class="sig-name descname">Fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spectrum</span></em>, <em class="sig-param"><span class="n">axis</span></em>, <em class="sig-param"><span class="n">wavenumbers_syn</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">sigma_rel</span></em>, <em class="sig-param"><span class="n">ML_model</span></em>, <em class="sig-param"><span class="n">sincgauss_args</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bayes_bool</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">Plot_bool</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class that defines the functions necessary for the modelling aspect. This includes
 the gaussian fit functions, the prior definitions, the log likelihood, and the
 definition of the posterior (log likelihood times prior).</p>
@@ -189,6 +189,7 @@ definition of the posterior (log likelihood times prior).</p>
 :param wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
 :param model_type: Type of model (‘gaussian’)
 :param lines: Lines to fit (must be in line_dict)
+:param sigma_rel: Constraints on sigma (must be list)
 :param ML_model: Tensorflow/keras machine learning model
 :param Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)</p>
 <dl class="py method">
@@ -386,6 +387,13 @@ Then normalize the spectrum so that the max value equals 1</p>
 <dt id="LUCI.LuciFit.Fit.plot">
 <code class="sig-name descname">plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot initial spectrum and fitted spectrum</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="LUCI.LuciFit.Fit.sigma_constraints">
+<code class="sig-name descname">sigma_constraints</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.sigma_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up constraints for sigma values before fitting line
+:returns: Dictionary describing constraints</p>
 </dd></dl>
 
 <dl class="py method">
