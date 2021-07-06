@@ -30,14 +30,14 @@ High-resolution optical integral field units (IFUs) are rapidly expanding our kn
 of extragalactic emission nebulae in galaxies and galaxy clusters. By studying the spectra
 of these objects -- which include classic HII regions, supernova remnants, planetary nebulae,
 and cluster filaments -- we are able to constrain their kinematics (velocity and velocity dispersion).
-In conjunction with additional tools, such as the BPT diagram (`@baldwin_classification_1981`), we can further classify
+In conjunction with additional tools, such as the BPT diagram (e.g. @baldwin_classification_1981; @kewley_host_2006), we can further classify
 emission regions based on strong emission-line flux ratios. `LUCI` is a simple-to-use python module
 intended to facilitate the rapid analysis of IFU spectra. `LUCI` does this by integrating
 well-developed pre-existing python tools such as `astropy` and `scipy` with new
 machine learning tools for spectral analysis (Rhea et al. 2020a).
 
 Recent advances in the science and technology of IFUs have resulted in the creation
-of the high-resolution, wide field-of-view (11 arcmin x 11 arcmin) instrument SITELLE (REF)
+of the high-resolution, wide field-of-view (11 arcmin x 11 arcmin) instrument SITELLE (@drissen_sitelle_2019)
 at the Canada-France-Hawaii Telescope. Due to the large field-of-view and the small
 angular resolution of the pixels (0.32 arcseconds), the resulting data cubes contain
 over 4 million spectra. Therefore, a simple, fast, and adaptable fitting code is
@@ -57,66 +57,72 @@ fit a region of the cube defined by a standard *ds9* file (in this case, the use
 region file to `fit_region`). Regardless of the region being fit, the user need only specify the
 lines they wish to fit and the fitting function. We currently support all standard lines in
 the SN1 filter ([OII3626] & [OII3629]), SN2 filter ([OIII4959], [OIII5007], & Hbeta), and SN3 filter ([SII6716], [SII6731], [NII6548], [NII6583], & Halpha).    
-The user also must chose between three fitting functions: a pure Gaussian, and pure sinc function, or a sinc function convolved with a Gaussian.
+The user also must chose between three fitting functions: a pure Gaussian, and pure sinc function, or a sinc function convolved with a Gaussian (@martin_optimal_2016).
 In either case, `LUCI` will solve for the three primary quantities of interest which are the **amplitude** of the line, the **position** of the line (often described as the velocity and quoted in km/s), and the **broadening** of the line (often described as the velocity dispersion and quoted in units of km/s
 
-The three fitting functions are mathematically described below where p0 corresponds to the **amplitude**, p1 corresponds to the **position**, and p2 corresponds of the **broadening**.
+The three fitting functions are mathematically described below where $p_0$ corresponds to the **amplitude**, $p_1$ corresponds to the **position**, and $p_2$ corresponds of the **broadening**.
 
 The pure Gaussian function is expressed as
 \begin{equation}
-    f(x) = p0*exp(-(x-p1)^2/(2*p2^2))
+    f(x) = p_0*exp(-(x-p1)^2/(2*p_2^2))
 \end{equation}
 
 The pure since function is expressed as
 \begin{equation}
-    p0*(\frac{(x-p1)/p2}{(x-p1)/p2})
+    f(x) = p_0*(\frac{(x-p_1)/p_2}{(x-p_1)/p_2})
 \end{equation}
 
 The convolved sincgauss function is expressed as
 \begin{equation}
-    p0*exp(-b*^2)*((erf(a-i*b)+erf(a+i*b))/(2*erf(a)))
+    f(x) = p_0*exp(-b*^2)*((erf(a-i*b)+erf(a+i*b))/(2*erf(a)))
 \end{equation}
 
-where *x* represents a given spectral channel, $a = p2/(\sqrt{2}*\sigma)$, $b=(x-p1)/(\sqrt(2)*\sigma)$, where $\sigma$ is the
+where *x* represents a given spectral channel, $a = p_2/(\sqrt{2}*\sigma)$, $b=(x-p_1)/(\sqrt(2)*\sigma)$, where $\sigma$ is the
 pre-defined width of the sinc function. We define this following (REF) as $\sigma = \frac{1}{2*MPD}$ where **MPD** is the maximum path difference.
 
 In each case, after solving for these values, the velocity and velocity dispersion are calculated using the following equations:
 
 \begin{equation}
-    v [km/s] = 3e5*((p1' - v_0)/v_0)
+    v [km/s] = 3e5*((p_1' - v_0)/v_0)
 \end{equation}
-where $3e5$ represents the speed of light in kilometers per second, p1' is p1 in nanometers, and $v_0$ is the reference wavelength of the line in nanometers.
+where $3e5$ represents the speed of light in kilometers per second, $p_1'$ is $p_1$ in nanometers, and $v_0$ is the reference wavelength of the line in nanometers.
 \begin{equation}
-    \sigma [km/s] = 3e5*(p2/p1)
+    \sigma [km/s] = 3e5*(p_2/p_1)
 \end{equation}
 where again $3e5$ represents the speed of light in kilometers per second.
 
+Similarly, we define the flux for each fitting function as the following:
+*Flux for a Gaussian Function*:
+\begin{equation}
+    Flux [erg/s/cm^2/Ang] = \sqrt{2\pi}p_0p_2
+\end{equation}
+
+*Flux for a Sinc Function*:
+\begin{equation}
+    Flux [erg/s/cm^2/Ang] = \pi p_0p_2
+\end{equation}
+
+*Flux for a SincGauss Function*:
+\begin{equation}
+    Flux [erg/s/cm^2/Ang] = p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}
+\end{equation}
+
+A full Bayesian approach is implemented in order to determine uncertainties on the three key
+fitting parameters ($p_0, p_1,$ and $p_2$) using the python `emcee` package (@foreman-mackey_emcee_2013).
+Thus, we are able to calculate posterior distributions for each parameter.
 
 # Other Software
-
-
-# Citations
-
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
-
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
-# Figures
+Several fitting software packages exist for fitting generalized functions to optical spectra (such as `astropy`; @robitaille_astropy_2013).
+Additionally, there exist software for fitting IFU datacubes for several instruments such as MUSE (@richard_reduction_2012)
+and SITELLE (@martin_orbs_2012). Although these are mature codes, we opted to write our own fitting package that
+is transparent to users and highly customize-able.
 
 
 
 
 # Acknowledgements
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+C. L. R. acknowledges financial support from the physics department of the Université de Montréal, IVADO, and le fonds de recherche -- Nature et Technologie.
+J. H.-L. acknowledges support from NSERC via the Discovery grant program, as well as the Canada Research Chair program.
 
 # References
