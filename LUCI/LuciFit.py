@@ -373,7 +373,6 @@ class Fit:
             Velocity of the Halpha line in units of km/s
         """
         line_name = self.lines[ind]
-        print(line_name)
         l_calc = 1e7 / self.fit_sol[3*ind+1]  # Halpha
         l_shift = (l_calc - self.line_dict[line_name]) / l_calc
         v = 3e5 * l_shift
