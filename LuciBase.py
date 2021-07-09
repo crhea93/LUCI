@@ -53,7 +53,7 @@ class Luci():
         self.spectrum_axis = None
         self.wavenumbers_syn = None
         self.hdr_dict = None
-        self.interferometer_cos_theta = None
+        self.interferometer_theta = None
         self.read_in_cube()
         self.spectrum_axis_func()
         self.read_in_reference_spectrum()
@@ -104,8 +104,9 @@ class Luci():
         """
         calib_map = file['calib_map'][()]
         calib_ref = self.hdr_dict['CALIBNM']
-        self.interferometer_cos_theta = calib_ref/calib_map
-
+        interferometer_cos_theta = calib_ref/calib_map.T[::-1,::-1]
+        # We need to convert to degree so bear with me here
+        self.interferometer_theta = np.rad2deg(np.arccos(interferometer_cos_theta))
 
 
     def update_header(self, file):
@@ -280,7 +281,7 @@ class Luci():
         fits.writeto(output_name+'_Chi2.fits', chi2_fits.T, header, overwrite=True)
 
 
-    def fit_cube(self, lines, fit_function, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None):
+    def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -349,9 +350,10 @@ class Luci():
                 sky = sky[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
-                        self.model_ML, sincgauss_args=[self.interferometer_cos_theta[x_pix, y_pix], self.hdr_dict['CDELT3'], self.hdr_dict['STEPNB']]
-                        , Plot_bool = False, bayes_bool=bayes_bool)
+                fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+                        self.model_ML, theta=self.interferometer_theta[x_pix, y_pix],
+                        delta_x = self.hdr_dict['STEP'], n_steps = self.hdr_dict['STEPNB'],
+                        Plot_bool = False, bayes_bool=bayes_bool)
                 fit_dict = fit.fit()
                 # Save local list of fit values
                 vel_local.append(fit_dict['velocity'])
@@ -378,7 +380,7 @@ class Luci():
         #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
         #Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(VEL, BROAD, i) for i in tqdm(range(x_max-x_min)));
 
-    def fit_region(self, lines, fit_function, region, bkg= None, binning=None, bayes_bool=False, output_name=None):
+    def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg= None, binning=None, bayes_bool=False, output_name=None):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -388,6 +390,8 @@ class Luci():
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
+            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             bkg: Background Spectrum (1D numpy array; default None)
             binning:  Value by which to bin (default None)
@@ -457,9 +461,10 @@ class Luci():
                     sky = sky[good_sky_inds]
                     axis = self.spectrum_axis[good_sky_inds]
                     # Call fit!
-                    fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
-                            self.model_ML, sincgauss_args=[self.interferometer_cos_theta[x_pix, y_pix], self.hdr_dict['CDELT3'], self.hdr_dict['STEPNB']],
-                             Plot_bool = False, bayes_bool=bayes_bool)
+                    fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+                            self.model_ML, theta = self.interferometer_theta[x_pix, y_pix],
+                            delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
+                            Plot_bool = False, bayes_bool=bayes_bool)
                     fit_dict = fit.fit()
                     # Save local list of fit values
                     vel_local.append(fit_dict['velocity'])
@@ -584,7 +589,7 @@ class Luci():
 
 
 
-    def fit_spectrum_region(self, lines, fit_function, region, bkg=None, bayes_bool=False, mean=False):
+    def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, bayes_bool=False, mean=False):
         """
         Fit spectrum in region.
         The spectra in the region are summed and then averaged (if mean is selected).
@@ -594,6 +599,8 @@ class Luci():
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
+            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             bkg: Background Spectrum (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
@@ -634,11 +641,12 @@ class Luci():
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
         # Call fit!
-        fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines,
-                self.model_ML, sincgauss_args=[self.interferometer_cos_theta[x_pix, y_pix], self.hdr_dict['CDELT3'], self.hdr_dict['STEPNB']],
+        fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+                self.model_ML, theta = self.interferometer_theta[x_pix, y_pix],
+                delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
                  Plot_bool = False, bayes_bool=bayes_bool)
         fit_dict = fit.fit()
-        return fit_dict
+        return axis, sky, fit_dict
 
 
 
@@ -668,23 +676,20 @@ class Luci():
             for j in range(y_max-y_min):
                 y_pix = y_min+j
                 # Calculate SNR
-                flux = np.real(self.cube_final[x_pix, y_pix])
-                flux = flux[np.where(flux != 0.0)]
-                n = len(flux)
+                # Select spectral region around Halpha and NII complex
+                min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-15150))
+                max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-15300))
+                flux_in_region = np.sum(self.cube_final[x_pix, y_pix, min_:max_])
+                # Select distance region
+                min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-14800))
+                max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-14850))
+                std_out_region = np.std(self.cube_final[x_pix, y_pix, min_:max_])
                 if method == 1:
-                    signal = np.max(flux)-np.median(flux)
-                    noise = np.std(flux)
+                    signal = np.max(flux_in_region)-np.median(flux_in_region)
+                    noise = np.std(std_out_region)
                     snr = float(signal / np.sqrt(noise))
-                    snr = snr/(np.sqrt(np.mean(flux)))
+                    snr = snr/(np.sqrt(np.mean(flux_in_region)))
                 else:
-                    # Select spectral region around Halpha and NII complex
-                    min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-15150))
-                    max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-15300))
-                    flux_in_region = np.sum(self.cube_final[x_pix, y_pix, min_:max_])
-                    # Select distance region
-                    min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-14800))
-                    max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-14850))
-                    std_out_region = np.std(self.cube_final[x_pix, y_pix, min_:max_])
                     snr = float(flux_in_region/std_out_region)
                     snr = snr
                 snr_local.append(snr)

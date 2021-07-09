@@ -28,9 +28,15 @@ natural position of Halpha emission. We plan on extending this to other lines.
 Velocity Dispersion
 ^^^^^^^^^^^^^^^^^^^
 The velocity dispersion of a line is calculated using the following equation:
-:math:`\Delta v = \frac{3e5 [km/s] * \sigma}{v [km/s]}`
+:math:`\Delta v = corr\_factor*\frac{3e5 [km/s] * \sigma}{v [km/s]}`
 
-where :math:`\sigma` is the calculated width of a the fitted Gaussian.
+where :math:`\sigma` is the calculated width of a the fitted Gaussian and the correction
+factor takes into account the different $\theta$ value given the pixels location in the cube.
+See the section of the *sincgauss* function for a discussion of $\theta$. The equation
+for the correction factor is as follows:
+
+
+:math:`corr\_factor = \frac{1}{\cos{\theta}}`
 
 
 

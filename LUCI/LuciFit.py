@@ -68,8 +68,8 @@ class Fit:
 
     """
 
-    def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines,
-                 ML_model, sincgauss_args=None, bayes_bool=False, Plot_bool=False):
+    def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
+                 ML_model, theta=0, delta_x=2, n_steps=842, bayes_bool=False, Plot_bool=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -80,8 +80,9 @@ class Fit:
             vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             ML_model: Tensorflow/keras machine learning model
-            sincgauss_args: Additional arguments required for sincgauss function in a list:
-                [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
+            theta: Interferometric angle in degrees (defaults to 11.960 -- this is so that the correction coeff is 1)
+            delta_x: Step Delta
+            n_steps: Number of steps in spectra
             bayes_bool:
             Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)
 
@@ -100,30 +101,47 @@ class Fit:
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
-        #self.sigma_rel = sigma_rel
-        #self.vel_rel = vel_rel
+        self.theta = theta
+        self.cos_theta = np.cos(self.theta)
+        self.correction_factor = 1.0  # Initialize Correction factor
+        self.axis_step = delta_x  # Initialize
+        self.delta_x = delta_x
+        self.n_steps = n_steps
+        self.calculate_correction()
+        self.sigma_rel = sigma_rel
+        self.vel_rel = vel_rel
         # ADD ML_MODEL AND PLOT_BOOL
         self.ML_model = ML_model
         self.bayes_bool = bayes_bool
         self.Plot_bool = Plot_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
-        if sincgauss_args is not None:
-            self.calc_sinc_width(sincgauss_args)
+        #if sincgauss_args is None:
+        #    sincgauss_args = [11.96, 2.1, 892]  # Randomly initialize these values  # TODO: Look niito best values
+        self.calc_sinc_width([self.cos_theta, self.delta_x, self.n_steps])
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.fit_sol = np.zeros(3 * self.line_num)  # Solution to the fit
         # Set bounds
         self.A_min = 0;
         self.A_max = 1.1;
-        self.x_min = 14700;
-        self.x_max = 15600
+        self.x_min = 0 #  14700;
+        self.x_max = 1e8 #  15600
         self.sigma_min = 0.01;
         self.sigma_max = 10
 
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()
+
+
+    def calculate_correction(self):
+        """
+        Calculate correction factor based of interferometric angle. This is used to correct the broadening
+        """
+        self.correction_factor = 1/self.cos_theta
+        self.axis_step = self.correction_factor / (2*self.delta_x*self.n_steps) * 1e7
+
 
 
     def calc_sinc_width(self, sincgauss_args):
@@ -187,7 +205,7 @@ class Fit:
         """
         line_theo = self.line_dict[line_name]
         if self.ML_model is None or self.model_type == '':
-            max_flux = np.argmax(self.spectrum)
+            max_flux = np.argmax(self.spectrum_normalized)
             self.vel_ml = np.abs(3e5 * ((1e7/self.axis[max_flux] - line_theo) / line_theo))
             self.broad_ml = 10.0  # Best for now
         else:
@@ -197,7 +215,7 @@ class Fit:
         line_amp_est = np.max([self.spectrum_normalized[line_ind - 2], self.spectrum_normalized[line_ind - 1],
                                self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind + 1],
                                self.spectrum_normalized[line_ind + 2]])
-        line_broad_est = (line_pos_est * self.broad_ml) / 3e5
+        line_broad_est = (line_pos_est * self.broad_ml * self.correction_factor) / 3e5
         return line_amp_est, line_pos_est, line_broad_est
 
     def gaussian_model(self, channel, theta):
@@ -346,29 +364,9 @@ class Fit:
         bounds_u = [val[1] for val in bounds_]
         bounds = Bounds(bounds_l, bounds_u)
         self.inital_values = initial
-        if self.line_num == 5:
-            cons = ({'type': 'eq',
-                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
-                             (1e7 / x[1] - self.line_dict['Halpha']) / (1e7 / x[1]))},
-                    {'type': 'eq', 'fun': lambda x: x[2] - x[5]},
-                    {'type': 'eq', 'fun': lambda x: x[5] - x[8]},
-                    {'type': 'eq', 'fun': lambda x: x[5] - x[11]},
-                    {'type': 'eq', 'fun': lambda x: x[5] - x[14]},
-                    {'type': 'eq',
-                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
-                             (1e7 / x[7] - self.line_dict['NII6548']) / (1e7 / x[7]))},
-                    {'type': 'eq',
-                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
-                             (1e7 / x[10] - self.line_dict['SII6716']) / (1e7 / x[10]))},
-                    {'type': 'eq',
-                     'fun': lambda x: 3e5 * ((1e7 / x[4] - self.line_dict['NII6583']) / (1e7 / x[4])) - 3e5 * (
-                             (1e7 / x[13] - self.line_dict['SII6731']) / (1e7 / x[13]))})
-        else:
-            cons = ()
-        #sigma_cons = self.sigma_constraints()
-        #vel_cons = self.vel_constraints()
-        #cons = (sigma_cons + vel_cons)
-        #print(cons)
+        sigma_cons = self.sigma_constraints()
+        vel_cons = self.vel_constraints()
+        cons = (sigma_cons + vel_cons)
         soln = minimize(nll, initial, method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
                         args=(1e-2), constraints=cons)
@@ -380,21 +378,25 @@ class Fit:
         self.fit_vector = self.gaussian_model(self.axis, self.fit_sol)
         return None
 
-    def calculate_vel(self):
+
+    def calculate_vel(self, ind):
         """
         Calculate velocity given the fit of Halpha
         TODO: Test
         TODO: Add other lines
 
+        Args:
+            ind: Index of line in lines
         Return:
             Velocity of the Halpha line in units of km/s
         """
-        l_calc = 1e7 / self.fit_sol[1]  # Halpha
-        l_shift = (l_calc - 656.28) / l_calc
+        line_name = self.lines[ind]
+        l_calc = 1e7 / self.fit_sol[3*ind+1]  # Halpha
+        l_shift = (l_calc - self.line_dict[line_name]) / l_calc
         v = 3e5 * l_shift
         return v
 
-    def calculate_broad(self):
+    def calculate_broad(self, ind):
         """
         Calculate velocity dispersion given the fit of Halpha
         TODO: Test
@@ -403,7 +405,7 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad = (3e5 * self.fit_sol[2]) / self.fit_sol[1]
+        broad = (3e5 * self.fit_sol[3*ind+2] * self.axis_step) / self.fit_sol[3*ind+1]
         return broad
 
     def calculate_flux(self, line_amp, line_sigma):
@@ -422,8 +424,10 @@ class Fit:
             flux = np.sqrt(2 * np.pi) * line_amp * line_sigma
         elif self.model_type == 'sinc':
             flux = np.sqrt(np.pi) * line_amp * line_sigma
-        if self.model_type == 'sincgauss':
+        elif self.model_type == 'sincgauss':
             flux = line_amp * ((np.sqrt(2*np.pi)*line_sigma)/(sps.erf((line_sigma)/(np.sqrt(2)*self.sinc_width))))
+        else:
+            print("ERROR: INCORRECT FIT FUNCTION")
         return flux
 
     def fit(self):
@@ -437,11 +441,13 @@ class Fit:
             {"fit_vector": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
-        # Interpolate Spectrum
-        self.interpolate_spectrum()
-        # Estimate the priors using machine learning algorithm
         if self.ML_model != None:
+            # Interpolate Spectrum
+            self.interpolate_spectrum()
+            # Estimate the priors using machine learning algorithm
             self.estimate_priors_ML()
+        else:
+            self.spectrum_scale = np.max(self.spectrum)
         # Apply Fit
         self.calculate_params()
         # Check if Bayesian approach is required
@@ -452,15 +458,18 @@ class Fit:
         # Collect Amplitudes
         ampls = []
         fluxes = []
+        vels = []
+        sigmas = []
         for line_ct, line_ in enumerate(self.lines):  # Step through each line
             ampls.append(self.fit_sol[line_ct * 3])
             # Calculate flux
             fluxes.append(self.calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2]))
-
+            vels.append(self.calculate_vel(line_ct))
         # Collect parameters to return in a dictionary
-        fit_dict = {'fit_sol': self.fit_vector, 'velocity': self.calculate_vel(),
-                    'broadening': self.calculate_broad(), 'amplitudes': ampls,
-                    'fluxes': fluxes, 'chi2': chi_sqr}
+        fit_dict = {'fit_sol': self.fit_sol, 'fit_vector': self.fit_vector,
+                    'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
+                    'amplitudes': ampls, 'fluxes': fluxes, 'chi2': chi_sqr, 'velocities': vels,
+                    'sigmas': sigmas}
         # Plot
         if self.Plot_bool == True:
             self.plot()
@@ -500,8 +509,8 @@ class Fit:
     def log_prior(self, theta, model):
         A_min = 0  # 1e-19
         A_max = 1.1  # 1e-15
-        x_min = 14700
-        x_max = 15400
+        x_min = 0#14700
+        x_max = 1e7#15400
         sigma_min = 0
         sigma_max = 10
         for model_num in range(len(model)):

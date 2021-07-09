@@ -8,7 +8,7 @@ from astropy.wcs import WCS
 import numpy as np
 
 
-def plot_spectrum(axis, spectrum, units='cm-1', output_name = None, fig_size=(10,8), **kwargs):
+def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name = None, fig_size=(10,8), **kwargs):
     """
     Plot Spectrum with Luci format. If output name is supplied, the plot will be saved
     Args:
@@ -17,7 +17,8 @@ def plot_spectrum(axis, spectrum, units='cm-1', output_name = None, fig_size=(10
         units: Wavelength units (e.x. 'cm')
         output_name: Path to output file (default None)
     """
-    f, ax = plt.subplots(figsize=fig_size)
+    if ax is None:
+        f, ax = plt.subplots(figsize=fig_size)
     check_units(units)  # Check that user supplied appropriate wavelength option
     if units == 'nm':
         axis = [1e7/axis_val for axis_val in axis]
@@ -47,7 +48,7 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None):
     if quantity_name != 'flux':
         quantity_map = np.log10(quantity_map)
         print('Please enter either flux, velocity, or broadening')
-    units = {'flux':'ergs/s/cm^2/A','velocity':'km/s'}
+    units = {'flux':'ergs/s/cm^2/A','velocity':'km/s', 'broadening':'km/s'}
     if clims is None:
         c_min = np.nanpercentile(quantity_map, 5)
         c_max = np.nanpercentile(quantity_map, 95)
