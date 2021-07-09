@@ -69,7 +69,7 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, sincgauss_args=None, bayes_bool=False, Plot_bool=False):
+                 ML_model, theta=0, sincgauss_args=None, bayes_bool=False, Plot_bool=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -80,6 +80,7 @@ class Fit:
             vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             ML_model: Tensorflow/keras machine learning model
+            theta: Interferometric angle in degrees (defaults to 11.960 -- this is so that the correction coeff is 1)
             sincgauss_args: Additional arguments required for sincgauss function in a list:
                 [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
             bayes_bool:
@@ -100,6 +101,9 @@ class Fit:
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
+        self.theta = theta
+        self.correction_factor = 1.0  # Initialize Correction factor
+        self.calculate_correction()
         self.sigma_rel = sigma_rel
         self.vel_rel = vel_rel
         # ADD ML_MODEL AND PLOT_BOOL
@@ -108,8 +112,9 @@ class Fit:
         self.Plot_bool = Plot_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
-        if sincgauss_args is not None:
-            self.calc_sinc_width(sincgauss_args)
+        if sincgauss_args is None:
+            sincgauss_args = [11.96, 2.1, 892]  # Randomly initialize these values  # TODO: Look niito best values
+        self.calc_sinc_width(sincgauss_args)
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.fit_sol = np.zeros(3 * self.line_num)  # Solution to the fit
@@ -124,6 +129,14 @@ class Fit:
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()
+
+
+    def calculate_correction(self):
+        """
+        Calculate correction factor based of interferometric angle. This is used to correct the broadening
+        """
+        self.correction_factor = 1/(np.cos(np.deg2rad(self.theta)))
+
 
 
     def calc_sinc_width(self, sincgauss_args):
@@ -387,7 +400,7 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
+        broad = (3e5 * self.fit_sol[3*ind+2] * self.correction_factor) / self.fit_sol[3*ind+1]
         return broad
 
     def calculate_flux(self, line_amp, line_sigma):
@@ -421,10 +434,10 @@ class Fit:
             {"fit_vector": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
-        # Interpolate Spectrum
-        self.interpolate_spectrum()
-        # Estimate the priors using machine learning algorithm
         if self.ML_model != None:
+            # Interpolate Spectrum
+            self.interpolate_spectrum()
+            # Estimate the priors using machine learning algorithm
             self.estimate_priors_ML()
         # Apply Fit
         self.calculate_params()

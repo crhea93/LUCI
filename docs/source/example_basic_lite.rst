@@ -53,11 +53,12 @@ Let's quickly create a deep frame
 
 
 We now fit part of our cube defined by the bounding box 1000<x<1500 and 250<y<750 with a Gaussian on the Halpha line, the NII-doublet, and the SII-doublet with a binning of 4.
+We are also going to constrain our velocities and sigmas.
 
 .. code-block:: python
 
     # Fit!
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', 1000, 1500, 250, 750, binning=4)
+    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 1000, 1500, 250, 750, binning=4)
 
 The output should look something like this:
 
