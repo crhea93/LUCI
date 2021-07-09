@@ -53,7 +53,7 @@ class Luci():
         self.spectrum_axis = None
         self.wavenumbers_syn = None
         self.hdr_dict = None
-        self.interferometer_cos_theta = None
+        self.interferometer_theta = None
         self.read_in_cube()
         self.spectrum_axis_func()
         self.read_in_reference_spectrum()
@@ -104,8 +104,9 @@ class Luci():
         """
         calib_map = file['calib_map'][()]
         calib_ref = self.hdr_dict['CALIBNM']
-        self.interferometer_cos_theta = calib_ref/calib_map
-
+        interferometer_cos_theta = calib_ref/calib_map.T[::-1,::-1]
+        # We need to convert to degree so bear with me here
+        self.interferometer_theta = np.rad2deg(np.arccos(interferometer_cos_theta))
 
 
     def update_header(self, file):
@@ -350,8 +351,8 @@ class Luci():
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
                 fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                        self.model_ML, theta=self.interferometer_cos_theta[x_pix, y_pix],
-                        sincgauss_args=[self.interferometer_cos_theta[x_pix, y_pix], self.hdr_dict['CDELT3'], self.hdr_dict['STEPNB']],
+                        self.model_ML, theta=self.interferometer_theta[x_pix, y_pix],
+                        delta_x = self.hdr_dict['STEP'], n_steps = self.hdr_dict['STEPNB'],
                         Plot_bool = False, bayes_bool=bayes_bool)
                 fit_dict = fit.fit()
                 # Save local list of fit values
@@ -461,8 +462,8 @@ class Luci():
                     axis = self.spectrum_axis[good_sky_inds]
                     # Call fit!
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                            self.model_ML, theta = self.interferometer_cos_theta[x_pix, y_pix],
-                            sincgauss_args=[self.interferometer_cos_theta[x_pix, y_pix], self.hdr_dict['CDELT3'], self.hdr_dict['STEPNB']],
+                            self.model_ML, theta = self.interferometer_theta[x_pix, y_pix],
+                            delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
                             Plot_bool = False, bayes_bool=bayes_bool)
                     fit_dict = fit.fit()
                     # Save local list of fit values
@@ -641,8 +642,8 @@ class Luci():
         axis = self.spectrum_axis[good_sky_inds]
         # Call fit!
         fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                self.model_ML, theta = self.interferometer_cos_theta[x_pix, y_pix],
-                sincgauss_args=[self.interferometer_cos_theta[x_pix, y_pix], self.hdr_dict['CDELT3'], self.hdr_dict['STEPNB']],
+                self.model_ML, theta = self.interferometer_theta[x_pix, y_pix],
+                delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
                  Plot_bool = False, bayes_bool=bayes_bool)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
