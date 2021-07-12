@@ -104,7 +104,7 @@ class Fit:
         self.theta = theta
         self.cos_theta = np.cos(self.theta)
         self.correction_factor = 1.0  # Initialize Correction factor
-        self.axis_step = delta_x  # Initialize
+        self.axis_step = 0.0  # Initialize
         self.delta_x = delta_x
         self.n_steps = n_steps
         self.calculate_correction()
@@ -400,8 +400,6 @@ class Fit:
         """
         Calculate velocity dispersion given the fit of Halpha
         TODO: Test
-        TODO: Add other lines
-
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
