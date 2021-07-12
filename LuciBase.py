@@ -104,7 +104,7 @@ class Luci():
         """
         calib_map = file['calib_map'][()]
         calib_ref = self.hdr_dict['CALIBNM']
-        interferometer_cos_theta = calib_ref/calib_map.T[::-1,::-1]
+        interferometer_cos_theta = calib_ref/calib_map.T#[::-1,::-1]
         # We need to convert to degree so bear with me here
         self.interferometer_theta = np.rad2deg(np.arccos(interferometer_cos_theta))
 
@@ -273,12 +273,12 @@ class Luci():
         """
         if binning is not None:
             output_name = output_name + "_" + str(binning)
-        fits.writeto(output_name+'_velocity.fits', velocity_fits.T, header, overwrite=True)
-        fits.writeto(output_name+'_broadening.fits', broadening_fits.T, header, overwrite=True)
+        fits.writeto(output_name+'_velocity.fits', velocity_fits, header, overwrite=True)
+        fits.writeto(output_name+'_broadening.fits', broadening_fits, header, overwrite=True)
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct].T, header, overwrite=True)
-            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct].T, header, overwrite=True)
-        fits.writeto(output_name+'_Chi2.fits', chi2_fits.T, header, overwrite=True)
+            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
+            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
+        fits.writeto(output_name+'_Chi2.fits', chi2_fits, header, overwrite=True)
 
 
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None):
@@ -670,6 +670,13 @@ class Luci():
         SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         #start = time.time()
         #def SNR_calc(SNR, i):
+        flux_min = 0 ; flux_max= 0; noise_min = 0; noise_max = 0  # Initializing bounds for flux and noise calculation regions
+        if self.hdr_dict['FILTER'] == 'SN3':
+            flux_min = 15150; flux_max = 15300; noise_min = 14800; noise_max = 14850
+        elif self.hdr_dict['FILTER'] == 'SN1':
+            flux_min = 26550; flux_max = 27550; noise_min = 26200; noise_max = 26300
+        else:
+            print('SNR Calculation for this filter has not been implemented')
         for i in range(x_max-x_min):
             x_pix = x_min + i
             snr_local = []
@@ -677,12 +684,12 @@ class Luci():
                 y_pix = y_min+j
                 # Calculate SNR
                 # Select spectral region around Halpha and NII complex
-                min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-15150))
-                max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-15300))
+                min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-flux_min))
+                max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-flux_max))
                 flux_in_region = np.sum(self.cube_final[x_pix, y_pix, min_:max_])
                 # Select distance region
-                min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-14800))
-                max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-14850))
+                min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_min))
+                max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_max))
                 std_out_region = np.std(self.cube_final[x_pix, y_pix, min_:max_])
                 if method == 1:
                     signal = np.max(flux_in_region)-np.median(flux_in_region)
