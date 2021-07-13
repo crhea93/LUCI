@@ -328,10 +328,13 @@ class Luci():
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
+        corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
+        step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
         flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
+        continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name
         for i in tqdm(range(x_max-x_min)):
@@ -341,6 +344,9 @@ class Luci():
             ampls_local = []
             flux_local = []
             chi2_local = []
+            corr_local = []
+            step_local = []
+            continuum_local = []
             for j in range(y_max-y_min):
                 y_pix = y_min+j
                 if binning is not None:
@@ -367,12 +373,18 @@ class Luci():
                 ampls_local.append(fit_dict['amplitudes'])
                 flux_local.append(fit_dict['fluxes'])
                 chi2_local.append(fit_dict['chi2'])
+                corr_local.append(fit_dict['corr'])
+                step_local.append(fit_dict['axis_step'])
+                continuum_local.append(fit_dict['continuum'])
             # Update global array of fit values
             velocity_fits[i] = vel_local
             broadening_fits[i] = broad_local
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
             chi2_fits[i] = chi2_local
+            corr_fits[i] = corr_local
+            step_fits[i] = step_local
+            continuum_fits[i] = continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
             self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header_binned, output_name, binning)
@@ -382,6 +394,9 @@ class Luci():
             # Make the cutout, including the WCS
             cutout = Cutout2D(self.cube_final[:,:,100], position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
             self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, cutout.wcs.to_header(), output_name, binning)
+        fits.writeto(output_name+'_corr.fits', corr_fits, self.header, overwrite=True)
+        fits.writeto(output_name+'_step.fits', step_fits, self.header, overwrite=True)
+        fits.writeto(output_name+'_continuum.fits', continuum_fits, self.header, overwrite=True)
         return velocity_fits, broadening_fits, flux_fits, chi2_fits
 
         #n_threads = 1
@@ -741,7 +756,7 @@ class Luci():
         while try_again:
             if not submission_id:
                 try:
-                    wcs_header = ast.solve_from_image(output_dir+'/stacked_%i.fits'%(tile_ct+1), submission_id=submission_id, solve_timeout=300)#, use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
+                    wcs_header = ast.solve_from_image(self.output_dir+'/'+self.object_name+'_deep.fits', submission_id=submission_id, solve_timeout=300)#, use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
                 except Exception as e:
                     print("Timedout")
                     submission_id = e.args[1]

@@ -208,7 +208,7 @@ class Fit:
         if self.ML_model is None or self.model_type == '':
             max_flux = np.argmax(self.spectrum_normalized)
             self.vel_ml = np.abs(3e5 * ((1e7/self.axis[max_flux] - line_theo) / line_theo))
-            self.broad_ml = 30.0  # Best for now
+            self.broad_ml = 10.0  # Best for now
         else:
             pass  # vel_ml and broad_ml already set using ML algorithm
         line_pos_est = 1e7 / ((self.vel_ml / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
@@ -288,7 +288,8 @@ class Fit:
 
         Args:
             theta - List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
+                            [amplitude, line location, sigma, continuum constant]
+                    The continuum constant is always the last argument regardless of the number of lines being modeled
             yerr: Error on Spectrum's flux values (default 1e-2)
         Return:
             Value of log likelihood
@@ -300,6 +301,8 @@ class Fit:
             model = self.sinc_model(self.axis, theta)
         elif self.model_type == 'sincgauss':
             model = self.sincgauss_model(self.axis, theta)
+        # Add constant contimuum to model
+        model += theta[-1]
         sigma2 = yerr ** 2
         return -0.5 * np.sum((self.spectrum_normalized - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
@@ -353,10 +356,10 @@ class Fit:
 
         """
         nll = lambda *args: -self.log_likelihood(*args)
-        initial = np.ones((3 * self.line_num))
+        initial = np.ones((3 * self.line_num + 1))
         bounds_ = []
         for mod in range(self.line_num):
-            val = 3 * mod + 1
+            #val = 3 * mod + 1
             amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])
             initial[3 * mod] = amp_est
             initial[3 * mod + 1] = vel_est
@@ -364,8 +367,9 @@ class Fit:
             bounds_.append((self.A_min, self.A_max))
             bounds_.append((self.x_min, self.x_max))
             bounds_.append((self.sigma_min, self.sigma_max))
-        bounds_l = [val[0] for val in bounds_]
-        bounds_u = [val[1] for val in bounds_]
+        initial[-1] = 0.1  # Add continuum constant and intialize it at 0.1 for the normalized spectrum
+        bounds_l = [val[0] for val in bounds_] + [0]  # Continuum Constraint
+        bounds_u = [val[1] for val in bounds_] + [1]  # Continuum Constraint
         bounds = Bounds(bounds_l, bounds_u)
         self.inital_values = initial
         sigma_cons = self.sigma_constraints()
@@ -378,6 +382,8 @@ class Fit:
         # We now must unscale the amplitude
         for i in range(self.line_num):
             parameters[i * 3] *= self.spectrum_scale
+        # Scale continuum
+        parameters[-1] *= self.spectrum_scale
         self.fit_sol = parameters
         self.fit_vector = self.gaussian_model(self.axis, self.fit_sol)
         return None
@@ -471,7 +477,8 @@ class Fit:
         fit_dict = {'fit_sol': self.fit_sol, 'fit_vector': self.fit_vector,
                     'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
                     'amplitudes': ampls, 'fluxes': fluxes, 'chi2': chi_sqr, 'velocities': vels,
-                    'sigmas': sigmas}
+                    'sigmas': sigmas, 'axis_step': self.axis_step, 'corr': self.correction_factor,
+                    'continuum': self.fit_sol[-1]}
         # Plot
         if self.Plot_bool == True:
             self.plot()
