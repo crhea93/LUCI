@@ -10,7 +10,7 @@ import time
 from joblib import Parallel, delayed
 from LUCI.LuciFit import Fit
 import matplotlib.pyplot as plt
-
+from astropy.nddata import Cutout2D
 
 class Luci():
     """
@@ -104,7 +104,7 @@ class Luci():
         """
         calib_map = file['calib_map'][()]
         calib_ref = self.hdr_dict['CALIBNM']
-        interferometer_cos_theta = calib_ref/calib_map.T#[::-1,::-1]
+        interferometer_cos_theta = calib_ref/calib_map#.T[::-1,::-1]
         # We need to convert to degree so bear with me here
         self.interferometer_theta = np.rad2deg(np.arccos(interferometer_cos_theta))
 
@@ -209,19 +209,6 @@ class Luci():
         max_ = np.argmin(np.abs(np.array(channel)-15600))
         self.wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
 
-    def fit_entire_cube(self, lines, fit_function):
-        """
-        Fit the entire cube (all spatial dimensions)
-        Args:
-            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
-            fit_function: Fitting function to use (e.x. 'gaussian')
-        """
-        x_min = 0
-        x_max = self.cube_final.shape[0]
-        y_min = 0
-        y_max = self.cube_final.shape[1]
-        self.fit_cube(lines, fit_function, x_min, x_max, y_min, y_max)
-
 
     def bin_cube(self, binning, x_min, x_max, y_min, y_max):
         """
@@ -279,6 +266,22 @@ class Luci():
             fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
             fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
         fits.writeto(output_name+'_Chi2.fits', chi2_fits, header, overwrite=True)
+
+
+    def fit_entire_cube(self, lines, fit_function, vel_rel, sigma_rel):
+        """
+        Fit the entire cube (all spatial dimensions)
+        Args:
+            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
+            fit_function: Fitting function to use (e.x. 'gaussian')
+            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
+        """
+        x_min = 0
+        x_max = self.cube_final.shape[0]
+        y_min = 0
+        y_max = self.cube_final.shape[1]
+        self.fit_cube(lines, fit_function,vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
 
 
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None):
@@ -369,9 +372,13 @@ class Luci():
             chi2_fits[i] = chi2_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header_binned, output_name, binning)
         else:
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
+            # Update header
+            wcs = WCS(self.header)
+            # Make the cutout, including the WCS
+            cutout = Cutout2D(self.cube_final[:,:,100], position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, cutout.wcs.to_header(), output_name, binning)
         return velocity_fits, broadening_fits, flux_fits, chi2_fits
 
         #n_threads = 1

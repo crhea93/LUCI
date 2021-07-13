@@ -207,14 +207,17 @@ class Fit:
         if self.ML_model is None or self.model_type == '':
             max_flux = np.argmax(self.spectrum_normalized)
             self.vel_ml = np.abs(3e5 * ((1e7/self.axis[max_flux] - line_theo) / line_theo))
-            self.broad_ml = 10.0  # Best for now
+            self.broad_ml = 30.0  # Best for now
         else:
             pass  # vel_ml and broad_ml already set using ML algorithm
         line_pos_est = 1e7 / ((self.vel_ml / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
-        line_amp_est = np.max([self.spectrum_normalized[line_ind - 2], self.spectrum_normalized[line_ind - 1],
-                               self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind + 1],
-                               self.spectrum_normalized[line_ind + 2]])
+        try:
+            line_amp_est = np.max([self.spectrum_normalized[line_ind - 2], self.spectrum_normalized[line_ind - 1],
+                                   self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind + 1],
+                                   self.spectrum_normalized[line_ind + 2]])
+        except:
+            line_amp_est = self.spectrum_normalized[line_ind]
         line_broad_est = (line_pos_est * self.broad_ml * self.correction_factor) / 3e5
         return line_amp_est, line_pos_est, line_broad_est
 
@@ -368,7 +371,7 @@ class Fit:
         vel_cons = self.vel_constraints()
         cons = (sigma_cons + vel_cons)
         soln = minimize(nll, initial, method='SLSQP',# jac=self.fun_der(),
-                        options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
+                        options={'disp': True, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
                         args=(1e-2), constraints=cons)
         parameters = soln.x
         # We now must unscale the amplitude
@@ -403,7 +406,7 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad = (3e5 * self.fit_sol[3*ind+2] * self.axis_step) / self.fit_sol[3*ind+1]
+        broad = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
         return broad
 
     def calculate_flux(self, line_amp, line_sigma):
