@@ -371,7 +371,7 @@ class Fit:
         vel_cons = self.vel_constraints()
         cons = (sigma_cons + vel_cons)
         soln = minimize(nll, initial, method='SLSQP',# jac=self.fun_der(),
-                        options={'disp': True, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
+                        options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
                         args=(1e-2), constraints=cons)
         parameters = soln.x
         # We now must unscale the amplitude
