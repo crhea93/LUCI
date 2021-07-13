@@ -11,6 +11,9 @@ from joblib import Parallel, delayed
 from LUCI.LuciFit import Fit
 import matplotlib.pyplot as plt
 from astropy.nddata import Cutout2D
+from astroquery.astrometry_net import AstrometryNet
+from astropy.io import fits
+
 
 class Luci():
     """
@@ -37,7 +40,7 @@ class Luci():
             os.mkdir(self.output_dir)
         self.object_name = object_name
         self.redshift = redshift
-        self.ref_spec = ref_spec+'.fits'
+        if ref_spec is not None: self.ref_spec = ref_spec+'.fits'
         if model_ML_name != None or '':
             self.model_ML = keras.models.load_model(model_ML_name)
         else:
@@ -56,7 +59,7 @@ class Luci():
         self.interferometer_theta = None
         self.read_in_cube()
         self.spectrum_axis_func()
-        self.read_in_reference_spectrum()
+        if ref_spec is not None: self.read_in_reference_spectrum()
 
 
     def get_quadrant_dims(self, quad_number):
@@ -713,3 +716,59 @@ class Luci():
         #end = time.time()
         # Save
         fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR.T, self.header, overwrite=True)
+
+
+
+    def update_astrometry(self, api_key):
+        """
+        Use astronomy.net to update the astrometry in the header
+        If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
+        the header is not updated and an exception is thrown.
+
+        Args:
+            api_key: Astronomy.net user api key
+        """
+        # Initiate Astronomy Net
+        ast = AstrometryNet()
+        ast.key = api_key
+        ast.api_key = api_key
+        try_again = True
+        submission_id = None
+        # Check that deep image exists. Otherwise make one
+        if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
+            self.create_deep_image()
+        # Now submit to astronomy.net until the value is found
+        while try_again:
+            if not submission_id:
+                try:
+                    wcs_header = ast.solve_from_image(output_dir+'/stacked_%i.fits'%(tile_ct+1), submission_id=submission_id, solve_timeout=300)#, use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
+                except Exception as e:
+                    print("Timedout")
+                    submission_id = e.args[1]
+                else:
+                    # got a result, so terminate
+                    print("Result")
+                    try_again = False
+            else:
+                try:
+                    wcs_header = ast.monitor_submission(submission_id, solve_timeout=300)
+                except Exception as e:
+                    print("Timedout")
+                    submission_id = e.args[1]
+                else:
+                    # got a result, so terminate
+                    print("Result")
+                    try_again = False
+
+        if wcs_header:
+            # Code to execute when solve succeeds
+            # update deep image header
+            deep = fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')
+            deep.header.update(wcs_header)
+            deep.close()
+            # Update normal header
+            self.header = wcs_header
+
+        else:
+            # Code to execute when solve fails
+            print('Astronomy.net failed to solve. This astrometry has not been updated!')

@@ -321,10 +321,12 @@ we would run the following:</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_entire_cube">
-<span class="sig-name descname"><span class="pre">fit_entire_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_entire_cube" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fit_entire_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_entire_cube" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit the entire cube (all spatial dimensions)
 :param lines: Lines to fit (e.x. [‘Halpha’, ‘NII6583’])
-:param fit_function: Fitting function to use (e.x. ‘gaussian’)</p>
+:param fit_function: Fitting function to use (e.x. ‘gaussian’)
+:param vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+:param sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])</p>
 </dd></dl>
 
 <dl class="py method">
@@ -463,6 +465,19 @@ defined when the cube is initiated.</p>
 <span class="sig-name descname"><span class="pre">spectrum_axis_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.spectrum_axis_func" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the x-axis for the spectra. We must construct this from header information
 since each pixel only has amplitudes of the spectra at each point.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.update_astrometry">
+<span class="sig-name descname"><span class="pre">update_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.update_astrometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use astronomy.net to update the astrometry in the header
+If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
+the header is not updated and an exception is thrown.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>api_key</strong> – Astronomy.net user api key</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">

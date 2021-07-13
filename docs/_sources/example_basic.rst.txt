@@ -42,12 +42,12 @@ For example:
 .. code-block:: python
 
     # Using Machine Learning Algorithm for Initial Guess
-    cube_dir = '/home/carterrhea/Documents'  # Path to data cube
-    cube_name = 'A0426_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
-    object_name = 'NGC1275'
-    redshift = 0.017284  # Redshift of NGC 1275
-    ML_ref = '/the/path/to/LUCI/ML/Reference-Spectrum-R1800'
-    ML_model = '/the/path/to/LUCI/ML/R1800-PREDICTOR-I'
+    cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
+    cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
+    object_name = 'M33_Field7'
+    redshift = -0.0006  # Redshift of M33
+    ML_ref = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R5000'
+    ML_model = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I'
 
 Although the first three arguments are rather self explanatory, it is worth discussing the others.
 The redshift is provided so that we can shift x-axis of the spectra to the rest-frame.
@@ -62,7 +62,7 @@ If you require a different resolution for your work, please send me an email at 
 Similarly, the `ML_model` argument contains the path to the trained network corresponding to the same
 resolutions available for the `ML_ref` argument. Note that the naming conventions
 follow the same structure as is indicated in the example. Therefore, for a resolution 2000
-cube, we would set `ML_ref='ML/Reference-Spectrum-R2000'` and `ML_model='ML/R5000-PREDICTOR-I'`.
+cube, we would set `ML_ref='ML/Reference-Spectrum-R2000'` and `ML_model='ML/R2000-PREDICTOR-I'`.
 
 If you do not wish to use the machine learning methodology to estimate the initial values for
 the velocity, broadening, and amplitude of the line, please simply set both parameters equal to **None**.
@@ -70,10 +70,10 @@ the velocity, broadening, and amplitude of the line, please simply set both para
 .. code-block:: python
 
     # Not Using Machine Learning Algorithm for Initial Guess
-    cube_dir = '/home/carterrhea/Documents'  # Path to data cube
-    cube_name = 'NGC1275-LowRes'  # don't add .hdf5 extension
-    object_name = 'NGC1275'
-    redshift = 0.017284  # Redshift of NGC 1275
+    cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
+    cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
+    object_name = 'M33_Field7'
+    redshift = -0.0006  # Redshift of M33
     ML_ref = None
     ML_model = None
 
@@ -113,7 +113,7 @@ For example if we want to fit the three lines in SN3 with all their parameters t
 
 .. code-block:: python
 
-        vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 1300, 1400, 550, 650)
+        vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300)
 
 This final command fits the regions and saves the velocity, velocity dispersion (broadening), amplitude, flux, and fit statistic (chi-squared)
 maps in the output directory defined above. Additionally, it returns the velocity, velocity dispersion, flux, and fit statistics maps for plotting purposes.
@@ -158,15 +158,15 @@ For clarity, we reproduce the commands required to obtain fits here:
 
 .. code-block:: python
 
-    cube_dir = '/home/carterrhea/Documents'  # Path to data cube
-    cube_name = 'A0426_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
-    object_name = 'NGC1275'
-    redshift = 0.017284  # Redshift of NGC 1275
-    ML_ref = '/the/path/to/LUCI/ML/Reference-Spectrum-R1800'
-    ML_model = '/the/path/to/LUCI/ML/R1800-PREDICTOR-I'
+    cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
+    cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
+    object_name = 'M33_Field7'
+    redshift = -0.0006  # Redshift of M33
+    ML_ref = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R5000'
+    ML_model = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I'
 
     cube = Luci(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
 
     cube.create_deep_image()
 
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', 1300, 1400, 550, 650)
+    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300)

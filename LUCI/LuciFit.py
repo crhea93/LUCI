@@ -133,6 +133,7 @@ class Fit:
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()
+        self.check_lengths()
 
 
     def calculate_correction(self):
@@ -590,3 +591,19 @@ class Fit:
             print(self.model_type)
             raise Exception(
                 'Please submit a fitting function name in the available list: \n {}'.format(self.available_functions))
+
+
+    def check_lengths(self):
+        """
+        This function checks to see that the length of the sigma_rel and vel_rel arguments are correct
+        Return:
+        Nothing if the user provides appropriate length
+        Else it will throw an error
+
+        """
+        if len(self.vel_rel) != len(self.lines):
+            raise Exception("The argument vel_rel has %i arguments, but it should have %i arguments"%(len(self.vel_rel), len(self.lines)))
+        elif len(self.sigma_rel) != len(self.lines):
+            raise Exception("The argument sigma_rel has %i arguments, but it should have %i arguments"%(len(self.sigma_rel), len(self.lines)))
+        else:
+            pass

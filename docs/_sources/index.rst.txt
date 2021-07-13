@@ -63,6 +63,7 @@ Examples
 
        example_basic
        example_basic_lite
+       example_sn1_sn2
        example_fit_single
 
 
