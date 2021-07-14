@@ -6,6 +6,7 @@ from tqdm import tqdm
 import numpy as np
 import keras
 import pyregion
+from scipy import interpolate
 import time
 from joblib import Parallel, delayed
 from LUCI.LuciFit import Fit
@@ -21,30 +22,29 @@ class Luci():
     all io/administrative functionality. The fitting functionality can be found in the
     Fit class (Lucifit.py).
     """
-    def __init__(self, cube_path, output_dir, object_name, redshift, ref_spec=None, model_ML_name=None):
+    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True):#ref_spec=None, model_ML_name=None):
         """
         Initialize our Luci class -- this acts similar to the SpectralCube class
         of astropy or spectral-cube.
 
         Args:
+            Luci_path: Path to Luci
             cube_path: Full path to hdf5 cube with the hdf5 extension (e.x. '/user/home/M87.hdf5')
             output_dir: Full path to output directory
             object_name: Name of the object to fit. This is used for naming purposes. (e.x. 'M87')
             redshift: Redshift to the object. (e.x. 0.00428)
+            resolution: Resolution requested of machine learning algorithm reference spectrum
+            ML_bool: Boolean for applying machine learning; default=True
             ref_spec: Name of reference spectrum for machine learning algo (e.x. 'Reference-Spectrum-R5000')
             model_ML_name: Name of pretrained machine learning model
         """
+        self.Luci_path = Luci_path
         self.cube_path = cube_path
         self.output_dir = output_dir+'/Luci'
         if not os.path.exists(self.output_dir):
             os.mkdir(self.output_dir)
         self.object_name = object_name
         self.redshift = redshift
-        if ref_spec is not None: self.ref_spec = ref_spec+'.fits'
-        if model_ML_name != None or '':
-            self.model_ML = keras.models.load_model(model_ML_name)
-        else:
-            self.model_ML = model_ML_name
         self.quad_nb = 0  # Number of quadrants in Hdf5
         self.dimx = 0  # X dimension of cube
         self.dimy = 0  # Y dimension of cube
@@ -54,12 +54,20 @@ class Luci():
         self.header = None
         self.deep_image = None
         self.spectrum_axis = None
+        self.spectrum_axis_unshifted = None  # Spectrum axis without redshift change
         self.wavenumbers_syn = None
         self.hdr_dict = None
         self.interferometer_theta = None
+        self.transmission_interpolated = None
         self.read_in_cube()
         self.spectrum_axis_func()
-        if ref_spec is not None: self.read_in_reference_spectrum()
+        if ML_bool is True:
+            self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
+            self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
+            self.read_in_reference_spectrum()
+        else:
+            self.model_ML = None
+        self.read_in_transmission()
 
 
     def get_quadrant_dims(self, quad_number):
@@ -193,6 +201,7 @@ class Luci():
         end = start + (len_wl)*self.hdr_dict['CDELT3']  # End
         #step = hdr_dict['CDELT3']  # Step size
         self.spectrum_axis = np.array(np.linspace(start, end, len_wl)*(self.redshift+1), dtype=np.float32)  # Apply redshift correction
+        self.spectrum_axis_unshifted = np.array(np.linspace(start, end, len_wl), dtype=np.float32)  # Do not apply redshift correction
 
 
     def read_in_reference_spectrum(self):
@@ -212,6 +221,15 @@ class Luci():
         max_ = np.argmin(np.abs(np.array(channel)-15600))
         self.wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
 
+
+    def read_in_transmission(self):
+        """
+        Read in the transmission spectrum for the filter. Then apply interpolation
+        on it to make it have the same x-axis as the spectra.
+        """
+        transmission = np.loadtxt('%s/Data/%s_filter.dat'%(self.Luci_path, self.hdr_dict['FILTER']))  # first column - axis; second column - value
+        f = interpolate.interp1d(transmission[:,0], [val/100 for val in transmission[:,1]], kind='slinear')
+        self.transmission_interpolated = f(self.spectrum_axis_unshifted)
 
     def bin_cube(self, binning, x_min, x_max, y_min, y_max):
         """
@@ -243,7 +261,7 @@ class Luci():
         self.cube_binned = binned_cube / (binning**2)
 
 
-    def save_fits(self, lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, header, output_name, binning):
+    def save_fits(self, lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, header, output_name, binning):
         """
         Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
         amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
@@ -256,6 +274,7 @@ class Luci():
             ampls_fits: 2D Numpy array of amplitude values
             flux_fis: 2D Numpy array of flux values
             chi2_fits: 2D Numpy array of chi-squared values
+            continuum_fits: 2D Numpy array of continuum value
             header: Header object (either binned or unbinned)
             output_name: Output directory and naming convention
             binning: Value by which to bin (default None)
@@ -269,6 +288,7 @@ class Luci():
             fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
             fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
         fits.writeto(output_name+'_Chi2.fits', chi2_fits, header, overwrite=True)
+        fits.writeto(output_name+'_continuum.fits', continuum_fits, header, overwrite=True)
 
 
     def fit_entire_cube(self, lines, fit_function, vel_rel, sigma_rel):
@@ -363,7 +383,8 @@ class Luci():
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
                 fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                        self.model_ML, theta=self.interferometer_theta[x_pix, y_pix],
+                        self.model_ML, trans_filter = self.transmission_interpolated,
+                        theta=self.interferometer_theta[x_pix, y_pix],
                         delta_x = self.hdr_dict['STEP'], n_steps = self.hdr_dict['STEPNB'],
                         Plot_bool = False, bayes_bool=bayes_bool)
                 fit_dict = fit.fit()
@@ -387,16 +408,15 @@ class Luci():
             continuum_fits[i] = continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header_binned, output_name, binning)
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header_binned, output_name, binning)
         else:
             # Update header
             wcs = WCS(self.header)
             # Make the cutout, including the WCS
             cutout = Cutout2D(self.cube_final[:,:,100], position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, cutout.wcs.to_header(), output_name, binning)
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
         fits.writeto(output_name+'_corr.fits', corr_fits, self.header, overwrite=True)
         fits.writeto(output_name+'_step.fits', step_fits, self.header, overwrite=True)
-        fits.writeto(output_name+'_continuum.fits', continuum_fits, self.header, overwrite=True)
         return velocity_fits, broadening_fits, flux_fits, chi2_fits
 
         #n_threads = 1
@@ -462,12 +482,14 @@ class Luci():
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
         flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
+        continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         for i in tqdm(range(x_max-x_min)):
             x_pix = x_min + i
             vel_local = []
             broad_local = []
             ampls_local = []
             flux_local = []
+            continuum_local = []
             for j in range(y_max-y_min):
                 y_pix = y_min+j
                 # Check if pixel is in the mask or not
@@ -487,7 +509,8 @@ class Luci():
                     axis = self.spectrum_axis[good_sky_inds]
                     # Call fit!
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                            self.model_ML, theta = self.interferometer_theta[x_pix, y_pix],
+                            self.model_ML, trans_filter = self.transmission_interpolated,
+                            theta = self.interferometer_theta[x_pix, y_pix],
                             delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
                             Plot_bool = False, bayes_bool=bayes_bool)
                     fit_dict = fit.fit()
@@ -496,21 +519,24 @@ class Luci():
                     broad_local.append(fit_dict['broadening'])
                     ampls_local.append(fit_dict['amplitudes'])
                     flux_local.append(fit_dict['fluxes'])
+                    continuum_local.append(fit_dict['continuum'])
                 else:
                     vel_local.append(0)
                     broad_local.append(0)
                     ampls_local.append([0]*len(lines))
                     flux_local.append([0]*len(lines))
+                    continuum_local.append([0])
             # Update global array of fit values
             velocity_fits[i] = vel_local
             broadening_fits[i] = broad_local
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
+            continuum_fits = continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header, output_name, binning)
         else:
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, self.header, output_name, binning)
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header, output_name, binning)
 
         return velocity_fits, broadening_fits, flux_fits
 
@@ -667,9 +693,10 @@ class Luci():
         axis = self.spectrum_axis[good_sky_inds]
         # Call fit!
         fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                self.model_ML, theta = self.interferometer_theta[x_pix, y_pix],
+                self.model_ML, trans_filter = self.transmission_interpolated,
+                theta = self.interferometer_theta[x_pix, y_pix],
                 delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
-                 Plot_bool = False, bayes_bool=bayes_bool)
+                Plot_bool = False, bayes_bool=bayes_bool)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 

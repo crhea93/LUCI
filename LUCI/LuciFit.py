@@ -69,17 +69,19 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, theta=0, delta_x=2, n_steps=842, bayes_bool=False, Plot_bool=False):
+                 ML_model, trans_filter, theta=0, delta_x=2, n_steps=842, bayes_bool=False, Plot_bool=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
-            axis: Wavelength Axis of Spectrum (numpy array)
+            axis: Wavelength Axis of Spectrum after Redshift Application (numpy array)
+            axis_unshifted: Wavelength Axis of Spectrum after Redshift Application (numpy array)
             wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
             model_type: Type of model ('gaussian')
             lines: Lines to fit (must be in line_dict)
             vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             ML_model: Tensorflow/keras machine learning model
+            trans_filter: Tranmission filter interpolated on unredshifted spectral axis
             theta: Interferometric angle in degrees (defaults to 11.960 -- this is so that the correction coeff is 1)
             delta_x: Step Delta
             n_steps: Number of steps in spectra
@@ -93,11 +95,14 @@ class Fit:
                           'Hbeta': 486.133}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.spectrum = spectrum
-        self.axis = axis
+        self.axis = axis  # Redshifted axis
+        #self.axis_unshifted = axis_unshifted  # Non-redshifted axis
         self.wavenumbers_syn = wavenumbers_syn
         self.model_type = model_type
         self.lines = lines
         self.line_num = len(lines)  # Number of  lines to fit
+        self.trans_filter = trans_filter
+        self.apply_transmission()  # Apply transmission filter
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
@@ -134,6 +139,18 @@ class Fit:
         self.check_lines()
         self.check_fitting_model()
         self.check_lengths()
+
+
+    def apply_transmission(self):
+        """
+        Apply transmission curve on the spectra according to un-redshifted axis.
+        This is done before we interpolate onto the wavenumbers_syn so that the axis
+        align properly. Note -- the values of the x-axis are not important for this
+        division since we have already interpolated the transition filter vector
+        over the UNSHIFTED spectral axis.
+        """
+        self.spectrum = [self.spectrum[i]/self.trans_filter[i] if self.trans_filter[i] > 0.5 else self.spectrum[i] for i in range(len(self.spectrum))]
+        #np.divide(self.spectrum, self.trans_filter)
 
 
     def calculate_correction(self):
@@ -413,7 +430,7 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
+        broad = (3e5 * self.fit_sol[3*ind+2] * self.correction_factor) / self.fit_sol[3*ind+1]
         return broad
 
     def calculate_flux(self, line_amp, line_sigma):
