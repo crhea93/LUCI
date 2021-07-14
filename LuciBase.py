@@ -2,6 +2,7 @@ from astropy.io import fits
 import h5py
 import os
 from astropy.wcs import WCS
+from astropy.wcs.utils import pixel_to_skycoord
 from tqdm import tqdm
 import numpy as np
 import keras
@@ -167,7 +168,7 @@ class Luci():
         self.deep_image = np.mean(self.cube_final, axis=2)
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
-        fits.writeto(output_name, self.deep_image.T, self.header, overwrite=True)
+        fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
 
     def read_in_cube(self):
         """
@@ -188,6 +189,8 @@ class Luci():
             iquad_data[(iquad_data < -1e-16)]= -1e-22 # Modifs
             iquad_data[(iquad_data > 1e-9)]= 1e-22 # Modifs
             self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
+        self.cube_final = self.cube_final.transpose(1, 0, 2)
+        print(self.cube_final.shape)
         self.update_header(file)
         self.get_interferometer_angles(file)
 
@@ -256,8 +259,12 @@ class Luci():
         self.header_binned = self.header
         self.header_binned['CRPIX1'] = self.header_binned['CRPIX1']/binning
         self.header_binned['CRPIX2'] = self.header_binned['CRPIX2']/binning
-        self.header_binned['CDELT1'] = self.header_binned['CDELT1']/binning
-        self.header_binned['CDELT2'] = self.header_binned['CDELT2']/binning
+        #wcs = WCS(self.header)
+        #new_crvals = wcs.pixel_to_world(self.header_binned['CRPIX1'], self.header['CRPIX2'])
+        #self.header_binned['CRVAL1'] = new_crvals[0]
+        #self.header_binned['CRVAL2'] = new_crvals[1]
+        self.header_binned['CDELT1'] = self.header_binned['CDELT1']*binning
+        self.header_binned['CDELT2'] = self.header_binned['CDELT2']*binning
         self.cube_binned = binned_cube / (binning**2)
 
 
@@ -345,20 +352,20 @@ class Luci():
             #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
             x_min = 0 ; y_min = 0
-        velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
-        broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
-        chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
-        corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
-        step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
+        velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
-        ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
-        flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
-        continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
+        ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name
-        for i in tqdm(range(x_max-x_min)):
-            x_pix = x_min + i
+        for i in tqdm(range(y_max-y_min)):
+            y_pix = y_min + i
             vel_local = []
             broad_local = []
             ampls_local = []
@@ -367,8 +374,8 @@ class Luci():
             corr_local = []
             step_local = []
             continuum_local = []
-            for j in range(y_max-y_min):
-                y_pix = y_min+j
+            for j in range(x_max-x_min):
+                x_pix = x_min+j
                 if binning is not None:
                     sky = self.cube_binned[x_pix, y_pix, :]
                 else:
@@ -408,17 +415,19 @@ class Luci():
             continuum_fits[i] = continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
+            wcs = WCS(self.header_binned)
+            Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
             self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header_binned, output_name, binning)
         else:
-            # Update header
-            wcs = WCS(self.header)
+            ## Update header
+            #wcs = WCS(self.header)
             # Make the cutout, including the WCS
-            if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
-                self.create_deep_image()
-            else:
-                self.deep_image = fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data
-            cutout = Cutout2D(self.deep_image, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
+            #if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
+        #        self.create_deep_image()
+            #else:
+            #    self.deep_image = fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data
+            #cutout = Cutout2D(self.deep_image, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header, output_name, binning)
         fits.writeto(output_name+'_corr.fits', corr_fits, self.header, overwrite=True)
         fits.writeto(output_name+'_step.fits', step_fits, self.header, overwrite=True)
         return velocity_fits, broadening_fits, flux_fits, chi2_fits
@@ -476,29 +485,29 @@ class Luci():
             #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
             x_min = 0 ; y_min = 0
-        velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
-        broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
         if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
             region = region.split('/')[-1]
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_'+region.split('.')[0]
+        velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
-        ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
-        flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32)
-        continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
-        for i in tqdm(range(x_max-x_min)):
-            x_pix = x_min + i
+        ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        for i in tqdm(range(y_max-y_min)):
+            y_pix = y_min + i
             vel_local = []
             broad_local = []
             ampls_local = []
             flux_local = []
             continuum_local = []
-            for j in range(y_max-y_min):
-                y_pix = y_min+j
+            for j in range(x_max-x_min):
+                x_pix = x_min+j
                 # Check if pixel is in the mask or not
                 # If so, fit as normal. Else, set values to zero
-                if mask[x_pix, y_pix] == True:
+                if mask[y_pix, x_pix] == True:
                     if binning is not None:
                         sky = self.cube_binned[x_pix, y_pix, :]
                     else:
@@ -628,12 +637,12 @@ class Luci():
         y_max = self.cube_final.shape[1]
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
         spec_ct = 0
-        for i in tqdm(range(x_max-x_min)):
-            x_pix = x_min + i
-            for j in range(y_max-y_min):
-                y_pix = y_min+j
+        for i in tqdm(range(y_max-y_min)):
+            y_pix = y_min + i
+            for j in range(x_max-x_min):
+                x_pix = x_min+j
                 # Check if pixel is in the mask or not
-                if mask[x_pix, y_pix] == True:
+                if mask[y_pix, x_pix] == True:
                     integrated_spectrum += self.cube_final[x_pix, y_pix, :]
                     spec_ct += 1
                 else:
@@ -678,10 +687,10 @@ class Luci():
         y_max = self.cube_final.shape[1]
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
         spec_ct = 0
-        for i in tqdm(range(x_max-x_min)):
-            x_pix = x_min + i
-            for j in range(y_max-y_min):
-                y_pix = y_min+j
+        for i in tqdm(range(y_max-y_min)):
+            y_pix = y_min + i
+            for j in range(x_max-x_min):
+                x_pix = x_min+j
                 # Check if pixel is in the mask or not
                 if mask[x_pix, y_pix] == True:
                     integrated_spectrum += self.cube_final[x_pix, y_pix, :]
@@ -733,11 +742,11 @@ class Luci():
             flux_min = 26550; flux_max = 27550; noise_min = 26200; noise_max = 26300
         else:
             print('SNR Calculation for this filter has not been implemented')
-        for i in range(x_max-x_min):
-            x_pix = x_min + i
+        for i in range(y_max-y_min):
+            y_pix = y_min + i
             snr_local = []
-            for j in range(y_max-y_min):
-                y_pix = y_min+j
+            for j in range(x_max-x_min):
+                x_pix = x_min+j
                 # Calculate SNR
                 # Select spectral region around Halpha and NII complex
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-flux_min))
