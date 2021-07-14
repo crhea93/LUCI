@@ -413,7 +413,11 @@ class Luci():
             # Update header
             wcs = WCS(self.header)
             # Make the cutout, including the WCS
-            cutout = Cutout2D(self.cube_final[:,:,100], position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
+                self.create_deep_image()
+            else:
+                self.deep_image = fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data
+            cutout = Cutout2D(self.deep_image, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
             self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
         fits.writeto(output_name+'_corr.fits', corr_fits, self.header, overwrite=True)
         fits.writeto(output_name+'_step.fits', step_fits, self.header, overwrite=True)
@@ -520,7 +524,7 @@ class Luci():
                     ampls_local.append(fit_dict['amplitudes'])
                     flux_local.append(fit_dict['fluxes'])
                     continuum_local.append(fit_dict['continuum'])
-                else:
+                else:  # If outside of mask set to zero
                     vel_local.append(0)
                     broad_local.append(0)
                     ampls_local.append([0]*len(lines))
