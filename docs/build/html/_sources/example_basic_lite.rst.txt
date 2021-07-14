@@ -26,12 +26,12 @@ We now will set the required parameters. We are also going to be using our machi
 
     #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
+    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
     cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7'
     redshift = -0.0006  # Redshift of M33
-    ML_ref = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R5000'
-    ML_model = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I'
+    resolution = 5000
 
 
 We intialize our LUCI object
@@ -39,7 +39,7 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = Luci(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
+    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
 
 The output will look something like this:
 

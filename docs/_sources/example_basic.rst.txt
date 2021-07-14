@@ -29,12 +29,12 @@ The next step is to load/read the HDF5 data cube. To do this we **invoke** LUCI
 by initiating an instance of her along with the proper parameters. First we
 define the correct parameters:
 
-1. cube_dir = '/path/to/data/cube'  # Path to data cube
-2. cube_name = 'name_of_data_cube'  # don't add .hdf5 extension
-3. object_name = 'name_of_object'
-4. redshift = 0.01  # Redshift of object
-5. ML_ref = '/the/path/to/LUCI/ML/Reference-Spectrum-R5000'  # Relative path to reference spectrum
-6. ML_model = '/the/path/to/LUCI/ML/R5000-PREDICTOR-I'  # Relative path to train ML algorithm
+1. luci_path = /the/path/to/LUCI  # Path to Luci
+2. cube_dir = '/path/to/data/cube'  # Path to data cube
+3. cube_name = 'name_of_data_cube'  # don't add .hdf5 extension
+4. object_name = 'name_of_object'
+5. redshift = 0.01  # Redshift of object
+6. resolution = 5000  # Resolution of the ML reference spectrum
 
 
 For example:
@@ -42,47 +42,48 @@ For example:
 .. code-block:: python
 
     # Using Machine Learning Algorithm for Initial Guess
+    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
     cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7'
     redshift = -0.0006  # Redshift of M33
-    ML_ref = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R5000'
-    ML_model = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I'
+    resolution = 5000
+    ML_bool = True
 
 Although the first three arguments are rather self explanatory, it is worth discussing the others.
 The redshift is provided so that we can shift x-axis of the spectra to the rest-frame.
 As discussed in `howLuciWorks`_, this enables better fitting. The redshift of an object
 can be found at `http://cdsportal.u-strasbg.fr/ <http://cdsportal.u-strasbg.fr/>`_ .
 
-The `ML_ref` argument contains the path to the reference spectrum with the appropriate resolution
+The `resolution` is the resolution of the reference spectrum
 that will be used for the initial fit estimates. Although this was previously described, I'll remind
 you that you can find more information at `https://sitelle-signals.github.io/Pamplemousse/index.html <https://sitelle-signals.github.io/Pamplemousse/index.html>`_.
-The Luci directory contains already a handful differing resolutions (R ~ 1800, 2000, 2500, 3000, 3500, 4000 ,4500, 5000, 7000).
+The Luci directory contains already a handful differing resolutions (R ~ 1000, 1800, 2000, 2500, 3000, 3500, 4000 ,4500, 5000, 7000).
 If you require a different resolution for your work, please send me an email at carter.rhea@umontreal.ca.
-Similarly, the `ML_model` argument contains the path to the trained network corresponding to the same
-resolutions available for the `ML_ref` argument. Note that the naming conventions
-follow the same structure as is indicated in the example. Therefore, for a resolution 2000
-cube, we would set `ML_ref='ML/Reference-Spectrum-R2000'` and `ML_model='ML/R2000-PREDICTOR-I'`.
+
+Note that `ML_bool=True` by default.
+
 
 If you do not wish to use the machine learning methodology to estimate the initial values for
-the velocity, broadening, and amplitude of the line, please simply set both parameters equal to **None**.
+the velocity, broadening, and amplitude of the line, please simply include the argument **ML_bool=False.
 
 .. code-block:: python
 
     # Not Using Machine Learning Algorithm for Initial Guess
+    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
     cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7'
     redshift = -0.0006  # Redshift of M33
-    ML_ref = None
-    ML_model = None
+    resolution = 5000
+    ML_bool = False
 
 
 With these parameters set, we can invoke `LUCI` with the following command:
 
 .. code-block:: python
 
-    cube = Luci(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
+    cube = Luci(luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
 
 This reads the HDF5 file, transforms the data cube into a 3d numpy array, and updates the header to be of an appropriate form.
 It also reads in the machine learning reference spectrum (we need the x-axis for interpolation purposes) and
@@ -158,12 +159,12 @@ For clarity, we reproduce the commands required to obtain fits here:
 
 .. code-block:: python
 
+    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'  # Path to Luci
     cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7'
     redshift = -0.0006  # Redshift of M33
-    ML_ref = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R5000'
-    ML_model = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I'
+    resolution = 5000
 
     cube = Luci(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
 

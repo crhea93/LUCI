@@ -24,12 +24,13 @@ We now will set the required parameters. We are also going to be using our machi
 
     #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
+    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
     cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN1.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7_SN1'
     redshift = -0.0006  # Redshift of M33
-    ML_ref = None
-    ML_model = None
+    resolution = 5000
+    ML_bool = False
 
 
 We intialize our LUCI object
@@ -37,7 +38,7 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = Luci(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
+    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
 
 The output will look something like this:
 
@@ -84,12 +85,13 @@ Let's do the same for SN2
 
     #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
+    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
     cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN2.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7_SN2'
     redshift = -0.0006  # Redshift of M33
-    ML_ref = None
-    ML_model = None
+    resolution = 5000
+    ML_bool = False
 
 
 We intialize our LUCI object
@@ -97,7 +99,7 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = Luci(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
+    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
 
 The output will look something like this:
 

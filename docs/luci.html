@@ -95,6 +95,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single.html">Fit Single Spectrum</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
@@ -181,7 +182,7 @@ functions in <cite>LuciFit.py</cite>.</p>
 <span id="core-functions"></span><h2>Core Functions<a class="headerlink" href="#module-LuciBase" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="LuciBase.Luci">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LuciBase.</span></span><span class="sig-name descname"><span class="pre">Luci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cube_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_spec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_ML_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LuciBase.</span></span><span class="sig-name descname"><span class="pre">Luci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Luci_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cube_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is the primary class for the general purpose line fitting code LUCI. This contains
 all io/administrative functionality. The fitting functionality can be found in the
 Fit class (Lucifit.py).</p>
@@ -438,8 +439,15 @@ will be saved as self.wavenumbers_syn [cm-1].</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.read_in_transmission">
+<span class="sig-name descname"><span class="pre">read_in_transmission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_transmission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read in the transmission spectrum for the filter. Then apply interpolation
+on it to make it have the same x-axis as the spectra.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.save_fits">
-<span class="sig-name descname"><span class="pre">save_fits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadening_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.save_fits" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save_fits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadening_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuum_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.save_fits" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
 amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
 defined when the cube is initiated.</p>
@@ -452,6 +460,7 @@ defined when the cube is initiated.</p>
 <li><p><strong>ampls_fits</strong> – 2D Numpy array of amplitude values</p></li>
 <li><p><strong>flux_fis</strong> – 2D Numpy array of flux values</p></li>
 <li><p><strong>chi2_fits</strong> – 2D Numpy array of chi-squared values</p></li>
+<li><p><strong>continuum_fits</strong> – 2D Numpy array of continuum value</p></li>
 <li><p><strong>header</strong> – Header object (either binned or unbinned)</p></li>
 <li><p><strong>output_name</strong> – Output directory and naming convention</p></li>
 <li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>

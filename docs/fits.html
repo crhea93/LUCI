@@ -96,6 +96,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single.html">Fit Single Spectrum</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
@@ -181,7 +182,7 @@
 <span id="fitting-functions"></span><h2>Fitting Functions<a class="headerlink" href="#module-LUCI.LuciFit" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFit.</span></span><span class="sig-name descname"><span class="pre">Fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">842</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Plot_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFit.</span></span><span class="sig-name descname"><span class="pre">Fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">842</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Plot_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class that defines the functions necessary for the modelling aspect. This includes
 the gaussian fit functions, the prior definitions, the log likelihood, and the
 definition of the posterior (log likelihood times prior).</p>
@@ -194,6 +195,16 @@ definition of the posterior (log likelihood times prior).</p>
 :param sigma_rel: Constraints on sigma (must be list)
 :param ML_model: Tensorflow/keras machine learning model
 :param Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.apply_transmission">
+<span class="sig-name descname"><span class="pre">apply_transmission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.apply_transmission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply transmission curve on the spectra according to un-redshifted axis.
+This is done before we interpolate onto the wavenumbers_syn so that the axis
+align properly. Note – the values of the x-axis are not important for this
+division since we have already interpolated the transition filter vector
+over the UNSHIFTED spectral axis.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calc_sinc_width">
 <span class="sig-name descname"><span class="pre">calc_sinc_width</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sincgauss_args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calc_sinc_width" title="Permalink to this definition">¶</a></dt>
@@ -383,7 +394,8 @@ Then normalize the spectrum so that the max value equals 1</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>- List of parameters for all the models in the following order</strong> (<em>theta</em>) – [amplitude, line location, sigma]</p></li>
+<li><p><strong>- List of parameters for all the models in the following order</strong> (<em>theta</em>) – [amplitude, line location, sigma, continuum constant]
+The continuum constant is always the last argument regardless of the number of lines being modeled</p></li>
 <li><p><strong>yerr</strong> – Error on Spectrum’s flux values (default 1e-2)</p></li>
 </ul>
 </dd>
