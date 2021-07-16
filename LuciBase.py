@@ -168,7 +168,7 @@ class Luci():
         self.deep_image = np.mean(self.cube_final, axis=2)
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
-        fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
+        fits.writeto(output_name, self.deep_image.T, self.header, overwrite=True)
 
     def read_in_cube(self):
         """
@@ -416,8 +416,8 @@ class Luci():
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
             wcs = WCS(self.header_binned)
-            Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header_binned, output_name, binning)
+            cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
         else:
             ## Update header
             #wcs = WCS(self.header)
@@ -427,7 +427,9 @@ class Luci():
             #else:
             #    self.deep_image = fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data
             #cutout = Cutout2D(self.deep_image, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header, output_name, binning)
+            wcs = WCS(self.header)
+            cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
         fits.writeto(output_name+'_corr.fits', corr_fits, self.header, overwrite=True)
         fits.writeto(output_name+'_step.fits', step_fits, self.header, overwrite=True)
         return velocity_fits, broadening_fits, flux_fits, chi2_fits

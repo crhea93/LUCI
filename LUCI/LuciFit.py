@@ -508,7 +508,7 @@ class Fit:
         # Unscale the amplitude
         for i in range(self.line_num):
             self.fit_sol[i * 3] /= self.spectrum_scale
-        n_dim = 3 * self.line_num
+        n_dim = 3 * self.line_num + 1
         n_walkers = n_dim * 2 + 4
         init_ = self.fit_sol + 1 * np.random.randn(n_walkers, n_dim)
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
