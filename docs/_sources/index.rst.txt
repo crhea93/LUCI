@@ -77,9 +77,21 @@ Pipeline
       fits
       luci
 
+
+FAQ & Errors
+^^^^^^^^^^^^
+  .. toctree::
+     :maxdepth: 1
+     :caption: FAQ:
+
+     FAQ
+
+
 .. image:: Luci-Prancing.jpg
     :width: 400
     :alt: Alternative text
+
+
 
 
 Indices and tables

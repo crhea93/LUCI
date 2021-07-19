@@ -347,7 +347,7 @@ class Luci():
 
         """
         # Initialize fit solution arrays
-        if binning != None:
+        if binning != None and binning > 1:
             self.bin_cube(binning, x_min, x_max, y_min, y_max)
             #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
@@ -482,7 +482,7 @@ class Luci():
         y_min = 0
         y_max = self.cube_final.shape[1]
         # Initialize fit solution arrays
-        if binning != None:
+        if binning != None and binning > 1:
             self.bin_cube(binning, x_min, x_max, y_min, y_max)
             #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
