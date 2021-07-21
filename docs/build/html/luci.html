@@ -214,7 +214,7 @@ Fit class (Lucifit.py).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.create_deep_image">
 <span class="sig-name descname"><span class="pre">create_deep_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_deep_image" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create deep image fits file of the cube. This takes the cube and averages
+<dd><p>Create deep image fits file of the cube. This takes the cube and sums
 the spectral axis. Then the deep image is saved as a fits file with the following
 naming convention: output_dir+’/’+object_name+’_deep.fits’</p>
 </dd></dl>
@@ -452,7 +452,7 @@ on it to make it have the same x-axis as the spectra.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.save_fits">
-<span class="sig-name descname"><span class="pre">save_fits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadening_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuum_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.save_fits" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save_fits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadening_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_err_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadening_err_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuum_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.save_fits" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
 amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
 defined when the cube is initiated.</p>
@@ -462,6 +462,8 @@ defined when the cube is initiated.</p>
 <li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
 <li><p><strong>velocity_fits</strong> – 2D Numpy array of velocity values</p></li>
 <li><p><strong>broadening_fits</strong> – 2D Numpy array of broadening values</p></li>
+<li><p><strong>velocity_err_fits</strong> – 2D Numpy array of velocity errors</p></li>
+<li><p><strong>broadening_err_fits</strong> – 2D Numpy array of broadening errors</p></li>
 <li><p><strong>ampls_fits</strong> – 2D Numpy array of amplitude values</p></li>
 <li><p><strong>flux_fis</strong> – 2D Numpy array of flux values</p></li>
 <li><p><strong>chi2_fits</strong> – 2D Numpy array of chi-squared values</p></li>

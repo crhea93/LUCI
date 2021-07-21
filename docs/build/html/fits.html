@@ -186,7 +186,7 @@
 <span id="fitting-functions"></span><h2>Fitting Functions<a class="headerlink" href="#module-LUCI.LuciFit" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFit.</span></span><span class="sig-name descname"><span class="pre">Fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">842</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Plot_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFit.</span></span><span class="sig-name descname"><span class="pre">Fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">842</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SN3'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Plot_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class that defines the functions necessary for the modelling aspect. This includes
 the gaussian fit functions, the prior definitions, the log likelihood, and the
 definition of the posterior (log likelihood times prior).</p>
@@ -222,9 +222,31 @@ over the UNSHIFTED spectral axis.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_broad">
 <span class="sig-name descname"><span class="pre">calculate_broad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_broad" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate velocity dispersion given the fit of Halpha
-TODO: Test
-:returns: Velocity Dispersion of the Halpha line in units of km/s</p>
+<dd><p>Calculate velocity dispersion
+TODO: Test</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ind</strong> – Index of line in lines</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_broad_err">
+<span class="sig-name descname"><span class="pre">calculate_broad_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_broad_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity dispersion error
+TODO: Test</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ind</strong> – Index of line in lines</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -252,6 +274,15 @@ TODO: Test</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_noise">
+<span class="sig-name descname"><span class="pre">calculate_noise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate noise level in spectrum. We assume the noise is homogenous across the
+spectrum. We estimate it by taking a region outside of the filter and calculating
+the standard deviation in that region. We use the normalized spectrum since that
+is what is passed to the fit function.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_params">
 <span class="sig-name descname"><span class="pre">calculate_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_params" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the amplitude, position, and sigma of the line. These values are
@@ -265,9 +296,23 @@ We then correct the flux by un-normalizing the spectrum.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_vel">
 <span class="sig-name descname"><span class="pre">calculate_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_vel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate velocity given the fit of Halpha
-TODO: Test
-TODO: Add other lines</p>
+<dd><p>Calculate velocity
+TODO: Test</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ind</strong> – Index of line in lines</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_vel_err">
+<span class="sig-name descname"><span class="pre">calculate_vel_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_vel_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity error
+TODO: Test</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>ind</strong> – Index of line in lines</p>

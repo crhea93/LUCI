@@ -146,3 +146,44 @@ of 0.01 for each point in the spectrum.
 
 .. toctree::
    :maxdepth: 2
+
+In order to estimate the uncertainties (and complete the fits), we assume a homogenous
+noise level associated with the the instrument. This is then accepted as the noise
+over the entire spectrum in the filter. This is calculated for each individual spectrum
+by considering a region outside of the filter (i.e. where the transmission is zero).
+We then take the noise as the standard deviation of the region. This is typically
+on the order of 1% of the flux in high SNR regions. We take the following wavelength regions:
+
+SN1: 25300 - 25700
+##################
+
+.. image:: SN1_noise.png
+    :alt: Luci Initialization Output
+
+SN1 filter of example background (M33 Field 7). The noise region is bounded
+by the magenta box.
+
+SN2: 18600 - 19000
+##################
+
+.. image:: SN2_noise.png
+    :alt: Luci Initialization Output
+
+SN2 filter of example background (M33 Field 7). The noise region is bounded
+by the magenta box.
+
+SN3: 16000 - 16400
+##################
+
+
+
+
+
+Transmission
+^^^^^^^^^^^^
+We take into account the transmission of the SITTELLE filters (SN1, SN2, and SN3).
+We take the true transmission as the mean of the transmission at different filter angles;
+the raw data can be found [here](https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php).
+The transmission is then applied to the spectrum in the following manner:
+if the transmission is above 0.5, then we multiply the spectrum by the transmission percentage. Otherwise, we set it to zero.
+Note that we calculate the noise **before** applying the transmission.

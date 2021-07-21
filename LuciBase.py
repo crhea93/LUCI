@@ -160,12 +160,12 @@ class Luci():
 
     def create_deep_image(self, output_name=None):
         """
-        Create deep image fits file of the cube. This takes the cube and averages
+        Create deep image fits file of the cube. This takes the cube and sums
         the spectral axis. Then the deep image is saved as a fits file with the following
         naming convention: output_dir+'/'+object_name+'_deep.fits'
         """
         hdu = fits.PrimaryHDU()
-        self.deep_image = np.mean(self.cube_final, axis=2)
+        self.deep_image = np.sum(self.cube_final, axis=2)
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
         fits.writeto(output_name, self.deep_image.T, self.header, overwrite=True)
@@ -231,7 +231,7 @@ class Luci():
         on it to make it have the same x-axis as the spectra.
         """
         transmission = np.loadtxt('%s/Data/%s_filter.dat'%(self.Luci_path, self.hdr_dict['FILTER']))  # first column - axis; second column - value
-        f = interpolate.interp1d(transmission[:,0], [val/100 for val in transmission[:,1]], kind='slinear')
+        f = interpolate.interp1d(transmission[:,0], [val/100 for val in transmission[:,1]], kind='slinear', fill_value="extrapolate")
         self.transmission_interpolated = f(self.spectrum_axis_unshifted)
 
     def bin_cube(self, binning, x_min, x_max, y_min, y_max):
@@ -268,7 +268,7 @@ class Luci():
         self.cube_binned = binned_cube / (binning**2)
 
 
-    def save_fits(self, lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, header, output_name, binning):
+    def save_fits(self, lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, header, output_name, binning):
         """
         Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
         amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
@@ -278,6 +278,8 @@ class Luci():
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             velocity_fits: 2D Numpy array of velocity values
             broadening_fits: 2D Numpy array of broadening values
+            velocity_err_fits: 2D Numpy array of velocity errors
+            broadening_err_fits: 2D Numpy array of broadening errors
             ampls_fits: 2D Numpy array of amplitude values
             flux_fis: 2D Numpy array of flux values
             chi2_fits: 2D Numpy array of chi-squared values
@@ -291,6 +293,8 @@ class Luci():
             output_name = output_name + "_" + str(binning)
         fits.writeto(output_name+'_velocity.fits', velocity_fits, header, overwrite=True)
         fits.writeto(output_name+'_broadening.fits', broadening_fits, header, overwrite=True)
+        fits.writeto(output_name+'_velocity_err.fits', velocity_err_fits, header, overwrite=True)
+        fits.writeto(output_name+'_broadening_err.fits', broadening_err_fits, header, overwrite=True)
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
             fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
             fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
@@ -354,6 +358,8 @@ class Luci():
             x_min = 0 ; y_min = 0
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        velocity_err_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        broadening_err_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
@@ -368,6 +374,8 @@ class Luci():
             y_pix = y_min + i
             vel_local = []
             broad_local = []
+            vel_err_local = []
+            broad_err_local = []
             ampls_local = []
             flux_local = []
             chi2_local = []
@@ -393,11 +401,14 @@ class Luci():
                         self.model_ML, trans_filter = self.transmission_interpolated,
                         theta=self.interferometer_theta[x_pix, y_pix],
                         delta_x = self.hdr_dict['STEP'], n_steps = self.hdr_dict['STEPNB'],
+                        filter = self.hdr_dict['FILTER'],
                         Plot_bool = False, bayes_bool=bayes_bool)
                 fit_dict = fit.fit()
                 # Save local list of fit values
                 vel_local.append(fit_dict['velocity'])
                 broad_local.append(fit_dict['broadening'])
+                vel_err_local.append(fit_dict['velocity_err'])
+                broad_err_local.append(fit_dict['broadening_err'])
                 ampls_local.append(fit_dict['amplitudes'])
                 flux_local.append(fit_dict['fluxes'])
                 chi2_local.append(fit_dict['chi2'])
@@ -407,6 +418,8 @@ class Luci():
             # Update global array of fit values
             velocity_fits[i] = vel_local
             broadening_fits[i] = broad_local
+            velocity_err_fits[i] = vel_err_local
+            broadening_err_fits[i] = broad_err_local
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
             chi2_fits[i] = chi2_local
@@ -415,21 +428,13 @@ class Luci():
             continuum_fits[i] = continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
-            wcs = WCS(self.header_binned)
-            cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
+            #wcs = WCS(self.header_binned)
+            #cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header, output_name, binning)
         else:
-            ## Update header
             #wcs = WCS(self.header)
-            # Make the cutout, including the WCS
-            #if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
-        #        self.create_deep_image()
-            #else:
-            #    self.deep_image = fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data
-            #cutout = Cutout2D(self.deep_image, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            wcs = WCS(self.header)
-            cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
+            #cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header, output_name, binning)
         fits.writeto(output_name+'_corr.fits', corr_fits, self.header, overwrite=True)
         fits.writeto(output_name+'_step.fits', step_fits, self.header, overwrite=True)
         return velocity_fits, broadening_fits, flux_fits, chi2_fits
@@ -471,7 +476,7 @@ class Luci():
         """
         # Create mask
         if '.reg' in region:
-            shape = (2048, 2064)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
             mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
         else:
@@ -493,6 +498,11 @@ class Luci():
             output_name = self.output_dir+'/'+self.object_name+'_'+region.split('.')[0]
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        velocity_err_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        broadening_err_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
@@ -502,14 +512,17 @@ class Luci():
             y_pix = y_min + i
             vel_local = []
             broad_local = []
+            vel_err_local = []
+            broad_err_local = []
             ampls_local = []
             flux_local = []
+            chi2_local = []
             continuum_local = []
             for j in range(x_max-x_min):
                 x_pix = x_min+j
                 # Check if pixel is in the mask or not
                 # If so, fit as normal. Else, set values to zero
-                if mask[y_pix, x_pix] == True:
+                if mask[x_pix, y_pix] == True:
                     if binning is not None:
                         sky = self.cube_binned[x_pix, y_pix, :]
                     else:
@@ -527,33 +540,47 @@ class Luci():
                             self.model_ML, trans_filter = self.transmission_interpolated,
                             theta = self.interferometer_theta[x_pix, y_pix],
                             delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
+                            filter = self.hdr_dict['FILTER'],
                             Plot_bool = False, bayes_bool=bayes_bool)
                     fit_dict = fit.fit()
                     # Save local list of fit values
                     vel_local.append(fit_dict['velocity'])
                     broad_local.append(fit_dict['broadening'])
+                    vel_err_local.append(fit_dict['velocity_err'])
+                    broad_err_local.append(fit_dict['broadening_err'])
                     ampls_local.append(fit_dict['amplitudes'])
                     flux_local.append(fit_dict['fluxes'])
+                    chi2_local.append(fit_dict['chi2'])
                     continuum_local.append(fit_dict['continuum'])
                 else:  # If outside of mask set to zero
                     vel_local.append(0)
                     broad_local.append(0)
+                    vel_err_local.append(0)
+                    broad_err_local.append(0)
                     ampls_local.append([0]*len(lines))
                     flux_local.append([0]*len(lines))
-                    continuum_local.append([0])
+                    chi2_local.append(0)
+                    continuum_local.append(0)
             # Update global array of fit values
             velocity_fits[i] = vel_local
             broadening_fits[i] = broad_local
+            velocity_err_fits[i] = vel_err_local
+            broadening_err_fits[i] = broad_err_local
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
-            continuum_fits = continuum_local
+            chi2_fits[i] = chi2_local
+            continuum_fits[i] = continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header, output_name, binning)
+            wcs = WCS(self.header_binned)
+            cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
         else:
-            self.save_fits(lines, velocity_fits, broadening_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, self.header, output_name, binning)
+            wcs = WCS(self.header)
+            cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
 
-        return velocity_fits, broadening_fits, flux_fits
+        return velocity_fits, broadening_fits, flux_fits, chi2_fits
 
 
     def extract_spectrum(self, x_min, x_max, y_min, y_max, bkg=None, binning=None, mean=False):
@@ -677,7 +704,7 @@ class Luci():
         """
         # Create mask
         if '.reg' in region:
-            shape = (2048, 2064)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
             mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
         else:
@@ -711,6 +738,7 @@ class Luci():
                 self.model_ML, trans_filter = self.transmission_interpolated,
                 theta = self.interferometer_theta[x_pix, y_pix],
                 delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
+                filter = self.hdr_dict['FILTER'],
                 Plot_bool = False, bayes_bool=bayes_bool)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
@@ -739,9 +767,9 @@ class Luci():
         #def SNR_calc(SNR, i):
         flux_min = 0 ; flux_max= 0; noise_min = 0; noise_max = 0  # Initializing bounds for flux and noise calculation regions
         if self.hdr_dict['FILTER'] == 'SN3':
-            flux_min = 15150; flux_max = 15300; noise_min = 14800; noise_max = 14850
+            flux_min = 15150; flux_max = 15300; noise_min = 16000; noise_max = 16400
         elif self.hdr_dict['FILTER'] == 'SN1':
-            flux_min = 26550; flux_max = 27550; noise_min = 26200; noise_max = 26300
+            flux_min = 26550; flux_max = 27550; noise_min = 25300; noise_max = 25700
         else:
             print('SNR Calculation for this filter has not been implemented')
         for i in range(y_max-y_min):
