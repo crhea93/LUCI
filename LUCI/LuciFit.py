@@ -198,7 +198,7 @@ class Fit:
         if self.filter == 'SN3':
             bound_lower = 16000
             bound_upper = 16400
-        if self.filter == 'SN2':
+        elif self.filter == 'SN2':
             bound_lower = 18600
             bound_upper = 19000
         elif self.filter == 'SN1':

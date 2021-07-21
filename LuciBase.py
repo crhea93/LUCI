@@ -189,8 +189,8 @@ class Luci():
             iquad_data[(iquad_data < -1e-16)]= -1e-22 # Modifs
             iquad_data[(iquad_data > 1e-9)]= 1e-22 # Modifs
             self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
-        self.cube_final = self.cube_final.transpose(1, 0, 2)
-        print(self.cube_final.shape)
+        self.cube_final = self.cube_final#.transpose(1, 0, 2)
+        #print(self.cube_final.shape)
         self.update_header(file)
         self.get_interferometer_angles(file)
 
@@ -654,7 +654,7 @@ class Luci():
         """
         # Create mask
         if '.reg' in region:
-            shape = (2048, 2064)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
             mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
         else:
