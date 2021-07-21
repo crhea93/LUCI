@@ -431,7 +431,7 @@ class Fit:
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
         cons = (sigma_cons + vel_cons)
-        soln = minimize(nll, initial, method='BFGS', #method='SLSQP',# jac=self.fun_der(),
+        soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
                         args=(self.noise), constraints=cons)
         parameters = soln.x
