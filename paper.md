@@ -36,6 +36,9 @@ intended to facilitate the rapid analysis of IFU spectra. `LUCI` does this by in
 well-developed pre-existing python tools such as `astropy` and `scipy` with new
 machine learning tools for spectral analysis (Rhea et al. 2020a).
 
+
+# Statement of Need 
+
 Recent advances in the science and technology of IFUs have resulted in the creation
 of the high-resolution, wide field-of-view (11 arcmin x 11 arcmin) instrument SITELLE (@drissen_sitelle_2019)
 at the Canada-France-Hawaii Telescope. Due to the large field-of-view and the small
@@ -45,8 +48,8 @@ paramount -- it is with this in mind that we created `LUCI`.
 
 
 # Functionality
-At her heart, `LUCI` is nothing more than a wrapper for a `scipy.optimize.minimize`
-function call. Since SITELLE data cubes are available as **HDF5** files, `LUCI` was built
+At her heart, like any fitting software, `LUCI` is nothing more than a collection of pre-processing and post-processing functions to extract information from a spectrum using a fitting function (in this case a `scipy.optimize.minimize` function call).
+Since SITELLE data cubes are available as **HDF5** files, `LUCI` was built
 to parse the original file and create an instance of a `LUCI` cube which contains the 2D header information and
 a 3D numpy array (Spatial X, Spatial Y, Spectral). Once the data cube has been successfully converted
 to a `LUCI` cube, there are several options for fitting different regions of the cube

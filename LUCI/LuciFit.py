@@ -196,8 +196,8 @@ class Fit:
         """
         # Determine filter
         if self.filter == 'SN3':
-            bound_lower = 16000
-            bound_upper = 16400
+            bound_lower = 14250#16000
+            bound_upper = 14400#16400
         elif self.filter == 'SN2':
             bound_lower = 18600
             bound_upper = 19000
@@ -207,10 +207,15 @@ class Fit:
         else:
             print('The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
         # Calculate standard deviation
+        #print(np.min(self.axis), np.max(self.axis))
+        #print(bound_upper, bound_lower)
         min_ = np.argmin(np.abs(np.array(self.axis)-bound_lower))
+        #print(min_)
         max_ = np.argmin(np.abs(np.array(self.axis)-bound_upper))
+        #print(max_)
         spec_noise = self.spectrum_clean[min_:max_]
-        self.noise = np.std(spec_noise)
+        #print(spec_noise)
+        self.noise = np.sqrt(np.nanstd(spec_noise))
 
 
     def estimate_priors_ML(self):
@@ -601,6 +606,7 @@ class Fit:
         n_dim = 3 * self.line_num + 1
         n_walkers = n_dim * 2 + 4
         init_ = self.fit_sol + 1 * np.random.randn(n_walkers, n_dim)
+        #print(self.noise)
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
                                         args=(self.axis, self.spectrum_normalized, self.noise, self.lines))
         sampler.run_mcmc(init_, 100, progress=False)
