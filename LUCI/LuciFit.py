@@ -436,14 +436,14 @@ class Fit:
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
         cons = (sigma_cons + vel_cons)
-        soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
+        soln = minimize(nll, initial, method='BFGS', #method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
                         args=(self.noise), constraints=cons)
         parameters = soln.x
         #print(soln)
         # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
-        #cov = -soln.hess_inv
-        #self.uncertainties = np.sqrt(np.diag(cov))  # 1 sigma uncertainties
+        cov = -soln.hess_inv
+        self.uncertainties = np.sqrt(np.diag(cov))  # 1 sigma uncertainties
         # We now must unscale the amplitude
         for i in range(self.line_num):
             parameters[i * 3] *= self.spectrum_scale
