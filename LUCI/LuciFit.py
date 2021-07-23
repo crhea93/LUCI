@@ -110,7 +110,7 @@ class Fit:
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
         self.theta = theta
-        self.cos_theta = np.cos(self.theta)
+        self.cos_theta = np.abs(np.cos(self.theta))
         self.correction_factor = 1.0  # Initialize Correction factor
         self.axis_step = 0.0  # Initialize
         self.delta_x = delta_x
@@ -163,7 +163,6 @@ class Fit:
         over the UNSHIFTED spectral axis.
         """
         self.spectrum = [self.spectrum[i]/self.trans_filter[i] if self.trans_filter[i] > 0.5 else self.spectrum[i] for i in range(len(self.spectrum))]
-        #np.divide(self.spectrum, self.trans_filter)
 
 
     def calculate_correction(self):
@@ -280,7 +279,7 @@ class Fit:
                                    self.spectrum_normalized[line_ind + 2]])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        line_broad_est = (line_pos_est * self.broad_ml) / 3e5
+        line_broad_est = (line_pos_est * self.broad_ml ) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
     def gaussian_model(self, channel, theta):
@@ -438,7 +437,7 @@ class Fit:
         cons = (sigma_cons + vel_cons)
         soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
-                        args=(1e-2), constraints=cons)
+                        args=(self.noise), constraints=cons)
         parameters = soln.x
         #print(soln)
         # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
@@ -460,7 +459,6 @@ class Fit:
     def calculate_vel(self, ind):
         """
         Calculate velocity
-        TODO: Test
 
         Args:
             ind: Index of line in lines
@@ -511,7 +509,6 @@ class Fit:
     def calculate_broad_err(self, ind):
         """
         Calculate velocity dispersion error
-        TODO: Test
 
         Args:
             ind: Index of line in lines

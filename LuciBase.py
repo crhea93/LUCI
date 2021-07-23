@@ -361,7 +361,7 @@ class Luci():
         # Initialize fit solution arrays
         if binning != None and binning > 1:
             self.bin_cube(binning, x_min, x_max, y_min, y_max)
-            #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
+            #x_min_bin = int(x_min/binning) ; y_min_bin = int(y_min/binning) ; x_max_bin = int(x_max/binning) ;  y_max_bin = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
             x_min = 0 ; y_min = 0
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
@@ -440,13 +440,14 @@ class Luci():
             if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
                 self.create_deep_image()
             wcs = WCS(self.header_binned)
-            cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max_bin+x_min_bin)/2, (y_max_bin+y_min_bin)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.header, output_name, binning)
+            cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
         else:
             # Check if deep image exists: if not, create it
             if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
                 self.create_deep_image()
             wcs = WCS(self.header, naxis=2)
+            print(x_min, x_max, y_min, y_max)
             cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
             self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
         fits.writeto(output_name+'_corr.fits', corr_fits, self.header, overwrite=True)
