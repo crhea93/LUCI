@@ -280,7 +280,7 @@ class Fit:
                                    self.spectrum_normalized[line_ind + 2]])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        line_broad_est = (line_pos_est * self.broad_ml * self.correction_factor) / 3e5
+        line_broad_est = (line_pos_est * self.broad_ml) / 3e5
         return line_amp_est, line_pos_est, line_broad_est
 
     def gaussian_model(self, channel, theta):
@@ -436,14 +436,14 @@ class Fit:
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
         cons = (sigma_cons + vel_cons)
-        soln = minimize(nll, initial, method='BFGS', #method='SLSQP',# jac=self.fun_der(),
+        soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
-                        args=(self.noise), constraints=cons)
+                        args=(1e-2), constraints=cons)
         parameters = soln.x
         #print(soln)
         # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
-        cov = -soln.hess_inv
-        self.uncertainties = np.sqrt(np.diag(cov))  # 1 sigma uncertainties
+        #cov = -soln.hess_inv
+        #self.uncertainties = np.sqrt(np.diag(cov))  # 1 sigma uncertainties
         # We now must unscale the amplitude
         for i in range(self.line_num):
             parameters[i * 3] *= self.spectrum_scale
@@ -505,7 +505,7 @@ class Fit:
             Velocity Dispersion of the Halpha line in units of km/s
         """
         broad = (3e5 * self.fit_sol[3*ind+2] * self.correction_factor) / self.fit_sol[3*ind+1]
-        return broad
+        return np.abs(broad)
 
 
     def calculate_broad_err(self, ind):
@@ -537,6 +537,7 @@ class Fit:
         flux = 0.0  # Initialize
         if self.model_type == 'gaussian':
             flux = np.sqrt(2 * np.pi) * line_amp * line_sigma
+            #print(line_sigma)
         elif self.model_type == 'sinc':
             flux = np.sqrt(np.pi) * line_amp * line_sigma
         elif self.model_type == 'sincgauss':
