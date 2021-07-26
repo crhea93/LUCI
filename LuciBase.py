@@ -496,9 +496,12 @@ class Luci():
         if '.reg' in region:
             shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             if binning != None and binning > 1:
-                r = pyregion.open(region).as_imagecoord(self.header_binned)  # Obtain pyregion region
+                header = self.header_binned
             else:
-                r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
+                header = self.header
+            header.set('NAXIS1', 2064)
+            header.set('NAXIS2', 2048)
+            r = pyregion.open(region).as_imagecoord(header)  # Obtain pyregion region
             mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
         else:
             mask = np.load(region)
