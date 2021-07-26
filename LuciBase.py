@@ -481,14 +481,6 @@ class Luci():
             >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', region='main.reg')
 
         """
-        # Create mask
-        if '.reg' in region:
-            shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
-            r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-            mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
-        else:
-            mask = np.load(region)
-
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -500,6 +492,17 @@ class Luci():
             #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
             x_min = 0 ; y_min = 0
+        # Create mask
+        if '.reg' in region:
+            shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            if binning != None and binning > 1:
+                r = pyregion.open(region).as_imagecoord(self.header_binned)  # Obtain pyregion region
+            else:
+                r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
+            mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
+        else:
+            mask = np.load(region)
+        # Clean up output name
         if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
             region = region.split('/')[-1]
         if output_name == None:
