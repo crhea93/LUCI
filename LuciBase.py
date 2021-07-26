@@ -144,7 +144,6 @@ class Luci():
                 hdr_dict[header_col] = float(header_val)
             if 'int' in str(header_type):
                 hdr_dict[header_col] = int(header_val)
-            #print(header_type)
             else:
                 try:
                     hdr_dict[header_col] = float(header_val)
@@ -159,10 +158,8 @@ class Luci():
         self.header = wcs_data.to_header()
         self.header.insert('WCSAXES', ('SIMPLE', 'T'))
         self.header.insert('SIMPLE', ('NAXIS', 2), after=True)
-        self.header.insert('NAXIS', ('NAXIS1', 2064), after=True)
-        self.header.insert('NAXIS1', ('NAXIS2', 2048), after=True)
-        #self.header['NAXIS1'] = 2064
-        #self.header['NAXIS2'] = 2048
+        #self.header.insert('NAXIS', ('NAXIS1', 2064), after=True)
+        #self.header.insert('NAXIS1', ('NAXIS2', 2048), after=True)
         self.hdr_dict = hdr_dict
 
 
@@ -198,7 +195,6 @@ class Luci():
             iquad_data[(iquad_data > 1e-9)]= 1e-22 # Modifs
             self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
         self.cube_final = self.cube_final#.transpose(1, 0, 2)
-        #print(self.cube_final.shape)
         self.update_header(file)
         self.get_interferometer_angles(file)
 
@@ -267,10 +263,6 @@ class Luci():
         self.header_binned = self.header
         self.header_binned['CRPIX1'] = self.header_binned['CRPIX1']/binning
         self.header_binned['CRPIX2'] = self.header_binned['CRPIX2']/binning
-        #wcs = WCS(self.header)
-        #new_crvals = wcs.pixel_to_world(self.header_binned['CRPIX1'], self.header['CRPIX2'])
-        #self.header_binned['CRVAL1'] = new_crvals[0]
-        #self.header_binned['CRVAL2'] = new_crvals[1]
         self.header_binned['CDELT1'] = self.header_binned['CDELT1']*binning
         self.header_binned['CDELT2'] = self.header_binned['CDELT2']*binning
         self.cube_binned = binned_cube / (binning**2)
@@ -470,8 +462,8 @@ class Luci():
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
-            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
-            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
+            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2])
+            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2])
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             bkg: Background Spectrum (1D numpy array; default None)
             binning:  Value by which to bin (default None)
@@ -493,9 +485,10 @@ class Luci():
         if '.reg' in region:
             shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-            mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
+            mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
         else:
             mask = np.load(region)
+
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -523,6 +516,7 @@ class Luci():
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        ct = 0
         for i in tqdm(range(y_max-y_min)):
             y_pix = y_min + i
             vel_local = []
@@ -547,6 +541,7 @@ class Luci():
                             sky -= bkg * binning**2  # Subtract background spectrum
                         else:
                             sky -= bkg  # Subtract background spectrum
+                    ct += 1
                     good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
                     sky = sky[good_sky_inds]
                     axis = self.spectrum_axis[good_sky_inds]
@@ -586,6 +581,7 @@ class Luci():
             chi2_fits[i] = chi2_local
             continuum_fits[i] = continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
+        print(ct)
         if binning is not None:
             wcs = WCS(self.header_binned)
             cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
@@ -595,7 +591,7 @@ class Luci():
             cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
             self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
 
-        return velocity_fits, broadening_fits, flux_fits, chi2_fits
+        return velocity_fits, broadening_fits, flux_fits, chi2_fits, mask
 
 
     def extract_spectrum(self, x_min, x_max, y_min, y_max, bkg=None, binning=None, mean=False):
