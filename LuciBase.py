@@ -628,14 +628,14 @@ class Luci():
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
             x_min = 0 ; y_min = 0
         for i in tqdm(range(x_max-x_min)):
-            x_pix = x_min + i
+            y_pix = y_min + i
             vel_local = []
             broad_local = []
             ampls_local = []
             flux_local = []
             chi2_local = []
             for j in range(y_max-y_min):
-                y_pix = y_min+j
+                x_pix = x_min+j
                 if binning is not None:
                     sky = self.cube_binned[x_pix, y_pix, :]
                 else:
