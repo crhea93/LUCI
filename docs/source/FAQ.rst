@@ -14,6 +14,14 @@ This section contains a discussion on frequently asked questions and errors that
 FAQ:
 ----
 
+How is the interferometric angle taken into account?
+####################################################
+We calculate the interferometric angle to calculate a correction factor `(1/cos(theta))` which is applied to the broadening.
+We do not apply this correction factor to the spectral axis of each spaxel since this
+is already done in ORB -- therefore, the data product downloaded from the CADC already has this
+correction applied! Normally, we would need to calculate the wavelength axis of each spaxel individually
+and then interpolate it (carefully!!!) onto a standard axis. 
+
 
 Common Errors
 -------------

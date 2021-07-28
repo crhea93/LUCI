@@ -203,12 +203,19 @@ class Luci():
         Create the x-axis for the spectra. We must construct this from header information
         since each pixel only has amplitudes of the spectra at each point.
         """
-        len_wl = self.cube_final.shape[2]  # Length of Spectral Axis
+        len_wl = self.hdr_dict['STEPNB']    # Length of Spectral Axis
         start = self.hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
         end = start + (len_wl)*self.hdr_dict['CDELT3']  # End
-        #step = hdr_dict['CDELT3']  # Step size
+        step = hdr_dict['CDELT3']  # Step size
         self.spectrum_axis = np.array(np.linspace(start, end, len_wl)*(self.redshift+1), dtype=np.float32)  # Apply redshift correction
         self.spectrum_axis_unshifted = np.array(np.linspace(start, end, len_wl), dtype=np.float32)  # Do not apply redshift correction
+
+        #min_ = 1e7  * (self.hdr_dict['ORDER'] / (2*self.hdr_dict['STEP']))# + 1e7  / (2*self.delta_x*self.n_steps)
+        #max_ = 1e7  * ((self.hdr_dict['ORDER'] + 1) / (2*self.hdr_dict['STEP']))# - 1e7  / (2*self.delta_x*self.n_steps)
+        #step_ = max_ - min_
+        #axis = np.array([min_+j*step_/self.hdr_dict['STEPNB'] for j in range(self.hdr_dict['STEPNB'])])
+        #self.spectrum_axis = axis*(1+self.redshift)
+        #self.spectrum_axis_unshifted = axis
 
 
     def read_in_reference_spectrum(self):
