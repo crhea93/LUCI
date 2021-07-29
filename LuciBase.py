@@ -206,7 +206,7 @@ class Luci():
         len_wl = self.hdr_dict['STEPNB']    # Length of Spectral Axis
         start = self.hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
         end = start + (len_wl)*self.hdr_dict['CDELT3']  # End
-        step = hdr_dict['CDELT3']  # Step size
+        step = self.hdr_dict['CDELT3']  # Step size
         self.spectrum_axis = np.array(np.linspace(start, end, len_wl)*(self.redshift+1), dtype=np.float32)  # Apply redshift correction
         self.spectrum_axis_unshifted = np.array(np.linspace(start, end, len_wl), dtype=np.float32)  # Do not apply redshift correction
 
@@ -214,7 +214,7 @@ class Luci():
         #max_ = 1e7  * ((self.hdr_dict['ORDER'] + 1) / (2*self.hdr_dict['STEP']))# - 1e7  / (2*self.delta_x*self.n_steps)
         #step_ = max_ - min_
         #axis = np.array([min_+j*step_/self.hdr_dict['STEPNB'] for j in range(self.hdr_dict['STEPNB'])])
-        #self.spectrum_axis = axis*(1+self.redshift)
+        #self.spectrum_axis = axis#*(1+self.redshift)
         #self.spectrum_axis_unshifted = axis
 
 
