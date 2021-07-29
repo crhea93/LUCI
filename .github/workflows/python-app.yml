@@ -22,7 +22,7 @@ jobs:
         with:
           activate-environment: luci
           environment-file: luci.yml
-          python-version: 3.8
+          python-version: 3.9.5
           auto-activate-base: false
       - shell: bash -l {0}
         run: |
