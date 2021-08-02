@@ -63,8 +63,14 @@ class Luci():
         self.read_in_cube()
         self.spectrum_axis_func()
         if ML_bool is True:
-            self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
-            self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
+            if self.hdr_dict['FILTER'] == 'SN1':
+                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN1.fits'%(resolution)
+                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN1'%(resolution))
+            elif self.hdr_dict['FILTER'] == 'SN3':
+                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
+                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
+            else:
+                print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
             self.read_in_reference_spectrum()
         else:
             self.model_ML = None
@@ -231,8 +237,12 @@ class Luci():
         for chan in ref_spec:  # Only want SN3 region
             channel.append(chan[0])
             counts.append(np.real(chan[1]))
-        min_ = np.argmin(np.abs(np.array(channel)-14700))
-        max_ = np.argmin(np.abs(np.array(channel)-15600))
+        if self.hdr_dict['FILTER'] == 'SN3':
+            min_ = np.argmin(np.abs(np.array(channel)-14700))
+            max_ = np.argmin(np.abs(np.array(channel)-15600))
+        else:
+            min_ = np.argmin(np.abs(np.array(channel)-25500))
+            max_ = np.argmin(np.abs(np.array(channel)-27500))
         self.wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
 
 
@@ -459,7 +469,7 @@ class Luci():
         #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
         #Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(VEL, BROAD, i) for i in tqdm(range(x_max-x_min)));
 
-    def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg= None, binning=None, bayes_bool=False, output_name=None):
+    def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, binning=None, bayes_bool=False, output_name=None):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -511,12 +521,20 @@ class Luci():
             r = pyregion.open(region).as_imagecoord(header)  # Obtain pyregion region
             mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
         else:
-            mask = np.load(region)
+            try:  # If numpy .np file
+                mask = np.load(region)
+            except:
+                mask = region
         # Clean up output name
-        if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
-            region = region.split('/')[-1]
-        if output_name == None:
-            output_name = self.output_dir+'/'+self.object_name+'_'+region.split('.')[0]
+        if isinstance(region, str):
+            if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
+                region = region.split('/')[-1]
+            if output_name == None:
+                output_name = self.output_dir+'/'+self.object_name+'_'+region.split('.')[0]
+        else:  # Passed mask not region file
+            if output_name == None:
+                output_name = self.output_dir+'/'+self.object_name+'_mask'
+
         velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         velocity_err_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T

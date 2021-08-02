@@ -18,7 +18,7 @@ for M33_FIELD7 SN1 and SN2.
     from LuciBase import Luci
     import LUCI.LuciPlotting as lplt
 
-We now will set the required parameters. We are also going to be using our machine learning algorithm to get the initial guesses.
+We now will set the required parameters. We are also going to be using our machine learning algorithm to get the initial guesses for SN1 only.
 
 .. code-block:: python
 
@@ -30,7 +30,7 @@ We now will set the required parameters. We are also going to be using our machi
     object_name = 'M33_Field7_SN1'
     redshift = -0.0006  # Redshift of M33
     resolution = 5000
-    ML_bool = False
+    ML_bool = True
 
 
 We intialize our LUCI object
@@ -79,7 +79,7 @@ And let's see what this looks like!
     :alt: M33_SN1_Flux
 
 
-Let's do the same for SN2
+Let's do the same for SN2 but this time set the machine learning boolean to False.
 
 .. code-block:: python
 
