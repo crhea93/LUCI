@@ -285,6 +285,36 @@ class Luci():
         self.cube_binned = binned_cube / (binning**2)
 
 
+    def get_binned_cube(self, binning, x_min, x_max, y_min, y_max):
+        """
+        Function to obtain the binned cube according to a binning of bin x bin
+        Args:
+            binning: Size of binning (equal in x and y direction)
+            x_min: Lower bound in x
+            x_max: Upper bound in x
+            y_min: Lower bound in y
+            y_max: Upper bound in y
+        Return:
+            Binned cube called cube_binned and new spatial coordinates.
+        """
+        x_shape_new = int((x_max-x_min)/binning)
+        y_shape_new = int((y_max-y_min)/binning)
+        binned_cube = np.zeros((x_shape_new, y_shape_new, self.cube_final.shape[2]))
+        for i in range(x_shape_new):
+            for j in range(y_shape_new):
+                summed_spec = self.cube_final[x_min+int(i*binning):x_min+int((i+1)*binning), y_min+int(j*binning):y_min+int((j+1)*binning), :]
+                summed_spec = np.nansum(summed_spec, axis=0)
+                summed_spec = np.nansum(summed_spec, axis=0)
+                binned_cube[i,j] = summed_spec[:]
+        self.header_binned = self.header
+        self.header_binned['CRPIX1'] = self.header_binned['CRPIX1']/binning
+        self.header_binned['CRPIX2'] = self.header_binned['CRPIX2']/binning
+        self.header_binned['CDELT1'] = self.header_binned['CDELT1']*binning
+        self.header_binned['CDELT2'] = self.header_binned['CDELT2']*binning
+        cube_binned = binned_cube / (binning**2)
+	return cube_binned, x_shape_new, y_shape_new
+
+
     def save_fits(self, lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, header, output_name, binning):
         """
         Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
