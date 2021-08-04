@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy import interpolate
 import keras
@@ -37,13 +36,10 @@ class Fit:
         sigma_rel: Constraints on sigma (must be list)
 
         ML_model: Tensorflow/keras machine learning model
-
-        Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)
-
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, trans_filter=None, theta=0, delta_x=2, n_steps=842, filter='SN3', bayes_bool=False, Plot_bool=False):
+                 ML_model, trans_filter=None, theta=0, delta_x=2, n_steps=842, filter='SN3', bayes_bool=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -61,7 +57,6 @@ class Fit:
             n_steps: Number of steps in spectra
             filter: SITELLE filter (e.x. 'SN3')
             bayes_bool:
-            Plot_bool: Boolean to determine whether or not to plot the spectrum (default = False)
 
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
@@ -98,10 +93,9 @@ class Fit:
         self.calculate_noise()
         self.sigma_rel = sigma_rel
         self.vel_rel = vel_rel
-        # ADD ML_MODEL AND PLOT_BOOL
+        # ADD ML_MODEL
         self.ML_model = ML_model
         self.bayes_bool = bayes_bool
-        self.Plot_bool = Plot_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
         #if sincgauss_args is None:
@@ -599,9 +593,6 @@ class Fit:
                     'sigmas': sigmas, 'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                     'axis_step': self.axis_step, 'corr': self.correction_factor,
                     'continuum': self.fit_sol[-1]}
-        # Plot
-        if self.Plot_bool == True:
-            self.plot()
         return fit_dict
 
     def fit_Bayes(self):
@@ -699,17 +690,6 @@ class Fit:
             return -np.inf
         return lp + self.log_likelihood_bayes(theta, x, y, yerr, model)
 
-    def plot(self):
-        """
-        Plot initial spectrum and fitted spectrum
-
-        """
-        plt.clf()
-        plt.plot(self.axis, self.sky, label='Spectrum')
-        plt.plot(self.axis, self.fit_vector, label='Fit')
-        plt.legend()
-        plt.show()
-        return None
 
     def check_lines(self):
         """

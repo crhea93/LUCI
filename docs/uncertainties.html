@@ -1,0 +1,305 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Uncertainties &mdash; LUCI v.0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MIT License" href="license.html" />
+    <link rel="prev" title="How LUCI Works" href="howLuciWorks.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> LUCI
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Uncertainties</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#likelihood-function">Likelihood Function</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#noise-calculation">Noise Calculation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sn1-25300-25700">SN1: 25300 - 25700</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sn2-18600-19000">SN2: 18600 - 19000</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sn3-16000-16400">SN3: 16000 - 16400</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hessian-approach">Hessian Approach</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+</ul>
+<p class="caption"><span class="caption-text">FAQ:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Uncertainties</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/uncertainties.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="uncertainties">
+<span id="id1"></span><h1>Uncertainties<a class="headerlink" href="#uncertainties" title="Permalink to this headline">¶</a></h1>
+<p>Since uncertainty estimates are often crucial in astrophysical calculations, we apply
+a full Bayesian MCMC approach (using the python module <em>emcee</em>). The likelihood function
+is defined as a standard Gaussian function. Additionally, we employ the same priors described
+above for the fitting function bounds.</p>
+<div class="section" id="likelihood-function">
+<h2>Likelihood Function<a class="headerlink" href="#likelihood-function" title="Permalink to this headline">¶</a></h2>
+<p>We assume a standard Gaussian likelihood function. Note that <img class="math" src="_images/math/b52df27bfb0b1e3af0c2c68a7b9da459178c2a7d.png" alt="\sigma"/> is the
+error on the measurement (also noted as noise – see next section).</p>
+<div class="math">
+<p><img src="_images/math/a74e9e5b02bfbbfa1e90d0650be81b08d5cc050a.png" alt="LL = -0.5 * \Sigma((y - model) ^ 2 / \sigma^2 + log(2 * \pi * \sigma^2))"/></p>
+</div><div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="noise-calculation">
+<h2>Noise Calculation<a class="headerlink" href="#noise-calculation" title="Permalink to this headline">¶</a></h2>
+<p>In order to estimate the uncertainties (and complete the fits), we assume a homogenous
+noise level associated with the the instrument. This is then accepted as the noise
+over the entire spectrum in the filter. This is calculated for each individual spectrum
+by considering a region outside of the filter (i.e. where the transmission is zero).
+We then take the noise as the standard deviation of the region. This is typically
+on the order of 1% of the flux in high SNR regions. We take the following wavelength regions:</p>
+<div class="section" id="sn1-25300-25700">
+<h3>SN1: 25300 - 25700<a class="headerlink" href="#sn1-25300-25700" title="Permalink to this headline">¶</a></h3>
+<img alt="Luci Initialization Output" src="_images/SN1_noise.png" />
+<p>SN1 filter of example background (M33 Field 7). The noise region is bounded
+by the magenta box.</p>
+</div>
+<div class="section" id="sn2-18600-19000">
+<h3>SN2: 18600 - 19000<a class="headerlink" href="#sn2-18600-19000" title="Permalink to this headline">¶</a></h3>
+<img alt="Luci Initialization Output" src="_images/SN2_noise.png" />
+<p>SN2 filter of example background (M33 Field 7). The noise region is bounded
+by the magenta box.</p>
+</div>
+<div class="section" id="sn3-16000-16400">
+<h3>SN3: 16000 - 16400<a class="headerlink" href="#sn3-16000-16400" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="hessian-approach">
+<h2>Hessian Approach<a class="headerlink" href="#hessian-approach" title="Permalink to this headline">¶</a></h2>
+<p>The calculation of fit uncertainties is a very important consideration. As previously
+discussed, we already have a methodology to calculate the uncertainties using an MCMC Bayesian
+approach. However, this method can be extremely time-consuming. Thus, we offer a default
+uncertainty estimate measurement based solely off the best-fit parameters.</p>
+<dl class="simple">
+<dt>The algorithm is as follows:</dt><dd><ul class="simple">
+<li><p>Calculate the best-fit parameters as previously discussed</p></li>
+<li><p>Calculate the Hessian matrix of the likelihood function given the best-fit parameters.</p></li>
+<li><p>Calculate the negative inverse of the Hessian – this yield the covariance matrix</p></li>
+<li><p>Calculate the square root of the diagonals of the covariance matrix</p></li>
+</ul>
+</dd>
+</dl>
+<p>In this manner, we calculate the 1-sigma uncertainties on our  fit parameters. We
+further propagate these to the velocity and broadening by taking the absolute difference between
+the value (velocity or broadening) assuming the best-fit parameters and the value assuming
+the best-fit parameters plus the 1-sigma error.</p>
+<p>For example:</p>
+<p><img class="math" src="_images/math/3921142a61cdf6e482fa1c1b038b899da4418919.png" alt="\delta v  = |v[\text{best-fit}] - v[\text{best-fit + 1-sigma}]|"/></p>
+<p>We calculate the Hessian matrix by using <a class="reference external" href="https://numdifftools.readthedocs.io/en/latest/reference/generated/numdifftools.core.Hessian.html">numdifftools.Hessian</a>.
+Additionally, we use <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html">numpy.linalg.inv</a>
+and <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.diagonal.html">numpy.diagonal</a>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="license.html" class="btn btn-neutral float-right" title="MIT License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="howLuciWorks.html" class="btn btn-neutral float-left" title="How LUCI Works" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Carter L. Rhea.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

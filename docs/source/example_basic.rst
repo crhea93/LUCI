@@ -52,7 +52,7 @@ For example:
 
 Although the first three arguments are rather self explanatory, it is worth discussing the others.
 The redshift is provided so that we can shift x-axis of the spectra to the rest-frame.
-As discussed in `howLuciWorks`_, this enables better fitting. The redshift of an object
+As discussed, this enables better fitting. The redshift of an object
 can be found at `http://cdsportal.u-strasbg.fr/ <http://cdsportal.u-strasbg.fr/>`_ .
 
 The `resolution` is the resolution of the reference spectrum

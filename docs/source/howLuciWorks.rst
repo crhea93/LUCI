@@ -128,55 +128,6 @@ is the cosine angle defined as :math:`\cos{\theta} = \frac{\lambda_{ref}}{\lambd
 :math:`\lambda_{ref}` is the wavelength of the calibration laser and :math:`\lambda_{ij}` is
 the measured calibration wavelength of a given pixel (thus :math:`\theta` is a function of the pixel).
 
-Uncertainty Estimates
-^^^^^^^^^^^^^^^^^^^^^
-Since uncertainty estimates are often crucial in astrophysical calculations, we apply
-a full Bayesian MCMC approach (using the python module *emcee*). The likelihood function
-is defined as a standard Gaussian function. Additionally, we employ the same priors described
-above for the fitting function bounds.
-
-Likelihood Function
-###################
-We assume a standard Gaussian likelihood function. We assume standard normalized errors
-of 0.01 for each point in the spectrum.
-
-.. math::
-    LL = -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
-
-
-.. toctree::
-   :maxdepth: 2
-
-In order to estimate the uncertainties (and complete the fits), we assume a homogenous
-noise level associated with the the instrument. This is then accepted as the noise
-over the entire spectrum in the filter. This is calculated for each individual spectrum
-by considering a region outside of the filter (i.e. where the transmission is zero).
-We then take the noise as the standard deviation of the region. This is typically
-on the order of 1% of the flux in high SNR regions. We take the following wavelength regions:
-
-SN1: 25300 - 25700
-##################
-
-.. image:: SN1_noise.png
-    :alt: Luci Initialization Output
-
-SN1 filter of example background (M33 Field 7). The noise region is bounded
-by the magenta box.
-
-SN2: 18600 - 19000
-##################
-
-.. image:: SN2_noise.png
-    :alt: Luci Initialization Output
-
-SN2 filter of example background (M33 Field 7). The noise region is bounded
-by the magenta box.
-
-SN3: 16000 - 16400
-##################
-
-
-
 
 
 Transmission

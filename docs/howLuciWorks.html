@@ -41,7 +41,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="MIT License" href="license.html" />
+    <link rel="next" title="Uncertainties" href="uncertainties.html" />
     <link rel="prev" title="Welcome to LUCI’s documentation!" href="index.html" /> 
 </head>
 
@@ -104,18 +104,12 @@
 <li class="toctree-l4"><a class="reference internal" href="#sincgauss">SincGauss</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#uncertainty-estimates">Uncertainty Estimates</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#likelihood-function">Likelihood Function</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#sn1-25300-25700">SN1: 25300 - 25700</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#sn2-18600-19000">SN2: 18600 - 19000</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#sn3-16000-16400">SN3: 16000 - 16400</a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="#transmission">Transmission</a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Example Modules:</span></p>
@@ -124,6 +118,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -303,43 +298,6 @@ is the cosine angle defined as <img class="math" src="_images/math/013521e12f828
 the measured calibration wavelength of a given pixel (thus <img class="math" src="_images/math/8a87f04e7d7cca18343c084cceca5237fae62491.png" alt="\theta"/> is a function of the pixel).</p>
 </div>
 </div>
-<div class="section" id="uncertainty-estimates">
-<h3>Uncertainty Estimates<a class="headerlink" href="#uncertainty-estimates" title="Permalink to this headline">¶</a></h3>
-<p>Since uncertainty estimates are often crucial in astrophysical calculations, we apply
-a full Bayesian MCMC approach (using the python module <em>emcee</em>). The likelihood function
-is defined as a standard Gaussian function. Additionally, we employ the same priors described
-above for the fitting function bounds.</p>
-<div class="section" id="likelihood-function">
-<h4>Likelihood Function<a class="headerlink" href="#likelihood-function" title="Permalink to this headline">¶</a></h4>
-<p>We assume a standard Gaussian likelihood function. We assume standard normalized errors
-of 0.01 for each point in the spectrum.</p>
-<div class="math">
-<p><img src="_images/math/4244f7bc1b04936c4211c463181d4518c2a44a6f.png" alt="LL = -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))"/></p>
-</div><div class="toctree-wrapper compound">
-</div>
-<p>In order to estimate the uncertainties (and complete the fits), we assume a homogenous
-noise level associated with the the instrument. This is then accepted as the noise
-over the entire spectrum in the filter. This is calculated for each individual spectrum
-by considering a region outside of the filter (i.e. where the transmission is zero).
-We then take the noise as the standard deviation of the region. This is typically
-on the order of 1% of the flux in high SNR regions. We take the following wavelength regions:</p>
-</div>
-<div class="section" id="sn1-25300-25700">
-<h4>SN1: 25300 - 25700<a class="headerlink" href="#sn1-25300-25700" title="Permalink to this headline">¶</a></h4>
-<img alt="Luci Initialization Output" src="_images/SN1_noise.png" />
-<p>SN1 filter of example background (M33 Field 7). The noise region is bounded
-by the magenta box.</p>
-</div>
-<div class="section" id="sn2-18600-19000">
-<h4>SN2: 18600 - 19000<a class="headerlink" href="#sn2-18600-19000" title="Permalink to this headline">¶</a></h4>
-<img alt="Luci Initialization Output" src="_images/SN2_noise.png" />
-<p>SN2 filter of example background (M33 Field 7). The noise region is bounded
-by the magenta box.</p>
-</div>
-<div class="section" id="sn3-16000-16400">
-<h4>SN3: 16000 - 16400<a class="headerlink" href="#sn3-16000-16400" title="Permalink to this headline">¶</a></h4>
-</div>
-</div>
 <div class="section" id="transmission">
 <h3>Transmission<a class="headerlink" href="#transmission" title="Permalink to this headline">¶</a></h3>
 <p>We take into account the transmission of the SITTELLE filters (SN1, SN2, and SN3).
@@ -358,7 +316,7 @@ Note that we calculate the noise <strong>before</strong> applying the transmissi
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="license.html" class="btn btn-neutral float-right" title="MIT License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="uncertainties.html" class="btn btn-neutral float-right" title="Uncertainties" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="index.html" class="btn btn-neutral float-left" title="Welcome to LUCI’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
