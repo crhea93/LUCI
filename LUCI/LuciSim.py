@@ -96,9 +96,7 @@ class Spectrum:
             Value of function given input parameters
 
         """
-        f1 = 0.0
-        f1 += Gaussian(channel, [amp, pos, sigma]).func
-        print(amp, pos, sigma)
+        f1 = Gaussian(channel, [amp, pos, sigma]).func
         return f1
 
 
@@ -116,8 +114,7 @@ class Spectrum:
             Value of function given input parameters
 
         """
-        f1 = 0.0
-        f1 += Sinc(channel, [amp, pos, sigma]).func
+        f1 = Sinc(channel, [amp, pos, sigma]).func
         return f1
 
 
@@ -135,8 +132,7 @@ class Spectrum:
             Value of function given input parameters
 
         """
-        f1 = 0.0
-        f1 += SincGauss(channel, [amp, pos, sigma], self.sinc_width).func
+        f1 = SincGauss(channel, [amp, pos, sigma], self.sinc_width).func
         return np.real(f1)
 
     def create_spectrum(self):
@@ -157,13 +153,15 @@ class Spectrum:
         step_ = x_max - x_min
         axis = np.array([x_min+j*step_/self.n_steps for j in range(self.n_steps)])
         # Initiate spectrum
-        spectrum = np.zeros_like(axis)
+        spectrum = np.ones_like(axis)  # Set continuum of about 2
         # Create emission lines
         for line_ct, line in enumerate(self.lines):
+            print(line)
             line_lambda_cm = 1e7 / self.line_dict[line]  # Convert from nm to cm-1
             vel_ = self.velocity[line_ct]  # Get velocity
             broad_ = self.broadening[line_ct]  # Get broadening
             amp_ = self.ampls[line_ct]  # Get amplitude
+            print(amp_)
             # Calculate position of line given velocity
             line_pos = (vel_/3e5)*line_lambda_cm + line_lambda_cm
             # Calculate sigma given broadening
@@ -178,8 +176,9 @@ class Spectrum:
                 spectrum += self.sincgauss_model(axis, amp_, line_pos, sigma)
             else:
                 print('An incorrect fit function was entered. Please use either gaussian, sinc, or sincgauss.')
+            print(np.max(spectrum))
         # We now add noise with our predefined SNR
-        spectrum += np.random.normal(0.0,1/self.snr,spectrum.shape)
+        #spectrum += np.max(spectrum)*np.random.normal(0.0,1/self.snr,spectrum.shape)
         return axis, spectrum
 
 

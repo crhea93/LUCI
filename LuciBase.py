@@ -176,10 +176,10 @@ class Luci():
         naming convention: output_dir+'/'+object_name+'_deep.fits'
         """
         hdu = fits.PrimaryHDU()
-        self.deep_image = np.sum(self.cube_final, axis=2)
+        self.deep_image = np.sum(self.cube_final, axis=2).T
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
-        fits.writeto(output_name, self.deep_image.T, self.header, overwrite=True)
+        fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
 
     def read_in_cube(self):
         """
@@ -285,7 +285,7 @@ class Luci():
         self.cube_binned = binned_cube / (binning**2)
 
 
-    
+
 
 
     def save_fits(self, lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, header, output_name, binning):

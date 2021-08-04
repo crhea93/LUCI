@@ -425,7 +425,12 @@ class Fit:
         parameters[-1] *= self.spectrum_scale
         self.uncertainties[-1] *= self.spectrum_scale
         self.fit_sol = parameters
-        self.fit_vector = self.gaussian_model(self.axis, self.fit_sol)
+        if self.model_type == 'gaussian':
+            self.fit_vector = self.gaussian_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+        elif self.model_type == 'sinc':
+            self.fit_vector = self.sinc_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+        elif self.model_type == 'sincgauss':
+            self.fit_vector = self.sincgauss_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
 
         return None
 
@@ -518,6 +523,26 @@ class Fit:
         return flux
 
 
+    def calc_chisquare(self, fit_vector, init_spectrum, init_errors, n_dof):
+        """
+        Calculate reduced chi 2
+
+        Args:
+            fit_vector: Spectrum obtained from fit
+            init_spectrum: Observed spectrum
+            init_errors: Errors on observed spectrum
+            n_dof: Number of degrees of freedom
+
+        Return:
+            chi2: Chi squared value
+            chi2dof: Reduced chi squared value
+        """
+        # compute the mean and the chi^2/dof
+        z = (fit_vector - init_spectrum)# / init_errors
+        chi2 = np.sum(z ** 2)
+        chi2dof = chi2 / (n_dof - 1)
+        return chi2, chi2dof
+
 
     def fit(self):
         """
@@ -543,7 +568,7 @@ class Fit:
         if self.bayes_bool == True:
             self.fit_Bayes()
         # Calculate fit statistic
-        chi_sqr, p_val = chisquare(self.fit_vector, self.spectrum)
+        chi_sqr, red_chi_sqr = self.calc_chisquare(self.fit_vector, self.spectrum, self.noise, 3*self.line_num+1)
         # Collect Amplitudes
         ampls = []
         fluxes = []
@@ -575,14 +600,15 @@ class Fit:
         # Unscale the amplitude
         for i in range(self.line_num):
             self.fit_sol[i * 3] /= self.spectrum_scale
+        self.fit_sol[-1] /= self.spectrum_scale
         n_dim = 3 * self.line_num + 1
         n_walkers = n_dim * 2 + 4
         init_ = self.fit_sol + 1 * np.random.randn(n_walkers, n_dim)
         #print(self.noise)
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
                                         args=(self.axis, self.spectrum_normalized, self.noise, self.lines))
-        sampler.run_mcmc(init_, 100, progress=False)
-        flat_samples = sampler.get_chain(discard=20, flat=True)
+        sampler.run_mcmc(init_, 1000, progress=False)
+        flat_samples = sampler.get_chain(discard=200, flat=True)
         #parameters = []
         parameters_med = []
         parameters_std = []
@@ -602,7 +628,12 @@ class Fit:
         # Scale continuum
         self.fit_sol[-1] *= self.spectrum_scale
         self.uncertainties[-1] *= self.spectrum_scale
-        self.fit_vector = self.gaussian_model(self.axis, self.fit_sol)
+        if self.model_type == 'gaussian':
+            self.fit_vector = self.gaussian_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+        elif self.model_type == 'sinc':
+            self.fit_vector = self.sinc_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+        elif self.model_type == 'sincgauss':
+            self.fit_vector = self.sincgauss_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
 
 
     def log_likelihood_bayes(self, theta, x, y, yerr, model__):
