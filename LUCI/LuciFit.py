@@ -39,7 +39,7 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, trans_filter=None, theta=0, delta_x=2, n_steps=842, filter='SN3', bayes_bool=False):
+                 ML_model, trans_filter=None, theta=0, delta_x=2943, n_steps=842, filter='SN3', bayes_bool=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -183,7 +183,7 @@ class Fit:
         #print(max_)
         spec_noise = self.spectrum_clean[min_:max_]
         #print(spec_noise)
-        self.noise = np.sqrt(np.nanstd(spec_noise))
+        self.noise = np.nanstd(spec_noise)
 
 
     def estimate_priors_ML(self):
