@@ -288,7 +288,7 @@ class Luci():
 
 
 
-    def save_fits(self, lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, header, output_name, binning):
+    def save_fits(self, lines, ampls_fits, flux_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, header, binning):
         """
         Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
         amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
@@ -296,12 +296,12 @@ class Luci():
 
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
-            velocity_fits: 2D Numpy array of velocity values
-            broadening_fits: 2D Numpy array of broadening values
-            velocity_err_fits: 2D Numpy array of velocity errors
-            broadening_err_fits: 2D Numpy array of broadening errors
-            ampls_fits: 2D Numpy array of amplitude values
-            flux_fis: 2D Numpy array of flux values
+            ampls_fits: 3D Numpy array of amplitude values
+            flux_fis: 3D Numpy array of flux values
+            velocities_fits: 3D Numpy array of velocity values
+            broadenings_fits: 3D Numpy array of broadening values
+            velocities_errors_fits: 3D Numpy array of velocity errors
+            broadenings_errors_fits: 3D Numpy array of broadening errors
             chi2_fits: 2D Numpy array of chi-squared values
             continuum_fits: 2D Numpy array of continuum value
             header: Header object (either binned or unbinned)
@@ -309,15 +309,25 @@ class Luci():
             binning: Value by which to bin (default None)
 
         """
+        # Make sure output dirs exist for amps, flux, vel, and broad
+        if not os.path.exists(self.output_dir+'/Amplitudes'):
+            os.mkdir(self.output_dir+'/Amplitudes')
+        if not os.path.exists(self.output_dir+'/Fluxes'):
+            os.mkdir(self.output_dir+'/Fluxes')
+        if not os.path.exists(self.output_dir+'/Velocity'):
+            os.mkdir(self.output_dir+'/Velocity')
+        if not os.path.exists(self.output_dir+'/Broadening'):
+            os.mkdir(self.output_dir+'/Broadening')
+
         if binning is not None:
-            output_name = output_name + "_" + str(binning)
-        fits.writeto(output_name+'_velocity.fits', velocity_fits, header, overwrite=True)
-        fits.writeto(output_name+'_broadening.fits', broadening_fits, header, overwrite=True)
-        fits.writeto(output_name+'_velocity_err.fits', velocity_err_fits, header, overwrite=True)
-        fits.writeto(output_name+'_broadening_err.fits', broadening_err_fits, header, overwrite=True)
+            output_name = self.object_name + "_" + str(binning)
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-            fits.writeto(output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
-            fits.writeto(output_name+'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
+            fits.writeto(self.output_dir + '/Amplitudes/'+ output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
+            fits.writeto(self.output_dir + '/Fluxes/'+ output_name +'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
+            fits.writeto(self.output_dir + '/Velocity/' + output_name +'_' + line_ +'_velocity.fits', velocities_fits[:,:,ct], header, overwrite=True)
+            fits.writeto(self.output_dir + '/Broadening/' + output_name +'_' + line_ +'_broadening.fits', broadenings_fits[:,:,ct], header, overwrite=True)
+            fits.writeto(self.output_dir + '/Velocity/' + output_name +'_' + line_ + '_velocity_err.fits', velocities_errors_fits[:,:,ct], header, overwrite=True)
+            fits.writeto(self.output_dir + '/Broadening/' + output_name +'_' + line_ + '_broadening_err.fits', broadenings_errors_fits[:,:,ct], header, overwrite=True)
         fits.writeto(output_name+'_Chi2.fits', chi2_fits, header, overwrite=True)
         fits.writeto(output_name+'_continuum.fits', continuum_fits, header, overwrite=True)
 
@@ -376,10 +386,6 @@ class Luci():
             #x_min_bin = int(x_min/binning) ; y_min_bin = int(y_min/binning) ; x_max_bin = int(x_max/binning) ;  y_max_bin = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
             x_min = 0 ; y_min = 0
-        velocity_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        broadening_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        velocity_err_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        broadening_err_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
@@ -387,17 +393,21 @@ class Luci():
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        velocities_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        broadenings_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        velocities_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        broadenings_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        if output_name == None:
-            output_name = self.output_dir+'/'+self.object_name
+        #if output_name == None:
+            #output_name = self.output_dir+'/'+self.object_name
         for i in tqdm(range(y_max-y_min)):
             y_pix = y_min + i
-            vel_local = []
-            broad_local = []
-            vel_err_local = []
-            broad_err_local = []
             ampls_local = []
             flux_local = []
+            vels_local = []
+            broads_local = []
+            vels_errs_local = []
+            broads_errs_local = []
             chi2_local = []
             corr_local = []
             step_local = []
@@ -425,23 +435,23 @@ class Luci():
                         Plot_bool = False, bayes_bool=bayes_bool)
                 fit_dict = fit.fit()
                 # Save local list of fit values
-                vel_local.append(fit_dict['velocity'])
-                broad_local.append(fit_dict['broadening'])
-                vel_err_local.append(fit_dict['velocity_err'])
-                broad_err_local.append(fit_dict['broadening_err'])
                 ampls_local.append(fit_dict['amplitudes'])
                 flux_local.append(fit_dict['fluxes'])
+                vels_local.append(fit_dict['velocities'])
+                broads_local.append(fit_dict['sigmas'])
+                vels_errs_local.append(fit_dict['vels_errors'])
+                broads_errs_local.append(fit_dict['sigmas_errors'])
                 chi2_local.append(fit_dict['chi2'])
                 corr_local.append(fit_dict['corr'])
                 step_local.append(fit_dict['axis_step'])
                 continuum_local.append(fit_dict['continuum'])
             # Update global array of fit values
-            velocity_fits[i] = vel_local
-            broadening_fits[i] = broad_local
-            velocity_err_fits[i] = vel_err_local
-            broadening_err_fits[i] = broad_err_local
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
+            velocities_fits[i] = vels_local
+            broadenings_fits[i] = broads_local
+            velocities_errors_fits[i] = vels_errs_local
+            broadenings_errors_fits[i] = broads_errs_local
             chi2_fits[i] = chi2_local
             corr_fits[i] = corr_local
             step_fits[i] = step_local
@@ -453,7 +463,7 @@ class Luci():
                 self.create_deep_image()
             wcs = WCS(self.header_binned)
             cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
+            self.save_fits(lines, ampls_fits, flux_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
         else:
             # Check if deep image exists: if not, create it
             if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
@@ -461,10 +471,10 @@ class Luci():
             wcs = WCS(self.header, naxis=2)
             print(x_min, x_max, y_min, y_max)
             cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-            self.save_fits(lines, velocity_fits, broadening_fits, velocity_err_fits, broadening_err_fits, ampls_fits, flux_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), output_name, binning)
-        fits.writeto(output_name+'_corr.fits', corr_fits, self.header, overwrite=True)
-        fits.writeto(output_name+'_step.fits', step_fits, self.header, overwrite=True)
-        return velocity_fits, broadening_fits, flux_fits, chi2_fits
+            self.save_fits(lines, ampls_fits, flux_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
+        #fits.writeto(output_name+'_corr.fits', corr_fits, self.header, overwrite=True)
+        #fits.writeto(output_name+'_step.fits', step_fits, self.header, overwrite=True)
+        return velocities_fits, broadenings_fits, flux_fits, chi2_fits
 
         #n_threads = 1
         #for i in range(x_max-x_min):

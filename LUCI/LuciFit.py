@@ -6,7 +6,7 @@ import keras
 from scipy.optimize import Bounds
 from numdifftools import Jacobian, Hessian
 import emcee
-from scipy.stats import chisquare
+import scipy.special as sps
 import warnings
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 warnings.filterwarnings("ignore")
@@ -43,7 +43,7 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, trans_filter, theta=0, delta_x=2, n_steps=842, filter='SN3', bayes_bool=False, Plot_bool=False):
+                 ML_model, trans_filter=None, theta=0, delta_x=2, n_steps=842, filter='SN3', bayes_bool=False, Plot_bool=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -78,7 +78,8 @@ class Fit:
         self.lines = lines
         self.line_num = len(lines)  # Number of  lines to fit
         self.trans_filter = trans_filter
-        self.apply_transmission()  # Apply transmission filter
+        if trans_filter is not None:
+            self.apply_transmission()  # Apply transmission filter if one is provided
         self.filter = filter
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
@@ -316,7 +317,7 @@ class Fit:
         return np.real(f1)
 
 
-    def log_likelihood(self, theta, yerr):
+    def log_likelihood(self, theta):
         """
         Calculate log likelihood function evaluated given parameters on spectral axis
 
@@ -337,7 +338,7 @@ class Fit:
             model = self.sincgauss_model(self.axis, theta)
         # Add constant contimuum to model
         model += theta[-1]
-        sigma2 = yerr ** 2
+        sigma2 = self.noise ** 2
         return -0.5 * np.sum((self.spectrum_normalized - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
     def fun_der(self, theta, yerr):
@@ -411,12 +412,16 @@ class Fit:
         cons = (sigma_cons + vel_cons)
         soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
-                        args=(self.noise), constraints=cons)
+                        args=(), constraints=cons)
         parameters = soln.x
-        #print(soln)
         # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
-        #cov = -soln.hess_inv
-        #self.uncertainties = np.sqrt(np.diag(cov))  # 1 sigma uncertainties
+        try:
+            hessian = Hessian(nll)
+            hessian_calc = hessian(parameters)
+            covariance_mat = -np.linalg.inv(hessian_calc)
+            self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
+        except np.linalg.LinAlgError:
+            self.uncertainties = np.zeros_like(parameters)
         # We now must unscale the amplitude
         for i in range(self.line_num):
             parameters[i * 3] *= self.spectrum_scale
@@ -426,11 +431,11 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         self.fit_sol = parameters
         if self.model_type == 'gaussian':
-            self.fit_vector = self.gaussian_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = self.gaussian_model(self.axis, self.fit_sol[:-1])
         elif self.model_type == 'sinc':
-            self.fit_vector = self.sinc_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = self.sinc_model(self.axis, self.fit_sol[:-1])
         elif self.model_type == 'sincgauss':
-            self.fit_vector = self.sincgauss_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = self.sincgauss_model(self.axis, self.fit_sol[:-1])
 
         return None
 
@@ -574,11 +579,16 @@ class Fit:
         fluxes = []
         vels = []
         sigmas = []
+        vels_errors = []
+        sigmas_errors = []
         for line_ct, line_ in enumerate(self.lines):  # Step through each line
             ampls.append(self.fit_sol[line_ct * 3])
             # Calculate flux
             fluxes.append(self.calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2]))
             vels.append(self.calculate_vel(line_ct))
+            sigmas.append(self.calculate_broad(line_ct))
+            vels_errors.append(self.calculate_vel_err(line_ct))
+            sigmas_errors.append(self.calculate_broad_err(line_ct))
         # Collect parameters to return in a dictionary
         fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
                     'fit_vector': self.fit_vector,
@@ -586,7 +596,8 @@ class Fit:
                     'velocity_err': self.calculate_vel_err(0),
                     'broadening_err': self.calculate_broad_err(0),
                     'amplitudes': ampls, 'fluxes': fluxes, 'chi2': chi_sqr, 'velocities': vels,
-                    'sigmas': sigmas, 'axis_step': self.axis_step, 'corr': self.correction_factor,
+                    'sigmas': sigmas, 'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
+                    'axis_step': self.axis_step, 'corr': self.correction_factor,
                     'continuum': self.fit_sol[-1]}
         # Plot
         if self.Plot_bool == True:
