@@ -321,6 +321,8 @@ class Luci():
 
         if binning is not None:
             output_name = self.object_name + "_" + str(binning)
+        else:
+            output_name = self.object_name
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
             fits.writeto(self.output_dir + '/Amplitudes/'+ output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
             fits.writeto(self.output_dir + '/Fluxes/'+ output_name +'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
@@ -348,7 +350,7 @@ class Luci():
         self.fit_cube(lines, fit_function,vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
 
 
-    def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None):
+    def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -365,8 +367,9 @@ class Luci():
             y_max: Upper bound in y
             bkg: Background Spectrum (1D numpy array; default None)
             binning:  Value by which to bin (default None)
-            bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default None)
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             output_name: User defined output path/name (default None)
+            uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -432,7 +435,7 @@ class Luci():
                         theta=self.interferometer_theta[x_pix, y_pix],
                         delta_x = self.hdr_dict['STEP'], n_steps = self.hdr_dict['STEPNB'],
                         filter = self.hdr_dict['FILTER'],
-                        bayes_bool=bayes_bool)
+                        bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
                 fit_dict = fit.fit()
                 # Save local list of fit values
                 ampls_local.append(fit_dict['amplitudes'])
@@ -478,7 +481,7 @@ class Luci():
         #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
         #Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(VEL, BROAD, i) for i in tqdm(range(x_max-x_min)));
 
-    def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, binning=None, bayes_bool=False, output_name=None):
+    def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -493,8 +496,9 @@ class Luci():
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             bkg: Background Spectrum (1D numpy array; default None)
             binning:  Value by which to bin (default None)
-            bayes_bool: Boolean to determine whether or not to run Bayesian analysis
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             output_name: User defined output path/name
+            uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -591,7 +595,7 @@ class Luci():
                             theta = self.interferometer_theta[x_pix, y_pix],
                             delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
                             filter = self.hdr_dict['FILTER'],
-                            bayes_bool=bayes_bool)
+                            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
                     fit_dict = fit.fit()
                     # Save local list of fit values
                     ampls_local.append(fit_dict['amplitudes'])
