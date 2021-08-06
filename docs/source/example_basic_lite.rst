@@ -78,3 +78,7 @@ And let's see what this looks like!
 
 .. image:: M33_SN3_Flux.png
     :alt: M33_SN3_Flux
+
+
+If you wish to additionally calculate uncertainties, set `uncertainty_bool=True` as an argument 
+of a fitting function (i.e. `cube.fit_cube()` or `cube.fit_region()`).

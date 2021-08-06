@@ -482,7 +482,7 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad = (3e5 * self.fit_sol[3*ind+2] * self.correction_factor) / self.fit_sol[3*ind+1]
+        broad = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
         return np.abs(broad)
 
 
@@ -495,8 +495,8 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad1 = (3e5 * self.fit_sol[3*ind+2] * self.correction_factor) / self.fit_sol[3*ind+1]
-        broad2 = (3e5 * (self.fit_sol[3*ind+2]+self.uncertainties[3*ind+2]) * self.correction_factor) / (self.fit_sol[3*ind+1]+self.uncertainties[3*ind+1])
+        broad1 = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
+        broad2 = (3e5 * (self.fit_sol[3*ind+2]+self.uncertainties[3*ind+2])) / (self.fit_sol[3*ind+1]+self.uncertainties[3*ind+1])
         return np.abs(broad1-broad2)
 
 
