@@ -630,7 +630,7 @@ class Luci():
             wcs = WCS(self.header_binned)
         else:
             wcs = WCS(self.header)
-        cutout = Cutout2D(velocity_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+        cutout = Cutout2D(velocities_fits, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
         self.save_fits(lines, ampls_fits, flux_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
 
 
