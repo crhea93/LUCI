@@ -609,10 +609,10 @@ class Luci():
                 else:  # If outside of mask set to zero
                     ampls_local.append([0]*len(lines))
                     flux_local.append([0]*len(lines))
-                    vels_local.append(0)
-                    broads_local.append(0)
-                    vels_errs_local.append(0)
-                    broads_errs_local.append(0)
+                    vels_local.append([0]*len(lines))
+                    broads_local.append([0]*len(lines))
+                    vels_errs_local.append([0]*len(lines))
+                    broads_errs_local.append([0]*len(lines))
                     chi2_local.append(0)
                     continuum_local.append(0)
             # Update global array of fit values
