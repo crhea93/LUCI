@@ -634,7 +634,7 @@ class Luci():
         self.save_fits(lines, ampls_fits, flux_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
 
 
-        return velocity_fits, broadening_fits, flux_fits, chi2_fits, mask
+        return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
 
     def extract_spectrum(self, x_min, x_max, y_min, y_max, bkg=None, binning=None, mean=False):
