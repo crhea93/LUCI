@@ -770,7 +770,7 @@ class Luci():
         if '.reg' in region:
             shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-            mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
+            mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
         else:
             mask = region
         # Set spatial bounds for entire cube
