@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize
 from scipy import interpolate
-import keras
+from tensorflow import keras
 from scipy.optimize import Bounds
 from numdifftools import Jacobian, Hessian
 import emcee
@@ -611,8 +611,8 @@ class Fit:
         #print(self.noise)
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
                                         args=(self.axis, self.spectrum_normalized, self.noise, self.lines))
-        sampler.run_mcmc(init_, 1000, progress=False)
-        flat_samples = sampler.get_chain(discard=200, flat=True)
+        sampler.run_mcmc(init_, 5000, progress=False)
+        flat_samples = sampler.get_chain(discard=100, flat=True)
         #parameters = []
         parameters_med = []
         parameters_std = []

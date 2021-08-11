@@ -66,6 +66,9 @@ class Luci():
             if self.hdr_dict['FILTER'] == 'SN1':
                 self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN1.fits'%(resolution)
                 self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN1'%(resolution))
+            elif self.hdr_dict['FILTER'] == 'SN2':
+                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN2.fits'%(resolution)
+                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN2'%(resolution))
             elif self.hdr_dict['FILTER'] == 'SN3':
                 self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
                 self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
@@ -240,9 +243,16 @@ class Luci():
         if self.hdr_dict['FILTER'] == 'SN3':
             min_ = np.argmin(np.abs(np.array(channel)-14700))
             max_ = np.argmin(np.abs(np.array(channel)-15600))
-        else:
+        elif self.hdr_dict['FILTER'] == 'SN2':
+            min_ = np.argmin(np.abs(np.array(channel)-19000))
+            max_ = np.argmin(np.abs(np.array(channel)-21000))
+        elif self.hdr_dict['FILTER'] == 'SN1':
             min_ = np.argmin(np.abs(np.array(channel)-25500))
             max_ = np.argmin(np.abs(np.array(channel)-27500))
+        else:
+            print('We do not support this filter.')
+            print('Terminating program!')
+            exit()
         self.wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
 
 
@@ -725,7 +735,7 @@ class Luci():
             for j in range(x_max-x_min):
                 x_pix = x_min+j
                 # Check if pixel is in the mask or not
-                if mask[y_pix, x_pix] == True:
+                if mask[x_pix, y_pix] == True:
                     integrated_spectrum += self.cube_final[x_pix, y_pix, :]
                     spec_ct += 1
                 else:
@@ -793,7 +803,7 @@ class Luci():
                 theta = self.interferometer_theta[x_pix, y_pix],
                 delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
                 filter = self.hdr_dict['FILTER'],
-                bayes_bool=bayes_bool)
+                bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
