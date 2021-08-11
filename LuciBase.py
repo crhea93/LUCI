@@ -746,7 +746,7 @@ class Luci():
 
 
 
-    def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, bayes_bool=False, mean=False):
+    def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False):
         """
         Fit spectrum in region.
         The spectra in the region are summed and then averaged (if mean is selected).
