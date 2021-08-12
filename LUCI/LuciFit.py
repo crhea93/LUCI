@@ -625,7 +625,6 @@ class Fit:
             vels_errors.append(self.calculate_vel_err(line_ct))
             sigmas_errors.append(self.calculate_broad_err(line_ct))
             flux_errors.append(self.calculate_flux_err(line_ct))
-        print(flux_errors)
         # Collect parameters to return in a dictionary
         fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
                     'fit_vector': self.fit_vector,
