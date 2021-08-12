@@ -451,7 +451,6 @@ class Luci():
                         filter = self.hdr_dict['FILTER'],
                         bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
                 fit_dict = fit.fit()
-                print(fit_dict)
                 # Save local list of fit values
                 ampls_local.append(fit_dict['amplitudes'])
                 flux_local.append(fit_dict['fluxes'])

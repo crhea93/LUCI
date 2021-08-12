@@ -545,16 +545,19 @@ class Fit:
             flux_err = np.sqrt(2*np.pi) * self.calculate_flux(p0 , p2) * \
                        np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
 
-        elif self.model_type == 'sunc':
+        elif self.model_type == 'sinc':
             flux_err = np.sqrt(np.pi) * self.calculate_flux(p0 , p2) * \
                        np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
 
         elif self.model_type == 'sincgauss':
-​
             erf_func = sps.erf(p2 / (np.sqrt(2)*self.sinc_width)) #Shortcut for the error function
-
             flux_err = np.sqrt(2*np.pi) * np.sqrt(   (p2*p0_err / erf_func)**2 + \
                        (  p0*p2_err *  (erf_func - (np.sqrt(2)*p2*np.exp(-(p2/(np.sqrt(2)*self.sinc_width))**2)/np.sqrt(np.pi))) / erf_func**2  )**2  )
+
+        else:
+            print('The fit function you have entered, %s, does not exist!'%self.model_type)
+            print('The program is terminating!')
+            exit()
 
         return flux_err
 
@@ -591,7 +594,6 @@ class Fit:
             {"fit_vector": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
-        print("WOAH")
         if self.ML_model != None:
             # Interpolate Spectrum
             self.interpolate_spectrum()
