@@ -57,51 +57,20 @@ Let's extract and visualize a background region we defined in ds9:
 
 
 
-We now extract our region
+We now fit our region
 
 .. code-block:: python
 
-    # Extract and visualize reigon
-    axis, sky = cube.extract_spectrum(1357, 1367, 608, 618, bkg=bkg_sky, mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
-    plt.plot(axis, sky)
+    # fit region
+    velocity_map, broadening_map, flux_map, chi2_map, mask = cube.fit_region(['OII3726', 'OII3729'], 'gaussian', [1,1], [1,1],
+            region=cube_dir+'/reg1.reg', bkg=bkg_sky)
 
 
-The output should look something like this:
-
-.. image:: example-single-fit-spectrum.png
-    :alt: Spectrum
-
-We now load the reference spectrum
+And let's check out what this looks like.
 
 .. code-block:: python
 
-    # Machine Learning Reference Spectrum
-    ref_spec = fits.open(ML_ref+'.fits')[1].data
-    channel = []
-    counts = []
-    for chan in ref_spec:  # Only want SN3 region
-    channel.append(chan[0])
-    counts.append(np.real(chan[1]))
-    min_ = np.argmin(np.abs(np.array(channel)-14700))
-    max_ = np.argmin(np.abs(np.array(channel)-15600))
-    wavenumbers_syn = channel[min_:max_]
-
-Finally, we fit!
-
-.. code-block:: python
-
-    fit = lfit.Fit(sky, axis, wavenumbers_syn, 'gaussian', ['Halpha'],
-                    keras.models.load_model(ML_model),
-                     Plot_bool = False, bayes_bool=True)
-    fit_dict = fit.fit()
-
-Now, we plot the result.
-
-.. code-block:: python
-
-    plt.plot(axis, sky-bkg_sky, label='background subtracted spectrum')
-    plt.plot(axis, fit_dict['fit_sol'], label='fit')
-    plt.legend()
+    lplt.plot_map(np.log10(flux_map[:,:,0]), 'flux', cube_dir, cube.header, clims=[-17, -15])
 
 
 .. image:: example-single-fit-fit.png

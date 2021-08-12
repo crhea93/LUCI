@@ -87,7 +87,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">Contents:</span></p>
+              <p class="caption"><span class="caption-text">Prerequisites:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
@@ -219,38 +219,14 @@ These values were chosen to correspond with the brightest region of the horsesho
     <span class="p">:</span><span class="n">alt</span><span class="p">:</span> <span class="n">Background</span> <span class="n">output</span>
 </pre></div>
 </div>
-<p>We now extract our region</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract and visualize reigon</span>
-<span class="n">axis</span><span class="p">,</span> <span class="n">sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum</span><span class="p">(</span><span class="mi">1357</span><span class="p">,</span> <span class="mi">1367</span><span class="p">,</span> <span class="mi">608</span><span class="p">,</span> <span class="mi">618</span><span class="p">,</span> <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># We use mean=True to take the mean of the emission in the region instead of the sum</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">sky</span><span class="p">)</span>
+<p>We now fit our region</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># fit region</span>
+<span class="n">velocity_map</span><span class="p">,</span> <span class="n">broadening_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_map</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_region</span><span class="p">([</span><span class="s1">&#39;OII3726&#39;</span><span class="p">,</span> <span class="s1">&#39;OII3729&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">region</span><span class="o">=</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/reg1.reg&#39;</span><span class="p">,</span> <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The output should look something like this:</p>
-<img alt="Spectrum" src="_images/example-single-fit-spectrum.png" />
-<p>We now load the reference spectrum</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Machine Learning Reference Spectrum</span>
-<span class="n">ref_spec</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">ML_ref</span><span class="o">+</span><span class="s1">&#39;.fits&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-<span class="n">channel</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="n">counts</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">chan</span> <span class="ow">in</span> <span class="n">ref_spec</span><span class="p">:</span>  <span class="c1"># Only want SN3 region</span>
-<span class="n">channel</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chan</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">chan</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-<span class="n">min_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span><span class="o">-</span><span class="mi">14700</span><span class="p">))</span>
-<span class="n">max_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span><span class="o">-</span><span class="mi">15600</span><span class="p">))</span>
-<span class="n">wavenumbers_syn</span> <span class="o">=</span> <span class="n">channel</span><span class="p">[</span><span class="n">min_</span><span class="p">:</span><span class="n">max_</span><span class="p">]</span>
-</pre></div>
-</div>
-<p>Finally, we fit!</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fit</span> <span class="o">=</span> <span class="n">lfit</span><span class="o">.</span><span class="n">Fit</span><span class="p">(</span><span class="n">sky</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">wavenumbers_syn</span><span class="p">,</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">],</span>
-                <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="n">ML_model</span><span class="p">),</span>
-                 <span class="n">Plot_bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">bayes_bool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">fit_dict</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Now, we plot the result.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">sky</span><span class="o">-</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;background subtracted spectrum&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">fit_dict</span><span class="p">[</span><span class="s1">&#39;fit_sol&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fit&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<p>And let’s check out what this looks like.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">17</span><span class="p">,</span> <span class="o">-</span><span class="mi">15</span><span class="p">])</span>
 </pre></div>
 </div>
 <img alt="Fit" src="_images/example-single-fit-fit.png" />

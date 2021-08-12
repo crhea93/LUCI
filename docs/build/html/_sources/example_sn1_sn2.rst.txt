@@ -79,7 +79,7 @@ And let's see what this looks like!
     :alt: M33_SN1_Flux
 
 
-Let's do the same for SN2 but this time set the machine learning boolean to False.
+Let's do the same for SN2 but this time set the machine learning boolean to False. Please note that the machine learning algorithm DOES work for SN2.
 
 .. code-block:: python
 

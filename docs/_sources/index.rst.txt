@@ -6,16 +6,6 @@
 Welcome to LUCI's documentation!
 ================================
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Prerequisites:
-
-   howLuciWorks
-   uncertainties
-   license
-
-
-
 LUCI is a general purpose fitting pipeline built specifically with SITELLE IFU
 data cubes in mind; however, if you need to fit any emission line spectra, LUCI
 will be able to help!
@@ -55,6 +45,16 @@ Lines Available
 
 The available fitting functions are as follows:
 'gaussian', 'sinc', 'sincgauss'
+
+Prerequisites
+^^^^^^^^^^^^^
+    .. toctree::
+       :maxdepth: 2
+       :caption: Prerequisites:
+
+       howLuciWorks
+       uncertainties
+       license
 
 Examples
 ^^^^^^^^

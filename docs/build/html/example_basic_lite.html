@@ -87,7 +87,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">Contents:</span></p>
+              <p class="caption"><span class="caption-text">Prerequisites:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
@@ -214,10 +214,14 @@ for M33_FIELD7 SN3 (product id: 2309128p).</p>
 <span class="n">cube</span><span class="o">.</span><span class="n">create_deep_image</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>We now fit part of our cube defined by the bounding box 1000&lt;x&lt;1500 and 250&lt;y&lt;750 with a Gaussian on the Halpha line, the NII-doublet, and the SII-doublet with a binning of 4.
-We are also going to constrain our velocities and sigmas.</p>
+<p>Let’s extract a background region and take a look at it. The background region is defined in a ds9 region file called <cite>bkg.reg</cite>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum_region</span><span class="p">(</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/bkg.reg&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># We use mean=True to take the mean of the emission in the region instead of the sum</span>
+</pre></div>
+</div>
+<p>We now fit part of our cube defined by the bounding box 500&lt;x&lt;1100 and 700&lt;y&lt;1300 with a Gaussian on the Halpha line, the NII-doublet, and the SII-doublet with a binning of 2.
+We are also going to constrain our velocities and sigmas. Furthermore, we will calculate uncertainties using the Hessian method.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fit!</span>
-<span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1100</span><span class="p">,</span> <span class="mi">700</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1100</span><span class="p">,</span> <span class="mi">700</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">uncertainty_bool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The output should look something like this:</p>
@@ -228,6 +232,9 @@ We are also going to constrain our velocities and sigmas.</p>
 </div>
 <p>And let’s see what this looks like!</p>
 <img alt="M33_SN3_Flux" src="_images/M33_SN3_Flux.png" />
+<p>The resulting data maps will be placed in a folder called <em>luci</em>. Inside there, you
+will find additional folders containing the Flux, Amplitude, Velocity, and Broadening maps
+for each line and their uncertainties.</p>
 </div>
 
 

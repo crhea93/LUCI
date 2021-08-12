@@ -54,14 +54,20 @@ Let's quickly create a deep frame
     # Create Deep Image
     cube.create_deep_image()
 
+Let's extract a background region and take a look at it. The background region is defined in a ds9 region file called `bkg.reg`.
 
-We now fit part of our cube defined by the bounding box 1000<x<1500 and 250<y<750 with a Gaussian on the Halpha line, the NII-doublet, and the SII-doublet with a binning of 4.
-We are also going to constrain our velocities and sigmas.
+.. code-block:: python
+
+  bkg_axis, bkg_sky = cube.extract_spectrum_region(cube_dir+'/bkg.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
+
+
+We now fit part of our cube defined by the bounding box 500<x<1100 and 700<y<1300 with a Gaussian on the Halpha line, the NII-doublet, and the SII-doublet with a binning of 2.
+We are also going to constrain our velocities and sigmas. Furthermore, we will calculate uncertainties using the Hessian method.
 
 .. code-block:: python
 
     # Fit!
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300, bkg=bkg_sky, binning=2)
+    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300, bkg=bkg_sky, binning=2, uncertainty_bool=True)
 
 The output should look something like this:
 
@@ -78,3 +84,8 @@ And let's see what this looks like!
 
 .. image:: M33_SN3_Flux.png
     :alt: M33_SN3_Flux
+
+
+The resulting data maps will be placed in a folder called *luci*. Inside there, you
+will find additional folders containing the Flux, Amplitude, Velocity, and Broadening maps
+for each line and their uncertainties.

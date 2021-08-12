@@ -3,6 +3,9 @@
 Uncertainties
 =============
 
+In order to calculate uncertainties, set `uncertainty_bool=True` as an argument
+of a fitting function (i.e. `cube.fit_cube()` or `cube.fit_region()`).
+
 Since uncertainty estimates are often crucial in astrophysical calculations, we apply
 a full Bayesian MCMC approach (using the python module *emcee*). The likelihood function
 is defined as a standard Gaussian function. Additionally, we employ the same priors described
