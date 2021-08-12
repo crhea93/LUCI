@@ -14,7 +14,7 @@ authors:
     affiliation: 1
   - name: Benjamin Vigneron
     affiliation: 1
-  - Louis-Simon Guité
+  - name: Louis-Simon Guité
     affiliation: 1
 affiliations:
  - name: Département de Physique, Université de Montréal, Succ. Centre-Ville, Montréal, Québec, H3C 3J7, Canada
