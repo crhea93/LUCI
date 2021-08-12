@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uncertainties &#8212; LUCI-package  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="uncertainties">
+<span id="id1"></span><h1>Uncertainties<a class="headerlink" href="#uncertainties" title="Permalink to this headline">¶</a></h1>
+<p>In order to calculate uncertainties, set <cite>uncertainty_bool=True</cite> as an argument
+of a fitting function (i.e. <cite>cube.fit_cube()</cite> or <cite>cube.fit_region()</cite>).</p>
+<p>Since uncertainty estimates are often crucial in astrophysical calculations, we apply
+a full Bayesian MCMC approach (using the python module <em>emcee</em>). The likelihood function
+is defined as a standard Gaussian function. Additionally, we employ the same priors described
+above for the fitting function bounds.</p>
+<div class="section" id="likelihood-function">
+<h2>Likelihood Function<a class="headerlink" href="#likelihood-function" title="Permalink to this headline">¶</a></h2>
+<p>We assume a standard Gaussian likelihood function. Note that <span class="math notranslate nohighlight">\(\sigma\)</span> is the
+error on the measurement (also noted as noise – see next section).</p>
+<div class="math notranslate nohighlight">
+\[LL = -0.5 * \Sigma((y - model) ^ 2 / \sigma^2 + log(2 * \pi * \sigma^2))\]</div>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="noise-calculation">
+<h2>Noise Calculation<a class="headerlink" href="#noise-calculation" title="Permalink to this headline">¶</a></h2>
+<p>In order to estimate the uncertainties (and complete the fits), we assume a homogenous
+noise level associated with the the instrument. This is then accepted as the noise
+over the entire spectrum in the filter. This is calculated for each individual spectrum
+by considering a region outside of the filter (i.e. where the transmission is zero).
+We then take the noise as the standard deviation of the region. This is typically
+on the order of 1% of the flux in high SNR regions. We take the following wavelength regions:</p>
+<div class="section" id="sn1-25300-25700">
+<h3>SN1: 25300 - 25700<a class="headerlink" href="#sn1-25300-25700" title="Permalink to this headline">¶</a></h3>
+<img alt="Luci Initialization Output" src="../_images/SN1_noise.png" />
+<p>SN1 filter of example background (M33 Field 7). The noise region is bounded
+by the magenta box.</p>
+</div>
+<div class="section" id="sn2-18600-19000">
+<h3>SN2: 18600 - 19000<a class="headerlink" href="#sn2-18600-19000" title="Permalink to this headline">¶</a></h3>
+<img alt="Luci Initialization Output" src="../_images/SN2_noise.png" />
+<p>SN2 filter of example background (M33 Field 7). The noise region is bounded
+by the magenta box.</p>
+</div>
+<div class="section" id="sn3-16000-16400">
+<h3>SN3: 16000 - 16400<a class="headerlink" href="#sn3-16000-16400" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="hessian-approach">
+<h2>Hessian Approach<a class="headerlink" href="#hessian-approach" title="Permalink to this headline">¶</a></h2>
+<p>The calculation of fit uncertainties is a very important consideration. As previously
+discussed, we already have a methodology to calculate the uncertainties using an MCMC Bayesian
+approach. However, this method can be extremely time-consuming. Thus, we offer a default
+uncertainty estimate measurement based solely off the best-fit parameters.</p>
+<dl class="simple">
+<dt>The algorithm is as follows:</dt><dd><ul class="simple">
+<li><p>Calculate the best-fit parameters as previously discussed</p></li>
+<li><p>Calculate the Hessian matrix of the likelihood function given the best-fit parameters.</p></li>
+<li><p>Calculate the negative inverse of the Hessian – this yield the covariance matrix</p></li>
+<li><p>Calculate the square root of the diagonals of the covariance matrix</p></li>
+</ul>
+</dd>
+</dl>
+<p>In this manner, we calculate the 1-sigma uncertainties on our  fit parameters. We
+further propagate these to the velocity and broadening by taking the absolute difference between
+the value (velocity or broadening) assuming the best-fit parameters and the value assuming
+the best-fit parameters plus the 1-sigma error.</p>
+<p>For example:</p>
+<p><span class="math notranslate nohighlight">\(\delta v  = |v[\text{best-fit}] - v[\text{best-fit + 1-sigma}]|\)</span></p>
+<p>We calculate the Hessian matrix by using <a class="reference external" href="https://numdifftools.readthedocs.io/en/latest/reference/generated/numdifftools.core.Hessian.html">numdifftools.Hessian</a>.
+Additionally, we use <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html">numpy.linalg.inv</a>
+and <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.diagonal.html">numpy.diagonal</a>.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">LUCI-package</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Carter Rhea.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/source/uncertainties.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

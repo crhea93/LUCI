@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to LUCI’s documentation! &#8212; LUCI-package  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-luci-s-documentation">
+<h1>Welcome to LUCI’s documentation!<a class="headerlink" href="#welcome-to-luci-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>LUCI is a general purpose fitting pipeline built specifically with SITELLE IFU
+data cubes in mind; however, if you need to fit any emission line spectra, LUCI
+will be able to help!</p>
+<p>Please note that this documentation is not exhaustive. If you have any questions or
+wish to see any new implementation, please send a message to <a class="reference external" href="mailto:carter&#46;rhea&#37;&#52;&#48;umontreal&#46;ca">carter<span>&#46;</span>rhea<span>&#64;</span>umontreal<span>&#46;</span>ca</a>.</p>
+<div class="section" id="lines-available">
+<h2>Lines Available<a class="headerlink" href="#lines-available" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 39%" />
+<col style="width: 61%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Line Name</p></td>
+<td><p>Wavelength (nm)</p></td>
+</tr>
+<tr class="row-even"><td><p>Halpha</p></td>
+<td><p>656.280</p></td>
+</tr>
+<tr class="row-odd"><td><p>NII6548</p></td>
+<td><p>654.803</p></td>
+</tr>
+<tr class="row-even"><td><p>NII6583</p></td>
+<td><p>658.341</p></td>
+</tr>
+<tr class="row-odd"><td><p>SII6716</p></td>
+<td><p>671.647</p></td>
+</tr>
+<tr class="row-even"><td><p>SII6731</p></td>
+<td><p>673.085</p></td>
+</tr>
+<tr class="row-odd"><td><p>OII3726</p></td>
+<td><p>372.603</p></td>
+</tr>
+<tr class="row-even"><td><p>OII3729</p></td>
+<td><p>372.882</p></td>
+</tr>
+<tr class="row-odd"><td><p>OIII4959</p></td>
+<td><p>495.891</p></td>
+</tr>
+<tr class="row-even"><td><p>OII5007</p></td>
+<td><p>500.684</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hbeta</p></td>
+<td><p>486.133</p></td>
+</tr>
+</tbody>
+</table>
+<p>The available fitting functions are as follows:
+‘gaussian’, ‘sinc’, ‘sincgauss’</p>
+<div class="section" id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Prerequisites:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="howLuciWorks.html#what-we-calculate">What we calculate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="howLuciWorks.html#how-we-calculate">How we calculate</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="uncertainties.html#likelihood-function">Likelihood Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncertainties.html#noise-calculation">Noise Calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncertainties.html#hessian-approach">Hessian Approach</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_fit_mask.html#make-mask">Make Mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_fit_mask.html#fitting">Fitting</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="pipeline">
+<h3>Pipeline<a class="headerlink" href="#pipeline" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+</ul>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="faq-errors">
+<h3>FAQ &amp; Errors<a class="headerlink" href="#faq-errors" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">FAQ:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+</ul>
+</div>
+</div></blockquote>
+<a class="reference internal image-reference" href="../_images/Luci-Prancing.jpg"><img alt="Alternative text" src="../_images/Luci-Prancing.jpg" style="width: 400px;" /></a>
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="../genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="../search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+<p>The software is protected under the <a class="reference internal" href="license.html#license"><span class="std std-ref">MIT License</span></a>.</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">LUCI-package</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Carter Rhea.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/source/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

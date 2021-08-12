@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FAQ and Errors &#8212; LUCI-package  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="faq-and-errors">
+<span id="luci"></span><h1>FAQ and Errors<a class="headerlink" href="#faq-and-errors" title="Permalink to this headline">¶</a></h1>
+<p>This section contains a discussion on frequently asked questions and errors that sometimes pop up.</p>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="faq">
+<h2>FAQ:<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="how-is-the-interferometric-angle-taken-into-account">
+<h3>How is the interferometric angle taken into account?<a class="headerlink" href="#how-is-the-interferometric-angle-taken-into-account" title="Permalink to this headline">¶</a></h3>
+<p>We calculate the interferometric angle to calculate a correction factor <cite>(1/cos(theta))</cite> which is applied to the broadening.
+We do not apply this correction factor to the spectral axis of each spaxel since this
+is already done in ORB – therefore, the data product downloaded from the CADC already has this
+correction applied! Normally, we would need to calculate the wavelength axis of each spaxel individually
+and then interpolate it (carefully!!!) onto a standard axis.</p>
+</div>
+</div>
+<div class="section" id="common-errors">
+<h2>Common Errors<a class="headerlink" href="#common-errors" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="valueerror-numpy-ndarray-size-changed-may-indicate-binary-incompatibility-expected-88-from-c-header-got-80-from-pyobject">
+<h3>ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject<a class="headerlink" href="#valueerror-numpy-ndarray-size-changed-may-indicate-binary-incompatibility-expected-88-from-c-header-got-80-from-pyobject" title="Permalink to this headline">¶</a></h3>
+<p>This error occasionally comes up when you have newly installed the luci conda environment and try to run
+<cite>extract_spectrum_region</cite>. This happens because your numpy version is disscordant with the
+environment. This can be simply remedied by reinstalling numpy.</p>
+<p><cite>pip uninstall numpy</cite></p>
+<p><cite>pip install numpy</cite></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">LUCI-package</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Carter Rhea.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/source/FAQ.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

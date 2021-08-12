@@ -14,6 +14,8 @@ authors:
     affiliation: 1
   - name: Benjamin Vigneron
     affiliation: 1
+  - Louis-Simon Guité
+    affiliation: 1
 affiliations:
  - name: Département de Physique, Université de Montréal, Succ. Centre-Ville, Montréal, Québec, H3C 3J7, Canada
    index: 1
@@ -34,7 +36,8 @@ In conjunction with additional tools, such as the BPT diagram (e.g. @baldwin_cla
 emission regions based on strong emission-line flux ratios. `LUCI` is a simple-to-use python module
 intended to facilitate the rapid analysis of IFU spectra. `LUCI` does this by integrating
 well-developed pre-existing python tools such as `astropy` and `scipy` with new
-machine learning tools for spectral analysis (Rhea et al. 2020a).
+machine learning tools for spectral analysis (Rhea et al. 2020a). Furthermore, `LUCI` provides
+several easy-to-use tools to access/fit SITELLE data cubes.
 
 
 # Statement of Need 
@@ -48,7 +51,7 @@ paramount -- it is with this in mind that we created `LUCI`.
 
 
 # Functionality
-At her heart, like any fitting software, `LUCI` is nothing more than a collection of pre-processing and post-processing functions to extract information from a spectrum using a fitting function (in this case a `scipy.optimize.minimize` function call).
+At her heart, like any fitting software, `LUCI` is nothing more than a collection of pre-processing and post-processing functions to extract information from a spectrum using a fitting function (in this case a `scipy.optimize.minimize` function call). That being said, `LUCI` is more than a simple wrapper for a fitting call.
 Since SITELLE data cubes are available as **HDF5** files, `LUCI` was built
 to parse the original file and create an instance of a `LUCI` cube which contains the 2D header information and
 a 3D numpy array (Spatial X, Spatial Y, Spectral). Once the data cube has been successfully converted
@@ -111,8 +114,11 @@ Similarly, we define the flux for each fitting function as the following:
 \end{equation}
 
 A full Bayesian approach is implemented in order to determine uncertainties on the three key
-fitting parameters ($p_0, p_1,$ and $p_2$) using the python `emcee` package (@foreman-mackey_emcee_2013).
-Thus, we are able to calculate posterior distributions for each parameter.
+fitting parameters ($p_0, p_1,$ and $p_2$) using the python `emcee` package (@foreman-mackey_emcee_2013). 
+It can be activated by added `bayes_bool=True` to the argument of any fitting function.
+Thus, we are able to calculate posterior distributions for each parameter. Additionally, `LUCI` can calculate
+the uncertainties by calculating the covariance matrix of the fit; this allows users to calculate
+uncertainties using a classical method by adding the argument `uncertainty_bool=True` to any fitting function.
 
 # Other Software
 Several fitting software packages exist for fitting generalized functions to optical spectra (such as `astropy`; @robitaille_astropy_2013).

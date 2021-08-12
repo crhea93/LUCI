@@ -1,0 +1,218 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How LUCI Works &#8212; LUCI-package  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="how-luci-works">
+<span id="howluciworks"></span><h1>How LUCI Works<a class="headerlink" href="#how-luci-works" title="Permalink to this headline">¶</a></h1>
+<p>LUCI is a general purpose line fitting pipeline designed to unveil the inner workings
+of how fits of SITELLE IFU datacubes are calculated. In this section, I will
+explain what we are trying to calculate, how it is calculated, and how you can
+personalize the fits.</p>
+<div class="section" id="what-we-calculate">
+<h2>What we calculate<a class="headerlink" href="#what-we-calculate" title="Permalink to this headline">¶</a></h2>
+<p>The three primary quantities of interest are the <strong>amplitude</strong> of the line, the <strong>position</strong>
+of the line (often described as the velocity and quoted in km/s), and the <strong>broadening</strong>
+of the line (often described as the velocity dispersion).</p>
+<div class="section" id="velocity">
+<h3>Velocity<a class="headerlink" href="#velocity" title="Permalink to this headline">¶</a></h3>
+<p>The velocity of a line is calculated using the following equation:
+<span class="math notranslate nohighlight">\(v [km/s] = c [km/s] * \Delta \lambda\)</span></p>
+<p><em>c</em> is the speed of light in kilometers per second. Delta lambda is the shift of the measured line. Although the line
+position is calculated in units of [cm-1], we translate it into nanometers since <span class="math notranslate nohighlight">\(\lambda [nm] = \frac{1e7}{\lambda[cm-1]}\)</span>.
+At the moment we only calculate the velocity for the Halpha line. Therefore <span class="math notranslate nohighlight">\(\Delta \lambda = (line\_pos[nm]-656.28)/656.28\)</span> where 656.28 nm is the
+natural position of Halpha emission. We plan on extending this to other lines.</p>
+</div>
+<div class="section" id="velocity-dispersion">
+<h3>Velocity Dispersion<a class="headerlink" href="#velocity-dispersion" title="Permalink to this headline">¶</a></h3>
+<p>The velocity dispersion of a line is calculated using the following equation:
+<span class="math notranslate nohighlight">\(\Delta v = corr\_factor*\frac{3e5 [km/s] * \sigma}{v [km/s]}\)</span></p>
+<p>where <span class="math notranslate nohighlight">\(\sigma\)</span> is the calculated width of a the fitted Gaussian and the correction
+factor takes into account the different $theta$ value given the pixels location in the cube.
+See the section of the <em>sincgauss</em> function for a discussion of $theta$. The equation
+for the correction factor is as follows:</p>
+<p><span class="math notranslate nohighlight">\(corr\_factor = \frac{1}{\cos{\theta}}\)</span></p>
+<p>Similarly, we define the flux for each fitting function as the following:</p>
+<p><em>Flux for a Gaussian Function</em>:</p>
+<p><span class="math notranslate nohighlight">\(Flux [erg/s/cm^2/Ang] = \sqrt{2\pi}p_0p_2\)</span></p>
+<p><em>Flux for a Sinc Function</em>:</p>
+<p><span class="math notranslate nohighlight">\(Flux [erg/s/cm^2/Ang] = \pi p_0p_2\)</span></p>
+<p><em>Flux for a SincGauss Function</em>:</p>
+<p><span class="math notranslate nohighlight">\(Flux [erg/s/cm^2/Ang] = p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}\)</span></p>
+</div>
+</div>
+<div class="section" id="how-we-calculate">
+<h2>How we calculate<a class="headerlink" href="#how-we-calculate" title="Permalink to this headline">¶</a></h2>
+<p>Once we have a spectrum, we do two things: we normalize the spectrum by the maximum amplitude
+and we apply a redshift correction (wavelength = wavelength*(1+redshift)). We do this
+primarily to constrain the velocity to be between -500 and 500 km/s. This allows our
+machine learning technique to obtain better initial guess estimates.</p>
+<div class="section" id="initial-guess">
+<h3>Initial Guess<a class="headerlink" href="#initial-guess" title="Permalink to this headline">¶</a></h3>
+<p>Having a good initial guess is crucial for the success (and speed) of the fitting algorithm.
+In order to obtain a good initial guess for the fit parameters (line amplitude, line position,
+and line broadening), we apply a machine learning technique described in <a class="reference external" href="https://arxiv.org/abs/2008.08093">Rhea et al. 2020a</a>
+(disclosure: the author of this code is also the author of this paper). The method
+uses pre-trained convolutional neural networks to estimate the velocity and broadening
+of the line in km/s. These are then translated into the line position and broadening. Next,
+the amplitude is taken as the height of the line corresponding to the shifted line position.
+We note that the machine learning model has only been trained to obtain velocities
+between -500 and 500 km/s. Similarly, the model was trained to obtain broadening
+values between 10 and 200 km/s. You can find more information on this at
+<cite>https://sitelle-signals.github.io/Pamplemousse/index.html &lt;https://sitelle-signals.github.io/Pamplemousse/index.html&gt;</cite>.
+We estimate the amplitude by taking the maximum value of spectrum corresponding to the
+estimated position plus or minus 2 channels.</p>
+<p>Since we understand that machine learning is not everyone’s cup of tea, we have
+an alternative method to calculate the initial guesses.</p>
+</div>
+<div class="section" id="fitting-function">
+<h3>Fitting Function<a class="headerlink" href="#fitting-function" title="Permalink to this headline">¶</a></h3>
+<p>The fitting function utilizes <em>scipy.optimize.minimize</em>. Currently, we are using the <cite>SLSQP &lt;https://docs.scipy.org/doc/scipy/reference/optimize.minimize-slsqp.html&gt;</cite>
+optimization algorithm. Before fitting the spectrum, we normalize the spectrum by the maximum
+amplitude – this makes the fitting process simpler. We also constrain the amplitudes
+to be between 0.001 and 1.1, the position of the line to be between 14700 and 15600 [cm-1],
+and the sigma of the Gaussian to be between 0.001 and 10. By applying these bounds,
+we constrain the optimization problem. The fit returns the amplitude of the line
+(which we then scale to be correct for the un-normalized spectrum), the velocity in km/s,
+and the velocity dispersion in km/s. If the user choses, the line velocities and velocity dispersions
+can be coupled.</p>
+</div>
+<div class="section" id="available-models">
+<h3>Available Models<a class="headerlink" href="#available-models" title="Permalink to this headline">¶</a></h3>
+<p>For the moment, we only have a Gaussian implemented. We plan on adding a sinc and sincgauss.</p>
+<div class="section" id="gaussian">
+<h4>Gaussian<a class="headerlink" href="#gaussian" title="Permalink to this headline">¶</a></h4>
+<p>We assume a standard form of a Gaussian:
+<span class="math notranslate nohighlight">\(p_0*exp{(-(x-p_1)**2)/(2*p_2**2)}\)</span></p>
+<p>We solve for p_0, p_1, and p_2 (x is the wavelength channel and is thus provided).
+<span class="math notranslate nohighlight">\(p_0\)</span> is the amplitude, <span class="math notranslate nohighlight">\(p_1\)</span> is the position of the line, and <span class="math notranslate nohighlight">\(p_2\)</span> is the broadening.</p>
+</div>
+<div class="section" id="sinc">
+<h4>Sinc<a class="headerlink" href="#sinc" title="Permalink to this headline">¶</a></h4>
+<p>We adopt the following form
+<span class="math notranslate nohighlight">\(p_0*((x-p_1)/p_2)/(x-p_1)/p_2)\)</span></p>
+</div>
+<div class="section" id="sincgauss">
+<h4>SincGauss<a class="headerlink" href="#sincgauss" title="Permalink to this headline">¶</a></h4>
+<p><span class="math notranslate nohighlight">\(p_0*exp(-b*^2)*((erf(a-i*b)+erf(a+i*b))/(2*erf(a)))\)</span></p>
+<p>where
+<span class="math notranslate nohighlight">\(a = p_2/(\sqrt{2}*\sigma)\)</span>
+<span class="math notranslate nohighlight">\(b = (x-p_1)/(\sqrt{2}*\sigma)\)</span></p>
+<p>where sigma is 1/(2*MPD) (where <strong>MPD</strong> is the maximum path difference).</p>
+<p>Therefore, when using a <strong>sincgauss</strong>, we have to calculate the <strong>MPD</strong>. We can
+adopt the following definition: <span class="math notranslate nohighlight">\(MPD = \cos{\theta}\delta_x N\)</span> where <span class="math notranslate nohighlight">\(\cos{\theta}\)</span>
+is the cosine angle defined as <span class="math notranslate nohighlight">\(\cos{\theta} = \frac{\lambda_{ref}}{\lambda_{ij}}\)</span>.
+<span class="math notranslate nohighlight">\(\lambda_{ref}\)</span> is the wavelength of the calibration laser and <span class="math notranslate nohighlight">\(\lambda_{ij}\)</span> is
+the measured calibration wavelength of a given pixel (thus <span class="math notranslate nohighlight">\(\theta\)</span> is a function of the pixel).</p>
+</div>
+</div>
+<div class="section" id="transmission">
+<h3>Transmission<a class="headerlink" href="#transmission" title="Permalink to this headline">¶</a></h3>
+<p>We take into account the transmission of the SITTELLE filters (SN1, SN2, and SN3).
+We take the true transmission as the mean of the transmission at different filter angles;
+the raw data can be found [here](<a class="reference external" href="https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php">https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php</a>).
+The transmission is then applied to the spectrum in the following manner:
+if the transmission is above 0.5, then we multiply the spectrum by the transmission percentage. Otherwise, we set it to zero.
+Note that we calculate the noise <strong>before</strong> applying the transmission.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">LUCI-package</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Carter Rhea.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/source/howLuciWorks.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

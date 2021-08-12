@@ -1,0 +1,991 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LUCI package &#8212; LUCI-package  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="LUCI" href="modules.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="luci-package">
+<h1>LUCI package<a class="headerlink" href="#luci-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-LUCI.LuciBase">
+<span id="luci-lucibase-module"></span><h2>LUCI.LuciBase module<a class="headerlink" href="#module-LUCI.LuciBase" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciBase.</span></span><span class="sig-name descname"><span class="pre">Luci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Luci_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cube_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>This is the primary class for the general purpose line fitting code LUCI. This contains
+all io/administrative functionality. The fitting functionality can be found in the
+Fit class (Lucifit.py).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.bin_cube">
+<span class="sig-name descname"><span class="pre">bin_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.bin_cube"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.bin_cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to bin cube into bin x bin sub cubes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>binning</strong> – Size of binning (equal in x and y direction)</p></li>
+<li><p><strong>x_min</strong> – Lower bound in x</p></li>
+<li><p><strong>x_max</strong> – Upper bound in x</p></li>
+<li><p><strong>y_min</strong> – Lower bound in y</p></li>
+<li><p><strong>y_max</strong> – Upper bound in y</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Binned cubed called self.cube_binned and new spatial limits</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.create_deep_image">
+<span class="sig-name descname"><span class="pre">create_deep_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.create_deep_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.create_deep_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create deep image fits file of the cube. This takes the cube and sums
+the spectral axis. Then the deep image is saved as a fits file with the following
+naming convention: output_dir+’/’+object_name+’_deep.fits’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.create_snr_map">
+<span class="sig-name descname"><span class="pre">create_snr_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2064</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.create_snr_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.create_snr_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
+a map of the entire cube is calculated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min</strong> – Minimal X value (default 0)</p></li>
+<li><p><strong>x_max</strong> – Maximal X value (default 2048)</p></li>
+<li><p><strong>y_min</strong> – Minimal Y value (default 0)</p></li>
+<li><p><strong>y_max</strong> – Maximal Y value (default 2064)</p></li>
+<li><p><strong>method</strong> – Method used to calculate SNR (default 1; options 1 or 2)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Signal-to-Noise ratio map</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>snr_map</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.extract_spectrum">
+<span class="sig-name descname"><span class="pre">extract_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.extract_spectrum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.extract_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract spectrum in region. This is primarily used to extract background regions.
+The spectra in the region are summed and then averaged (if mean is selected).
+Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
+or the averaged spectrum for background spectra (True).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min</strong> – Lower bound in x</p></li>
+<li><p><strong>x_max</strong> – Upper bound in x</p></li>
+<li><p><strong>y_min</strong> – Lower bound in y</p></li>
+<li><p><strong>y_max</strong> – Upper bound in y</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+<li><p><strong>mean</strong> – Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>X-axis and spectral axis of region.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.extract_spectrum_region">
+<span class="sig-name descname"><span class="pre">extract_spectrum_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.extract_spectrum_region"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.extract_spectrum_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract spectrum in region. This is primarily used to extract background regions.
+The spectra in the region are summed and then averaged (if mean is selected).
+Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
+or the averaged spectrum for background spectra (True).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>region</strong> – Name of ds9 region file (e.x. ‘region.reg’). You can also pass a boolean mask array.</p></li>
+<li><p><strong>mean</strong> – Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>X-axis and spectral axis of region.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.fit_cube">
+<span class="sig-name descname"><span class="pre">fit_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.fit_cube"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.fit_cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Primary fit call to fit rectangular regions in the data cube. This wraps the
+LuciFits.FIT().fit() call which applies all the fitting steps. This also
+saves the velocity and broadening fits files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
+<li><p><strong>vel_rel</strong> – Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>sigma_rel</strong> – Constraints on sigma (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>x_min</strong> – Lower bound in x</p></li>
+<li><p><strong>x_max</strong> – Upper bound in x</p></li>
+<li><p><strong>y_min</strong> – Lower bound in y</p></li>
+<li><p><strong>y_max</strong> – Upper bound in y</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+<li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default False)</p></li>
+<li><p><strong>output_name</strong> – User defined output path/name (default None)</p></li>
+<li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity and Broadening arrays (2d). Also return amplitudes array (3D).</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>As always, we must first have the cube initialized (see basic example).</p>
+<p>If we want to fit all five lines in SN3 with a sincgauss function and binning of 2
+over a rectangular region defined in image coordinates as 800&lt;x&lt;1500; 250&lt;y&lt;1250,
+we would run the following:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span> <span class="mi">1500</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">750</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.fit_entire_cube">
+<span class="sig-name descname"><span class="pre">fit_entire_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.fit_entire_cube"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.fit_entire_cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the entire cube (all spatial dimensions)
+:param lines: Lines to fit (e.x. [‘Halpha’, ‘NII6583’])
+:param fit_function: Fitting function to use (e.x. ‘gaussian’)
+:param vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+:param sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.fit_region">
+<span class="sig-name descname"><span class="pre">fit_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.fit_region"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.fit_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the spectrum in a region. This is an extremely similar command to fit_cube except
+it works for ds9 regions. We first create a mask from the ds9 region file. Then
+we step through the cube and only fit the unmasked pixels. Although this may not
+be the most efficient method, it does ensure the fidelity of the wcs system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
+<li><p><strong>vel_rel</strong> – Constraints on Velocity/Position (must be list; e.x. [1, 2])</p></li>
+<li><p><strong>sigma_rel</strong> – Constraints on sigma (must be list; e.x. [1, 2])</p></li>
+<li><p><strong>region</strong> – Name of ds9 region file (e.x. ‘region.reg’). You can also pass a boolean mask array.</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+<li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default False)</p></li>
+<li><p><strong>output_name</strong> – User defined output path/name</p></li>
+<li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity and Broadening arrays (2d). Also return amplitudes array (3D).</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>As always, we must first have the cube initialized (see basic example).</p>
+<p>If we want to fit all five lines in SN3 with a gaussian function and no binning
+over a ds9 region called main.reg, we would run the following:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_region</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="s1">&#39;main.reg&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.fit_spectrum_region">
+<span class="sig-name descname"><span class="pre">fit_spectrum_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.fit_spectrum_region"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.fit_spectrum_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit spectrum in region.
+The spectra in the region are summed and then averaged (if mean is selected).
+Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
+or the averaged spectrum for background spectra (True).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
+<li><p><strong>vel_rel</strong> – Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>sigma_rel</strong> – Constraints on sigma (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>region</strong> – Name of ds9 region file (e.x. ‘region.reg’). You can also pass a boolean mask array.</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>X-axis and spectral axis of region.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.get_interferometer_angles">
+<span class="sig-name descname"><span class="pre">get_interferometer_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.get_interferometer_angles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.get_interferometer_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the interferometer angle 2d array for the entire cube. We use
+the following equation:
+cos(theta) = lambda_ref/lambda
+where lambda_ref is the reference laser wavelength and lambda is the measured calibration laser wavelength.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>file</strong> – hdf5 File object containing HDF5 file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.get_quadrant_dims">
+<span class="sig-name descname"><span class="pre">get_quadrant_dims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quad_number</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.get_quadrant_dims"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.get_quadrant_dims" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the x and y limits of a given quadrant in the HDF5 file. The
+data cube is saved in 9 individual arrays in the original HDF5 cube. This
+function gets the bouunds for each quadrant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>quad_number</strong> – Quadrant Number</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Spatial bounds of quadrant</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>x_min, x_max, y_min, y_max</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.read_in_cube">
+<span class="sig-name descname"><span class="pre">read_in_cube</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.read_in_cube"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.read_in_cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to read the hdf5 data into a 3d numpy array (data cube). We also
+translate the header to standard wcs format by calling the update_header function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.read_in_reference_spectrum">
+<span class="sig-name descname"><span class="pre">read_in_reference_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.read_in_reference_spectrum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.read_in_reference_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read in the reference spectrum that will be used in the machine learning
+algorithm to interpolate the true spectra so that they
+wil all have the same size (required for our CNN). The reference spectrum
+will be saved as self.wavenumbers_syn [cm-1].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.read_in_transmission">
+<span class="sig-name descname"><span class="pre">read_in_transmission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.read_in_transmission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.read_in_transmission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read in the transmission spectrum for the filter. Then apply interpolation
+on it to make it have the same x-axis as the spectra.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.save_fits">
+<span class="sig-name descname"><span class="pre">save_fits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadenings_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadenings_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuum_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.save_fits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.save_fits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
+amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
+defined when the cube is initiated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>ampls_fits</strong> – 3D Numpy array of amplitude values</p></li>
+<li><p><strong>flux_fis</strong> – 3D Numpy array of flux values</p></li>
+<li><p><strong>velocities_fits</strong> – 3D Numpy array of velocity values</p></li>
+<li><p><strong>broadenings_fits</strong> – 3D Numpy array of broadening values</p></li>
+<li><p><strong>velocities_errors_fits</strong> – 3D Numpy array of velocity errors</p></li>
+<li><p><strong>broadenings_errors_fits</strong> – 3D Numpy array of broadening errors</p></li>
+<li><p><strong>chi2_fits</strong> – 2D Numpy array of chi-squared values</p></li>
+<li><p><strong>continuum_fits</strong> – 2D Numpy array of continuum value</p></li>
+<li><p><strong>header</strong> – Header object (either binned or unbinned)</p></li>
+<li><p><strong>output_name</strong> – Output directory and naming convention</p></li>
+<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.spectrum_axis_func">
+<span class="sig-name descname"><span class="pre">spectrum_axis_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.spectrum_axis_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.spectrum_axis_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the x-axis for the spectra. We must construct this from header information
+since each pixel only has amplitudes of the spectra at each point.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.update_astrometry">
+<span class="sig-name descname"><span class="pre">update_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.update_astrometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.update_astrometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use astronomy.net to update the astrometry in the header
+If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
+the header is not updated and an exception is thrown.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>api_key</strong> – Astronomy.net user api key</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciBase.Luci.update_header">
+<span class="sig-name descname"><span class="pre">update_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciBase.html#Luci.update_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciBase.Luci.update_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a standard WCS header from the HDF5 header. To do this we clean up the
+header data (which is initially stored in individual arrays). We then create
+a new header dictionary with the old cleaned header info. Finally, we use
+astropy.wcs.WCS to create an updated WCS header for the 2 spatial dimensions.
+This is then saved to self.header while the header dictionary is saved
+as self.hdr_dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>file</strong> – hdf5 File object containing HDF5 file</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="luci-lucibayesian-module">
+<h2>LUCI.LuciBayesian module<a class="headerlink" href="#luci-lucibayesian-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-LUCI.LuciErrors">
+<span id="luci-lucierrors-module"></span><h2>LUCI.LuciErrors module<a class="headerlink" href="#module-LUCI.LuciErrors" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-LUCI.LuciFit">
+<span id="luci-lucifit-module"></span><h2>LUCI.LuciFit module<a class="headerlink" href="#module-LUCI.LuciFit" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFit.</span></span><span class="sig-name descname"><span class="pre">Fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2943</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">842</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SN3'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Class that defines the functions necessary for the modelling aspect. This includes
+the gaussian fit functions, the prior definitions, the log likelihood, and the
+definition of the posterior (log likelihood times prior).</p>
+<p>The initial arguments are as follows:
+:param spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
+:param axis: Wavelength Axis of Spectrum (numpy array)
+:param wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
+:param model_type: Type of model (‘gaussian’)
+:param lines: Lines to fit (must be in line_dict)
+:param sigma_rel: Constraints on sigma (must be list)
+:param ML_model: Tensorflow/keras machine learning model</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.apply_transmission">
+<span class="sig-name descname"><span class="pre">apply_transmission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.apply_transmission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.apply_transmission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply transmission curve on the spectra according to un-redshifted axis.
+This is done before we interpolate onto the wavenumbers_syn so that the axis
+align properly. Note – the values of the x-axis are not important for this
+division since we have already interpolated the transition filter vector
+over the UNSHIFTED spectral axis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calc_chisquare">
+<span class="sig-name descname"><span class="pre">calc_chisquare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fit_vector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_errors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_dof</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calc_chisquare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calc_chisquare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate reduced chi 2</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fit_vector</strong> – Spectrum obtained from fit</p></li>
+<li><p><strong>init_spectrum</strong> – Observed spectrum</p></li>
+<li><p><strong>init_errors</strong> – Errors on observed spectrum</p></li>
+<li><p><strong>n_dof</strong> – Number of degrees of freedom</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Chi squared value
+chi2dof: Reduced chi squared value</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>chi2</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calc_sinc_width">
+<span class="sig-name descname"><span class="pre">calc_sinc_width</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sincgauss_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calc_sinc_width"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calc_sinc_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate sinc width of the sincgauss function
+:param sincgauss_args: Additional arguments required for sincgauss function in a list:
+:param [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle():
+:param step_delta:
+:param n_steps]:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_broad">
+<span class="sig-name descname"><span class="pre">calculate_broad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calculate_broad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_broad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity dispersion
+TODO: Test</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ind</strong> – Index of line in lines</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_broad_err">
+<span class="sig-name descname"><span class="pre">calculate_broad_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calculate_broad_err"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_broad_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity dispersion error</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ind</strong> – Index of line in lines</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_correction">
+<span class="sig-name descname"><span class="pre">calculate_correction</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calculate_correction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_correction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate correction factor based of interferometric angle. This is used to correct the broadening</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_flux">
+<span class="sig-name descname"><span class="pre">calculate_flux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calculate_flux"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate flux value given fit of line
+TODO: Test</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>line_amp</strong> – Amplitude of the line (un-normalized)</p></li>
+<li><p><strong>line_sigma</strong> – Sigma of the line fit</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Flux of the provided line in units of erg/s/cm-2</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_noise">
+<span class="sig-name descname"><span class="pre">calculate_noise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calculate_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate noise level in spectrum. We assume the noise is homogenous across the
+spectrum. We estimate it by taking a region outside of the filter and calculating
+the standard deviation in that region. We use the normalized spectrum since that
+is what is passed to the fit function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_params">
+<span class="sig-name descname"><span class="pre">calculate_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calculate_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the amplitude, position, and sigma of the line. These values are
+calculated using the scipy.optimize.minimize function. This is called
+on the log likelood previously described. The minimization algorithm uses
+the SLSQP optimization implementation. We have applied standard bounds in order
+to speed up the fitting. We also apply the fit on the normalized spectrum.
+We then correct the flux by un-normalizing the spectrum.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_vel">
+<span class="sig-name descname"><span class="pre">calculate_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calculate_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_vel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ind</strong> – Index of line in lines</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_vel_err">
+<span class="sig-name descname"><span class="pre">calculate_vel_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.calculate_vel_err"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_vel_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity error
+TODO: Test</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ind</strong> – Index of line in lines</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.check_fitting_model">
+<span class="sig-name descname"><span class="pre">check_fitting_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.check_fitting_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.check_fitting_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function checks to see that the model provided is in the available options
+Return:
+Nothing if the user provides an appropriate fitting model
+Else it will throw an error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.check_lengths">
+<span class="sig-name descname"><span class="pre">check_lengths</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.check_lengths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.check_lengths" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function checks to see that the length of the sigma_rel and vel_rel arguments are correct
+Return:
+Nothing if the user provides appropriate length
+Else it will throw an error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.check_lines">
+<span class="sig-name descname"><span class="pre">check_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.check_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.check_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function checks to see that the lines provided are in the available options
+Return:
+Nothing if the user provides appropriate lines
+Else it will throw an error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.estimate_priors_ML">
+<span class="sig-name descname"><span class="pre">estimate_priors_ML</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.estimate_priors_ML"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.estimate_priors_ML" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Test
+Apply machine learning algorithm on spectrum in order to estimate the velocity.
+The spectrum fed into this method must be interpolated already onto the
+reference spectrum axis AND normalized as described in Rhea et al. 2020a.
+:param ml_dir: Relative path to the trained ML Predictor (e.g. R5000-PREDICITOR-I)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Updates self.vel_ml</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Primary function call for a spectrum. This will estimate the velocity using
+our machine learning algorithm described in Rhea et al. 2020a. Then we will
+fit our lines using scipy.optimize.minimize.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>{“fit_vector”: Fitted spectrum, “velocity”: Velocity of the line in km/s (float),
+“broadening”: Velocity Dispersion of the line in km/s (float)}</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dictionary of parameters returned by the fit. The dictionary has the following form</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.fit_Bayes">
+<span class="sig-name descname"><span class="pre">fit_Bayes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.fit_Bayes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.fit_Bayes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply Bayesian MCMC run to constrain the parameters after solving</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.fun_der">
+<span class="sig-name descname"><span class="pre">fun_der</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.fun_der"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.fun_der" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.gaussian_model">
+<span class="sig-name descname"><span class="pre">gaussian_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.gaussian_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.gaussian_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>theta</strong> – List of parameters for all the models in the following order
+[amplitude, line location, sigma]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.interpolate_spectrum">
+<span class="sig-name descname"><span class="pre">interpolate_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.interpolate_spectrum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.interpolate_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate Spectrum given the wavelength axis of reference spectrum.
+Then normalize the spectrum so that the max value equals 1</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Populates self.spectrum_interpolated, self.spectrum_scale, and self.spectrum_interp_norm.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.line_vals_estimate">
+<span class="sig-name descname"><span class="pre">line_vals_estimate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.line_vals_estimate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.line_vals_estimate" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Test</p>
+<p>Function to estimate the position and amplitude of a given line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spec</strong> – Spectrum flux values</p></li>
+<li><p><strong>line_name</strong> – Name of model. Available options are ‘Halpha’, ‘NII6548’, ‘NII6543’, ‘SII6716’, ‘SII6731’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Estimated line amplitude in units of cm-1 (line_amp_est) and estimate line position in units of cm-1 (line_pos_est)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.log_likelihood">
+<span class="sig-name descname"><span class="pre">log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.log_likelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.log_likelihood" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate log likelihood function evaluated given parameters on spectral axis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>- List of parameters for all the models in the following order</strong> (<em>theta</em>) – [amplitude, line location, sigma, continuum constant]
+The continuum constant is always the last argument regardless of the number of lines being modeled</p></li>
+<li><p><strong>yerr</strong> – Error on Spectrum’s flux values (default 1e-2)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of log likelihood</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.log_likelihood_bayes">
+<span class="sig-name descname"><span class="pre">log_likelihood_bayes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model__</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.log_likelihood_bayes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.log_likelihood_bayes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.log_prior">
+<span class="sig-name descname"><span class="pre">log_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.log_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.log_prior" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.log_probability">
+<span class="sig-name descname"><span class="pre">log_probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.log_probability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.log_probability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.sigma_constraints">
+<span class="sig-name descname"><span class="pre">sigma_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.sigma_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.sigma_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up constraints for sigma values before fitting line
+:returns: Dictionary describing constraints</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.sinc_model">
+<span class="sig-name descname"><span class="pre">sinc_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.sinc_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.sinc_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>theta</strong> – List of parameters for all the models in the following order
+[amplitude, line location, sigma]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.sincgauss_model">
+<span class="sig-name descname"><span class="pre">sincgauss_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.sincgauss_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.sincgauss_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>theta</strong> – List of parameters for all the models in the following order
+[amplitude, line location, sigma]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.vel_constraints">
+<span class="sig-name descname"><span class="pre">vel_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFit.html#Fit.vel_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFit.Fit.vel_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up constraints for velocity values before fitting line
+:returns: Dictionary describing constraints</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-LUCI.LuciFunctions">
+<span id="luci-lucifunctions-module"></span><h2>LUCI.LuciFunctions module<a class="headerlink" href="#module-LUCI.LuciFunctions" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="LUCI.LuciFunctions.Gaussian">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFunctions.</span></span><span class="sig-name descname"><span class="pre">Gaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFunctions.html#Gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFunctions.Gaussian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="LUCI.LuciFunctions.Sinc">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFunctions.</span></span><span class="sig-name descname"><span class="pre">Sinc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFunctions.html#Sinc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFunctions.Sinc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="LUCI.LuciFunctions.SincGauss">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFunctions.</span></span><span class="sig-name descname"><span class="pre">SincGauss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciFunctions.html#SincGauss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciFunctions.SincGauss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-LUCI.LuciPlotting">
+<span id="luci-luciplotting-module"></span><h2>LUCI.LuciPlotting module<a class="headerlink" href="#module-LUCI.LuciPlotting" title="Permalink to this headline">¶</a></h2>
+<p>Collection of plotting functions</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="LUCI.LuciPlotting.check_units">
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">check_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciPlotting.html#check_units"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciPlotting.check_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function checks to see that the unit provided is in the available options
+:param unit: User supplied unit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Nothing if the user provides an appropriate unit
+Else it will throw an error</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_map">
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciPlotting.html#plot_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciPlotting.plot_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to plot fit map
+:param quantity_map: 2d numpy array from fit
+:param quantity_name: Name of quantity (e.x. ‘flux’)
+:param output_dit: Path (absolute or partial) to output directory
+:param clims: List containing lower and upper limits of colorbar (e.x. [-500, 500])</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_spectrum">
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cm-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciPlotting.html#plot_spectrum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciPlotting.plot_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot Spectrum with Luci format. If output name is supplied, the plot will be saved
+:param axis: X axis of spectrum (1d numpy array)
+:param spectrum: Y axis of spectrum (1d numpy array)
+:param units: Wavelength units (e.x. ‘cm’)
+:param output_name: Path to output file (default None)</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-LUCI.LuciSim">
+<span id="luci-lucisim-module"></span><h2>LUCI.LuciSim module<a class="headerlink" href="#module-LUCI.LuciSim" title="Permalink to this headline">¶</a></h2>
+<p>Suite of simulations tools in LUCI</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="LUCI.LuciSim.Spectrum">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciSim.</span></span><span class="sig-name descname"><span class="pre">Spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadening</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciSim.html#Spectrum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciSim.Spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciSim.Spectrum.calc_sinc_width">
+<span class="sig-name descname"><span class="pre">calc_sinc_width</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciSim.html#Spectrum.calc_sinc_width"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciSim.Spectrum.calc_sinc_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate sinc width of the sincgauss function</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciSim.Spectrum.check_fitting_model">
+<span class="sig-name descname"><span class="pre">check_fitting_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciSim.html#Spectrum.check_fitting_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciSim.Spectrum.check_fitting_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function checks to see that the model provided is in the available options
+Return:
+Nothing if the user provides an appropriate fitting model
+Else it will throw an error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciSim.Spectrum.check_lines">
+<span class="sig-name descname"><span class="pre">check_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciSim.html#Spectrum.check_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciSim.Spectrum.check_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function checks to see that the lines provided are in the available options
+Return:
+Nothing if the user provides appropriate lines
+Else it will throw an error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciSim.Spectrum.create_spectrum">
+<span class="sig-name descname"><span class="pre">create_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciSim.html#Spectrum.create_spectrum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciSim.Spectrum.create_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a mock spectrum given the lines of interest, the fitting function, the
+amplitudes of the lines, the kinematics of the lines, and the interferometer parameters.
+The interferometer parameters (step, n_steps, order &amp; theta) will be used to construct the x-axis.
+We add noise given the snr value provided by sampling from a normal distribution with a sigma=1.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciSim.Spectrum.gaussian_model">
+<span class="sig-name descname"><span class="pre">gaussian_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciSim.html#Spectrum.gaussian_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciSim.Spectrum.gaussian_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>amp</strong> – Amplitude of the line</p></li>
+<li><p><strong>pos</strong> – Position of the line</p></li>
+<li><p><strong>sigma</strong> – Sigma of the line</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciSim.Spectrum.sinc_model">
+<span class="sig-name descname"><span class="pre">sinc_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciSim.html#Spectrum.sinc_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciSim.Spectrum.sinc_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>amp</strong> – Amplitude of the line</p></li>
+<li><p><strong>pos</strong> – Position of the line</p></li>
+<li><p><strong>sigma</strong> – Sigma of the line</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciSim.Spectrum.sincgauss_model">
+<span class="sig-name descname"><span class="pre">sincgauss_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciSim.html#Spectrum.sincgauss_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciSim.Spectrum.sincgauss_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>amp</strong> – Amplitude of the line</p></li>
+<li><p><strong>pos</strong> – Position of the line</p></li>
+<li><p><strong>sigma</strong> – Sigma of the line</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciSim.Spectrum.steps_from_resolution">
+<span class="sig-name descname"><span class="pre">steps_from_resolution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/LUCI/LuciSim.html#Spectrum.steps_from_resolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#LUCI.LuciSim.Spectrum.steps_from_resolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the number of steps given the resolution, delta_x, and order.
+This is taken from Martin’s Thesis.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-LUCI">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-LUCI" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">LUCI-package</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Module Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">LUCI package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">LUCI</a><ul>
+      <li>Previous: <a href="modules.html" title="previous chapter">LUCI</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Carter Rhea.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/api/LUCI.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
