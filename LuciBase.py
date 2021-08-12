@@ -298,7 +298,7 @@ class Luci():
 
 
 
-    def save_fits(self, lines, ampls_fits, flux_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, header, binning):
+    def save_fits(self, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, header, binning):
         """
         Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
         amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
@@ -308,6 +308,7 @@ class Luci():
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             ampls_fits: 3D Numpy array of amplitude values
             flux_fis: 3D Numpy array of flux values
+            flux_errors_fits 3D numpy array of flux errors
             velocities_fits: 3D Numpy array of velocity values
             broadenings_fits: 3D Numpy array of broadening values
             velocities_errors_fits: 3D Numpy array of velocity errors
@@ -336,6 +337,7 @@ class Luci():
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
             fits.writeto(self.output_dir + '/Amplitudes/'+ output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
             fits.writeto(self.output_dir + '/Fluxes/'+ output_name +'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
+            fits.writeto(self.output_dir + '/Fluxes/'+ output_name +'_'+line_+'_Flux_err.fits', flux_errors_fits[:,:,ct], header, overwrite=True)
             fits.writeto(self.output_dir + '/Velocity/' + output_name +'_' + line_ +'_velocity.fits', velocities_fits[:,:,ct], header, overwrite=True)
             fits.writeto(self.output_dir + '/Broadening/' + output_name +'_' + line_ +'_broadening.fits', broadenings_fits[:,:,ct], header, overwrite=True)
             fits.writeto(self.output_dir + '/Velocity/' + output_name +'_' + line_ + '_velocity_err.fits', velocities_errors_fits[:,:,ct], header, overwrite=True)
@@ -406,6 +408,7 @@ class Luci():
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        flux_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         velocities_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         broadenings_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         velocities_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
@@ -417,6 +420,7 @@ class Luci():
             y_pix = y_min + i
             ampls_local = []
             flux_local = []
+            flux_errs_local = []
             vels_local = []
             broads_local = []
             vels_errs_local = []
@@ -447,9 +451,11 @@ class Luci():
                         filter = self.hdr_dict['FILTER'],
                         bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
                 fit_dict = fit.fit()
+                print(fit_dict)
                 # Save local list of fit values
                 ampls_local.append(fit_dict['amplitudes'])
                 flux_local.append(fit_dict['fluxes'])
+                flux_errs_local.append(fit_dict['flux_errors'])
                 vels_local.append(fit_dict['velocities'])
                 broads_local.append(fit_dict['sigmas'])
                 vels_errs_local.append(fit_dict['vels_errors'])
@@ -461,6 +467,7 @@ class Luci():
             # Update global array of fit values
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
+            flux_errors_fits[i] = flux_errs_local
             velocities_fits[i] = vels_local
             broadenings_fits[i] = broads_local
             velocities_errors_fits[i] = vels_errs_local
@@ -481,7 +488,7 @@ class Luci():
                 self.create_deep_image()
             wcs = WCS(self.header, naxis=2)
         cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-        self.save_fits(lines, ampls_fits, flux_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
+        self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
 
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
 
@@ -565,6 +572,7 @@ class Luci():
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        flux_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         velocities_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         broadenings_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         velocities_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
@@ -575,6 +583,7 @@ class Luci():
             y_pix = y_min + i
             ampls_local = []
             flux_local = []
+            flux_errs_local = []
             vels_local = []
             broads_local = []
             vels_errs_local = []
@@ -610,6 +619,7 @@ class Luci():
                     # Save local list of fit values
                     ampls_local.append(fit_dict['amplitudes'])
                     flux_local.append(fit_dict['fluxes'])
+                    flux_errs_local.append(fit_dict['flux_errors'])
                     vels_local.append(fit_dict['velocities'])
                     broads_local.append(fit_dict['sigmas'])
                     vels_errs_local.append(fit_dict['vels_errors'])
@@ -619,6 +629,7 @@ class Luci():
                 else:  # If outside of mask set to zero
                     ampls_local.append([0]*len(lines))
                     flux_local.append([0]*len(lines))
+                    flux_errs_local.append([0]*len(lines))
                     vels_local.append([0]*len(lines))
                     broads_local.append([0]*len(lines))
                     vels_errs_local.append([0]*len(lines))
@@ -628,6 +639,7 @@ class Luci():
             # Update global array of fit values
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
+            flux_errors_fits[i] = flux_errs_local
             velocities_fits[i] = vels_local
             broadenings_fits[i] = broads_local
             velocities_errors_fits[i] = vels_errs_local
@@ -635,13 +647,12 @@ class Luci():
             chi2_fits[i] = chi2_local
             continuum_fits[i] = continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
-        print(ct)
         if binning is not None:
             wcs = WCS(self.header_binned)
         else:
             wcs = WCS(self.header)
         cutout = Cutout2D(velocities_fits[:,:,0], position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-        self.save_fits(lines, ampls_fits, flux_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
+        self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
 
 
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
@@ -720,7 +731,7 @@ class Luci():
         if '.reg' in region:
             shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-            mask = r.get_mask(shape=shape)  # Calculate mask from pyregion region
+            mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
         else:
             mask = region
         # Set spatial bounds for entire cube

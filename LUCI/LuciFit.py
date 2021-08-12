@@ -524,6 +524,41 @@ class Fit:
         return flux
 
 
+    def calculate_flux_err(self, ind):
+        """
+        Calculate flux error
+
+        Args:
+            ind: Index of line in lines
+
+        Return:
+            Error of the provided line in units of ergs/s/cm-2
+        """
+
+        p0 = self.fit_sol[3*ind]
+        p2 = self.fit_sol[3*ind + 2]
+        p0_err = self.uncertainties[3*ind]
+        p2_err = self.uncertainties[3*ind + 2]
+
+
+        if self.model_type == 'gaussian':
+            flux_err = np.sqrt(2*np.pi) * self.calculate_flux(p0 , p2) * \
+                       np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
+
+        elif self.model_type == 'sunc':
+            flux_err = np.sqrt(np.pi) * self.calculate_flux(p0 , p2) * \
+                       np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
+
+        elif self.model_type == 'sincgauss':
+​
+            erf_func = sps.erf(p2 / (np.sqrt(2)*self.sinc_width)) #Shortcut for the error function
+
+            flux_err = np.sqrt(2*np.pi) * np.sqrt(   (p2*p0_err / erf_func)**2 + \
+                       (  p0*p2_err *  (erf_func - (np.sqrt(2)*p2*np.exp(-(p2/(np.sqrt(2)*self.sinc_width))**2)/np.sqrt(np.pi))) / erf_func**2  )**2  )
+
+        return flux_err
+
+
     def calc_chisquare(self, fit_vector, init_spectrum, init_errors, n_dof):
         """
         Calculate reduced chi 2
@@ -556,6 +591,7 @@ class Fit:
             {"fit_vector": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
+        print("WOAH")
         if self.ML_model != None:
             # Interpolate Spectrum
             self.interpolate_spectrum()
@@ -577,6 +613,7 @@ class Fit:
         sigmas = []
         vels_errors = []
         sigmas_errors = []
+        flux_errors = []
         for line_ct, line_ in enumerate(self.lines):  # Step through each line
             ampls.append(self.fit_sol[line_ct * 3])
             # Calculate flux
@@ -585,14 +622,17 @@ class Fit:
             sigmas.append(self.calculate_broad(line_ct))
             vels_errors.append(self.calculate_vel_err(line_ct))
             sigmas_errors.append(self.calculate_broad_err(line_ct))
+            flux_errors.append(self.calculate_flux_err(line_ct))
+        print(flux_errors)
         # Collect parameters to return in a dictionary
         fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
                     'fit_vector': self.fit_vector,
                     'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
                     'velocity_err': self.calculate_vel_err(0),
                     'broadening_err': self.calculate_broad_err(0),
-                    'amplitudes': ampls, 'fluxes': fluxes, 'chi2': chi_sqr, 'velocities': vels,
-                    'sigmas': sigmas, 'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
+                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': chi_sqr,
+                    'velocities': vels, 'sigmas': sigmas,
+                    'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                     'axis_step': self.axis_step, 'corr': self.correction_factor,
                     'continuum': self.fit_sol[-1]}
         return fit_dict
