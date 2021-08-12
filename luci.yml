@@ -1,4 +1,4 @@
-name: LUCI
+name: luci
 channels:
   - defaults
 dependencies:
@@ -162,4 +162,4 @@ dependencies:
     - termcolor==1.1.0
     - toml==0.10.2
     - werkzeug==2.0.1
-prefix: /home/carterrhea/miniconda3/envs/LUCI
+prefix: /home/carterrhea/miniconda3/envs/luci
