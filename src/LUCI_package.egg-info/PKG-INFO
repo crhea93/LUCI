@@ -1,3 +1,23 @@
+Metadata-Version: 2.1
+Name: LUCI-package
+Version: 0.0.3
+Summary: A data analysis pipeline for SITELLE data cubes
+Home-page: https://github.com/crhea93/LUCI
+Author: Carter Rhea
+Author-email: carter.rhea@umontreal.ca
+License: MIT
+Project-URL: Documentation, https://crhea93.github.io/LUCI/index.html
+Project-URL: Tracker, https://github.com/crhea93/LUCI/issues
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+License-File: LICENSE.txt
+License-File: AUTHORS.rst
+
 # Welcome to LUCI
 In this document, you will find a brief description of what `LUCI` is, how to install it (her), where to go to find examples, documentation, and more!
 
@@ -8,8 +28,6 @@ will be able to help! Although other codees exist, we built `LUCI` specifically 
 in mind. Thanks to the clear coding practices used in creating `LUCI` and her detailed documentation,
 users can modify the code easily by changing numerical solvers. Additionally, we implemented
 a Bayesian Inference algorithm using MCMC (using `emcee`) to derive uncertainty estimates.
-
-
 
 ## Installing `LUCI`
 We have tried to make the installation of `LUCI` as smooth and painless as possible; however, if you have suggestions, please reach out to us.
@@ -27,16 +45,6 @@ import sys
 sys.path.insert(0, '/the/path/to/LUCI/')
 import Luci
 ```
-
-We also have created a pypi package which can be found at [https://pypi.org/project/LUCI-fit/](https://pypi.org/project/LUCI-fit/). In order to install this distribution, simply enter the following command in your terminal:
-`pip install luci-fit`. You will also need the other packages from the luci.yml file, so I suggest running this after you have created the luci conda environment and activated it following the instructions above. 
-
-LUCI can then be initiated in python with the following command:
-```
-from LUCI.LuciBase import Luci
-```
-
-Please note that the version on pypi is used for major updates whereas this GitHub repo is undergoing continual updates.
 
 
 ## What to use `LUCI` for
@@ -69,3 +77,5 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along with this program. If not, see [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/).
+
+
