@@ -119,11 +119,6 @@ class Fit:
         self.check_lengths()
 
 
-
-
-
-
-
     def apply_transmission(self):
         """
         Apply transmission curve on the spectra according to un-redshifted axis.
@@ -141,7 +136,6 @@ class Fit:
         """
         self.correction_factor = 1/self.cos_theta
         self.axis_step = self.correction_factor / (2*self.delta_x*self.n_steps) * 1e7
-
 
 
     def calc_sinc_width(self, sincgauss_args):
@@ -203,6 +197,7 @@ class Fit:
         self.vel_ml = float(predictions[0][0])
         self.broad_ml = float(predictions[0][1])  # Multiply value by FWHM of a gaussian
         return None
+
 
     def interpolate_spectrum(self):
         """
@@ -427,11 +422,11 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         self.fit_sol = parameters
         if self.model_type == 'gaussian':
-            self.fit_vector = self.gaussian_model(self.axis, self.fit_sol[:-1])
+            self.fit_vector = self.gaussian_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
-            self.fit_vector = self.sinc_model(self.axis, self.fit_sol[:-1])
+            self.fit_vector = self.sinc_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
-            self.fit_vector = self.sincgauss_model(self.axis, self.fit_sol[:-1])
+            self.fit_vector = self.sincgauss_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
 
         return None
 
@@ -631,7 +626,7 @@ class Fit:
                     'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
                     'velocity_err': self.calculate_vel_err(0),
                     'broadening_err': self.calculate_broad_err(0),
-                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': chi_sqr,
+                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
                     'velocities': vels, 'sigmas': sigmas,
                     'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                     'axis_step': self.axis_step, 'corr': self.correction_factor,
@@ -647,13 +642,13 @@ class Fit:
             self.fit_sol[i * 3] /= self.spectrum_scale
         self.fit_sol[-1] /= self.spectrum_scale
         n_dim = 3 * self.line_num + 1
-        n_walkers = n_dim * 2 + 4
-        init_ = self.fit_sol + 1 * np.random.randn(n_walkers, n_dim)
+        n_walkers = n_dim * 3 + 4
+        init_ = self.fit_sol + self.fit_sol[-1] * np.random.randn(n_walkers, n_dim)
         #print(self.noise)
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
                                         args=(self.axis, self.spectrum_normalized, self.noise, self.lines))
-        sampler.run_mcmc(init_, 5000, progress=False)
-        flat_samples = sampler.get_chain(discard=1000, flat=True)
+        sampler.run_mcmc(init_, 2000, progress=False)
+        flat_samples = sampler.get_chain(discard=500, flat=True)
         #parameters = []
         parameters_med = []
         parameters_std = []
