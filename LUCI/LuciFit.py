@@ -76,6 +76,7 @@ class Fit:
         if trans_filter is not None:
             self.apply_transmission()  # Apply transmission filter if one is provided
         self.filter = filter
+        self.restrict_wavelength()
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
@@ -148,6 +149,29 @@ class Fit:
         """
         MPD = sincgauss_args[0]*sincgauss_args[1]*sincgauss_args[2]
         self.sinc_width = 1/(2*MPD)
+
+
+    def restrict_wavelength(self):
+        """
+        Restrict the wavelength range of the fit so that the fit only occurs over the central regions of the spectra.
+        We do this so that the continuum is properly calculated.
+        """
+        # Determine filter
+        if self.filter == 'SN3':
+            bound_lower = 14500
+            bound_upper = 15400
+        elif self.filter == 'SN2':
+            bound_lower = 19500
+            bound_upper = 20800
+        elif self.filter == 'SN1':
+            bound_lower = 26000
+            bound_upper = 27400
+        else:
+            print('The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
+        min_ = np.argmin(np.abs(np.array(self.axis)-bound_lower))
+        max_ = np.argmin(np.abs(np.array(self.axis)-bound_upper))
+        self.spectrum = self.spectrum[min_:max_]
+        self.axis = self.axis[min_:max:]
 
 
     def calculate_noise(self):
