@@ -76,10 +76,11 @@ class Fit:
         if trans_filter is not None:
             self.apply_transmission()  # Apply transmission filter if one is provided
         self.filter = filter
-        self.restrict_wavelength()
+
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
+        self.restrict_wavelength()
         self.theta = theta
         self.cos_theta = np.abs(np.cos(self.theta))
         self.correction_factor = 1.0  # Initialize Correction factor
@@ -170,8 +171,8 @@ class Fit:
             print('The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
         min_ = np.argmin(np.abs(np.array(self.axis)-bound_lower))
         max_ = np.argmin(np.abs(np.array(self.axis)-bound_upper))
-        self.spectrum = self.spectrum[min_:max_]
-        self.axis = self.axis[min_:max:]
+        self.spectrum_restricted = self.spectrum_normalized[min_:max_]
+        self.axis_restricted = self.axis[min_:max_]
 
 
     def calculate_noise(self):
@@ -232,7 +233,7 @@ class Fit:
             Populates self.spectrum_interpolated, self.spectrum_scale, and self.spectrum_interp_norm.
 
         """
-        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear')
+        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_scale
@@ -345,15 +346,15 @@ class Fit:
 
         """
         if self.model_type == 'gaussian':
-            model = self.gaussian_model(self.axis, theta)
+            model = self.gaussian_model(self.axis_restricted, theta)
         elif self.model_type == 'sinc':
-            model = self.sinc_model(self.axis, theta)
+            model = self.sinc_model(self.axis_restricted, theta)
         elif self.model_type == 'sincgauss':
-            model = self.sincgauss_model(self.axis, theta)
+            model = self.sincgauss_model(self.axis_restricted, theta)
         # Add constant contimuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        return -0.5 * np.sum((self.spectrum_normalized - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
+        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
     def fun_der(self, theta, yerr):
         return Jacobian(lambda theta: self.log_likelihood(theta, yerr))(theta).ravel()
@@ -646,7 +647,7 @@ class Fit:
             flux_errors.append(self.calculate_flux_err(line_ct))
         # Collect parameters to return in a dictionary
         fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
-                    'fit_vector': self.fit_vector,
+                    'fit_vector': self.fit_vector, 'fit_axis':self.axis,
                     'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
                     'velocity_err': self.calculate_vel_err(0),
                     'broadening_err': self.calculate_broad_err(0),
