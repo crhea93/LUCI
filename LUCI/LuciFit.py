@@ -425,7 +425,7 @@ class Fit:
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
         cons = (sigma_cons + vel_cons)
-        soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
+        soln = minimize(nll, initial, method='L-BFGS-B', #method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
                         args=(), constraints=cons)
         parameters = soln.x
@@ -707,7 +707,7 @@ class Fit:
         # model = self.gaussian_model(x, theta, model)
         model = self.gaussian_model(self.axis, theta)
         sigma2 = yerr ** 2
-        return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
+        return -0.5 * np.sum((y - model) ** 2 / sigma2)# + np.log(2 * np.pi * sigma2))
 
     def log_prior(self, theta, model):
         A_min = 0  # 1e-19
@@ -715,7 +715,7 @@ class Fit:
         x_min = 0#14700
         x_max = 1e7#15400
         sigma_min = 0
-        sigma_max = 10
+        sigma_max = 30
         for model_num in range(len(model)):
             params = theta[model_num * 3:(model_num + 1) * 3]
         within_bounds = True  # Boolean to determine if parameters are within bounds

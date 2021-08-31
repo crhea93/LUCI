@@ -841,7 +841,7 @@ class Luci():
         #def SNR_calc(SNR, i):
         flux_min = 0 ; flux_max= 0; noise_min = 0; noise_max = 0  # Initializing bounds for flux and noise calculation regions
         if self.hdr_dict['FILTER'] == 'SN3':
-            flux_min = 15150; flux_max = 15300; noise_min = 16000; noise_max = 16400
+            flux_min = 15150; flux_max = 15300; noise_min = 14250; noise_max = 14400
         elif self.hdr_dict['FILTER'] == 'SN1':
             flux_min = 26550; flux_max = 27550; noise_min = 25300; noise_max = 25700
         else:
@@ -855,16 +855,16 @@ class Luci():
                 # Select spectral region around Halpha and NII complex
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-flux_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-flux_max))
-                flux_in_region = np.sum(self.cube_final[x_pix, y_pix, min_:max_])
+                flux_in_region = np.nansum(self.cube_final[x_pix, y_pix, min_:max_])
                 # Select distance region
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_max))
-                std_out_region = np.std(self.cube_final[x_pix, y_pix, min_:max_])
+                std_out_region = np.nanstd(self.cube_final[x_pix, y_pix, min_:max_])
                 if method == 1:
-                    signal = np.max(flux_in_region)-np.median(flux_in_region)
-                    noise = np.std(std_out_region)
+                    signal = np.max(flux_in_region)-np.nanmedian(flux_in_region)
+                    noise = np.nanstd(std_out_region)
                     snr = float(signal / np.sqrt(noise))
-                    snr = snr/(np.sqrt(np.mean(flux_in_region)))
+                    snr = snr/(np.sqrt(np.nanmean(flux_in_region)))
                 else:
                     snr = float(flux_in_region/std_out_region)
                     snr = snr
