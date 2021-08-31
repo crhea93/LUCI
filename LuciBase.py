@@ -855,16 +855,18 @@ class Luci():
                 # Select spectral region around Halpha and NII complex
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-flux_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-flux_max))
+                in_region = self.cube_final[x_pix, y_pix, min_:max_]
                 flux_in_region = np.nansum(self.cube_final[x_pix, y_pix, min_:max_])
                 # Select distance region
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_max))
+                out_region = self.cube_final[x_pix, y_pix, min_:max_]
                 std_out_region = np.nanstd(self.cube_final[x_pix, y_pix, min_:max_])
                 if method == 1:
-                    signal = np.max(flux_in_region)-np.nanmedian(flux_in_region)
-                    noise = np.nanstd(std_out_region)
+                    signal = np.nanmax(in_region)-np.nanmedian(in_region)
+                    noise = np.abs(np.nanstd(out_region))
                     snr = float(signal / np.sqrt(noise))
-                    snr = snr/(np.sqrt(np.nanmean(flux_in_region)))
+                    snr = snr/(np.sqrt(np.nanmean(np.abs(in_region))))
                 else:
                     snr = float(flux_in_region/std_out_region)
                     snr = snr
