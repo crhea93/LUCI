@@ -6,6 +6,7 @@ from scipy.optimize import Bounds
 from numdifftools import Jacobian, Hessian
 import emcee
 import scipy.special as sps
+import scipy.stats as spst
 import warnings
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 warnings.filterwarnings("ignore")
@@ -110,10 +111,10 @@ class Fit:
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
         self.A_min = 0;
-        self.A_max = 1.1;
+        self.A_max = 5.0;
         self.x_min = 0 #  14700;
         self.x_max = 1e8 #  15600
-        self.sigma_min = 0.01;
+        self.sigma_min = 0.001;
         self.sigma_max = 10
         # Check that lines inputted by user are in line_dict
         self.check_lines()
@@ -163,7 +164,7 @@ class Fit:
             bound_upper = 15400
         elif self.filter == 'SN2':
             bound_lower = 19500
-            bound_upper = 20800
+            bound_upper = 20750
         elif self.filter == 'SN1':
             bound_lower = 26000
             bound_upper = 27400
@@ -264,13 +265,40 @@ class Fit:
         line_pos_est = 1e7 / ((self.vel_ml / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
-            line_amp_est = np.max([self.spectrum_normalized[line_ind - 2], self.spectrum_normalized[line_ind - 1],
-                                   self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind + 1],
-                                   self.spectrum_normalized[line_ind + 2]])
+            line_amp_est = np.max([self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
+                                   self.spectrum_normalized[line_ind - 2], self.spectrum_normalized[line_ind - 1],
+                                   self.spectrum_normalized[line_ind],
+                                   self.spectrum_normalized[line_ind + 1], self.spectrum_normalized[line_ind + 2],
+                                   self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
+                                   ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        line_broad_est = (line_pos_est * self.broad_ml ) / (3e5)
+        line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
+
+
+    def cont_estimate(self, sigma_level):
+        """
+        TODO: Test
+
+        Function to estimate the continuum level. We use a sigma clipping algorithm over the
+        restricted axis/spectrum to effectively ignore emission lines. Therefore, we
+        are left with the continuum. We take the medium value of this continuum as the initial
+        guess.
+
+        Args:
+            sigma_level: Sigma level to clip (Default=1)
+
+        Return:
+            Initial guess for continuum
+
+        """
+        # Clip values at given sigma level (defined by sigma_level)
+        clipped_spec = spst.sigmaclip(self.spectrum_restricted, low=sigma_level, high=sigma_level)
+        # Now take the mean value to serve as the continuum value
+        cont_val = np.median(clipped_spec)
+        return cont_val
+
 
     def gaussian_model(self, channel, theta):
         """
@@ -290,6 +318,7 @@ class Fit:
             params = theta[model_num * 3:(model_num + 1) * 3]
             f1 += Gaussian(channel, params).func
         return f1
+
 
 
     def sinc_model(self, channel, theta):
@@ -417,16 +446,16 @@ class Fit:
             bounds_.append((self.A_min, self.A_max))
             bounds_.append((self.x_min, self.x_max))
             bounds_.append((self.sigma_min, self.sigma_max))
-        initial[-1] = 0.1  # Add continuum constant and intialize it at 0.1 for the normalized spectrum
-        bounds_l = [val[0] for val in bounds_] + [0]  # Continuum Constraint
-        bounds_u = [val[1] for val in bounds_] + [1]  # Continuum Constraint
+        initial[-1] = self.cont_estimate(sigma_level=1.0)  # Add continuum constant and intialize it
+        bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
+        bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum Constraint
         bounds = Bounds(bounds_l, bounds_u)
         self.inital_values = initial
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
         cons = (sigma_cons + vel_cons)
         soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
-                        options={'disp': False, 'maxiter': 1000}, bounds=bounds, tol=1e-8,
+                        options={'disp': False, 'maxiter': 2000}, bounds=bounds, tol=1e-16,
                         args=(), constraints=cons)
         parameters = soln.x
         if self.uncertainty_bool == True:
@@ -455,6 +484,166 @@ class Fit:
 
         return None
 
+
+
+    def fit(self):
+        """
+        Primary function call for a spectrum. This will estimate the velocity using
+        our machine learning algorithm described in Rhea et al. 2020a. Then we will
+        fit our lines using scipy.optimize.minimize.
+
+        Return:
+            dictionary of parameters returned by the fit. The dictionary has the following form:
+            {"fit_vector": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
+            "broadening": Velocity Dispersion of the line in km/s (float)}
+        """
+        if self.ML_model != None:
+            # Interpolate Spectrum
+            self.interpolate_spectrum()
+            # Estimate the priors using machine learning algorithm
+            self.estimate_priors_ML()
+        else:
+            self.spectrum_scale = np.max(self.spectrum)
+        # Apply Fit
+        self.calculate_params()
+        # Check if Bayesian approach is required
+        if self.bayes_bool == True:
+            self.fit_Bayes()
+        # Calculate fit statistic
+        chi_sqr, red_chi_sqr = self.calc_chisquare(self.fit_vector, self.spectrum, self.noise, 3*self.line_num+1)
+        # Collect Amplitudes
+        ampls = []
+        fluxes = []
+        vels = []
+        sigmas = []
+        vels_errors = []
+        sigmas_errors = []
+        flux_errors = []
+        for line_ct, line_ in enumerate(self.lines):  # Step through each line
+            ampls.append(self.fit_sol[line_ct * 3])
+            # Calculate flux
+            fluxes.append(self.calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2]))
+            vels.append(self.calculate_vel(line_ct))
+            sigmas.append(self.calculate_broad(line_ct))
+            vels_errors.append(self.calculate_vel_err(line_ct))
+            sigmas_errors.append(self.calculate_broad_err(line_ct))
+            flux_errors.append(self.calculate_flux_err(line_ct))
+        # Collect parameters to return in a dictionary
+        fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
+                    'fit_vector': self.fit_vector, 'fit_axis':self.axis,
+                    'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
+                    'velocity_err': self.calculate_vel_err(0),
+                    'broadening_err': self.calculate_broad_err(0),
+                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
+                    'velocities': vels, 'sigmas': sigmas,
+                    'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
+                    'axis_step': self.axis_step, 'corr': self.correction_factor,
+                    'continuum': self.fit_sol[-1]}
+        return fit_dict
+
+    def fit_Bayes(self):
+        """
+        Apply Bayesian MCMC run to constrain the parameters after solving
+        """
+        # Unscale the amplitude
+        for i in range(self.line_num):
+            self.fit_sol[i * 3] /= self.spectrum_scale
+        self.fit_sol[-1] /= self.spectrum_scale
+        n_dim = 3 * self.line_num + 1
+        n_walkers = n_dim * 3 + 4
+        init_ = self.fit_sol + self.fit_sol[-1] * np.random.randn(n_walkers, n_dim)
+        #print(self.noise)
+        sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
+                                        args=(self.axis, self.spectrum_restricted, self.noise, self.lines))
+        sampler.run_mcmc(init_, 1000, progress=False)
+        flat_samples = sampler.get_chain(discard=500, flat=True)
+        #parameters = []
+        parameters_med = []
+        parameters_std = []
+        for i in range(n_dim):
+            #mcmc = np.percentile(flat_samples[:, i], [16, 50, 84])
+            #parameters.append(mcmc[1])
+            median = np.median(flat_samples[:, i])
+            std = np.std(flat_samples[:, i])
+            parameters_med.append(median)
+            parameters_std.append(std)
+        self.fit_sol = parameters_med
+        self.uncertainties = parameters_std
+        # Now rescale the amplitude
+        for i in range(self.line_num):
+            print(self.fit_sol[i * 3])
+            self.fit_sol[i * 3] *= self.spectrum_scale * (1 / np.sqrt(2*np.pi)*self.fit_sol[i*3+2])
+            print(self.fit_sol[i * 3])
+            self.uncertainties[i * 3] *= self.spectrum_scale
+        # Scale continuum
+        self.fit_sol[-1] *= self.spectrum_scale
+        self.uncertainties[-1] *= self.spectrum_scale
+        if self.model_type == 'gaussian':
+            self.fit_vector = self.gaussian_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+        elif self.model_type == 'sinc':
+            self.fit_vector = self.sinc_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+        elif self.model_type == 'sincgauss':
+            self.fit_vector = self.sincgauss_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+
+
+    def log_likelihood_bayes(self, theta, x, y, yerr, model__):
+        """
+        """
+        # model = self.gaussian_model(x, theta, model)
+        if self.model_type == 'gaussian':
+            model = self.gaussian_model(self.axis_restricted, theta)
+        elif self.model_type == 'sinc':
+            model = self.sinc_model(self.axis_restricted, theta)
+        elif self.model_type == 'sincgauss':
+            model = self.sincgauss_model(self.axis_restricted, theta)
+        # Add constant contimuum to model
+        model += theta[-1]
+        sigma2 = yerr ** 2
+        return -0.5 * np.sum((y - model) ** 2 / sigma2)# + np.log(2 * np.pi * sigma2))
+
+    def log_prior(self, theta, model):
+        A_min = 0  # 1e-19
+        A_max = 1.1  # 1e-15
+        x_min = 0#14700
+        x_max = 1e7#15400
+        sigma_min = 0
+        sigma_max = 10
+        for model_num in range(len(model)):
+            params = theta[model_num * 3:(model_num + 1) * 3]
+        within_bounds = True  # Boolean to determine if parameters are within bounds
+        for ct, param in enumerate(params):
+            if ct % 3 == 0:  # Amplitude parameter
+                if param > A_min and param < A_max:
+                    pass
+                else:
+                    within_bounds = False  # Value not in bounds
+                    break
+            if ct % 3 == 1:  # velocity parameter
+                if param > x_min and param < x_max:
+                    pass
+                else:
+                    within_bounds = False  # Value not in bounds
+                    break
+            if ct % 3 == 2:  # sigma parameter
+                if param > sigma_min and param < sigma_max:
+                    pass
+                else:
+                    within_bounds = False  # Value not in bounds
+                    break
+        if within_bounds:
+            return 0.0
+        else:
+            return -np.inf
+        # A_,x_,sigma_ = theta
+        # if A_min < A_ < A_max and x_min < x_ < x_max and sigma_min < sigma_ < sigma_max:
+        #    return 0.0#np.log(1/((t_max-t_min)*(rp_max-rp_min)*(b_max-b_min)))
+        # return -np.inf
+
+    def log_probability(self, theta, x, y, yerr, model):
+        lp = self.log_prior(theta, model)
+        if not np.isfinite(lp):
+            return -np.inf
+        return lp + self.log_likelihood_bayes(theta, x, y, yerr, model)
 
     def calculate_vel(self, ind):
         """
@@ -601,158 +790,6 @@ class Fit:
         chi2 = np.sum(z ** 2)
         chi2dof = chi2 / (n_dof - 1)
         return chi2, chi2dof
-
-
-    def fit(self):
-        """
-        Primary function call for a spectrum. This will estimate the velocity using
-        our machine learning algorithm described in Rhea et al. 2020a. Then we will
-        fit our lines using scipy.optimize.minimize.
-
-        Return:
-            dictionary of parameters returned by the fit. The dictionary has the following form:
-            {"fit_vector": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
-            "broadening": Velocity Dispersion of the line in km/s (float)}
-        """
-        if self.ML_model != None:
-            # Interpolate Spectrum
-            self.interpolate_spectrum()
-            # Estimate the priors using machine learning algorithm
-            self.estimate_priors_ML()
-        else:
-            self.spectrum_scale = np.max(self.spectrum)
-        # Apply Fit
-        self.calculate_params()
-        # Check if Bayesian approach is required
-        if self.bayes_bool == True:
-            self.fit_Bayes()
-        # Calculate fit statistic
-        chi_sqr, red_chi_sqr = self.calc_chisquare(self.fit_vector, self.spectrum, self.noise, 3*self.line_num+1)
-        # Collect Amplitudes
-        ampls = []
-        fluxes = []
-        vels = []
-        sigmas = []
-        vels_errors = []
-        sigmas_errors = []
-        flux_errors = []
-        for line_ct, line_ in enumerate(self.lines):  # Step through each line
-            ampls.append(self.fit_sol[line_ct * 3])
-            # Calculate flux
-            fluxes.append(self.calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2]))
-            vels.append(self.calculate_vel(line_ct))
-            sigmas.append(self.calculate_broad(line_ct))
-            vels_errors.append(self.calculate_vel_err(line_ct))
-            sigmas_errors.append(self.calculate_broad_err(line_ct))
-            flux_errors.append(self.calculate_flux_err(line_ct))
-        # Collect parameters to return in a dictionary
-        fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
-                    'fit_vector': self.fit_vector, 'fit_axis':self.axis,
-                    'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
-                    'velocity_err': self.calculate_vel_err(0),
-                    'broadening_err': self.calculate_broad_err(0),
-                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
-                    'velocities': vels, 'sigmas': sigmas,
-                    'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
-                    'axis_step': self.axis_step, 'corr': self.correction_factor,
-                    'continuum': self.fit_sol[-1]}
-        return fit_dict
-
-    def fit_Bayes(self):
-        """
-        Apply Bayesian MCMC run to constrain the parameters after solving
-        """
-        # Unscale the amplitude
-        for i in range(self.line_num):
-            self.fit_sol[i * 3] /= self.spectrum_scale
-        self.fit_sol[-1] /= self.spectrum_scale
-        n_dim = 3 * self.line_num + 1
-        n_walkers = n_dim * 3 + 4
-        init_ = self.fit_sol + self.fit_sol[-1] * np.random.randn(n_walkers, n_dim)
-        #print(self.noise)
-        sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
-                                        args=(self.axis, self.spectrum_normalized, self.noise, self.lines))
-        sampler.run_mcmc(init_, 2000, progress=False)
-        flat_samples = sampler.get_chain(discard=500, flat=True)
-        #parameters = []
-        parameters_med = []
-        parameters_std = []
-        for i in range(n_dim):
-            #mcmc = np.percentile(flat_samples[:, i], [16, 50, 84])
-            #parameters.append(mcmc[1])
-            median = np.median(flat_samples[:, i])
-            std = np.std(flat_samples[:, i])
-            parameters_med.append(median)
-            parameters_std.append(std)
-        self.fit_sol = parameters_med
-        self.uncertainties = parameters_std
-        # Now rescale the amplitude
-        for i in range(self.line_num):
-            self.fit_sol[i * 3] *= self.spectrum_scale
-            self.uncertainties[i * 3] *= self.spectrum_scale
-        # Scale continuum
-        self.fit_sol[-1] *= self.spectrum_scale
-        self.uncertainties[-1] *= self.spectrum_scale
-        if self.model_type == 'gaussian':
-            self.fit_vector = self.gaussian_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
-        elif self.model_type == 'sinc':
-            self.fit_vector = self.sinc_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
-        elif self.model_type == 'sincgauss':
-            self.fit_vector = self.sincgauss_model(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
-
-
-    def log_likelihood_bayes(self, theta, x, y, yerr, model__):
-        """
-        """
-        # model = self.gaussian_model(x, theta, model)
-        model = self.gaussian_model(self.axis, theta)
-        sigma2 = yerr ** 2
-        return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
-
-    def log_prior(self, theta, model):
-        A_min = 0  # 1e-19
-        A_max = 1.1  # 1e-15
-        x_min = 0#14700
-        x_max = 1e7#15400
-        sigma_min = 0
-        sigma_max = 10
-        for model_num in range(len(model)):
-            params = theta[model_num * 3:(model_num + 1) * 3]
-        within_bounds = True  # Boolean to determine if parameters are within bounds
-        for ct, param in enumerate(params):
-            if ct % 3 == 0:  # Amplitude parameter
-                if param > A_min and param < A_max:
-                    pass
-                else:
-                    within_bounds = False  # Value not in bounds
-                    break
-            if ct % 3 == 1:  # velocity parameter
-                if param > x_min and param < x_max:
-                    pass
-                else:
-                    within_bounds = False  # Value not in bounds
-                    break
-            if ct % 3 == 2:  # sigma parameter
-                if param > sigma_min and param < sigma_max:
-                    pass
-                else:
-                    within_bounds = False  # Value not in bounds
-                    break
-        if within_bounds:
-            return 0.0
-        else:
-            return -np.inf
-        # A_,x_,sigma_ = theta
-        # if A_min < A_ < A_max and x_min < x_ < x_max and sigma_min < sigma_ < sigma_max:
-        #    return 0.0#np.log(1/((t_max-t_min)*(rp_max-rp_min)*(b_max-b_min)))
-        # return -np.inf
-
-    def log_probability(self, theta, x, y, yerr, model):
-        lp = self.log_prior(theta, model)
-        if not np.isfinite(lp):
-            return -np.inf
-        return lp + self.log_likelihood_bayes(theta, x, y, yerr, model)
-
 
     def check_lines(self):
         """
