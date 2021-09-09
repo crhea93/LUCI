@@ -7,6 +7,7 @@ from numdifftools import Jacobian, Hessian
 import emcee
 import scipy.special as sps
 import scipy.stats as spst
+import astropy.stats as astrostats
 import warnings
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 warnings.filterwarnings("ignore")
@@ -294,7 +295,7 @@ class Fit:
 
         """
         # Clip values at given sigma level (defined by sigma_level)
-        clipped_spec = spst.sigmaclip(self.spectrum_restricted, low=sigma_level, high=sigma_level)
+        clipped_spec = astrostats.sigma_clip(self.spectrum_restricted, sigma=sigma_level, masked=False, copy=False, maxiters=3)
         # Now take the mean value to serve as the continuum value
         cont_val = np.median(clipped_spec)
         return cont_val
