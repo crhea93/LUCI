@@ -607,7 +607,7 @@ class Fit:
         x_min = 0#14700
         x_max = 1e7#15400
         sigma_min = 0
-        sigma_max = 10
+        sigma_max = 30
         for model_num in range(len(model)):
             params = theta[model_num * 3:(model_num + 1) * 3]
         within_bounds = True  # Boolean to determine if parameters are within bounds
