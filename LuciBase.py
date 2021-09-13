@@ -876,7 +876,7 @@ class Luci():
         #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(SNR,i) for i in tqdm(range(x_max-x_min)));
         #end = time.time()
         # Save
-        fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR.T, self.header, overwrite=True)
+        fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR, self.header, overwrite=True)
 
 
 
