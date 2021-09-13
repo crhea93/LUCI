@@ -160,6 +160,7 @@ class Fit:
         We do this so that the continuum is properly calculated.
         """
         # Determine filter
+        global bound_lower, bound_upper
         if self.filter == 'SN3':
             bound_lower = 14500
             bound_upper = 15400
@@ -185,6 +186,7 @@ class Fit:
         is what is passed to the fit function.
         """
         # Determine filter
+        global bound_lower, bound_upper
         if self.filter == 'SN3':
             bound_lower = 14250#16000
             bound_upper = 14400#16400
@@ -197,14 +199,9 @@ class Fit:
         else:
             print('The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
         # Calculate standard deviation
-        #print(np.min(self.axis), np.max(self.axis))
-        #print(bound_upper, bound_lower)
         min_ = np.argmin(np.abs(np.array(self.axis)-bound_lower))
-        #print(min_)
         max_ = np.argmin(np.abs(np.array(self.axis)-bound_upper))
-        #print(max_)
         spec_noise = self.spectrum_clean[min_:max_]
-        #print(spec_noise)
         self.noise = np.nanstd(spec_noise)
 
 
@@ -215,7 +212,7 @@ class Fit:
         The spectrum fed into this method must be interpolated already onto the
         reference spectrum axis AND normalized as described in Rhea et al. 2020a.
         Args:
-            ml_dir: Relative path to the trained ML Predictor (e.g. R5000-PREDICITOR-I)
+
         Return:
             Updates self.vel_ml
         """
@@ -239,7 +236,6 @@ class Fit:
         self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_scale
-        # self.spectrum_interpolated = np.real(sky_corr)
         return None
 
     def line_vals_estimate(self, line_name):
@@ -249,7 +245,6 @@ class Fit:
         Function to estimate the position and amplitude of a given line.
 
         Args:
-            spec: Spectrum flux values
             line_name: Name of model. Available options are 'Halpha', 'NII6548', 'NII6543', 'SII6716', 'SII6731'
 
         Return:
@@ -375,6 +370,7 @@ class Fit:
             Value of log likelihood
 
         """
+        global model
         if self.model_type == 'gaussian':
             model = self.gaussian_model(self.axis_restricted, theta)
         elif self.model_type == 'sinc':
