@@ -65,7 +65,8 @@ Examples
        example_basic
        example_basic_lite
        example_sn1_sn2
-       example_fit_single
+       example_fit_region
+       example_fit_single_spectrum
        example_fit_mask
 
 

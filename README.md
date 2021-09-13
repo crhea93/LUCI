@@ -1,6 +1,10 @@
 # Welcome to LUCI
 In this document, you will find a brief description of what `LUCI` is, how to install it (her), where to go to find examples, documentation, and more!
 
+[![DOI](https://zenodo.org/badge/378741966.svg)](https://zenodo.org/badge/latestdoi/378741966)
+
+[Arxiv Paper: 2108.12428](https://arxiv.org/abs/2108.12428)
+
 ## What is LUCI
 `LUCI` is a general purpose fitting pipeline built specifically with [SITELLE IFU](https://www.cfht.hawaii.edu/Instruments/Sitelle/)
 data cubes in mind; however, if you need to fit any emission line spectra, LUCI

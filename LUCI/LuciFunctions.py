@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import special as sps
- 
+
 
 class Gaussian:
     def __init__(self, channel, params):
