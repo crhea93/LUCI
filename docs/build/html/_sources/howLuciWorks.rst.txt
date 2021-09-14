@@ -8,6 +8,9 @@ of how fits of SITELLE IFU datacubes are calculated. In this section, I will
 explain what we are trying to calculate, how it is calculated, and how you can
 personalize the fits.
 
+.. image:: Luci1.png
+    :alt: Luci overview
+
 What we calculate
 -----------------
 The three primary quantities of interest are the **amplitude** of the line, the **position**
