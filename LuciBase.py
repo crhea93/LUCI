@@ -839,7 +839,8 @@ class Luci():
         """
         # Calculate bounds for SNR calculation
         # Step through spectra
-        SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        #SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        SNR = np.zeros((2048, 2064), dtype=np.float32).T
         #start = time.time()
         #def SNR_calc(SNR, i):
         flux_min = 0 ; flux_max= 0; noise_min = 0; noise_max = 0  # Initializing bounds for flux and noise calculation regions
@@ -851,7 +852,7 @@ class Luci():
             print('SNR Calculation for this filter has not been implemented')
         for i in range(y_max-y_min):
             y_pix = y_min + i
-            snr_local = []
+            snr_local = np.zeros(2048)
             for j in range(x_max-x_min):
                 x_pix = x_min+j
                 # Calculate SNR
@@ -879,8 +880,8 @@ class Luci():
                         snr = 0
                     else:
                         pass
-                snr_local.append(snr)
-            SNR[i] = snr_local
+                snr_local[x_pix] = snr
+            SNR[y_pix] = snr_local
         #n_threads = 2
         #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(SNR,i) for i in tqdm(range(x_max-x_min)));
         #end = time.time()
