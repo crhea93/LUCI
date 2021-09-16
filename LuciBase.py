@@ -802,8 +802,11 @@ class Luci():
                     pass
         if mean == True:
             integrated_spectrum /= spec_ct
-        if bkg is not None:
-            integrated_spectrum -= bkg  # Subtract background spectrum
+            if bkg is not None:
+                integrated_spectrum -= bkg  # Subtract background spectrum
+        else:
+            if bkg is not None:
+                integrated_spectrum -= bkg  # Subtract background spectrum
         good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
@@ -836,7 +839,7 @@ class Luci():
         """
         # Calculate bounds for SNR calculation
         # Step through spectra
-        SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32)
+        SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         #start = time.time()
         #def SNR_calc(SNR, i):
         flux_min = 0 ; flux_max= 0; noise_min = 0; noise_max = 0  # Initializing bounds for flux and noise calculation regions
@@ -866,10 +869,16 @@ class Luci():
                     signal = np.nanmax(in_region)-np.nanmedian(in_region)
                     noise = np.abs(np.nanstd(out_region))
                     snr = float(signal / np.sqrt(noise))
-                    snr = snr/(np.sqrt(np.nanmean(np.abs(in_region))))
+                    if snr<0:
+                        snr = 0
+                    else:
+                        snr = snr/(np.sqrt(np.nanmean(np.abs(in_region))))
                 else:
                     snr = float(flux_in_region/std_out_region)
-                    snr = snr
+                    if snr < 0:
+                        snr = 0
+                    else:
+                        pass
                 snr_local.append(snr)
             SNR[i] = snr_local
         #n_threads = 2

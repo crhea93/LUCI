@@ -190,8 +190,8 @@ class Fit:
         # Determine filter
         global bound_lower, bound_upper
         if self.filter == 'SN3':
-            bound_lower = 14250#16000
-            bound_upper = 14400#16400
+            bound_lower = 14300#16000
+            bound_upper = 14500#16400
         elif self.filter == 'SN2':
             bound_lower = 18600
             bound_upper = 19000
@@ -448,7 +448,7 @@ class Fit:
             bounds_.append((self.sigma_min, self.sigma_max))
         initial[-1] = self.cont_estimate(sigma_level=1.0)  # Add continuum constant and intialize it
         bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
-        bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum Constraint
+        bounds_u = [val[1] for val in bounds_] + [1.0]  # Continuum Constraint
         bounds = Bounds(bounds_l, bounds_u)
         self.inital_values = initial
         sigma_cons = self.sigma_constraints()
@@ -572,9 +572,7 @@ class Fit:
         self.uncertainties = parameters_std
         # Now rescale the amplitude
         for i in range(self.line_num):
-            print(self.fit_sol[i * 3])
-            self.fit_sol[i * 3] *= self.spectrum_scale * (1 / np.sqrt(2*np.pi)*self.fit_sol[i*3+2])
-            print(self.fit_sol[i * 3])
+            self.fit_sol[i * 3] *= self.spectrum_scale
             self.uncertainties[i * 3] *= self.spectrum_scale
         # Scale continuum
         self.fit_sol[-1] *= self.spectrum_scale
