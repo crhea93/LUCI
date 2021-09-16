@@ -79,7 +79,7 @@ class Fit:
         if trans_filter is not None:
             self.apply_transmission()  # Apply transmission filter if one is provided
         self.filter = filter
-        self.spectrum_scale = np.max(self.spectrum)
+
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
@@ -234,10 +234,10 @@ class Fit:
             Populates self.spectrum_interpolated, self.spectrum_scale, and self.spectrum_interp_norm.
 
         """
-
+        self.spectrum_scale = np.max(self.spectrum)
         f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
-        self.spectrum_interp_scale = (self.spectrum_interpolated)
+        self.spectrum_interp_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_interp_scale
         return None
 
@@ -535,7 +535,7 @@ class Fit:
                     'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
                     'velocity_err': self.calculate_vel_err(0),
                     'broadening_err': self.calculate_broad_err(0),
-                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': chi_sqr,
+                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
                     'velocities': vels, 'sigmas': sigmas,
                     'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                     'axis_step': self.axis_step, 'corr': self.correction_factor,
