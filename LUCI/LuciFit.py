@@ -10,6 +10,7 @@ import scipy.stats as spst
 import astropy.stats as astrostats
 import warnings
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
+import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 
 
@@ -78,7 +79,7 @@ class Fit:
         if trans_filter is not None:
             self.apply_transmission()  # Apply transmission filter if one is provided
         self.filter = filter
-
+        self.spectrum_scale = np.max(self.spectrum)
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
@@ -176,6 +177,7 @@ class Fit:
         max_ = np.argmin(np.abs(np.array(self.axis)-bound_upper))
         self.spectrum_restricted = self.spectrum_normalized[min_:max_]
         self.axis_restricted = self.axis[min_:max_]
+        return min_, max_
 
 
     def calculate_noise(self):
@@ -232,10 +234,11 @@ class Fit:
             Populates self.spectrum_interpolated, self.spectrum_scale, and self.spectrum_interp_norm.
 
         """
+
         f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
-        self.spectrum_scale = np.max(self.spectrum_interpolated)
-        self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_scale
+        self.spectrum_interp_scale = (self.spectrum_interpolated)
+        self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_interp_scale
         return None
 
     def line_vals_estimate(self, line_name):
@@ -455,6 +458,7 @@ class Fit:
                         options={'disp': False, 'maxiter': 2000}, bounds=bounds, tol=1e-16,
                         args=(), constraints=cons)
         parameters = soln.x
+        print(parameters)
         if self.uncertainty_bool == True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
             try:
@@ -531,11 +535,11 @@ class Fit:
                     'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
                     'velocity_err': self.calculate_vel_err(0),
                     'broadening_err': self.calculate_broad_err(0),
-                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
+                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': chi_sqr,
                     'velocities': vels, 'sigmas': sigmas,
                     'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                     'axis_step': self.axis_step, 'corr': self.correction_factor,
-                    'continuum': self.fit_sol[-1]}
+                    'continuum': self.fit_sol[-1], 'scale':self.spectrum_scale}
         return fit_dict
 
     def fit_Bayes(self):
@@ -783,8 +787,9 @@ class Fit:
             chi2dof: Reduced chi squared value
         """
         # compute the mean and the chi^2/dof
-        z = (fit_vector - init_spectrum)# / init_errors
-        chi2 = np.sum(z ** 2)
+        min_restricted, max_restricted = self.restrict_wavelength()
+        z = (fit_vector[min_restricted: max_restricted] - init_spectrum[min_restricted: max_restricted]) / init_spectrum[min_restricted: max_restricted]
+        chi2 = np.sum((z ** 2))#/(self.spectrum_scale))
         chi2dof = chi2 / (n_dof - 1)
         return chi2, chi2dof
 
