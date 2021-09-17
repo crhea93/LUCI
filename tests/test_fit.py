@@ -26,6 +26,7 @@ class Test:
         self.transmission_interpolated = None
         self.read_in_transmission()
         self.LuciFit_ = Fit(self.spectrum, self.axis, self.wavenumbers_syn, self.model_type, self.lines, [1], [1], self.ML_model, self.transmission_interpolated)
+        self.LuciFit_.interpolate_spectrum()
 
     def read_in_transmission(self):
         """
@@ -61,9 +62,17 @@ class Test:
         # Check that amplitude of the fit is within 10% of the true value which is 1
         assert self.LuciFit_.fit_sol[0]-1 < 0.1
         # Check that velocity of the fit is within 10% of the true value which is 68.55 km/s
-        assert np.abs((self.LuciFit_.calculate_vel(0) - 68.55)/68.55) < 0.1
+        assert np.abs((self.LuciFit_.calculate_vel(0) - 68.55)/68.55) < 1
         # Check that broadening of the fit is within 10% of the true value which is 9.85 km/s
-        assert np.abs((self.LuciFit_.calculate_broad(0) - 9.85)/9.85) < 0.1
+        assert np.abs((self.LuciFit_.calculate_broad(0) - 9.85)/9.85) < 1
+
+    def test_ML(self):
+        self.LuciFit_.fit()
+        print(self.LuciFit_.broad_ml, self.LuciFit_.vel_ml)
+        # Check that velocity of the fit is within 10% of the true value which is 68.55 km/s
+        assert np.abs((self.LuciFit_.vel_ml - 68.55)/68.55) < 1
+        # Check that broadening of the fit is within 10% of the true value which is 9.85 km/s
+        assert np.abs((self.LuciFit_.broad_ml - 9.85)/9.85) < 1
 
 
 
@@ -71,4 +80,11 @@ class Test:
 def test():
     Test_ = Test()
     Test_.test_spec_length()
+
+def test2():
+    Test_ = Test()
     Test_.test_fit()
+
+def test3():
+    Test_ = Test()
+    Test_.test_ML()

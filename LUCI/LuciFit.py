@@ -210,7 +210,6 @@ class Fit:
 
     def estimate_priors_ML(self):
         """
-        TODO: Test
         Apply machine learning algorithm on spectrum in order to estimate the velocity.
         The spectrum fed into this method must be interpolated already onto the
         reference spectrum axis AND normalized as described in Rhea et al. 2020a.
