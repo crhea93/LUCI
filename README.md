@@ -34,13 +34,6 @@ import Luci
 
 You can also quickly test that everything is working for your system by entering the LUCI directory and running `pytest`. You may receive some warning, but everything should be passing! If not, please let me know :)
 
-LUCI can then be initiated in python with the following command:
-```
-from LUCI.LuciBase import Luci
-```
-
-Please note that the version on pypi is used for major updates whereas this GitHub repo is undergoing continual updates.
-
 
 ## What to use `LUCI` for
 `LUCI` is, of course, first and foremost a fitting algorithm. In order to ease the pain of fitting IFU data cubes, we have built several wrappers for the fitting functions (these can be found in **Luci/LuciFit.py**). These functionalities include, but are not limited to, reading in a data cube in the HDF5 format (`LUCI()`), fitting the entire data cube (`LUCI.fit_entire_cube`), fitting a region or masked region of the cube (`LUCI.fit_region()`), extracting and fitting an integrated region (`LUCI.fit_spectrum_region`, creating a *deep image* (`LUCI.create_deep_image`), and building a Signal-to-Noise ratio map of the cube (`LUCI.create_snr_map`).
