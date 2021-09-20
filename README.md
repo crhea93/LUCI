@@ -32,8 +32,7 @@ sys.path.insert(0, '/the/path/to/LUCI/')
 import Luci
 ```
 
-We also have created a pypi package which can be found at [https://pypi.org/project/LUCI-fit/](https://pypi.org/project/LUCI-fit/). In order to install this distribution, simply enter the following command in your terminal:
-`pip install luci-fit`. You will also need the other packages from the luci.yml file, so I suggest running this after you have created the luci conda environment and activated it following the instructions above. 
+You can also quickly test that everything is working for your system by entering the LUCI directory and running `pytest`. You may receive some warning, but everything should be passing! If not, please let me know :)
 
 LUCI can then be initiated in python with the following command:
 ```
