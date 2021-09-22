@@ -153,17 +153,17 @@ class Spectrum:
         step_ = x_max - x_min
         axis = np.array([x_min+j*step_/self.n_steps for j in range(self.n_steps)])
         # Initiate spectrum
-        spectrum = np.ones_like(axis)  # Set continuum of about 2
+        spectrum = np.zeros_like(axis)  # Set continuum of about 2
         # Create emission lines
         for line_ct, line in enumerate(self.lines):
-            print(line)
             line_lambda_cm = 1e7 / self.line_dict[line]  # Convert from nm to cm-1
             vel_ = self.velocity[line_ct]  # Get velocity
             broad_ = self.broadening[line_ct]  # Get broadening
             amp_ = self.ampls[line_ct]  # Get amplitude
-            print(amp_)
-            # Calculate position of line given velocity
+            # Calculate position of line given velocity & match to closest point on axis
             line_pos = (vel_/3e5)*line_lambda_cm + line_lambda_cm
+            min_ind = np.argmin(np.abs(axis - line_pos))
+            line_pos = axis[min_ind]
             # Calculate sigma given broadening
             sigma = (broad_*line_pos)/(3e5*corr)
             # Create spectrum
@@ -176,9 +176,9 @@ class Spectrum:
                 spectrum += self.sincgauss_model(axis, amp_, line_pos, sigma)
             else:
                 print('An incorrect fit function was entered. Please use either gaussian, sinc, or sincgauss.')
-            print(np.max(spectrum))
+            #print(np.max(spectrum))
         # We now add noise with our predefined SNR
-        #spectrum += np.max(spectrum)*np.random.normal(0.0,1/self.snr,spectrum.shape)
+        spectrum += np.max(spectrum)*np.random.normal(0.0,1/self.snr,spectrum.shape)
         return axis, spectrum
 
 

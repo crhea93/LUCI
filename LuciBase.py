@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from astropy.nddata import Cutout2D
 from astroquery.astrometry_net import AstrometryNet
 from astropy.io import fits
+#from numba import njit, prange
 
 
 class Luci():
@@ -361,7 +362,7 @@ class Luci():
         y_max = self.cube_final.shape[1]
         self.fit_cube(lines, fit_function,vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
 
-
+    #@njit(parallel=True)
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
