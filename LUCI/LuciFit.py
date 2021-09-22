@@ -317,6 +317,7 @@ class Fit:
         f1 = 0.0
         for model_num in range(self.line_num):
             params = theta[model_num * 3:(model_num + 1) * 3]
+            print(Gaussian(channel, params).func)
             f1 += Gaussian(channel, params).func
         #f1 += theta[-1]
         return f1
@@ -362,7 +363,7 @@ class Fit:
         f1 = 0.0
         for model_num in range(self.line_num):
             params = theta[model_num * 3:(model_num + 1) * 3]
-            f1 += Sinc(channel, params).func
+            f1 += np.array(Sinc(channel, params).func)
         return f1
 
 
@@ -384,7 +385,7 @@ class Fit:
             min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
-            f1 += Sinc(channel, params).func
+            f1 += np.array(Sinc(channel, params).func)
         return f1
 
 
