@@ -28,7 +28,6 @@ We now will set the required parameters. We are also going to be using our machi
     object_name = 'M33_Field7_SN1'
     redshift = -0.0006  # Redshift of M33
     resolution = 5000
-    ML_bool = True
 
 
 We intialize our LUCI object
@@ -36,7 +35,7 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
+    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
 
 The output will look something like this:
 

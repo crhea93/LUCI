@@ -299,6 +299,20 @@ TODO: Test</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_flux_err">
+<span class="sig-name descname"><span class="pre">calculate_flux_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_flux_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate flux error</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ind</strong> – Index of line in lines</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Error of the provided line in units of ergs/s/cm-2</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_noise">
 <span class="sig-name descname"><span class="pre">calculate_noise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_noise" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate noise level in spectrum. We assume the noise is homogenous across the
@@ -375,13 +389,30 @@ Else it will throw an error</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.cont_estimate">
+<span class="sig-name descname"><span class="pre">cont_estimate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.cont_estimate" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Test</p>
+<p>Function to estimate the continuum level. We use a sigma clipping algorithm over the
+restricted axis/spectrum to effectively ignore emission lines. Therefore, we
+are left with the continuum. We take the medium value of this continuum as the initial
+guess.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sigma_level</strong> – Sigma level to clip (Default=1)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Initial guess for continuum</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.estimate_priors_ML">
 <span class="sig-name descname"><span class="pre">estimate_priors_ML</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.estimate_priors_ML" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO: Test
-Apply machine learning algorithm on spectrum in order to estimate the velocity.
+<dd><p>Apply machine learning algorithm on spectrum in order to estimate the velocity.
 The spectrum fed into this method must be interpolated already onto the
 reference spectrum axis AND normalized as described in Rhea et al. 2020a.
-:param ml_dir: Relative path to the trained ML Predictor (e.g. R5000-PREDICITOR-I)</p>
+Args:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>Updates self.vel_ml</p>
@@ -431,6 +462,24 @@ fit our lines using scipy.optimize.minimize.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.gaussian_model_plot">
+<span class="sig-name descname"><span class="pre">gaussian_model_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.gaussian_model_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>theta</strong> – List of parameters for all the models in the following order
+[amplitude, line location, sigma]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.interpolate_spectrum">
 <span class="sig-name descname"><span class="pre">interpolate_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.interpolate_spectrum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolate Spectrum given the wavelength axis of reference spectrum.
@@ -449,10 +498,7 @@ Then normalize the spectrum so that the max value equals 1</p>
 <p>Function to estimate the position and amplitude of a given line.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>spec</strong> – Spectrum flux values</p></li>
-<li><p><strong>line_name</strong> – Name of model. Available options are ‘Halpha’, ‘NII6548’, ‘NII6543’, ‘SII6716’, ‘SII6731’</p></li>
-</ul>
+<dd class="field-odd"><p><strong>line_name</strong> – Name of model. Available options are ‘Halpha’, ‘NII6548’, ‘NII6543’, ‘SII6716’, ‘SII6731’</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>Estimated line amplitude in units of cm-1 (line_amp_est) and estimate line position in units of cm-1 (line_pos_est)</p>
@@ -484,6 +530,13 @@ The continuum constant is always the last argument regardless of the number of l
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.restrict_wavelength">
+<span class="sig-name descname"><span class="pre">restrict_wavelength</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.restrict_wavelength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict the wavelength range of the fit so that the fit only occurs over the central regions of the spectra.
+We do this so that the continuum is properly calculated.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.sigma_constraints">
 <span class="sig-name descname"><span class="pre">sigma_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.sigma_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set up constraints for sigma values before fitting line
@@ -509,8 +562,44 @@ The continuum constant is always the last argument regardless of the number of l
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.sinc_model_plot">
+<span class="sig-name descname"><span class="pre">sinc_model_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.sinc_model_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>theta</strong> – List of parameters for all the models in the following order
+[amplitude, line location, sigma]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.sincgauss_model">
 <span class="sig-name descname"><span class="pre">sincgauss_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.sincgauss_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to initiate the correct number of models to fit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel</strong> – Wavelength Axis in cm-1</p></li>
+<li><p><strong>theta</strong> – List of parameters for all the models in the following order
+[amplitude, line location, sigma]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of function given input parameters (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.sincgauss_model_plot">
+<span class="sig-name descname"><span class="pre">sincgauss_model_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.sincgauss_model_plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to initiate the correct number of models to fit</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
