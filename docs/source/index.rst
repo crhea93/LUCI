@@ -68,6 +68,7 @@ Examples
        example_fit_region
        example_fit_single_spectrum
        example_fit_mask
+       example_fit_snr
 
 
 
