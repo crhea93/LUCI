@@ -1,7 +1,7 @@
 .. _example_fit_region:
 
 Fit Single Region
-===================
+==================
 In this example, we are going to fit a single region of the science verification Abell 426 data cube (found at: https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_sv.php).
 
 We will read in the data as usual using a LUCI cube object. We then will extract a background region and plot it.

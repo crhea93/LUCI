@@ -1,7 +1,7 @@
-.. _example_mask:
+.. _example_fit_snr:
 
-Example Mask
-============
+Example SNR Calculation
+=======================
 
 
 
