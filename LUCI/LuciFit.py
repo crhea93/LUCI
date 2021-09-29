@@ -172,6 +172,11 @@ class Fit:
         elif self.filter == 'SN1':
             bound_lower = 26000
             bound_upper = 27400
+        elif self.filter == 'C4' and 'Halpha' in self.lines:
+            ## This is true for objects at redshift ~0.25
+            # In this case we pretend we are in SN3
+            bound_lower = 14500
+            bound_upper = 15400
         else:
             print('The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
         min_ = np.argmin(np.abs(np.array(self.axis)-bound_lower))
@@ -199,6 +204,11 @@ class Fit:
         elif self.filter == 'SN1':
             bound_lower = 25300
             bound_upper = 25700
+        elif self.filter == 'C4' and 'Halpha' in self.lines:
+            ## This is true for objects at redshift ~0.25
+            # In this case we pretend we are in SN3
+            bound_lower = 14300
+            bound_upper = 14500
         else:
             print('The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
         # Calculate standard deviation
@@ -317,7 +327,6 @@ class Fit:
         f1 = 0.0
         for model_num in range(self.line_num):
             params = theta[model_num * 3:(model_num + 1) * 3]
-            print(Gaussian(channel, params).func)
             f1 += Gaussian(channel, params).func
         #f1 += theta[-1]
         return f1
@@ -880,7 +889,6 @@ class Fit:
         if self.model_type in self.available_functions:
             pass
         else:
-            print(self.model_type)
             raise Exception(
                 'Please submit a fitting function name in the available list: \n {}'.format(self.available_functions))
 
