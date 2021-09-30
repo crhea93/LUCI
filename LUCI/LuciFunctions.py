@@ -16,7 +16,8 @@ class Sinc:
         p1 = params[1];
         p2 = params[2]
         u = (channel - p1) / p2
-        self.func = [p0 * (np.sin(u_) / (u_)) if u_ != 0 else p0 for u_ in u]
+        #self.func = [p0 * (np.sin(u_) / (u_)) if u_ != 0 else p0 for u_ in u]
+        self.func = [p0 * np.sinc(u_) if u_ != 0 else p0 for u_ in u]
 
 
 class SincGauss:

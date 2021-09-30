@@ -154,7 +154,6 @@ class Fit:
         """
         MPD = sincgauss_args[0]*sincgauss_args[1]*sincgauss_args[2]
         self.sinc_width = 1/(2*MPD)
-        print(self.sinc_width)
 
 
     def restrict_wavelength(self):
@@ -392,7 +391,7 @@ class Fit:
         """
         f1 = 0.0
         for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
+            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))-1
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
             f1 += np.array(Sinc(channel, params).func)
@@ -438,7 +437,6 @@ class Fit:
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
             f1 += SincGauss(channel, params, self.sinc_width).func
-        #print(f1)
         return np.real(f1)
 
 
