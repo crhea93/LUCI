@@ -317,7 +317,6 @@ class Fit:
         f1 = 0.0
         for model_num in range(self.line_num):
             params = theta[model_num * 3:(model_num + 1) * 3]
-            print(Gaussian(channel, params).func)
             f1 += Gaussian(channel, params).func
         #f1 += theta[-1]
         return f1
@@ -625,7 +624,7 @@ class Fit:
         init_ = self.fit_sol + self.fit_sol[-1] * np.random.randn(n_walkers, n_dim)
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
                                         args=(self.axis, self.spectrum_restricted, self.noise, self.lines))
-        sampler.run_mcmc(init_, 1000, progress=False)
+        sampler.run_mcmc(init_, 2000, progress=False)
         flat_samples = sampler.get_chain(discard=500, flat=True)
         parameters_med = []
         parameters_std = []
@@ -636,19 +635,21 @@ class Fit:
             parameters_std.append(std)
         self.fit_sol = parameters_med
         self.uncertainties = parameters_std
-        # Now rescale the amplitude
+        # We now must unscale the amplitude
         for i in range(self.line_num):
-            self.fit_sol[i * 3] *= self.spectrum_scale
-            self.uncertainties[i * 3] *= self.spectrum_scale
+            parameters[i * 3] *= self.spectrum_scale
+            self.uncertainties[i*3] *= self.spectrum_scale
         # Scale continuum
-        self.fit_sol[-1] *= self.spectrum_scale
+        parameters[-1] *= self.spectrum_scale
         self.uncertainties[-1] *= self.spectrum_scale
+        self.fit_sol = parameters
         if self.model_type == 'gaussian':
-            self.fit_vector = self.gaussian_model(self.axis, self.fit_sol[:-1])# + self.fit_sol[-1]
+            self.fit_vector = self.gaussian_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
-            self.fit_vector = self.sinc_model(self.axis, self.fit_sol[:-1])# + self.fit_sol[-1]
+            self.fit_vector = self.sinc_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
-            self.fit_vector = self.sincgauss_model(self.axis, self.fit_sol[:-1])# + self.fit_sol[-1]
+            self.fit_vector = self.sincgauss_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+
 
 
     def log_likelihood_bayes(self, theta, x, y, yerr, model__):
