@@ -282,8 +282,8 @@ class Fit:
                                    ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        if self.broad_ml > 50:
-            self.broad_ml = 10
+        #if self.broad_ml > 50:
+        #    self.broad_ml = 10
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
@@ -391,7 +391,7 @@ class Fit:
         """
         f1 = 0.0
         for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))-1
+            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
             f1 += np.array(Sinc(channel, params).func)
@@ -517,7 +517,7 @@ class Fit:
         nll = lambda *args: -self.log_likelihood(*args)
         initial = np.ones((3 * self.line_num + 1))
         bounds_ = []
-        initial[-1] = self.cont_estimate(sigma_level=1.0)  # Add continuum constant and intialize it
+        initial[-1] = self.cont_estimate(sigma_level=3.0)  # Add continuum constant and intialize it
         for mod in range(self.line_num):
             #val = 3 * mod + 1
             amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])
@@ -534,8 +534,8 @@ class Fit:
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
         cons = (sigma_cons + vel_cons)
-        soln = minimize(nll, initial, method='BFGS', #method='SLSQP',# jac=self.fun_der(),
-                        options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-2,
+        soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
+                        options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-8,
                         args=(), constraints=cons)
         parameters = soln.x
         if self.uncertainty_bool == True:
