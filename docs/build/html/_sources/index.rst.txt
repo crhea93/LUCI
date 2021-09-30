@@ -6,6 +6,10 @@
 Welcome to LUCI's documentation!
 ================================
 
+.. image:: luci-basket.jpg
+    :width: 800
+    :alt: Alternative text
+
 LUCI is a general purpose fitting pipeline built specifically with SITELLE IFU
 data cubes in mind; however, if you need to fit any emission line spectra, LUCI
 will be able to help!

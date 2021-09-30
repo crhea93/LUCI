@@ -134,6 +134,11 @@ is the cosine angle defined as :math:`\cos{\theta} = \frac{\lambda_{ref}}{\lambd
 :math:`\lambda_{ref}` is the wavelength of the calibration laser and :math:`\lambda_{ij}` is
 the measured calibration wavelength of a given pixel (thus :math:`\theta` is a function of the pixel).
 
+We note that we do in fact fit for p1 in all cases **INCLUDING** the sinc function. However,
+we note that this value can also be fixed as discussed above. Therefore, the p1 calculated
+using the sinc function should be taken with a grain of salt. We do not suggest understanding
+this parameter as the broadening. Instead, if you are interested in the broadening,
+we strongly suggest you use the *sincgauss* function :)
 
 
 Transmission

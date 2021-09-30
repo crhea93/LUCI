@@ -20,7 +20,22 @@ We calculate the interferometric angle to calculate a correction factor `(1/cos(
 We do not apply this correction factor to the spectral axis of each spaxel since this
 is already done in ORB -- therefore, the data product downloaded from the CADC already has this
 correction applied! Normally, we would need to calculate the wavelength axis of each spaxel individually
-and then interpolate it (carefully!!!) onto a standard axis. 
+and then interpolate it (carefully!!!) onto a standard axis.
+
+
+What is the broadening parameter in the sinc function?
+######################################################
+(Repeat from How Luci Works page)
+We note that we do in fact fit for p1 in all cases **INCLUDING** the sinc function. However,
+we note that this value can also be fixed as discussed above. Therefore, the p1 calculated
+using the sinc function should be taken with a grain of salt. We do not suggest understanding
+this parameter as the broadening. Instead, if you are interested in the broadening,
+we strongly suggest you use the *sincgauss* function :)
+
+Are other filters available?
+############################
+YES! However, for the C1, C2, and C4 filters, we can only handle the case of redshift ~ 0.25 objects.
+Please note this is the intended science case for these filters. 
 
 
 Common Errors

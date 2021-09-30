@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
@@ -436,7 +437,9 @@ function gets the bouunds for each quadrant.</p>
 <dt class="sig sig-object py" id="LuciBase.Luci.read_in_cube">
 <span class="sig-name descname"><span class="pre">read_in_cube</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_cube" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to read the hdf5 data into a 3d numpy array (data cube). We also
-translate the header to standard wcs format by calling the update_header function.</p>
+translate the header to standard wcs format by calling the update_header function.
+Note that the data are saved in several quadrants which is why we have to loop
+through them and place all the spectra in a single cube.</p>
 </dd></dl>
 
 <dl class="py method">
