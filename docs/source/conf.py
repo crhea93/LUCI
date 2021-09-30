@@ -21,9 +21,14 @@ sys.path.insert(0, os.path.abspath('../../'))
 project = 'LUCI'
 copyright = '2021, Carter L. Rhea'
 author = 'Carter L. Rhea'
-
+html_favicon = 'LuciLogo.png'
+html_logo = 'LuciLogo.png'
+html_theme_options = {
+    'logo_only': True,
+    'display_version': False,
+}
 # The full version, including alpha/beta/rc tags
-release = 'v.0.0.1'
+release = 'v.1.0.0'
 
 
 # -- General configuration ---------------------------------------------------
