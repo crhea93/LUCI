@@ -11,6 +11,9 @@ personalize the fits.
 .. image:: Luci1.png
     :alt: Luci overview
 
+.. image:: LuciFit.png
+    :alt: Luci overview
+
 What we calculate
 -----------------
 The three primary quantities of interest are the **amplitude** of the line, the **position**

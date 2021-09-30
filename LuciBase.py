@@ -73,6 +73,9 @@ class Luci():
             elif self.hdr_dict['FILTER'] == 'SN3':
                 self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
                 self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
+            elif self.hdr_dict['FILTER'] == 'C4':
+                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
+                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
             else:
                 print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
             self.read_in_reference_spectrum()
@@ -189,6 +192,8 @@ class Luci():
         """
         Function to read the hdf5 data into a 3d numpy array (data cube). We also
         translate the header to standard wcs format by calling the update_header function.
+        Note that the data are saved in several quadrants which is why we have to loop
+        through them and place all the spectra in a single cube.
         """
         print('Reading in data...')
         file =  h5py.File(self.cube_path+'.hdf5', 'r')  # Read in file
@@ -200,9 +205,9 @@ class Luci():
         for iquad in tqdm(range(self.quad_nb)):
             xmin,xmax,ymin,ymax = self.get_quadrant_dims(iquad)
             iquad_data = file['quad00%i'%iquad]['data'][:]  # Save data to intermediate array
-            iquad_data[(np.isfinite(iquad_data) == False)]= 1e-22 # Modifs
-            iquad_data[(iquad_data < -1e-16)]= -1e-22 # Modifs
-            iquad_data[(iquad_data > 1e-9)]= 1e-22 # Modifs
+            iquad_data[(np.isfinite(iquad_data) == False)]= 1e-22 # Set infinite values to 1-e22
+            iquad_data[(iquad_data < -1e-16)]= -1e-22 # Set high negative flux values to 1e-22
+            iquad_data[(iquad_data > 1e-9)]= 1e-22 # Set unrealistically high positive flux values to 1e-22
             self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
         self.cube_final = self.cube_final#.transpose(1, 0, 2)
         self.update_header(file)
@@ -250,6 +255,9 @@ class Luci():
         elif self.hdr_dict['FILTER'] == 'SN1':
             min_ = np.argmin(np.abs(np.array(channel)-25500))
             max_ = np.argmin(np.abs(np.array(channel)-27500))
+        elif self.hdr_dict['FILTER'] == 'C4':
+            min_ = np.argmin(np.abs(np.array(channel)-14700))
+            max_ = np.argmin(np.abs(np.array(channel)-15600))
         else:
             print('We do not support this filter.')
             print('Terminating program!')
@@ -648,10 +656,16 @@ class Luci():
             continuum_fits[i] = continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
+            # Check if deep image exists: if not, create it
+            if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
+                self.create_deep_image()
             wcs = WCS(self.header_binned)
         else:
-            wcs = WCS(self.header)
-        cutout = Cutout2D(velocities_fits[:,:,0], position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+            # Check if deep image exists: if not, create it
+            if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
+                self.create_deep_image()
+            wcs = WCS(self.header, naxis=2)
+        cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
         self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
 
 

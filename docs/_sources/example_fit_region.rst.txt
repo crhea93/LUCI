@@ -1,7 +1,7 @@
 .. _example_fit_region:
 
 Fit Single Region
-===================
+==================
 In this example, we are going to fit a single region of the science verification Abell 426 data cube (found at: https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_sv.php).
 
 We will read in the data as usual using a LUCI cube object. We then will extract a background region and plot it.
@@ -29,12 +29,12 @@ We now will set the required parameters. We are also going to be using our machi
 
     #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
-    cube_dir = '/media/carterrhea/carterrhea/Benjamin'  # Path to data cube
-    cube_name = 'A0426_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
-    object_name = 'NGC1275'
-    redshift = 0.017284  # Redshift of NGC 1275
-    ML_ref = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R1800'
-    ML_model = '/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R1800-PREDICTOR-I'
+    Luci_path = '/home/carterrhea/Documents/LUCI/'
+    cube_dir = '/home/carterrhea/Documents/M33/SN1'  # Path to data cube
+    cube_name = 'SN1_Field7'  # don't add .hdf5 extension
+    object_name = 'M33_Field7'
+    redshift = -0.0006  # Redshift of M33
+    resolution = 1000
 
 
 We intialize our LUCI object
@@ -42,7 +42,7 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = Luci(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
+    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
 
 Let's extract and visualize a background region we defined in ds9:
 
