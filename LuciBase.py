@@ -458,7 +458,7 @@ class Luci():
                 fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                         self.model_ML, trans_filter = self.transmission_interpolated,
                         theta=self.interferometer_theta[x_pix, y_pix],
-                        delta_x = self.hdr_dict['STEP'], n_steps = self.n_steps,
+                        delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
                         zpd_index = self.zpd_index,
                         filter = self.hdr_dict['FILTER'],
                         bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
@@ -623,7 +623,8 @@ class Luci():
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                             self.model_ML, trans_filter = self.transmission_interpolated,
                             theta = self.interferometer_theta[x_pix, y_pix],
-                            delta_x = self.hdr_dict['CDELT3'], n_steps = self.n_steps,
+                            delta_x = self.hdr_dict['STEP'],  n_steps = self.step_nb,
+                            zpd_index = self.zpd_index,
                             filter = self.hdr_dict['FILTER'],
                             bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
                     fit_dict = fit.fit()
@@ -832,7 +833,8 @@ class Luci():
         fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                 self.model_ML, trans_filter = self.transmission_interpolated,
                 theta = self.interferometer_theta[x_pix, y_pix],
-                delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
+                delta_x = self.hdr_dict['STEP'],  n_steps = self.step_nb,
+                zpd_index = self.zpd_index,
                 filter = self.hdr_dict['FILTER'],
                 bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
         fit_dict = fit.fit()

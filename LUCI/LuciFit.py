@@ -80,7 +80,6 @@ class Fit:
         if trans_filter is not None:
             self.apply_transmission()  # Apply transmission filter if one is provided
         self.filter = filter
-
         self.spectrum_interpolated = np.zeros_like(self.spectrum)
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
@@ -107,8 +106,6 @@ class Fit:
         self.uncertainty_bool = uncertainty_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
-        #if sincgauss_args is None:
-        #    sincgauss_args = [11.96, 2.1, 892]  # Randomly initialize these values  # TODO: Look niito best values
         self.calc_sinc_width()
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
@@ -143,7 +140,7 @@ class Fit:
         Calculate correction factor based of interferometric angle. This is used to correct the broadening
         """
         self.correction_factor = 1/self.cos_theta
-        self.axis_step = self.correction_factor / (2*self.delta_x*self.n_steps) * 1e7
+        self.axis_step = self.correction_factor / (2*self.delta_x*(self.n_steps-self.zpd_index)) * 1e7
 
 
     def calc_sinc_width(self,):
@@ -286,6 +283,7 @@ class Fit:
             line_amp_est = self.spectrum_normalized[line_ind]
         #if self.broad_ml > 50:
         #    self.broad_ml = 10
+        print(self.broad_ml)
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
