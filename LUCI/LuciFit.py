@@ -283,7 +283,6 @@ class Fit:
             line_amp_est = self.spectrum_normalized[line_ind]
         #if self.broad_ml > 50:
         #    self.broad_ml = 10
-        print(self.broad_ml)
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
