@@ -42,7 +42,7 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, trans_filter=None, theta=0, delta_x=2943, n_steps=842, filter='SN3', bayes_bool=False, uncertainty_bool=False):
+                 ML_model, trans_filter=None, theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3', bayes_bool=False, uncertainty_bool=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -58,6 +58,7 @@ class Fit:
             theta: Interferometric angle in degrees (defaults to 11.960 -- this is so that the correction coeff is 1)
             delta_x: Step Delta
             n_steps: Number of steps in spectra
+            zpd_index: Zero Path Difference index
             filter: SITELLE filter (e.x. 'SN3')
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
@@ -91,6 +92,7 @@ class Fit:
         self.axis_step = 0.0  # Initialize
         self.delta_x = delta_x
         self.n_steps = n_steps
+        self.zpd_index = zpd_index
         self.calculate_correction()
         # Update axis with correction factor
         #self.axis = self.axis*self.correction_factor
@@ -107,7 +109,7 @@ class Fit:
         self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
         #if sincgauss_args is None:
         #    sincgauss_args = [11.96, 2.1, 892]  # Randomly initialize these values  # TODO: Look niito best values
-        self.calc_sinc_width([self.cos_theta, self.delta_x, self.n_steps])
+        self.calc_sinc_width()
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
@@ -144,7 +146,7 @@ class Fit:
         self.axis_step = self.correction_factor / (2*self.delta_x*self.n_steps) * 1e7
 
 
-    def calc_sinc_width(self, sincgauss_args):
+    def calc_sinc_width(self,):
         """
         Calculate sinc width of the sincgauss function
         Args:
@@ -152,7 +154,7 @@ class Fit:
             [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
 
         """
-        MPD = sincgauss_args[0]*sincgauss_args[1]*sincgauss_args[2]
+        MPD = self.cos_theta*self.delta_x*(self.n_steps-self.zpd_index)/1e7
         self.sinc_width = 1/(2*MPD)
 
 
@@ -372,7 +374,7 @@ class Fit:
         f1 = 0.0
         for model_num in range(self.line_num):
             params = theta[model_num * 3:(model_num + 1) * 3]
-            f1 += np.array(Sinc(channel, params).func)
+            f1 += np.array(Sinc(channel, params, self.sinc_width).func)
         return f1
 
 
@@ -394,7 +396,7 @@ class Fit:
             min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
-            f1 += np.array(Sinc(channel, params).func)
+            f1 += np.array(Sinc(channel, params, self.sinc_width).func)
         return f1
 
 

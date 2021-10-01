@@ -62,6 +62,8 @@ class Luci():
         self.interferometer_theta = None
         self.transmission_interpolated = None
         self.read_in_cube()
+        self.step_nb = self.hdr_dict['STEPNB']# - self.hdr_dict['ZPDINDEX']
+        self.zpd_index = self.hdr_dict['ZPDINDEX']
         self.spectrum_axis_func()
         if ML_bool is True:
             if self.hdr_dict['FILTER'] == 'SN1':
@@ -456,7 +458,8 @@ class Luci():
                 fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                         self.model_ML, trans_filter = self.transmission_interpolated,
                         theta=self.interferometer_theta[x_pix, y_pix],
-                        delta_x = self.hdr_dict['STEP'], n_steps = self.hdr_dict['STEPNB'],
+                        delta_x = self.hdr_dict['STEP'], n_steps = self.n_steps,
+                        zpd_index = self.zpd_index,
                         filter = self.hdr_dict['FILTER'],
                         bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
                 fit_dict = fit.fit()
@@ -620,7 +623,7 @@ class Luci():
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                             self.model_ML, trans_filter = self.transmission_interpolated,
                             theta = self.interferometer_theta[x_pix, y_pix],
-                            delta_x = self.hdr_dict['CDELT3'], n_steps = self.hdr_dict['STEPNB'],
+                            delta_x = self.hdr_dict['CDELT3'], n_steps = self.n_steps,
                             filter = self.hdr_dict['FILTER'],
                             bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
                     fit_dict = fit.fit()
