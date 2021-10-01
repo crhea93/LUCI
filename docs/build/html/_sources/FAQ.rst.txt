@@ -25,17 +25,19 @@ and then interpolate it (carefully!!!) onto a standard axis.
 
 What is the broadening parameter in the sinc function?
 ######################################################
-(Repeat from How Luci Works page)
-We note that we do in fact fit for p1 in all cases **INCLUDING** the sinc function. However,
-we note that this value can also be fixed as discussed above. Therefore, the p1 calculated
-using the sinc function should be taken with a grain of salt. We do not suggest understanding
-this parameter as the broadening. Instead, if you are interested in the broadening,
-we strongly suggest you use the *sincgauss* function :)
+The broadening parameter for the sinc function is **SET** to :math:`1/(2*MPD)`.
+We can adopt the following definition: :math:`MPD = \cos{\theta}\delta_x N` where :math:`\cos{\theta}`
+is the cosine angle defined as :math:`\cos{\theta} = \frac{\lambda_{ref}}{\lambda_{ij}}`.
+:math:`\lambda_{ref}` is the wavelength of the calibration laser and :math:`\lambda_{ij}` is
+the measured calibration wavelength of a given pixel (thus :math:`\theta` is a function of the pixel).
+
+If you want to obtain a broadening parameter we strongly suggest using the **sincgauss** function!
+
 
 Are other filters available?
 ############################
 YES! However, for the C1, C2, and C4 filters, we can only handle the case of redshift ~ 0.25 objects.
-Please note this is the intended science case for these filters. 
+Please note this is the intended science case for these filters.
 
 
 Common Errors

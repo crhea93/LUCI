@@ -115,8 +115,10 @@ We solve for p_0, p_1, and p_2 (x is the wavelength channel and is thus provided
 Sinc
 ####
 We adopt the following form
-:math:`p_0*((x-p_1)/p_2)/(x-p_1)/p_2)`
+:math:`u=(x-p_1)/p_2`
+:math:`p_0*sinc(u)/u`
 
+Note that :math:`p_2` is **FIXED** for the sinc function as 1/(2*MPD) (where **MPD** is the maximum path difference).
 
 SincGauss
 #########
@@ -126,7 +128,11 @@ where
 :math:`a = p_2/(\sqrt{2}*\sigma)`
 :math:`b = (x-p_1)/(\sqrt{2}*\sigma)`
 
-where sigma is 1/(2*MPD) (where **MPD** is the maximum path difference).
+We also have the Dawson integral calculation of the *sincgauss* function:
+
+:math:`p_0*( (dawson(ai+b)exp(2iab) + dawson(ai-b)exp(-2iab)) / 2*dawson(ai) )`
+
+where sigma is 1/(2*MPD).
 
 Therefore, when using a **sincgauss**, we have to calculate the **MPD**. We can
 adopt the following definition: :math:`MPD = \cos{\theta}\delta_x N` where :math:`\cos{\theta}`
@@ -134,11 +140,9 @@ is the cosine angle defined as :math:`\cos{\theta} = \frac{\lambda_{ref}}{\lambd
 :math:`\lambda_{ref}` is the wavelength of the calibration laser and :math:`\lambda_{ij}` is
 the measured calibration wavelength of a given pixel (thus :math:`\theta` is a function of the pixel).
 
-We note that we do in fact fit for p1 in all cases **INCLUDING** the sinc function. However,
-we note that this value can also be fixed as discussed above. Therefore, the p1 calculated
-using the sinc function should be taken with a grain of salt. We do not suggest understanding
-this parameter as the broadening. Instead, if you are interested in the broadening,
+If you are interested in the broadening,
 we strongly suggest you use the *sincgauss* function :)
+
 
 
 Transmission
