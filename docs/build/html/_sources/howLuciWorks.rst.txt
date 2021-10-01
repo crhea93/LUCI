@@ -116,7 +116,7 @@ Sinc
 ####
 We adopt the following form
 :math:`u=(x-p_1)/p_2`
-:math:`p_0*sinc(u)/u`
+:math:`p_0*sinc(\pi*u)/(\pi*u)`
 
 Note that :math:`p_2` is **FIXED** for the sinc function as 1/(2*MPD) (where **MPD** is the maximum path difference).
 
@@ -139,6 +139,9 @@ adopt the following definition: :math:`MPD = \cos{\theta}\delta_x N` where :math
 is the cosine angle defined as :math:`\cos{\theta} = \frac{\lambda_{ref}}{\lambda_{ij}}`.
 :math:`\lambda_{ref}` is the wavelength of the calibration laser and :math:`\lambda_{ij}` is
 the measured calibration wavelength of a given pixel (thus :math:`\theta` is a function of the pixel).
+
+Also note that we divide the sinc width (:math:`p_2`) by :math:`\pi` based on our definition of the sinc width above.
+
 
 If you are interested in the broadening,
 we strongly suggest you use the *sincgauss* function :)

@@ -289,7 +289,7 @@ can be coupled.</p>
 <h4>Sinc<a class="headerlink" href="#sinc" title="Permalink to this headline">¶</a></h4>
 <p>We adopt the following form
 <img class="math" src="_images/math/c474dee175514a34c8e9cbd504a4c13434da9300.png" alt="u=(x-p_1)/p_2"/>
-<img class="math" src="_images/math/8ccf6f52d2d7e2a33df2df6609cb3dde8b18a710.png" alt="p_0*sinc(u)/u"/></p>
+<img class="math" src="_images/math/a20738bedc4a37bf151f44f516084dd98ffd7f15.png" alt="p_0*sinc(\pi*u)/(\pi*u)"/></p>
 <p>Note that <img class="math" src="_images/math/0ba5a12df77ecc7e17158f419025b5acca993472.png" alt="p_2"/> is <strong>FIXED</strong> for the sinc function as 1/(2*MPD) (where <strong>MPD</strong> is the maximum path difference).</p>
 </div>
 <div class="section" id="sincgauss">
@@ -306,6 +306,7 @@ adopt the following definition: <img class="math" src="_images/math/a23cbb309bf3
 is the cosine angle defined as <img class="math" src="_images/math/013521e12f828ad7c4f7b905cd3f3f7268d2ad4c.png" alt="\cos{\theta} = \frac{\lambda_{ref}}{\lambda_{ij}}"/>.
 <img class="math" src="_images/math/2b899994ef65e5177b3c166379e701041dbf2dcb.png" alt="\lambda_{ref}"/> is the wavelength of the calibration laser and <img class="math" src="_images/math/4ac0de4c00ba1f6a2ce1ab3214cdbc33cb05d40c.png" alt="\lambda_{ij}"/> is
 the measured calibration wavelength of a given pixel (thus <img class="math" src="_images/math/8a87f04e7d7cca18343c084cceca5237fae62491.png" alt="\theta"/> is a function of the pixel).</p>
+<p>Also note that we divide the sinc width (<img class="math" src="_images/math/0ba5a12df77ecc7e17158f419025b5acca993472.png" alt="p_2"/>) by <img class="math" src="_images/math/9cc8517129c87252edd7fe2e4532af9dcf7a54d9.png" alt="\pi"/> based on our definition of the sinc width above.</p>
 <p>If you are interested in the broadening,
 we strongly suggest you use the <em>sincgauss</em> function :)</p>
 </div>
