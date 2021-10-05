@@ -34,6 +34,7 @@ class Spectrum:
         self.n_steps = 289  # Number of steps (default R~5000)
         self.order = 8  # Folding order
         self.theta = 11.96  # Interferometer angle in degrees
+        self.zpd_index  = 0  # Zero Path Difference
         self.lines = lines
         self.fit_function = fit_function
         self.ampls = ampls
@@ -59,6 +60,7 @@ class Spectrum:
         self.n_steps = 0
         self.steps_from_resolution()
         self.snr = snr  # Set signal-to-noise ratio
+        self.calc_sinc_width()
 
 
         # Checks
@@ -79,7 +81,7 @@ class Spectrum:
         Calculate sinc width of the sincgauss function
 
         """
-        MPD = self.theta * self.delta_x * self.n_steps
+        MPD = np.cos(np.deg2rad(self.theta))*self.delta_x*(self.n_steps-self.zpd_index)/1e7
         self.sinc_width = 1/(2*MPD)
 
     def gaussian_model(self, channel, amp, pos, sigma):
@@ -114,7 +116,7 @@ class Spectrum:
             Value of function given input parameters
 
         """
-        f1 = Sinc(channel, [amp, pos, sigma]).func
+        f1 = Sinc(channel, [amp, pos, sigma], self.sinc_width).func
         return f1
 
 
