@@ -14,9 +14,8 @@ class Sinc:
     def __init__(self, channel, params, sinc_width):
         p0 = params[0];
         p1 = params[1];
-        p2 = sinc_width#params[2]
+        p2 = sinc_width
         u = (channel - p1) / p2
-        #self.func = [p0 * (np.sin(u_) / (u_)) if u_ != 0 else p0 for u_ in u]
         self.func = [p0 * np.sinc(u_) if u_ != 0 else p0 for u_ in u]
 
 
@@ -24,7 +23,7 @@ class SincGauss:
     def __init__(self, channel, params, sinc_width):
         p0 = params[0]
         p1 = params[1]
-        p2 = sinc_width
+        p2 = sinc_width/np.pi
         p3 = params[2]
         a = p3/(np.sqrt(2)*p2)
         b = (channel-p1)/(np.sqrt(2)*p3)
