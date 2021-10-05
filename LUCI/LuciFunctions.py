@@ -31,7 +31,6 @@ class SincGauss:
         dawson1 = sps.dawsn(1j * a + b) * np.exp(2.* 1j * a *b)
         dawson2 = sps.dawsn(1j * a - b) * np.exp(-2. * 1j * a *b)
         dawson3 = 2. * sps.dawsn(1j * a)
-        #print(dawson1, dawson2, dawson3)
         self.func = p0*(dawson1 + dawson2)/dawson3
         '''erf1 = sps.erf(a-1j*b)
         erf2 = sps.erf(a+1j*b)

@@ -120,7 +120,7 @@ class Fit:
         self.x_min = 0 #  14700;
         self.x_max = 1e8 #  15600
         self.sigma_min = 0.001;
-        self.sigma_max = 10
+        self.sigma_max = 1
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()
@@ -149,9 +149,7 @@ class Fit:
     def calc_sinc_width(self,):
         """
         Calculate sinc width of the sincgauss function
-        Args:
-            sincgauss_args: Additional arguments required for sincgauss function in a list:
-            [Cosine of the Interfermeter Angle as calculated in Luci.get_interferometer_angle(), step_delta, n_steps]
+
 
         """
         MPD = self.cos_theta*self.delta_x*(self.n_steps-self.zpd_index)/1e7
@@ -284,8 +282,8 @@ class Fit:
                                    ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        #if self.broad_ml > 50:
-        #    self.broad_ml = 10
+        if self.broad_ml > 50:
+            self.broad_ml = .1
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
