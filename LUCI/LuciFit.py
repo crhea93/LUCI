@@ -430,9 +430,9 @@ class Fit:
         """
         f1 = 0.0
         for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
+            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))-1
             pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
+            params = [theta[model_num * 3], pos_on_axis, self.axis_step*theta[model_num*3 + 2]]
             f1 += SincGauss(channel, params, self.sinc_width).func
         return np.real(f1)
 
@@ -630,8 +630,9 @@ class Fit:
         n_walkers = n_dim * 3 + 4
         init_ = self.fit_sol + self.fit_sol[-1] * np.random.randn(n_walkers, n_dim)
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
-                                        args=(self.axis, self.spectrum_restricted, self.noise, self.lines))
-        sampler.run_mcmc(init_, 2000, progress=False)
+                                        args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.lines))
+        sampler.run_mcmc(init_, 2000, progress=True)
+
         flat_samples = sampler.get_chain(discard=500, flat=True)
         parameters_med = []
         parameters_std = []
@@ -672,7 +673,7 @@ class Fit:
         # Add constant contimuum to model
         model += theta[-1]
         sigma2 = yerr ** 2
-        return -0.5 * np.sum((y - model) ** 2 / sigma2)# + np.log(2 * np.pi * sigma2))
+        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2)# + np.log(2 * np.pi * sigma2))
 
     def log_prior(self, theta, model):
         A_min = 0  # 1e-19
@@ -716,7 +717,7 @@ class Fit:
         lp = self.log_prior(theta, model)
         if not np.isfinite(lp):
             return -np.inf
-        return lp + self.log_likelihood_bayes(theta, x, y, yerr, model)
+        return lp + self.log_likelihood(theta)#, x, y, yerr, model)
 
     def calculate_vel(self, ind):
         """
@@ -764,7 +765,7 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
+        broad = (3e5 * self.axis_step*self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
         return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
 
 
