@@ -628,7 +628,17 @@ class Fit:
         self.fit_sol[-1] /= self.spectrum_scale
         n_dim = 3 * self.line_num + 1
         n_walkers = n_dim * 3 + 4
-        init_ = self.fit_sol + self.fit_sol[-1] * np.random.randn(n_walkers, n_dim)
+        random_ = np.random.randn(n_walkers, n_dim)
+        for i in range(self.line_num):
+            random_[3*i] *= 0.05
+            #random_[3*i+1] += 10
+            random_[3*i+2] *= 0.01
+        #init_ = (self.fit_sol + self.fit_sol[-1] )* np.random.randn(n_walkers, n_dim)
+        init_ = self.fit_sol + self.fit_sol[-1] + random_
+        for i in range(self.line_num):
+            init_[:,3*i] = np.abs(init_[:,3*i])
+            init_[:,3*i+2] = np.abs(init_[:,3*i+2])
+        init_[:,-1] = np.abs(init_[:,-1])
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
                                         args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.lines))
         sampler.run_mcmc(init_, 2000, progress=True)
@@ -645,12 +655,12 @@ class Fit:
         self.uncertainties = parameters_std
         # We now must unscale the amplitude
         for i in range(self.line_num):
-            parameters[i * 3] *= self.spectrum_scale
+            parameters_med[i * 3] *= self.spectrum_scale
             self.uncertainties[i*3] *= self.spectrum_scale
         # Scale continuum
-        parameters[-1] *= self.spectrum_scale
+        parameters_med[-1] *= self.spectrum_scale
         self.uncertainties[-1] *= self.spectrum_scale
-        self.fit_sol = parameters
+        self.fit_sol = parameters_med
         if self.model_type == 'gaussian':
             self.fit_vector = self.gaussian_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
@@ -679,7 +689,7 @@ class Fit:
         A_min = 0  # 1e-19
         A_max = 1.1  # 1e-15
         x_min = 0#14700
-        x_max = 1e7#15400
+        x_max = 1e8#15400
         sigma_min = 0
         sigma_max = 30
         for model_num in range(len(model)):
@@ -717,7 +727,12 @@ class Fit:
         lp = self.log_prior(theta, model)
         if not np.isfinite(lp):
             return -np.inf
-        return lp + self.log_likelihood(theta)#, x, y, yerr, model)
+        if np.isnan(lp):
+            return -np.inf
+        if np.isnan(lp + self.log_likelihood(theta)):
+            return -np.inf
+        else:
+            return lp + self.log_likelihood(theta)#, x, y, yerr, model)
 
     def calculate_vel(self, ind):
         """

@@ -963,3 +963,12 @@ class Luci():
         else:
             # Code to execute when solve fails
             print('Astronomy.net failed to solve. This astrometry has not been updated!')
+
+    def close(self):
+        """
+        Functionality to delete Luci object (and thus the cube) from memory
+        """
+        del self.cube_final
+        del self.header
+        if self.cube_binned:
+            del self.cube_binned
