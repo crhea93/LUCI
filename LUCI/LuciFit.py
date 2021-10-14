@@ -692,30 +692,39 @@ class Fit:
         x_max = 1e8#15400
         sigma_min = 0
         sigma_max = 30
+        continuum_min = 0
+        continuum_max = 1
+        val_prior = 1
         for model_num in range(len(model)):
             params = theta[model_num * 3:(model_num + 1) * 3]
         within_bounds = True  # Boolean to determine if parameters are within bounds
         for ct, param in enumerate(params):
             if ct % 3 == 0:  # Amplitude parameter
                 if param > A_min and param < A_max:
-                    pass
+                    val_prior *= (A_max-A_min)
                 else:
                     within_bounds = False  # Value not in bounds
                     break
             if ct % 3 == 1:  # velocity parameter
                 if param > x_min and param < x_max:
-                    pass
+                    val_prior *= (x_max-x_min)
                 else:
                     within_bounds = False  # Value not in bounds
                     break
             if ct % 3 == 2:  # sigma parameter
                 if param > sigma_min and param < sigma_max:
-                    pass
+                    val_prior *= (sigma_max-sigma_min)
                 else:
                     within_bounds = False  # Value not in bounds
                     break
+        # Check continuum
+        if theta[-1] > continuum_min and theta[-1] < continuum_max:
+            val_prior *= (continuum_max-continuum_min)
+        else:
+            within_bounds = False  # Value not in bounds
         if within_bounds:
-            return 0.0
+
+            return 1/val_prior
         else:
             return -np.inf
         # A_,x_,sigma_ = theta
