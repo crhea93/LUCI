@@ -11,6 +11,7 @@ import astropy.stats as astrostats
 import warnings
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 import matplotlib.pyplot as plt
+import corner
 warnings.filterwarnings("ignore")
 
 
@@ -430,9 +431,9 @@ class Fit:
         """
         f1 = 0.0
         for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))-1
+            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, self.axis_step*theta[model_num*3 + 2]]
+            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
             f1 += SincGauss(channel, params, self.sinc_width).func
         return np.real(f1)
 
@@ -501,6 +502,25 @@ class Fit:
         return vel_dict_list
 
 
+    def multiple_component_vel_constraint(self):
+        """
+        Constraints for the case that we have multiple components.
+        If there are two components (i.e. the user passes the same line twice),
+        we require that the first component has a higher velocity than the second component.
+        This forces the solver to find the two components instead of simply fitting the same
+        component twice.
+        """
+        vel_dict_list = []
+        unique_rels = np.unique(self.lines)  # List of unique groups
+        for unique_ in unique_rels:  # Step through each unique group
+            inds_unique = [i for i, e in enumerate(self.lines) if e == unique_]  # Obtain line indices in group
+            if len(inds_unique) > 1:  # If there is more than one element in the group
+                ind_0 = inds_unique[0]  # Get first element
+                for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
+                    expr_dict = {'type': 'ineq', 'fun': lambda x: x[3*ind_unique+1] - x[3*ind_0+1] - 10}
+        return vel_dict_list
+
+
     def calculate_params(self):
         """
         Calculate the amplitude, position, and sigma of the line. These values are
@@ -514,7 +534,7 @@ class Fit:
         nll = lambda *args: -self.log_likelihood(*args)
         initial = np.ones((3 * self.line_num + 1))
         bounds_ = []
-        initial[-1] = self.cont_estimate(sigma_level=3.0)  # Add continuum constant and intialize it
+        initial[-1] = self.cont_estimate(sigma_level=2.0)  # Add continuum constant and intialize it
         for mod in range(self.line_num):
             #val = 3 * mod + 1
             amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])
@@ -525,12 +545,13 @@ class Fit:
             bounds_.append((self.x_min, self.x_max))
             bounds_.append((self.sigma_min, self.sigma_max))
         bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
-        bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum Constraint
+        bounds_u = [val[1] for val in bounds_] + [0.75]  # Continuum Constraint
         bounds = Bounds(bounds_l, bounds_u)
         self.inital_values = initial
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
-        cons = (sigma_cons + vel_cons)
+        #vel_cons_multiple = self.multiple_component_vel_constraint()
+        cons = (sigma_cons + vel_cons)# + vel_cons_multiple)
         soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-8,
                         args=(), constraints=cons)
@@ -632,7 +653,7 @@ class Fit:
         for i in range(self.line_num):
             random_[3*i] *= 0.05
             #random_[3*i+1] += 10
-            random_[3*i+2] *= 0.01
+            random_[3*i+2] *= 0.1
         #init_ = (self.fit_sol + self.fit_sol[-1] )* np.random.randn(n_walkers, n_dim)
         init_ = self.fit_sol + self.fit_sol[-1] + random_
         for i in range(self.line_num):
@@ -642,8 +663,11 @@ class Fit:
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
                                         args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.lines))
         sampler.run_mcmc(init_, 2000, progress=True)
-
-        flat_samples = sampler.get_chain(discard=500, flat=True)
+        flat_samples = sampler.get_chain(discard=200, flat=True)
+        #fig = corner.corner(
+        #    flat_samples, labels=np.arange(len(self.fit_sol))
+        #);
+        #plt.savefig('test.png')
         parameters_med = []
         parameters_std = []
         for i in range(n_dim):
