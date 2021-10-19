@@ -218,6 +218,20 @@ Fit class (Lucifit.py).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.check_luci_path">
+<span class="sig-name descname"><span class="pre">check_luci_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.check_luci_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Functionality to check that the user has included the trailing “/” to Luci_path.
+If they have not, we add it.
+TODO: TEST</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Functionality to delete Luci object (and thus the cube) from memory</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.create_deep_image">
 <span class="sig-name descname"><span class="pre">create_deep_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_deep_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create deep image fits file of the cube. This takes the cube and sums
@@ -492,19 +506,6 @@ defined when the cube is initiated.</p>
 <span class="sig-name descname"><span class="pre">spectrum_axis_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.spectrum_axis_func" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the x-axis for the spectra. We must construct this from header information
 since each pixel only has amplitudes of the spectra at each point.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.update_astrometry">
-<span class="sig-name descname"><span class="pre">update_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.update_astrometry" title="Permalink to this definition">¶</a></dt>
-<dd><p>Use astronomy.net to update the astrometry in the header
-If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
-the header is not updated and an exception is thrown.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>api_key</strong> – Astronomy.net user api key</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
