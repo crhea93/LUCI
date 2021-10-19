@@ -58,6 +58,7 @@ Prerequisites
 
        howLuciWorks
        uncertainties
+       fit_options
        license
 
 Examples

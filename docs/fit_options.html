@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Python Module Index &mdash; LUCI v.1.0.0 documentation</title>
+  <title>Fit Options &mdash; LUCI v.1.0.0 documentation</title>
   
 
   
@@ -43,9 +43,8 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
- 
-
-
+    <link rel="next" title="MIT License" href="license.html" />
+    <link rel="prev" title="Uncertainties" href="uncertainties.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -91,10 +90,10 @@
             
             
               <p class="caption"><span class="caption-text">Prerequisites:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Fit Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Example Modules:</span></p>
@@ -163,10 +162,14 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Python Module Index</li>
+      <li>Fit Options</li>
     
     
       <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/fit_options.rst.txt" rel="nofollow"> View page source</a>
+          
         
       </li>
     
@@ -178,40 +181,32 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-
-   <h1>Python Module Index</h1>
-
-   <div class="modindex-jumpbox">
-   <a href="#cap-l"><strong>l</strong></a>
-   </div>
-
-   <table class="indextable modindextable">
-     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
-     <tr class="cap" id="cap-l"><td></td><td>
-       <strong>l</strong></td><td></td></tr>
-     <tr>
-       <td><img src="_static/minus.png" class="toggler"
-              id="toggle-1" style="display: none" alt="-" /></td>
-       <td>
-       <code class="xref">LUCI</code></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="fits.html#module-LUCI.LuciFit"><code class="xref">LUCI.LuciFit</code></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="luci.html#module-LuciBase"><code class="xref">LuciBase</code></a></td><td>
-       <em></em></td></tr>
-   </table>
+  <div class="section" id="fit-options">
+<span id="id1"></span><h1>Fit Options<a class="headerlink" href="#fit-options" title="Permalink to this headline">¶</a></h1>
+<p><cite>LUCI</cite> has several options that can either be included or not when fitting. The details of these
+options is explained in the <cite>howLuciWorks</cite> page, but we wanted to reiterate them here.</p>
+<p>The fitting methods in <cite>LUCI</cite> are: <cite>cube.fit_cube(), cube.fit_entire_cube(), cube.fit_region(), cube.fit_spectrum_region()</cite>.
+With the exception of <cite>cube.fit_spectrum_region()</cite>, these methods fit each pixel in a predefined region of the cube.</p>
+<p>In addition to the required arguments, we have the following set of optional arguments:</p>
+<ul class="simple">
+<li><p>bkg: This is where you define the background region that will be subtracted from each spectrum. This is technically optional, but you really should do this…</p></li>
+<li><p>binning: This will bin your cube into larger pixels of nxn size where n is the integer you supply (i.e. <cite>binning=2</cite> will create 2x2 bins)</p></li>
+<li><p>bayes_bool: This activates the Bayesian inference calculations using EMCEE (<cite>bayes_bool=True</cite>). Might as well grab a beer (or two) while you wait for it to run because it’s going to be a while…</p></li>
+<li><p>output_name: If you want a different output suffix, please add that information here. (i.e. <cite>output_name=’SuperCoolName’</cite>)</p></li>
+<li><p>uncertainty_bool: This is if you don’t want to wait for the full Bayesian inference to run. Instead, it calculates the inverse Hessian of the fit matrix and takes its diagonals as the errors on the fit parameters.</p></li>
+<li><p>n_threads: This sets the number of threads that will be used in the fits. Choose this based on the number of threads available to you. I like <cite>n_threads=4</cite>.</p></li>
+</ul>
+</div>
 
 
            </div>
            
           </div>
           <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="license.html" class="btn btn-neutral float-right" title="MIT License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="uncertainties.html" class="btn btn-neutral float-left" title="Uncertainties" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
 
   <hr/>
 
