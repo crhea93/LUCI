@@ -13,8 +13,11 @@ from joblib import Parallel, delayed
 from LUCI.LuciFit import Fit
 import matplotlib.pyplot as plt
 from astropy.nddata import Cutout2D
-from astroquery.astrometry_net import AstrometryNet
-from astropy.io import fits
+from astropy import log
+log.setLevel('ERROR')
+#from astroquery.astrometry_net import AstrometryNet
+
+
 #from numba import njit, prange
 
 
@@ -30,8 +33,8 @@ class Luci():
         of astropy or spectral-cube.
 
         Args:
-            Luci_path: Path to Luci
-            cube_path: Full path to hdf5 cube with the hdf5 extension (e.x. '/user/home/M87.hdf5')
+            Luci_path: Path to Luci (must include trailing "/")
+            cube_path: Full path to hdf5 cube with the hdf5 extension (e.x. '/user/home/M87.hdf5'; No trailing "/")
             output_dir: Full path to output directory
             object_name: Name of the object to fit. This is used for naming purposes. (e.x. 'M87')
             redshift: Redshift to the object. (e.x. 0.00428)
@@ -41,6 +44,7 @@ class Luci():
             model_ML_name: Name of pretrained machine learning model
         """
         self.Luci_path = Luci_path
+        self.check_luci_path()  # Make sure the path is correctly written
         self.cube_path = cube_path
         self.output_dir = output_dir+'/Luci'
         if not os.path.exists(self.output_dir):
@@ -184,8 +188,14 @@ class Luci():
         the spectral axis. Then the deep image is saved as a fits file with the following
         naming convention: output_dir+'/'+object_name+'_deep.fits'
         """
-        hdu = fits.PrimaryHDU()
-        self.deep_image = np.sum(self.cube_final, axis=2).T
+        #hdu = fits.PrimaryHDU()
+        # We are going to break up this calculation into chunks so that  we can have a progress bar
+        self.deep_image = np.zeros((self.cube_final.shape[0], self.cube_final.shape[1]))#np.sum(self.cube_final, axis=2).T
+        iterations_ = 10
+        step_size = int(self.cube_final.shape[0]/iterations_)
+        for i in tqdm(range(10)):
+            self.deep_image[step_size*i:step_size*(i+1)] = np.sum(self.cube_final[step_size*i:step_size*(i+1)], axis=2)
+        self.deep_image = self.deep_image.T
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
         fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
@@ -869,8 +879,8 @@ class Luci():
         elif self.hdr_dict['FILTER'] == 'SN1':
             flux_min = 26550; flux_max = 27550; noise_min = 25300; noise_max = 25700
         else:
-            print('SNR Calculation for this filter has not been implemented')
-        for i in range(y_max-y_min):
+            print('SNR Calculation for this filter has not been implemented\n')
+        for i in tqdm(range(y_max-y_min)):
             y_pix = y_min + i
             snr_local = np.zeros(2048)
             for j in range(x_max-x_min):
@@ -910,7 +920,7 @@ class Luci():
 
 
 
-    def update_astrometry(self, api_key):
+    '''def update_astrometry(self, api_key):
         """
         Use astronomy.net to update the astrometry in the header
         If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
@@ -963,6 +973,7 @@ class Luci():
         else:
             # Code to execute when solve fails
             print('Astronomy.net failed to solve. This astrometry has not been updated!')
+    '''
 
     def close(self):
         """
@@ -972,3 +983,14 @@ class Luci():
         del self.header
         if self.cube_binned:
             del self.cube_binned
+
+    def check_luci_path(self):
+        """
+        Functionality to check that the user has included the trailing "/" to Luci_path.
+        If they have not, we add it.
+        TODO: TEST
+        """
+        if not self.Luci_path.endswith('/'):
+            self.Luci_path += '/'
+            print("We have added a trailing '/' to your Luci_path variable.\n")
+            print("Please add this in the future.\n")
