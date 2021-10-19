@@ -13,11 +13,8 @@ from joblib import Parallel, delayed
 from LUCI.LuciFit import Fit
 import matplotlib.pyplot as plt
 from astropy.nddata import Cutout2D
-from astropy import log
-log.setLevel('ERROR')
 #from astroquery.astrometry_net import AstrometryNet
-
-
+from astropy.io import fits
 #from numba import njit, prange
 
 
@@ -383,7 +380,7 @@ class Luci():
         self.fit_cube(lines, fit_function,vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
 
     #@njit(parallel=True)
-    def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False):
+    def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False, n_threads=2):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -403,6 +400,7 @@ class Luci():
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             output_name: User defined output path/name (default None)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+            n_threads: Number of threads to be passed to joblib for parallelization (default = 2)
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -437,7 +435,8 @@ class Luci():
         continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         #if output_name == None:
             #output_name = self.output_dir+'/'+self.object_name
-        for i in tqdm(range(y_max-y_min)):
+        #for i in tqdm(range(y_max-y_min)):
+        def fit_calc(i):
             y_pix = y_min + i
             ampls_local = []
             flux_local = []
@@ -465,13 +464,17 @@ class Luci():
                 sky = sky[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+                try:
+                    fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                         self.model_ML, trans_filter = self.transmission_interpolated,
                         theta=self.interferometer_theta[x_pix, y_pix],
                         delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
                         zpd_index = self.zpd_index,
                         filter = self.hdr_dict['FILTER'],
                         bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
+                except:
+                    print(i,j)
+                    quit()
                 fit_dict = fit.fit()
                 # Save local list of fit values
                 ampls_local.append(fit_dict['amplitudes'])
@@ -485,18 +488,7 @@ class Luci():
                 corr_local.append(fit_dict['corr'])
                 step_local.append(fit_dict['axis_step'])
                 continuum_local.append(fit_dict['continuum'])
-            # Update global array of fit values
-            ampls_fits[i] = ampls_local
-            flux_fits[i] = flux_local
-            flux_errors_fits[i] = flux_errs_local
-            velocities_fits[i] = vels_local
-            broadenings_fits[i] = broads_local
-            velocities_errors_fits[i] = vels_errs_local
-            broadenings_errors_fits[i] = broads_errs_local
-            chi2_fits[i] = chi2_local
-            corr_fits[i] = corr_local
-            step_fits[i] = step_local
-            continuum_fits[i] = continuum_local
+            return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
             # Check if deep image exists: if not, create it
@@ -509,6 +501,20 @@ class Luci():
                 self.create_deep_image()
             wcs = WCS(self.header, naxis=2)
         cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+        res_parallel = Parallel(n_jobs=n_threads, mmap_mode='w+')(delayed(fit_calc)(i) for i in tqdm(range(y_max-y_min)))
+        for res_fit in res_parallel:
+            step_i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = res_fit
+            ampls_fits[step_i] = ampls_local
+            flux_fits[step_i] = flux_local
+            flux_errors_fits[step_i] = flux_errs_local
+            velocities_fits[step_i] = vels_local
+            broadenings_fits[step_i] = broads_local
+            velocities_errors_fits[step_i] = vels_errs_local
+            broadenings_errors_fits[step_i] = broads_errs_local
+            chi2_fits[step_i] = chi2_local
+            corr_fits[step_i] = corr_local
+            step_fits[step_i] = step_local
+            continuum_fits[step_i] = continuum_local
         self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
 
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
@@ -516,9 +522,8 @@ class Luci():
         #n_threads = 1
         #for i in range(x_max-x_min):
             #SNR_calc(VEL, BROAD, i)
-        res = Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
-        print(res)
-        #Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(VEL, BROAD, i) for i in tqdm(range(x_max-x_min)));
+        #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
+
 
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False):
         """
@@ -601,7 +606,8 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         ct = 0
-        for i in tqdm(range(y_max-y_min)):
+        def fit_calc(i):
+        #for i in tqdm(range(y_max-y_min)):
             y_pix = y_min + i
             ampls_local = []
             flux_local = []
@@ -659,16 +665,7 @@ class Luci():
                     broads_errs_local.append([0]*len(lines))
                     chi2_local.append(0)
                     continuum_local.append(0)
-            # Update global array of fit values
-            ampls_fits[i] = ampls_local
-            flux_fits[i] = flux_local
-            flux_errors_fits[i] = flux_errs_local
-            velocities_fits[i] = vels_local
-            broadenings_fits[i] = broads_local
-            velocities_errors_fits[i] = vels_errs_local
-            broadenings_errors_fits[i] = broads_errs_local
-            chi2_fits[i] = chi2_local
-            continuum_fits[i] = continuum_local
+            return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
             # Check if deep image exists: if not, create it
@@ -681,9 +678,21 @@ class Luci():
                 self.create_deep_image()
             wcs = WCS(self.header, naxis=2)
         cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+        res_parallel = Parallel(n_jobs=n_threads, mmap_mode='w+')(delayed(fit_calc)(i) for i in tqdm(range(y_max-y_min)))
+        for res_fit in res_parallel:
+            step_i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = res_fit
+            ampls_fits[y_min+step_i] = ampls_local
+            flux_fits[y_min+step_i] = flux_local
+            flux_errors_fits[y_min+step_i] = flux_errs_local
+            velocities_fits[y_min+step_i] = vels_local
+            broadenings_fits[y_min+step_i] = broads_local
+            velocities_errors_fits[y_min+step_i] = vels_errs_local
+            broadenings_errors_fits[y_min+step_i] = broads_errs_local
+            chi2_fits[y_min+step_i] = chi2_local
+            corr_fits[y_min+step_i] = corr_local
+            step_fits[y_min+step_i] = step_local
+            continuum_fits[y_min+step_i] = continuum_local
         self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
-
-
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
 
@@ -853,7 +862,7 @@ class Luci():
 
 
 
-    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1):
+    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, n_threads=2):
         """
         Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
         a map of the entire cube is calculated.
@@ -864,6 +873,7 @@ class Luci():
             y_min: Minimal Y value (default 0)
             y_max: Maximal Y value (default 2064)
             method: Method used to calculate SNR (default 1; options 1 or 2)
+            n_threads: Number of threads to use
         Return:
             snr_map: Signal-to-Noise ratio map
 
@@ -880,8 +890,9 @@ class Luci():
         elif self.hdr_dict['FILTER'] == 'SN1':
             flux_min = 26550; flux_max = 27550; noise_min = 25300; noise_max = 25700
         else:
-            print('SNR Calculation for this filter has not been implemented\n')
-        for i in tqdm(range(y_max-y_min)):
+            print('SNR Calculation for this filter has not been implemented')
+        #for i in range(y_max-y_min):
+        def SNR_calc(i):
             y_pix = y_min + i
             snr_local = np.zeros(2048)
             for j in range(x_max-x_min):
@@ -912,11 +923,17 @@ class Luci():
                     else:
                         pass
                 snr_local[x_pix] = snr
-            SNR[y_pix] = snr_local
-        #n_threads = 2
-        #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(SNR,i) for i in tqdm(range(x_max-x_min)));
+            #SNR[y_pix] = snr_local
+            return snr_local,i
+
+        #res = Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(i) for i in tqdm(range(y_max-y_min)));
+        res = Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(i) for i in tqdm(range(y_max-y_min)));
         #end = time.time()
         # Save
+        for snr_ind in res:
+            snr_vals, step_i = snr_ind
+            SNR[y_min+step_i] = snr_vals
+
         fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR, self.header, overwrite=True)
 
 

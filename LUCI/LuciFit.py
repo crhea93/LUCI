@@ -85,7 +85,10 @@ class Fit:
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
         self.restrict_wavelength()
+        #try:
         self.spectrum_restricted_norm = self.spectrum_restricted/np.max(self.spectrum_restricted)
+        #except ValueError:  # self.spectrum_restricted is empty
+        #    self.spectrum_restricted_norm = self.spectrum_restricted
         self.theta = theta
         self.cos_theta = np.abs(np.cos(self.theta))
         self.correction_factor = 1.0  # Initialize Correction factor
