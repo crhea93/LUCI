@@ -827,7 +827,9 @@ class Fit:
             Velocity Dispersion of the Halpha line in units of km/s
         """
         broad1 = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
+        broad1 /= abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
         broad2 = (3e5 * (self.fit_sol[3*ind+2]+self.uncertainties[3*ind+2])) / (self.fit_sol[3*ind+1]+self.uncertainties[3*ind+1])
+        broad2 /= abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
         return np.abs(broad1-broad2)
 
 
