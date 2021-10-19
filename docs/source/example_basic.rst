@@ -25,11 +25,13 @@ Remember that '/the/path/to/LUCI/' is the full path to the directory where you c
 LUCI from github. For example, yours may look like '/home/carterrhea/LUCI/'.
 We will also be highlighting the built in plotting functions found in `LUCI/LuciPlotting.py`.
 
+All the region files can be found in 'Examples/regions'.
+
 The next step is to load/read the HDF5 data cube. To do this we **invoke** LUCI
 by initiating an instance of her along with the proper parameters. First we
 define the correct parameters:
 
-1. luci_path = /the/path/to/LUCI  # Path to Luci
+1. luci_path = /the/path/to/LUCI/  # Path to Luci
 2. cube_dir = '/path/to/data/cube'  # Path to data cube
 3. cube_name = 'name_of_data_cube'  # don't add .hdf5 extension
 4. object_name = 'name_of_object'
