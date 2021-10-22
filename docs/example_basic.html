@@ -185,7 +185,12 @@
 region of the data cube. In this tutorial, we will outline how to do just that.</p>
 <p>If you want to see the complete example code, please see the bottom of the page.
 This is also available as a jupyter notebook (complete with output) under <em>Exmples/BasicExamples.ipynb</em> in the main Luci repository.</p>
-<p>I am working on making the import easier (BTW).</p>
+<p>This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
+so the download may take a while.
+Note you may need to change the name of the HDF5 file to <cite>NGC6946_SN3.merged.cm1.1.0</cite>.</p>
+<p>The region files used in the examples can be
+found in the ‘Examples/regions’ folder. To run the examples, place these region files in the same
+directory as the hdf5 file.</p>
 <p>We should start by import the appropriate modules.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;/the/path/to/LUCI/&#39;</span><span class="p">)</span>

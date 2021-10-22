@@ -14,6 +14,22 @@ LUCI is a general purpose fitting pipeline built specifically with SITELLE IFU
 data cubes in mind; however, if you need to fit any emission line spectra, LUCI
 will be able to help!
 
+You can download the example data using the following command:
+
+
+.. code-block:: bash
+
+    wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
+
+This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
+so the download may take a while.
+Note you may need to change the name of the HDF5 file to `NGC6946_SN3.merged.cm1.1.0`.
+
+The region files used in the examples can be
+found in the 'Examples/regions' folder. To run the examples, place these region files in the same
+directory as the hdf5 file.
+
+
 
 Please note that this documentation is not exhaustive. If you have any questions or
 wish to see any new implementation, please send a message to carter.rhea@umontreal.ca.

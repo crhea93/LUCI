@@ -185,7 +185,12 @@
 already familiar with the parameters and how <cite>LUCI</cite> works. Let’s get started!</p>
 <p>Let’s start with importing <cite>LUCI</cite>. Just as descsribed on the <em>readthedocs</em> page, we need to point our system path to our install location of the <strong>LUCI</strong> folder.
 We will additionally import the Luci plotting functions :)</p>
-<p>We use a small cube containing SN3 of NGC6946. If you wish to download this data, please contact me at <a class="reference external" href="mailto:carter&#46;rhea&#37;&#52;&#48;umontreal&#46;ca">carter<span>&#46;</span>rhea<span>&#64;</span>umontreal<span>&#46;</span>ca</a>.</p>
+<p>This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
+so the download may take a while.
+Note you may need to change the name of the HDF5 file to <cite>NGC6946_SN3.merged.cm1.1.0</cite>.</p>
+<p>The region files used in the examples can be
+found in the ‘Examples/regions’ folder. To run the examples, place these region files in the same
+directory as the hdf5 file.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;/media/carterrhea/carterrhea/SIGNALS/LUCI/&#39;</span><span class="p">)</span>  <span class="c1"># Location of Luci</span>
