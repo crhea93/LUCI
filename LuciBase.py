@@ -13,9 +13,8 @@ from joblib import Parallel, delayed
 from LUCI.LuciFit import Fit
 import matplotlib.pyplot as plt
 from astropy.nddata import Cutout2D
-#from astroquery.astrometry_net import AstrometryNet
+from astroquery.astrometry_net import AstrometryNet
 from astropy.io import fits
-#from numba import njit, prange
 
 
 class Luci():
@@ -938,7 +937,7 @@ class Luci():
 
 
 
-    '''def update_astrometry(self, api_key):
+    def update_astrometry(self, api_key):
         """
         Use astronomy.net to update the astrometry in the header
         If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
@@ -991,7 +990,7 @@ class Luci():
         else:
             # Code to execute when solve fails
             print('Astronomy.net failed to solve. This astrometry has not been updated!')
-    '''
+
 
     def close(self):
         """
