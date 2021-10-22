@@ -43,14 +43,14 @@ For example:
 
 .. code-block:: python
 
+    #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
-    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
-    cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
-    cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
-    object_name = 'M33_Field7'
-    redshift = -0.0006  # Redshift of M33
-    resolution = 5000
-    ML_bool = True
+    Luci_path = '/home/carterrhea/Documents/LUCI/'
+    cube_dir = '/home/carterrhea/Documents/LUCI_test'  # Path to data cube
+    cube_name = 'NGC6946_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
+    object_name = 'NGC6946'
+    redshift = 0.000133  # Redshift of M33
+    resolution = 1000
 
 Although the first three arguments are rather self explanatory, it is worth discussing the others.
 The redshift is provided so that we can shift x-axis of the spectra to the rest-frame.
@@ -67,7 +67,7 @@ Note that `ML_bool=True` by default.
 
 
 If you do not wish to use the machine learning methodology to estimate the initial values for
-the velocity, broadening, and amplitude of the line, please simply include the argument **ML_bool=False.
+the velocity, broadening, and amplitude of the line, please simply include the argument `ML_bool=False`.
 
 .. code-block:: python
 

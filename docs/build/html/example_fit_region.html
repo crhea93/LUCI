@@ -13,8 +13,6 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
@@ -33,10 +31,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -93,6 +91,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Example Modules:</span></p>
@@ -202,11 +201,11 @@ These values were chosen to correspond with the brightest region of the horsesho
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#Set Parameters</span>
 <span class="c1"># Using Machine Learning Algorithm for Initial Guess</span>
 <span class="n">Luci_path</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span>
-<span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/M33/SN1&#39;</span>  <span class="c1"># Path to data cube</span>
-<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;SN1_Field7&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
-<span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;M33_Field7&#39;</span>
-<span class="n">redshift</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.0006</span>  <span class="c1"># Redshift of M33</span>
-<span class="n">resolution</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI_test&#39;</span>  <span class="c1"># Path to data cube</span>
+<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;NGC6946_SN3.merged.cm1.1.0&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
+<span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;NGC6946&#39;</span>
+<span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.000133</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># The actual resolution is 400, but we don&#39;t have machine learning algorithms for that resolution, so we use 1000</span>
 </pre></div>
 </div>
 <p>We intialize our LUCI object</p>

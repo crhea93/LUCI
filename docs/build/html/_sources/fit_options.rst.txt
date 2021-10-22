@@ -16,4 +16,4 @@ In addition to the required arguments, we have the following set of optional arg
 - bayes_bool: This activates the Bayesian inference calculations using EMCEE (`bayes_bool=True`). Might as well grab a beer (or two) while you wait for it to run because it's going to be a while...
 - output_name: If you want a different output suffix, please add that information here. (i.e. `output_name='SuperCoolName'`)
 - uncertainty_bool: This is if you don't want to wait for the full Bayesian inference to run. Instead, it calculates the inverse Hessian of the fit matrix and takes its diagonals as the errors on the fit parameters.
-- n_threads: This sets the number of threads that will be used in the fits. Choose this based on the number of threads available to you. I like `n_threads=4`.
+- n_threads: This sets the number of threads that will be used in the fits. Choose this based on the number of threads available to you. I like `n_threads=4`. **Note that this frequently doesn't work in a jupyter notebook setting**.
