@@ -9,8 +9,14 @@ already familiar with the parameters and how `LUCI` works. Let's get started!
 Let's start with importing `LUCI`. Just as descsribed on the *readthedocs* page, we need to point our system path to our install location of the **LUCI** folder.
 We will additionally import the Luci plotting functions :)
 
-You can find the data used in this tutorial at the CADC database ([http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/search](http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/search)) searching
-for M33_FIELD7 SN3 (product id: 2309128p).
+This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
+so the download may take a while.
+Note you may need to change the name of the HDF5 file to `NGC6946_SN3.merged.cm1.1.0`.
+
+The region files used in the examples can be
+found in the 'Examples/regions' folder. To run the examples, place these region files in the same
+directory as the hdf5 file.
+
 
 .. code-block:: python
 
@@ -26,11 +32,11 @@ We now will set the required parameters. We are also going to be using our machi
 
     #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
-    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
-    cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
-    cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
-    object_name = 'M33_Field7'
-    redshift = -0.0006  # Redshift of M33
+    Luci_path = '/home/carterrhea/Documents/LUCI/'
+    cube_dir = '/home/carterrhea/Documents/LUCI_test'  # Path to data cube
+    cube_name = 'NGC6946_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
+    object_name = 'NGC6946'
+    redshift = 0.000133
     resolution = 5000
 
 
@@ -82,8 +88,8 @@ Let's take a look at the velocity map. We can play with the colorbar limits with
 
 And let's see what this looks like!
 
-.. image:: M33_SN3_Flux.png
-    :alt: M33_SN3_Flux
+.. image:: NGC6946_Flux.png
+    :alt: NGC6946_Flux
 
 
 The resulting data maps will be placed in a folder called *luci*. Inside there, you

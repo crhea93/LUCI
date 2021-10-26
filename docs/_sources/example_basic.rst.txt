@@ -9,7 +9,13 @@ region of the data cube. In this tutorial, we will outline how to do just that.
 If you want to see the complete example code, please see the bottom of the page.
 This is also available as a jupyter notebook (complete with output) under *Exmples/BasicExamples.ipynb* in the main Luci repository.
 
-I am working on making the import easier (BTW).
+This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
+so the download may take a while.
+Note you may need to change the name of the HDF5 file to `NGC6946_SN3.merged.cm1.1.0`.
+
+The region files used in the examples can be
+found in the 'Examples/regions' folder. To run the examples, place these region files in the same
+directory as the hdf5 file.
 
 We should start by import the appropriate modules.
 
@@ -43,14 +49,14 @@ For example:
 
 .. code-block:: python
 
+    #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
-    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
-    cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
-    cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
-    object_name = 'M33_Field7'
-    redshift = -0.0006  # Redshift of M33
-    resolution = 5000
-    ML_bool = True
+    Luci_path = '/home/carterrhea/Documents/LUCI/'
+    cube_dir = '/home/carterrhea/Documents/LUCI_test'  # Path to data cube
+    cube_name = 'NGC6946_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
+    object_name = 'NGC6946'
+    redshift = 0.000133  # Redshift of M33
+    resolution = 1000
 
 Although the first three arguments are rather self explanatory, it is worth discussing the others.
 The redshift is provided so that we can shift x-axis of the spectra to the rest-frame.
@@ -67,7 +73,7 @@ Note that `ML_bool=True` by default.
 
 
 If you do not wish to use the machine learning methodology to estimate the initial values for
-the velocity, broadening, and amplitude of the line, please simply include the argument **ML_bool=False.
+the velocity, broadening, and amplitude of the line, please simply include the argument `ML_bool=False`.
 
 .. code-block:: python
 
