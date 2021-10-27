@@ -3,8 +3,15 @@
 Fit Single Spectrum
 ===================
 
-In this example, we will extract a region of M33 field 7 and fit is using  `LUCI`.
+In this example, we will extract a region of NGC6946 and fit is using  `LUCI`.
 This is a very basic example.
+
+You can download the example data using the following command:
+
+
+.. code-block:: bash
+
+    wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
 
 .. code-block:: python
 

@@ -2,11 +2,17 @@
 
 Fit Single Region
 ==================
-In this example, we are going to fit a single region of the science verification Abell 426 data cube (found at: https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_sv.php).
+In this example, we are going to fit a single region of the NGC 6946 data cube.
+You can download the example data using the following command:
+
+
+.. code-block:: bash
+
+    wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
 
 We will read in the data as usual using a LUCI cube object. We then will extract a background region and plot it.
 We will then extract a spectrum from a square region around 1357<x<1367 and 608<y<618.
-These values were chosen to correspond with the brightest region of the horseshoe. Finally, we use the LuciFit Fit object to fit the region.
+ Finally, we use the LuciFit Fit object to fit the region.
 
 
 

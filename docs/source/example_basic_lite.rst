@@ -9,6 +9,13 @@ already familiar with the parameters and how `LUCI` works. Let's get started!
 Let's start with importing `LUCI`. Just as descsribed on the *readthedocs* page, we need to point our system path to our install location of the **LUCI** folder.
 We will additionally import the Luci plotting functions :)
 
+You can download the example data using the following command:
+
+
+.. code-block:: bash
+
+    wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
+
 This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
 so the download may take a while.
 Note you may need to change the name of the HDF5 file to `NGC6946_SN3.merged.cm1.1.0`.

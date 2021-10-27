@@ -181,10 +181,16 @@
             
   <div class="section" id="fit-single-region">
 <span id="example-fit-region"></span><h1>Fit Single Region<a class="headerlink" href="#fit-single-region" title="Permalink to this headline">¶</a></h1>
-<p>In this example, we are going to fit a single region of the science verification Abell 426 data cube (found at: <a class="reference external" href="https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_sv.php">https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_sv.php</a>).</p>
+<p>In this example, we are going to fit a single region of the NGC 6946 data cube.
+You can download the example data using the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
+</pre></div>
+</div>
 <p>We will read in the data as usual using a LUCI cube object. We then will extract a background region and plot it.
-We will then extract a spectrum from a square region around 1357&lt;x&lt;1367 and 608&lt;y&lt;618.
-These values were chosen to correspond with the brightest region of the horseshoe. Finally, we use the LuciFit Fit object to fit the region.</p>
+We will then extract a spectrum from a square region around 1357&lt;x&lt;1367 and 608&lt;y&lt;618.</p>
+<blockquote>
+<div><p>Finally, we use the LuciFit Fit object to fit the region.</p>
+</div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;/media/carterrhea/carterrhea/SIGNALS/LUCI/&#39;</span><span class="p">)</span>  <span class="c1"># Location of Luci</span>

@@ -186,11 +186,12 @@ class Luci():
         """
         #hdu = fits.PrimaryHDU()
         # We are going to break up this calculation into chunks so that  we can have a progress bar
+        #self.deep_image = np.sum(self.cube_final, axis=2).T
         self.deep_image = np.zeros((self.cube_final.shape[0], self.cube_final.shape[1]))#np.sum(self.cube_final, axis=2).T
         iterations_ = 10
         step_size = int(self.cube_final.shape[0]/iterations_)
         for i in tqdm(range(10)):
-            self.deep_image[step_size*i:step_size*(i+1)] = np.sum(self.cube_final[step_size*i:step_size*(i+1)], axis=2)
+            self.deep_image[step_size*i:step_size*(i+1)] = np.nansum(self.cube_final[step_size*i:step_size*(i+1)], axis=2)
         self.deep_image = self.deep_image.T
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
@@ -977,7 +978,7 @@ class Luci():
             # Code to execute when solve succeeds
             # update deep image header
             deep = fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')
-            deep.header.update(wcs_header)
+            deep[0].header.update(wcs_header)
             deep.close()
             # Update normal header
             self.header = wcs_header
