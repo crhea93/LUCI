@@ -977,13 +977,8 @@ class Luci():
         if wcs_header:
             # Code to execute when solve succeeds
             # update deep image header
-<<<<<<< HEAD
             deep = fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')
             deep[0].header.update(wcs_header)
-=======
-            deep = fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0]
-            deep.header.update(wcs_header)
->>>>>>> main
             deep.close()
             # Update normal header
             self.header = wcs_header
