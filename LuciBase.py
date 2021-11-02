@@ -176,69 +176,6 @@ class Luci():
         #self.header.insert('NAXIS', ('NAXIS1', 2064), after=True)
         #self.header.insert('NAXIS1', ('NAXIS2', 2048), after=True)
         self.hdr_dict = hdr_dict
-        
-    def old_open_hdf5(self, file_path, mode):
-        """Return a :py:class:`h5py.File` instance with some
-        informations.
-
-        :param file_path: Path to the hdf5 file.
-
-        :param mode: Opening mode. Can be 'r', 'r+', 'w', 'w-', 'x',
-         'a'.
-
-        .. note:: Please refer to http://www.h5py.org/.
-        """
-        if mode in ['w', 'a', 'w-', 'x']:
-            # create folder if it does not exist
-            dirname = os.path.dirname(file_path)
-            if dirname != '':
-                if not os.path.exists(dirname): 
-                    os.makedirs(dirname)
-
-        f = h5py.File(file_path+'.hdf5', mode)
-
-        if mode in ['w', 'a', 'w-', 'x', 'r+']:
-            f.attrs['program'] = 'Created/modified with ORB'
-            f.attrs['date'] = str(datetime.datetime.now())
-
-        return f
-
-    def open_hdf5(self, mode='r'):
-        """Return a handle on the hdf5 file.
-
-        :param mode: opening mode. can be 'r' or 'a'. 
-        """
-        if mode not in ['r', 'a', 'r+']:
-            raise ValueError('mode is {} and must be r, r+ or a'.format(mode))
-
-        return self.old_open_hdf5(self.cube_path, mode)
-
-    def has_dataset(self, path):
-        """Check if a dataset is present"""
-        with self.open_hdf5() as f: 
-            if path not in f: return False
-            else: return True
-
-    def get_dataset(self, path, protect=True):
-        """Return a dataset (but not 'data', instead use get_data).
-
-        :param path: dataset path
-
-        :param protect: (Optional) check if dataset is protected
-          (default True).
-        """
-        if protect:
-            for iprot_path in self.protected_datasets:
-                if path in iprot_path:
-                    raise IOError('dataset {} is protected. please use the corresponding higher level method (something like set_{} should do)'.format(path, path))
-
-        if path == 'data':
-            raise ValueError('to get data please use your cube as a classic 3d numpy array. e.g. arr = cube[:,:,:].')
-        
-        with self.open_hdf5() as f:
-            if path not in f:
-                raise AttributeError('{} dataset not in the hdf5 file'.format(path))
-            return f[path][:]
 
     def create_deep_image(self, output_name=None):
         """
@@ -249,8 +186,11 @@ class Luci():
         #hdu = fits.PrimaryHDU()
         # We are going to break up this calculation into chunks so that  we can have a progress bar
         #self.deep_image = np.sum(self.cube_final, axis=2).T
-        if self.has_dataset('deep_frame'):
-                self.deep_image = self.get_dataset('deep_frame', protect=False)
+        
+        hdf5_file = h5py.File(self.cube_path+'.hdf5', 'r') # Open and read hdf5 file        
+       
+        if 'deep_frame' in hdf5_file:
+                self.deep_image = hdf5_file['deep_frame'][:]
                 self.deep_image *= self.dimz
         else:
             self.deep_image = np.zeros((self.cube_final.shape[0], self.cube_final.shape[1]))#np.sum(self.cube_final, axis=2).T
