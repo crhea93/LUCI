@@ -313,6 +313,35 @@ class Luci():
         self.cube_binned = binned_cube / (binning**2)
 
 
+    def bin_mask(self, mask, binning, x_min, x_max, y_min, y_max):
+        """
+        Function to bin mask. This is effectively the same as `self.bin_cube` with
+        the exception that it is for the mask only. For now, this function is only
+        triggered when the mask is in the form of a '.npy' file. Region files
+        passed as '.reg' files do not need to be additionally masked since they use
+        the binned header information.
+
+        Args:
+            mask: Mask to be binned
+            binning: Size of binning (equal in x and y direction)
+            x_min: Lower bound in x
+            x_max: Upper bound in x
+            y_min: Lower bound in y
+            y_max: Upper bound in y
+        Return:
+            Binned cubed called self.cube_binned and new spatial limits
+        """
+        x_shape_new = int((x_max-x_min)/binning)
+        y_shape_new = int((y_max-y_min)/binning)
+        binned_mask = np.zeros((x_shape_new, y_shape_new))
+        for i in range(x_shape_new):
+            for j in range(y_shape_new):
+                summed_spec = mask[x_min+int(i*binning):x_min+int((i+1)*binning), y_min+int(j*binning):y_min+int((j+1)*binning)]
+                summed_spec = np.nansum(summed_spec, axis=0)
+                summed_spec = np.nansum(summed_spec, axis=0)
+                binned_mask[i,j] = summed_spec[:]
+        binned_mask = binned_mask / (binning**2)
+
 
 
 
@@ -515,11 +544,6 @@ class Luci():
 
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
 
-        #n_threads = 1
-        #for i in range(x_max-x_min):
-            #SNR_calc(VEL, BROAD, i)
-        #Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(VEL, BROAD, i) for i in range(x_max-x_min));
-
 
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False, n_threads=1):
         """
@@ -574,11 +598,11 @@ class Luci():
             header.set('NAXIS2', 2048)
             r = pyregion.open(region).as_imagecoord(header)  # Obtain pyregion region
             mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
+        elif '.npy' in region:
+            mask = np.load(region)
         else:
-            try:  # If numpy .np file
-                mask = np.load(region)
-            except:
-                mask = region
+            print("At the moment, we only support '.reg' and '.npy' files for masks.")
+            print("Terminating Program!")
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
@@ -765,8 +789,12 @@ class Luci():
             shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
             mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
+        elif '.npy' in region:
+            mask = np.load(region)
         else:
-            mask = region
+            print("At the moment, we only support '.reg' and '.npy' files for masks.")
+            print("Terminating Program!")
+
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -815,8 +843,11 @@ class Luci():
             shape = (2064, 2048)#(self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
             mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
+        elif '.npy' in region:
+            mask = np.load(region)
         else:
-            mask = region
+            print("At the moment, we only support '.reg' and '.npy' files for masks.")
+            print("Terminating Program!")
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -835,12 +866,9 @@ class Luci():
                 else:
                     pass
         if mean == True:
-            integrated_spectrum /= spec_ct
-            if bkg is not None:
-                integrated_spectrum -= bkg  # Subtract background spectrum
-        else:
-            if bkg is not None:
-                integrated_spectrum -= bkg  # Subtract background spectrum
+            integrated_spectrum /= spec_ct  # Take mean spectrum
+        if bkg is not None:
+            integrated_spectrum -= bkg  # Subtract background spectrum
         good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]

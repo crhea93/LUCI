@@ -90,6 +90,7 @@ Examples
        example_fit_single_spectrum
        example_fit_mask
        example_fit_snr
+       example_synthetic_spectrum
 
 
 
