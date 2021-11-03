@@ -23,7 +23,7 @@ class Luci():
     all io/administrative functionality. The fitting functionality can be found in the
     Fit class (Lucifit.py).
     """
-    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True):#ref_spec=None, model_ML_name=None):
+    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True, mdn=False):
         """
         Initialize our Luci class -- this acts similar to the SpectralCube class
         of astropy or spectral-cube.
@@ -36,8 +36,7 @@ class Luci():
             redshift: Redshift to the object. (e.x. 0.00428)
             resolution: Resolution requested of machine learning algorithm reference spectrum
             ML_bool: Boolean for applying machine learning; default=True
-            ref_spec: Name of reference spectrum for machine learning algo (e.x. 'Reference-Spectrum-R5000')
-            model_ML_name: Name of pretrained machine learning model
+            mdn: Boolean for using the Mixed Density Network models; If true, then we use the posterior distributions calculated by our network as our priors for bayesian fits
         """
         self.Luci_path = Luci_path
         self.check_luci_path()  # Make sure the path is correctly written
@@ -66,20 +65,37 @@ class Luci():
         self.zpd_index = self.hdr_dict['ZPDINDEX']
         self.spectrum_axis_func()
         if ML_bool is True:
-            if self.hdr_dict['FILTER'] == 'SN1':
-                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN1.fits'%(resolution)
-                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN1'%(resolution))
-            elif self.hdr_dict['FILTER'] == 'SN2':
-                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN2.fits'%(resolution)
-                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN2'%(resolution))
-            elif self.hdr_dict['FILTER'] == 'SN3':
-                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
-                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
-            elif self.hdr_dict['FILTER'] == 'C4':
-                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
-                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
-            else:
-                print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
+            if mdn == False:
+                if self.hdr_dict['FILTER'] == 'SN1':
+                    self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN1.fits'%(resolution)
+                    self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN1'%(resolution))
+                elif self.hdr_dict['FILTER'] == 'SN2':
+                    self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN2.fits'%(resolution)
+                    self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN2'%(resolution))
+                elif self.hdr_dict['FILTER'] == 'SN3':
+                    self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
+                    self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
+                elif self.hdr_dict['FILTER'] == 'C4':
+                    self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
+                    self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
+                else:
+                    print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
+            else:  # mdn == True
+                if self.hdr_dict['FILTER'] == 'SN1':
+                    self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN1.fits'%(resolution)
+                    self.model_ML = create_probablistic_bnn_model(hidden_units=[128, 256], num_filters=[4,16], filter_length=[5,3])
+                    self.model_ML.load_weights(self.Luci_path+'ML/R%i-PREDICTOR-I-SN1-MDN'%(resolution))
+                    #self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN1-MDN'%(resolution))
+                elif self.hdr_dict['FILTER'] == 'SN2':
+                    self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN2.fits'%(resolution)
+                    self.model_ML = create_probablistic_bnn_model(hidden_units=[128, 256], num_filters=[4,16], filter_length=[5,3])
+                    self.model_ML.load_weights(self.Luci_path+'ML/R%i-PREDICTOR-I-SN2-MDN'%(resolution))
+                elif self.hdr_dict['FILTER'] == 'SN3':
+                    self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
+                    self.model_ML = create_probablistic_bnn_model(hidden_units=[128, 256], num_filters=[4,16], filter_length=[5,3])
+                    self.model_ML.load_weights(self.Luci_path+'ML/R%i-PREDICTOR-I-MDN'%(resolution))
+                else:
+                    print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
             self.read_in_reference_spectrum()
         else:
             self.model_ML = None
@@ -186,9 +202,9 @@ class Luci():
         #hdu = fits.PrimaryHDU()
         # We are going to break up this calculation into chunks so that  we can have a progress bar
         #self.deep_image = np.sum(self.cube_final, axis=2).T
-        
-        hdf5_file = h5py.File(self.cube_path+'.hdf5', 'r') # Open and read hdf5 file        
-       
+
+        hdf5_file = h5py.File(self.cube_path+'.hdf5', 'r') # Open and read hdf5 file
+
         if 'deep_frame' in hdf5_file:
                 print('Existing deep frame extracted from hdf5 file.')
                 self.deep_image = hdf5_file['deep_frame'][:]

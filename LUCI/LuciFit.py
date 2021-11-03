@@ -113,6 +113,8 @@ class Fit:
         self.calc_sinc_width()
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
+        self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
+        self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
@@ -232,7 +234,9 @@ class Fit:
         Spectrum = self.spectrum_interp_norm.reshape(1, self.spectrum_interp_norm.shape[0], 1)
         predictions = self.ML_model(Spectrum, training=False)
         self.vel_ml = float(predictions[0][0])
-        self.broad_ml = float(predictions[0][1])  # Multiply value by FWHM of a gaussian
+        self.vel_ml_sigma = float(predictions[0][1])
+        self.broad_ml = float(predictions[0][2])
+        self.broad_ml_broad = float(predictions[0][3])  # Multiply value by FWHM of a gaussian
         return None
 
 
@@ -712,7 +716,13 @@ class Fit:
         sigma2 = yerr ** 2
         return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2)# + np.log(2 * np.pi * sigma2))
 
-    def log_prior(self, theta, model):
+    def log_prior(self, theta, model, gaussian=False):
+        """
+        Args:
+            theta:
+            model:
+            gaussian: Gaussian prior on velocity and broadening
+        """
         A_min = 0  # 1e-19
         A_max = 1.1  # 1e-15
         x_min = 0#14700
@@ -733,25 +743,30 @@ class Fit:
                     within_bounds = False  # Value not in bounds
                     break
             if ct % 3 == 1:  # velocity parameter
-                if param > x_min and param < x_max:
-                    val_prior *= (x_max-x_min)
+                if gaussian == True:
+                    val_prior *= np.log(1.0/(np.sqrt(2*np.pi)*self.vel_ml_sigma))-0.5*(param-self.vel_ml)**2/self.vel_ml_sigma**2
                 else:
-                    within_bounds = False  # Value not in bounds
-                    break
+                    if param > x_min and param < x_max:
+                        val_prior *= (x_max-x_min)
+                    else:
+                        within_bounds = False  # Value not in bounds
+                        break
             if ct % 3 == 2:  # sigma parameter
-                if param > sigma_min and param < sigma_max:
-                    val_prior *= (sigma_max-sigma_min)
+                if gaussian == True:
+                    val_prior *= np.log(1.0/(np.sqrt(2*np.pi)*self.broad_ml_sigma))-0.5*(param-self.broad_ml)**2/self.broad_ml_sigma**2
                 else:
-                    within_bounds = False  # Value not in bounds
-                    break
+                    if param > sigma_min and param < sigma_max:
+                        val_prior *= (sigma_max-sigma_min)
+                    else:
+                        within_bounds = False  # Value not in bounds
+                        break
         # Check continuum
         if theta[-1] > continuum_min and theta[-1] < continuum_max:
             val_prior *= (continuum_max-continuum_min)
         else:
             within_bounds = False  # Value not in bounds
         if within_bounds:
-
-            return 1/val_prior
+            return -np.log(val_prior)  # Log transform of 1/val_prior
         else:
             return -np.inf
         # A_,x_,sigma_ = theta
