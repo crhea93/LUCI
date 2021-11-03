@@ -11,7 +11,7 @@ import astropy.stats as astrostats
 import warnings
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 import matplotlib.pyplot as plt
-import corner
+#import corner
 warnings.filterwarnings("ignore")
 
 
