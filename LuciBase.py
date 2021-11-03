@@ -190,9 +190,11 @@ class Luci():
         hdf5_file = h5py.File(self.cube_path+'.hdf5', 'r') # Open and read hdf5 file        
        
         if 'deep_frame' in hdf5_file:
+                print('Existing deep frame extracted from hdf5 file.')
                 self.deep_image = hdf5_file['deep_frame'][:]
                 self.deep_image *= self.dimz
         else:
+            print('New deep frame created from data.')
             self.deep_image = np.zeros((self.cube_final.shape[0], self.cube_final.shape[1]))#np.sum(self.cube_final, axis=2).T
             iterations_ = 10
             step_size = int(self.cube_final.shape[0]/iterations_)
