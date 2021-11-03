@@ -177,7 +177,6 @@ class Luci():
         #self.header.insert('NAXIS1', ('NAXIS2', 2048), after=True)
         self.hdr_dict = hdr_dict
 
-
     def create_deep_image(self, output_name=None):
         """
         Create deep image fits file of the cube. This takes the cube and sums
@@ -187,11 +186,20 @@ class Luci():
         #hdu = fits.PrimaryHDU()
         # We are going to break up this calculation into chunks so that  we can have a progress bar
         #self.deep_image = np.sum(self.cube_final, axis=2).T
-        self.deep_image = np.zeros((self.cube_final.shape[0], self.cube_final.shape[1]))#np.sum(self.cube_final, axis=2).T
-        iterations_ = 10
-        step_size = int(self.cube_final.shape[0]/iterations_)
-        for i in tqdm(range(10)):
-            self.deep_image[step_size*i:step_size*(i+1)] = np.nansum(self.cube_final[step_size*i:step_size*(i+1)], axis=2)
+        
+        hdf5_file = h5py.File(self.cube_path+'.hdf5', 'r') # Open and read hdf5 file        
+       
+        if 'deep_frame' in hdf5_file:
+                print('Existing deep frame extracted from hdf5 file.')
+                self.deep_image = hdf5_file['deep_frame'][:]
+                self.deep_image *= self.dimz
+        else:
+            print('New deep frame created from data.')
+            self.deep_image = np.zeros((self.cube_final.shape[0], self.cube_final.shape[1]))#np.sum(self.cube_final, axis=2).T
+            iterations_ = 10
+            step_size = int(self.cube_final.shape[0]/iterations_)
+            for i in tqdm(range(10)):
+                self.deep_image[step_size*i:step_size*(i+1)] = np.nansum(self.cube_final[step_size*i:step_size*(i+1)], axis=2)
         self.deep_image = self.deep_image.T
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
