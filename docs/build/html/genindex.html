@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
@@ -31,10 +33,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -101,6 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -208,6 +211,10 @@
       <li><a href="luci.html#LuciBase.Luci.bin_cube">bin_cube() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="luci.html#LuciBase.Luci.bin_mask">bin_mask() (LuciBase.Luci method)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="C">C</h2>
@@ -224,8 +231,6 @@
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_correction">calculate_correction() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_flux">calculate_flux() (LUCI.LuciFit.Fit method)</a>
-</li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_flux_err">calculate_flux_err() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_noise">calculate_noise() (LUCI.LuciFit.Fit method)</a>
 </li>
@@ -246,8 +251,6 @@
       <li><a href="luci.html#LuciBase.Luci.check_luci_path">check_luci_path() (LuciBase.Luci method)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.close">close() (LuciBase.Luci method)</a>
-</li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.cont_estimate">cont_estimate() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.create_deep_image">create_deep_image() (LuciBase.Luci method)</a>
 </li>
@@ -296,8 +299,6 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.gaussian_model">gaussian_model() (LUCI.LuciFit.Fit method)</a>
-</li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.gaussian_model_plot">gaussian_model_plot() (LUCI.LuciFit.Fit method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -359,10 +360,6 @@
 </li>
       </ul></li>
   </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.multiple_component_vel_constraint">multiple_component_vel_constraint() (LUCI.LuciFit.Fit method)</a>
-</li>
-  </ul></td>
 </tr></table>
 
 <h2 id="R">R</h2>
@@ -370,13 +367,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="luci.html#LuciBase.Luci.read_in_cube">read_in_cube() (LuciBase.Luci method)</a>
 </li>
-      <li><a href="luci.html#LuciBase.Luci.read_in_reference_spectrum">read_in_reference_spectrum() (LuciBase.Luci method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.read_in_transmission">read_in_transmission() (LuciBase.Luci method)</a>
+      <li><a href="luci.html#LuciBase.Luci.read_in_reference_spectrum">read_in_reference_spectrum() (LuciBase.Luci method)</a>
 </li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.restrict_wavelength">restrict_wavelength() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="luci.html#LuciBase.Luci.read_in_transmission">read_in_transmission() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -388,15 +383,11 @@
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.sigma_constraints">sigma_constraints() (LUCI.LuciFit.Fit method)</a>
 </li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.sinc_model">sinc_model() (LUCI.LuciFit.Fit method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.sinc_model_plot">sinc_model_plot() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="fits.html#LUCI.LuciFit.Fit.sinc_model">sinc_model() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.sincgauss_model">sincgauss_model() (LUCI.LuciFit.Fit method)</a>
-</li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.sincgauss_model_plot">sincgauss_model_plot() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.spectrum_axis_func">spectrum_axis_func() (LuciBase.Luci method)</a>
 </li>
