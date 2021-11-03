@@ -1,7 +1,7 @@
 pillow==8.3.1
 scikit-image==0.17.2
 scipy
-tensorflow==2.4.1
+tensorflow
 tqdm
 urllib3==1.26.6
 astropy
