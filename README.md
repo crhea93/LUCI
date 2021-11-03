@@ -1,7 +1,8 @@
 # Welcome to LUCI
 In this document, you will find a brief description of what `LUCI` is, how to install it (her), where to go to find examples, documentation, and more!
 
-[![DOI](https://zenodo.org/badge/378741966.svg)](https://zenodo.org/badge/latestdoi/378741966)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg)](https://doi.org/10.5281/zenodo.5385351)
+
 
 [Arxiv Paper: 2108.12428](https://arxiv.org/abs/2108.12428)
 
@@ -18,13 +19,19 @@ a Bayesian Inference algorithm using MCMC (using `emcee`) to derive uncertainty 
 
 ## Installing `LUCI`
 We have tried to make the installation of `LUCI` as smooth and painless as possible; however, if you have suggestions, please reach out to us.
-Below are instructions for installing on a linux/MacOS-based distribution.
+
+Below are instructions for installing on a linux distribution (only tested on Ubuntu and Pop-OS!).
 
 1. **Clone** this repository. I suggest cloning it in Documents or Applications.
     ```git clone https://github.com/crhea93/LUCI.git```
 2. **Enter repository** wherever you cloned it.
     ```cd LUCI```
 3. **Create** luci environment using the following command: `conda env create -f luci.yml`. Now, whenever you wish to use `LUCI`, you can load the environment by simply typing the following into your terminal: `conda activate luci`.  
+
+
+If you are on a Mac, you will need to change step 3 slightly:
+3.  **Create** luci environment with `conda create -n luci` and then install the requirements with `pip install -r requirements.txt`.
+
 
 Now you are all set to use Luci! To load the module into a python file or jupyter notebook, simply add the following lines:
 ```

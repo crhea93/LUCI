@@ -14,6 +14,9 @@ LUCI is a general purpose fitting pipeline built specifically with SITELLE IFU
 data cubes in mind; however, if you need to fit any emission line spectra, LUCI
 will be able to help!
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg
+   :target: https://doi.org/10.5281/zenodo.5385351
+
 You can download the example data using the following command:
 
 
