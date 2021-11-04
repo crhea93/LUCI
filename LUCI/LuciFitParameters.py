@@ -2,9 +2,10 @@
 In this file we have the functions used to calculate the velocity, the velocity dispersion (broadening),
 and the flux as well as their uncertainties.
 """
+import numpy as np
+from scipy import special as sps
 
-
-def calculate_vel(self, ind, lines, fit_sol, line_dict):
+def calculate_vel(ind, lines, fit_sol, line_dict):
     """
     Calculate velocity.
 
@@ -29,7 +30,7 @@ def calculate_vel(self, ind, lines, fit_sol, line_dict):
     return v
 
 
-def calculate_vel_err(self, ind, lines, fit_sol, line_dict, uncertainties):
+def calculate_vel_err(ind, lines, fit_sol, line_dict, uncertainties):
     """
     Calculate velocity error
 
@@ -54,7 +55,7 @@ def calculate_vel_err(self, ind, lines, fit_sol, line_dict, uncertainties):
     return np.abs(v1 - v2)
 
 
-def calculate_broad(self, ind, fit_sol, axis_step):
+def calculate_broad(ind, fit_sol, axis_step):
     """
     Calculate velocity dispersion
 
@@ -75,7 +76,7 @@ def calculate_broad(self, ind, fit_sol, axis_step):
     return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
 
 
-def calculate_broad_err(self, ind, fit_sol, axis_step, uncertainties):
+def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
     """
     Calculate velocity dispersion error
 
@@ -97,7 +98,7 @@ def calculate_broad_err(self, ind, fit_sol, axis_step, uncertainties):
     return np.abs(broad1-broad2)
 
 
-def calculate_flux(self, line_amp, line_sigma, model_type, sinc_width):
+def calculate_flux(line_amp, line_sigma, model_type, sinc_width):
     """
     Calculate flux value given fit of line
 
@@ -123,7 +124,7 @@ def calculate_flux(self, line_amp, line_sigma, model_type, sinc_width):
     return flux
 
 
-def calculate_flux_err(self, ind, fit_sol, uncertainties, model_type, sinc_width):
+def calculate_flux_err(ind, fit_sol, uncertainties, model_type, sinc_width):
     """
     Calculate flux error
 
@@ -148,11 +149,11 @@ def calculate_flux_err(self, ind, fit_sol, uncertainties, model_type, sinc_width
 
 
     if model_type == 'gaussian':
-        flux_err = np.sqrt(2*np.pi) * calculate_flux(p0 , p2) * \
+        flux_err = np.sqrt(2*np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
                    np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
 
     elif model_type == 'sinc':
-        flux_err = np.sqrt(np.pi) * calculate_flux(p0 , p2) * \
+        flux_err = np.sqrt(np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
                    np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
 
     elif model_type == 'sincgauss':

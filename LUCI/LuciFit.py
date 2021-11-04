@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
-from LUCI.LuciFitParameters import calculate_vel, calculate_vel, calculate_broad, calculate_broad_err, calculate_flux, calculate_flux_err
+from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, calculate_flux, calculate_flux_err
 from LUCI.LuciBayesian import log_probability
 
 
@@ -503,12 +503,12 @@ class Fit:
         for line_ct, line_ in enumerate(self.lines):  # Step through each line
             ampls.append(self.fit_sol[line_ct * 3])
             # Calculate flux
-            fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.fit_function, self.sinc_width))
+            fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.model_type, self.sinc_width))
             vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
             sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
             vels_errors.append(calculate_vel_err(line_ct,  self.lines, self.fit_sol, self.line_dict, self.uncertainties))
             sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
-            flux_errors.append(calculate_flux_err(line_ct, self.fit_sol, self.fit_uncertainties, self.fit_function, self.sinc_width))
+            flux_errors.append(calculate_flux_err(line_ct, self.fit_sol, self.uncertainties, self.model_type, self.sinc_width))
         # Collect parameters to return in a dictionary
         fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
                     'fit_vector': self.fit_vector, 'fit_axis':self.axis,
