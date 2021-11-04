@@ -29,7 +29,7 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
     # Add constant contimuum to model
     model += theta[-1]
     sigma2 = yerr ** 2
-    return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2))
+    return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
 def log_prior(self, theta, line_num):
     """

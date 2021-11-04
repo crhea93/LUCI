@@ -13,8 +13,6 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
@@ -33,10 +31,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -109,6 +107,8 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
 </ul>
 <p class="caption"><span class="caption-text">FAQ:</span></p>
 <ul>
@@ -224,13 +224,15 @@
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calc_sinc_width">calc_sinc_width() (LUCI.LuciFit.Fit method)</a>
 </li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_broad">calculate_broad() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_broad">calculate_broad() (in module LUCI.LuciFitParameters)</a>
 </li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_broad_err">calculate_broad_err() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_broad_err">calculate_broad_err() (in module LUCI.LuciFitParameters)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_correction">calculate_correction() (LUCI.LuciFit.Fit method)</a>
 </li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_flux">calculate_flux() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_flux">calculate_flux() (in module LUCI.LuciFitParameters)</a>
+</li>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_flux_err">calculate_flux_err() (in module LUCI.LuciFitParameters)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_noise">calculate_noise() (LUCI.LuciFit.Fit method)</a>
 </li>
@@ -238,9 +240,9 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_vel">calculate_vel() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_vel">calculate_vel() (in module LUCI.LuciFitParameters)</a>
 </li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_vel_err">calculate_vel_err() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_vel_err">calculate_vel_err() (in module LUCI.LuciFitParameters)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.check_fitting_model">check_fitting_model() (LUCI.LuciFit.Fit method)</a>
 </li>
@@ -251,6 +253,8 @@
       <li><a href="luci.html#LuciBase.Luci.check_luci_path">check_luci_path() (LuciBase.Luci method)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.close">close() (LuciBase.Luci method)</a>
+</li>
+      <li><a href="fits.html#LUCI.LuciFit.Fit.cont_estimate">cont_estimate() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.create_deep_image">create_deep_image() (LuciBase.Luci method)</a>
 </li>
@@ -298,12 +302,10 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.gaussian_model">gaussian_model() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="luci.html#LuciBase.Luci.get_interferometer_angles">get_interferometer_angles() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.get_interferometer_angles">get_interferometer_angles() (LuciBase.Luci method)</a>
-</li>
       <li><a href="luci.html#LuciBase.Luci.get_quadrant_dims">get_quadrant_dims() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
@@ -324,10 +326,21 @@
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.log_likelihood">log_likelihood() (LUCI.LuciFit.Fit method)</a>
 </li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.log_likelihood_bayes">log_likelihood_bayes() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="bayes.html#LUCI.LuciBayesian.log_likelihood_bayes">log_likelihood_bayes() (in module LUCI.LuciBayesian)</a>, <a href="wvt.html#LUCI.LuciBayesian.log_likelihood_bayes">[1]</a>
+</li>
+      <li><a href="bayes.html#LUCI.LuciBayesian.log_prior">log_prior() (in module LUCI.LuciBayesian)</a>, <a href="wvt.html#LUCI.LuciBayesian.log_prior">[1]</a>
+</li>
+      <li><a href="bayes.html#LUCI.LuciBayesian.log_probability">log_probability() (in module LUCI.LuciBayesian)</a>, <a href="wvt.html#LUCI.LuciBayesian.log_probability">[1]</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci">Luci (class in LuciBase)</a>
 </li>
+      <li>
+    LUCI.LuciBayesian
+
+      <ul>
+        <li><a href="bayes.html#module-LUCI.LuciBayesian">module</a>, <a href="wvt.html#module-LUCI.LuciBayesian">[1]</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
@@ -335,6 +348,13 @@
 
       <ul>
         <li><a href="fits.html#module-LUCI.LuciFit">module</a>
+</li>
+      </ul></li>
+      <li>
+    LUCI.LuciFitParameters
+
+      <ul>
+        <li><a href="params.html#module-LUCI.LuciFitParameters">module</a>
 </li>
       </ul></li>
       <li>
@@ -354,11 +374,19 @@
     module
 
       <ul>
+        <li><a href="bayes.html#module-LUCI.LuciBayesian">LUCI.LuciBayesian</a>, <a href="wvt.html#module-LUCI.LuciBayesian">[1]</a>
+</li>
         <li><a href="fits.html#module-LUCI.LuciFit">LUCI.LuciFit</a>
+</li>
+        <li><a href="params.html#module-LUCI.LuciFitParameters">LUCI.LuciFitParameters</a>
 </li>
         <li><a href="luci.html#module-LuciBase">LuciBase</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="fits.html#LUCI.LuciFit.Fit.multiple_component_vel_constraint">multiple_component_vel_constraint() (LUCI.LuciFit.Fit method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -367,11 +395,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="luci.html#LuciBase.Luci.read_in_cube">read_in_cube() (LuciBase.Luci method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="luci.html#LuciBase.Luci.read_in_reference_spectrum">read_in_reference_spectrum() (LuciBase.Luci method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="luci.html#LuciBase.Luci.read_in_transmission">read_in_transmission() (LuciBase.Luci method)</a>
+</li>
+      <li><a href="fits.html#LUCI.LuciFit.Fit.restrict_wavelength">restrict_wavelength() (LUCI.LuciFit.Fit method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -381,13 +411,9 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="luci.html#LuciBase.Luci.save_fits">save_fits() (LuciBase.Luci method)</a>
 </li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.sigma_constraints">sigma_constraints() (LUCI.LuciFit.Fit method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.sinc_model">sinc_model() (LUCI.LuciFit.Fit method)</a>
-</li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.sincgauss_model">sincgauss_model() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="fits.html#LUCI.LuciFit.Fit.sigma_constraints">sigma_constraints() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.spectrum_axis_func">spectrum_axis_func() (LuciBase.Luci method)</a>
 </li>

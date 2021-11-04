@@ -105,6 +105,8 @@ Pipeline
 
       fits
       luci
+      bayes
+      params
 
 
 FAQ & Errors

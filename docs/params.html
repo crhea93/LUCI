@@ -1,0 +1,376 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Parameter Calculations &mdash; LUCI v.1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="_static/LuciLogo.png"/>
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="FAQ and Errors" href="FAQ.html" />
+    <link rel="prev" title="Bayesian Methods" href="bayes.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html">
+          
+
+          
+            
+            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Prerequisites:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Parameter Calculations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-LUCI.LuciFitParameters">Bayesian Methods</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">FAQ:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Parameter Calculations</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/params.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="parameter-calculations">
+<span id="params"></span><h1>Parameter Calculations<a class="headerlink" href="#parameter-calculations" title="Permalink to this headline">¶</a></h1>
+<p>In this file we have the functions used to calculate the velocity, the velocity dispersion (broadening),
+and the flux as well as their uncertainties.</p>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="module-LUCI.LuciFitParameters">
+<span id="bayesian-methods"></span><h2>Bayesian Methods<a class="headerlink" href="#module-LUCI.LuciFitParameters" title="Permalink to this headline">¶</a></h2>
+<p>In this file we have the functions used to calculate the velocity, the velocity dispersion (broadening),
+and the flux as well as their uncertainties.</p>
+<dl class="py function">
+<dt id="LUCI.LuciFitParameters.calculate_broad">
+<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_broad</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">axis_step</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity dispersion</p>
+<div class="math">
+<p><img src="_images/math/cf262df4bd8b6c5ebacc50844b1d565b686aae20.png" alt="\sigma = (3e5*fit_\sigma * axis\_step)/(fit\_vel)"/></p>
+</div><p>where <img class="math" src="_images/math/c84a0b116afbd35da601f3798b4d6340263efb09.png" alt="fit\_sigma"/> is the gaussian broadening parameter found in the fit, <img class="math" src="_images/math/0b470d717b5d740c79727fe76384de94d8fbb001.png" alt="axis\_step"/> is defined in the HowLuciWorks section,
+and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915.png" alt="fit\_vel"/> is the shifted position of the line in units of cm-1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ind</strong> – Index of line in lines</p></li>
+<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
+<li><p><strong>axis_step</strong> – Step due to correction factor (see LuciFit.calculate_correction)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="LUCI.LuciFitParameters.calculate_broad_err">
+<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_broad_err</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">axis_step</span></em>, <em class="sig-param"><span class="n">uncertainties</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity dispersion error</p>
+<p>We simply take the difference between the velocity dispersions with and without the uncertainty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ind</strong> – Index of line in lines</p></li>
+<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
+<li><p><strong>axis_step</strong> – Step due to correction factor (see LuciFit.calculate_correction)</p></li>
+<li><p><strong>uncertaintes</strong> – Uncertainties from fitting algoritm</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="LUCI.LuciFitParameters.calculate_flux">
+<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_flux</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">line_amp</span></em>, <em class="sig-param"><span class="n">line_sigma</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">sinc_width</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate flux value given fit of line</p>
+<p>See HowLuciWorks for calculations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>line_amp</strong> – Amplitude of the line (un-normalized)</p></li>
+<li><p><strong>line_sigma</strong> – Sigma of the line fit</p></li>
+<li><p><strong>model_type</strong> – Fitting function (i.e. ‘gaussian’, ‘sinc’, or ‘sincgauss’)</p></li>
+<li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Flux of the provided line in units of erg/s/cm-2</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="LUCI.LuciFitParameters.calculate_flux_err">
+<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_flux_err</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">uncertainties</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">sinc_width</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate flux error</p>
+<p>We simply take the difference between the fluxes with and without the uncertainty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ind</strong> – Index of line in lines</p></li>
+<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
+<li><p><strong>uncertaintes</strong> – Uncertainties from fitting algoritm</p></li>
+<li><p><strong>model_type</strong> – Fitting function (i.e. ‘gaussian’, ‘sinc’, or ‘sincgauss’)</p></li>
+<li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Error of the provided line in units of ergs/s/cm-2</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="LUCI.LuciFitParameters.calculate_vel">
+<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_vel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">line_dict</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity.</p>
+<div class="math">
+<p><img src="_images/math/2740aaebe5f191139687a2aabc4105ca55d946e7.png" alt="v = 3e5*(l\_calc - l\_rest)/l\_calc"/></p>
+</div><p>Where <img class="math" src="_images/math/e4829235a887bfa0b4b1357b4485dadd9f58a941.png" alt="l\_calc = 1e7/fit\_vel"/> and <img class="math" src="_images/math/932e7ef573df9a38a0bae21fc93e212a3011ae84.png" alt="l\_rest"/> is the rest wavelength of the line.
+<img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915.png" alt="fit\_vel"/> is the shifted position of the line in units of cm-1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ind</strong> – Index of line in lines</p></li>
+<li><p><strong>lines</strong> – Lines to be fit (e.x. [‘Halpha’])</p></li>
+<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
+<li><p><strong>line_dict</strong> – Dictionary of Line Names and their wavelengths in nm</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="LUCI.LuciFitParameters.calculate_vel_err">
+<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_vel_err</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">line_dict</span></em>, <em class="sig-param"><span class="n">uncertainties</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate velocity error</p>
+<p>We simply take the difference between the velocities with and without the uncertainty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ind</strong> – Index of line in lines</p></li>
+<li><p><strong>lines</strong> – Lines to be fit (e.x. [‘Halpha’])</p></li>
+<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
+<li><p><strong>line_dict</strong> – Dictionary of Line Names and their wavelengths in nm</p></li>
+<li><p><strong>uncertaintes</strong> – Uncertainties from fitting algoritm</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity of the Halpha line in units of km/s</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="FAQ.html" class="btn btn-neutral float-right" title="FAQ and Errors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="bayes.html" class="btn btn-neutral float-left" title="Bayesian Methods" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Carter L. Rhea.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

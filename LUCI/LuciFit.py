@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
+from LUCI.LuciFitParameters import calculate_vel, calculate_vel, calculate_broad, calculate_broad_err, calculate_flux, calculate_flux_err
 from LUCI.LuciBayesian import log_probability
 
 
@@ -26,8 +27,10 @@ class Fit:
 
     All the functions (gauss, sinc, and sincgauss) are stored in `LuciFuncitons.py`.
 
+    All functions for calculating the velocity, broadening, and flux are in 'LuciFitParameters.py'.
+
     All the functions for Bayesian Inference with the exception of the fit call
-    are in 'LuciBayesian.py'
+    are in 'LuciBayesian.py'.
 
     The initial arguments are as follows:
     Args:
@@ -500,18 +503,15 @@ class Fit:
         for line_ct, line_ in enumerate(self.lines):  # Step through each line
             ampls.append(self.fit_sol[line_ct * 3])
             # Calculate flux
-            fluxes.append(self.calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2]))
-            vels.append(self.calculate_vel(line_ct))
-            sigmas.append(self.calculate_broad(line_ct))
-            vels_errors.append(self.calculate_vel_err(line_ct))
-            sigmas_errors.append(self.calculate_broad_err(line_ct))
-            flux_errors.append(self.calculate_flux_err(line_ct))
+            fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.fit_function, self.sinc_width))
+            vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
+            sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
+            vels_errors.append(calculate_vel_err(line_ct,  self.lines, self.fit_sol, self.line_dict, self.uncertainties))
+            sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
+            flux_errors.append(calculate_flux_err(line_ct, self.fit_sol, self.fit_uncertainties, self.fit_function, self.sinc_width))
         # Collect parameters to return in a dictionary
         fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
                     'fit_vector': self.fit_vector, 'fit_axis':self.axis,
-                    'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
-                    'velocity_err': self.calculate_vel_err(0),
-                    'broadening_err': self.calculate_broad_err(0),
                     'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
                     'velocities': vels, 'sigmas': sigmas,
                     'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
@@ -566,138 +566,12 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         self.fit_sol = parameters_med
         if self.model_type == 'gaussian':
-            self.fit_vector = self.gaussian_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Gaussian().evaluate(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
-            self.fit_vector = self.sinc_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Sinc().evaluate(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
-            self.fit_vector = self.sincgauss_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = SincGauss().evaluate(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
 
-
-    def calculate_vel(self, ind):
-        """
-        Calculate velocity
-
-        Args:
-            ind: Index of line in lines
-        Return:
-            Velocity of the Halpha line in units of km/s
-        """
-        line_name = self.lines[ind]
-        l_calc = 1e7 / self.fit_sol[3*ind+1]
-        l_shift = (l_calc - self.line_dict[line_name]) / l_calc
-        v = 3e5 * l_shift
-        return v
-
-
-    def calculate_vel_err(self, ind):
-        """
-        Calculate velocity error
-        TODO: Test
-
-        Args:
-            ind: Index of line in lines
-        Return:
-            Velocity of the Halpha line in units of km/s
-        """
-        line_name = self.lines[ind]
-        l_calc1 = 1e7 / (self.fit_sol[3*ind+1])
-        l_calc2 = 1e7 / (self.fit_sol[3*ind+1] + self.uncertainties[3*ind+1])
-        l_shift1 = (l_calc1 - self.line_dict[line_name]) / l_calc1
-        l_shift2 = (l_calc2 - self.line_dict[line_name]) / l_calc2
-        v1 = 3e5 * l_shift1
-        v2 = 3e5 * l_shift2
-        return np.abs(v1 - v2)
-
-
-    def calculate_broad(self, ind):
-        """
-        Calculate velocity dispersion
-        TODO: Test
-
-        Args:
-            ind: Index of line in lines
-        Return:
-            Velocity Dispersion of the Halpha line in units of km/s
-        """
-        broad = (3e5 * self.fit_sol[3*ind+2] * self.axis_step) / self.fit_sol[3*ind+1]
-        return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
-
-
-    def calculate_broad_err(self, ind):
-        """
-        Calculate velocity dispersion error
-
-        Args:
-            ind: Index of line in lines
-        Return:
-            Velocity Dispersion of the Halpha line in units of km/s
-        """
-        broad1 = (3e5 * self.fit_sol[3*ind+2]* self.axis_step) / self.fit_sol[3*ind+1]
-        broad1 /= abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
-        broad2 = (3e5 * (self.fit_sol[3*ind+2]+self.uncertainties[3*ind+2])* self.axis_step) / (self.fit_sol[3*ind+1]+self.uncertainties[3*ind+1])
-        broad2 /= abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
-        return np.abs(broad1-broad2)
-
-
-    def calculate_flux(self, line_amp, line_sigma):
-        """
-        Calculate flux value given fit of line
-        TODO: Test
-
-        Args:
-            line_amp: Amplitude of the line (un-normalized)
-            line_sigma: Sigma of the line fit
-        Return:
-            Flux of the provided line in units of erg/s/cm-2
-        """
-        flux = 0.0  # Initialize
-        if self.model_type == 'gaussian':
-            flux = np.sqrt(2 * np.pi) * line_amp * line_sigma
-        elif self.model_type == 'sinc':
-            flux = np.sqrt(np.pi) * line_amp * line_sigma
-        elif self.model_type == 'sincgauss':
-            flux = line_amp * ((np.sqrt(2*np.pi)*line_sigma)/(sps.erf((line_sigma)/(np.sqrt(2)*self.sinc_width))))
-        else:
-            print("ERROR: INCORRECT FIT FUNCTION")
-        return flux
-
-
-    def calculate_flux_err(self, ind):
-        """
-        Calculate flux error
-
-        Args:
-            ind: Index of line in lines
-
-        Return:
-            Error of the provided line in units of ergs/s/cm-2
-        """
-
-        p0 = self.fit_sol[3*ind]
-        p2 = self.fit_sol[3*ind + 2]
-        p0_err = self.uncertainties[3*ind]
-        p2_err = self.uncertainties[3*ind + 2]
-
-
-        if self.model_type == 'gaussian':
-            flux_err = np.sqrt(2*np.pi) * self.calculate_flux(p0 , p2) * \
-                       np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
-
-        elif self.model_type == 'sinc':
-            flux_err = np.sqrt(np.pi) * self.calculate_flux(p0 , p2) * \
-                       np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
-
-        elif self.model_type == 'sincgauss':
-            erf_func = sps.erf(p2 / (np.sqrt(2)*self.sinc_width)) #Shortcut for the error function
-            flux_err = np.sqrt(2*np.pi) * np.sqrt(   (p2*p0_err / erf_func)**2 + \
-                       (  p0*p2_err *  (erf_func - (np.sqrt(2)*p2*np.exp(-(p2/(np.sqrt(2)*self.sinc_width))**2)/np.sqrt(np.pi))) / erf_func**2  )**2  )
-
-        else:
-            print('The fit function you have entered, %s, does not exist!'%self.model_type)
-            print('The program is terminating!')
-            exit()
-
-        return flux_err
 
 
     def calc_chisquare(self, fit_vector, init_spectrum, init_errors, n_dof):
@@ -720,6 +594,8 @@ class Fit:
         chi2 = np.sum((z ** 2))#/(self.spectrum_scale))
         chi2dof = chi2 / (n_dof - 1)
         return chi2, chi2dof
+
+
 
     def check_lines(self):
         """
