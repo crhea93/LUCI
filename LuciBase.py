@@ -16,6 +16,9 @@ from astropy.nddata import Cutout2D
 import astropy.stats as astrostats
 from astroquery.astrometry_net import AstrometryNet
 from astropy.io import fits
+import multiprocessing
+from numba import jit, set_num_threads
+
 
 
 class Luci():
@@ -482,8 +485,9 @@ class Luci():
         continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         #if output_name == None:
             #output_name = self.output_dir+'/'+self.object_name
-        #for i in tqdm(range(y_max-y_min)):
-        def fit_calc(i):
+        set_num_threads(n_threads)
+        @jit(nopython=False)
+        def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit):
             y_pix = y_min + i
             ampls_local = []
             flux_local = []
@@ -531,7 +535,18 @@ class Luci():
                 corr_local.append(fit_dict['corr'])
                 step_local.append(fit_dict['axis_step'])
                 continuum_local.append(fit_dict['continuum'])
-            return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
+            ampls_fits[i] = ampls_local
+            flux_fits[i] = flux_local
+            flux_errors_fits[i] = flux_errs_local
+            velocities_fits[i] = vels_local
+            broadenings_fits[i] = broads_local
+            velocities_errors_fits[i] = vels_errs_local
+            broadenings_errors_fits[i] = broads_errs_local
+            chi2_fits[i] = chi2_local
+            corr_fits[i] = corr_local
+            step_fits[i] = step_local
+            continuum_fits[i] = continuum_local
+            return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
             # Check if deep image exists: if not, create it
@@ -544,20 +559,8 @@ class Luci():
                 self.create_deep_image()
             wcs = WCS(self.header, naxis=2)
         cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-        res_parallel = Parallel(n_jobs=n_threads, mmap_mode='w+')(delayed(fit_calc)(i) for i in tqdm(range(y_max-y_min)))
-        for res_fit in res_parallel:
-            step_i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = res_fit
-            ampls_fits[step_i] = ampls_local
-            flux_fits[step_i] = flux_local
-            flux_errors_fits[step_i] = flux_errs_local
-            velocities_fits[step_i] = vels_local
-            broadenings_fits[step_i] = broads_local
-            velocities_errors_fits[step_i] = vels_errs_local
-            broadenings_errors_fits[step_i] = broads_errs_local
-            chi2_fits[step_i] = chi2_local
-            corr_fits[step_i] = corr_local
-            step_fits[step_i] = step_local
-            continuum_fits[step_i] = continuum_local
+        for step_i in tqdm(range(y_max-y_min)):
+            fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits, broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
         self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
 
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
@@ -645,7 +648,9 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
         continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         ct = 0
-        def fit_calc(i,ct):
+        set_num_threads(n_threads)
+        @jit(nopython=False)
+        def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit):
         #for i in tqdm(range(y_max-y_min)):
             y_pix = y_min + i
             ampls_local = []
@@ -704,7 +709,19 @@ class Luci():
                     broads_errs_local.append([0]*len(lines))
                     chi2_local.append(0)
                     continuum_local.append(0)
-            return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, continuum_local
+            ampls_fits[i] = ampls_local
+            flux_fits[i] = flux_local
+            flux_errors_fits[i] = flux_errs_local
+            velocities_fits[i] = vels_local
+            broadenings_fits[i] = broads_local
+            velocities_errors_fits[i] = vels_errs_local
+            broadenings_errors_fits[i] = broads_errs_local
+            chi2_fits[i] = chi2_local
+            corr_fits[i] = corr_local
+            step_fits[i] = step_local
+            continuum_fits[i] = continuum_local
+            return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
+            #return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None:
             # Check if deep image exists: if not, create it
@@ -717,18 +734,9 @@ class Luci():
                 self.create_deep_image()
             wcs = WCS(self.header, naxis=2)
         cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-        res_parallel = Parallel(n_jobs=n_threads, mmap_mode='w+')(delayed(fit_calc)(i,ct) for i in tqdm(range(y_max-y_min)))
-        for res_fit in res_parallel:
-            step_i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, continuum_local = res_fit
-            ampls_fits[y_min+step_i] = ampls_local
-            flux_fits[y_min+step_i] = flux_local
-            flux_errors_fits[y_min+step_i] = flux_errs_local
-            velocities_fits[y_min+step_i] = vels_local
-            broadenings_fits[y_min+step_i] = broads_local
-            velocities_errors_fits[y_min+step_i] = vels_errs_local
-            broadenings_errors_fits[y_min+step_i] = broads_errs_local
-            chi2_fits[y_min+step_i] = chi2_local
-            continuum_fits[y_min+step_i] = continuum_local
+        #res_parallel = Parallel(n_jobs=n_threads, mmap_mode='w+')(delayed(fit_calc)(i,ct) for i in tqdm(range(y_max-y_min)))
+        for step_i in tqdm(range(y_max-y_min)):
+            fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits, broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
         self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
@@ -950,7 +958,7 @@ class Luci():
                 clipped_spec = astrostats.sigma_clip(self.cube_final[x_pix, y_pix, min_:max_], sigma=2, masked=False, copy=False, maxiters=3)
                 # Now take the mean value to serve as the continuum value
                 cont_val = np.median(clipped_spec)
-                flux_in_region -= cont_val
+                flux_in_region -= cont_val*(max_-min_)  # Need to scale by the number of steps along wavelength axis
                 # Select distance region
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_max))
