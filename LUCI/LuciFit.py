@@ -90,7 +90,7 @@ class Fit:
         #except ValueError:  # self.spectrum_restricted is empty
         #    self.spectrum_restricted_norm = self.spectrum_restricted
         self.theta = theta
-        self.cos_theta = np.abs(np.cos(self.theta))
+        self.cos_theta = np.abs(np.cos(np.deg2rad(self.theta)))
         self.correction_factor = 1.0  # Initialize Correction factor
         self.axis_step = 0.0  # Initialize
         self.delta_x = delta_x
@@ -665,7 +665,7 @@ class Fit:
         init_[:,-1] = np.abs(init_[:,-1])
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
                                         args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.lines))
-        sampler.run_mcmc(init_, 2000, progress=True)
+        sampler.run_mcmc(init_, 2000, progress=False)
         flat_samples = sampler.get_chain(discard=200, flat=True)
         #fig = corner.corner(
         #    flat_samples, labels=np.arange(len(self.fit_sol))
@@ -816,7 +816,7 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad = (3e5 * self.axis_step*self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
+        broad = (3e5 * self.fit_sol[3*ind+2] * self.axis_step) / self.fit_sol[3*ind+1]
         return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
 
 
@@ -829,9 +829,9 @@ class Fit:
         Return:
             Velocity Dispersion of the Halpha line in units of km/s
         """
-        broad1 = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
+        broad1 = (3e5 * self.fit_sol[3*ind+2]* self.axis_step) / self.fit_sol[3*ind+1]
         broad1 /= abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
-        broad2 = (3e5 * (self.fit_sol[3*ind+2]+self.uncertainties[3*ind+2])) / (self.fit_sol[3*ind+1]+self.uncertainties[3*ind+1])
+        broad2 = (3e5 * (self.fit_sol[3*ind+2]+self.uncertainties[3*ind+2])* self.axis_step) / (self.fit_sol[3*ind+1]+self.uncertainties[3*ind+1])
         broad2 /= abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
         return np.abs(broad1-broad2)
 

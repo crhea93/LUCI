@@ -45,7 +45,7 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_si
     """
     #if quantity_name == 'broadening' or quantity_name == 'velocity':
     #    quantity_name = 'velocity'  # The quantities are the same
-    if quantity_name != 'flux':
+    if quantity_name == 'flux':
         quantity_map = np.log10(quantity_map)
         print('Please enter either flux, velocity, or broadening')
     units = {'flux':'ergs/s/cm^2/A','velocity':'km/s', 'broadening':'km/s'}

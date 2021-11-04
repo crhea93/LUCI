@@ -13,6 +13,7 @@ from joblib import Parallel, delayed
 from LUCI.LuciFit import Fit
 import matplotlib.pyplot as plt
 from astropy.nddata import Cutout2D
+import astropy.stats as astrostats
 from astroquery.astrometry_net import AstrometryNet
 from astropy.io import fits
 
@@ -186,9 +187,9 @@ class Luci():
         #hdu = fits.PrimaryHDU()
         # We are going to break up this calculation into chunks so that  we can have a progress bar
         #self.deep_image = np.sum(self.cube_final, axis=2).T
-        
-        hdf5_file = h5py.File(self.cube_path+'.hdf5', 'r') # Open and read hdf5 file        
-       
+
+        hdf5_file = h5py.File(self.cube_path+'.hdf5', 'r') # Open and read hdf5 file
+
         if 'deep_frame' in hdf5_file:
                 print('Existing deep frame extracted from hdf5 file.')
                 self.deep_image = hdf5_file['deep_frame'][:]
@@ -401,7 +402,7 @@ class Luci():
         fits.writeto(output_name+'_continuum.fits', continuum_fits, header, overwrite=True)
 
 
-    def fit_entire_cube(self, lines, fit_function, vel_rel, sigma_rel):
+    def fit_entire_cube(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False, n_threads=1):
         """
         Fit the entire cube (all spatial dimensions)
         Args:
@@ -409,6 +410,15 @@ class Luci():
             fit_function: Fitting function to use (e.x. 'gaussian')
             vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
+            bkg: Background Spectrum (1D numpy array; default None)
+            binning:  Value by which to bin (default None)
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
+            output_name: User defined output path/name (default None)
+            uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+            n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
+
+        Return:
+            Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
         """
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -918,6 +928,8 @@ class Luci():
         flux_min = 0 ; flux_max= 0; noise_min = 0; noise_max = 0  # Initializing bounds for flux and noise calculation regions
         if self.hdr_dict['FILTER'] == 'SN3':
             flux_min = 15150; flux_max = 15300; noise_min = 14250; noise_max = 14400
+        elif self.hdr_dict['FILTER'] == 'SN2':
+            flux_min = 19500; flux_max = 20750; noise_min = 18600; noise_max = 19000
         elif self.hdr_dict['FILTER'] == 'SN1':
             flux_min = 26550; flux_max = 27550; noise_min = 25300; noise_max = 25700
         else:
@@ -934,6 +946,11 @@ class Luci():
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-flux_max))
                 in_region = self.cube_final[x_pix, y_pix, min_:max_]
                 flux_in_region = np.nansum(self.cube_final[x_pix, y_pix, min_:max_])
+                # Subtract off continuum estimate
+                clipped_spec = astrostats.sigma_clip(self.cube_final[x_pix, y_pix, min_:max_], sigma=2, masked=False, copy=False, maxiters=3)
+                # Now take the mean value to serve as the continuum value
+                cont_val = np.median(clipped_spec)
+                flux_in_region -= cont_val
                 # Select distance region
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis)-noise_max))
