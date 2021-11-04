@@ -9,12 +9,12 @@ import scipy.special as sps
 import scipy.stats as spst
 import astropy.stats as astrostats
 import warnings
-from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 import matplotlib.pyplot as plt
 #import corner
 warnings.filterwarnings("ignore")
 
-
+from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
+from LUCI.LuciBayesian import log_probability
 
 
 
@@ -23,6 +23,11 @@ class Fit:
     Class that defines the functions necessary for the modelling aspect. This includes
     the gaussian fit functions, the prior definitions, the log likelihood, and the
     definition of the posterior (log likelihood times prior).
+
+    All the functions (gauss, sinc, and sincgauss) are stored in `LuciFuncitons.py`.
+
+    All the functions for Bayesian Inference with the exception of the fit call
+    are in 'LuciBayesian.py'
 
     The initial arguments are as follows:
     Args:
@@ -312,134 +317,6 @@ class Fit:
         return cont_val
 
 
-    def gaussian_model(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            params = theta[model_num * 3:(model_num + 1) * 3]
-            f1 += Gaussian(channel, params).func
-        #f1 += theta[-1]
-        return f1
-
-
-    def gaussian_model_plot(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
-            pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
-            f1 += Gaussian(channel, params).func
-        #f1 += theta[-1]
-        return f1
-
-
-
-    def sinc_model(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            params = theta[model_num * 3:(model_num + 1) * 3]
-            f1 += np.array(Sinc(channel, params, self.sinc_width).func)
-        return f1
-
-
-    def sinc_model_plot(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
-            pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
-            f1 += np.array(Sinc(channel, params, self.sinc_width).func)
-        return f1
-
-
-    def sincgauss_model(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            params = theta[model_num * 3:(model_num + 1) * 3]
-            f1 += SincGauss(channel, params, self.sinc_width).func
-        return np.real(f1)
-
-
-    def sincgauss_model_plot(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
-            pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
-            f1 += SincGauss(channel, params, self.sinc_width).func
-        return np.real(f1)
-
 
     def log_likelihood(self, theta):
         """
@@ -456,11 +333,11 @@ class Fit:
         """
         global model
         if self.model_type == 'gaussian':
-            model = self.gaussian_model(self.axis_restricted, theta)
+            model = Gaussian().evaluate(self.axis_restricted, theta, self.line_num)
         elif self.model_type == 'sinc':
-            model = self.sinc_model(self.axis_restricted, theta)
+            model = Sinc().evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
         elif self.model_type == 'sincgauss':
-            model = self.sincgauss_model(self.axis_restricted, theta)
+            model = SincGauss().evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
         # Add constant contimuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
@@ -577,11 +454,11 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         self.fit_sol = parameters
         if self.model_type == 'gaussian':
-            self.fit_vector = self.gaussian_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Gaussian().plot(self.axis, self.fit_sol[:-1], self.line_num) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
-            self.fit_vector = self.sinc_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
-            self.fit_vector = self.sincgauss_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = SincGauss().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
 
         return None
 
@@ -663,8 +540,8 @@ class Fit:
             init_[:,3*i] = np.abs(init_[:,3*i])
             init_[:,3*i+2] = np.abs(init_[:,3*i+2])
         init_[:,-1] = np.abs(init_[:,-1])
-        sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
-                                        args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.lines))
+        sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
+                                        args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.fit_function, self.line_num, self.sinc_width))
         sampler.run_mcmc(init_, 2000, progress=False)
         flat_samples = sampler.get_chain(discard=200, flat=True)
         #fig = corner.corner(
@@ -695,80 +572,6 @@ class Fit:
         elif self.model_type == 'sincgauss':
             self.fit_vector = self.sincgauss_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
 
-
-
-    def log_likelihood_bayes(self, theta, x, y, yerr, model__):
-        """
-        """
-        # model = self.gaussian_model(x, theta, model)
-        if self.model_type == 'gaussian':
-            model = self.gaussian_model(self.axis_restricted, theta)
-        elif self.model_type == 'sinc':
-            model = self.sinc_model(self.axis_restricted, theta)
-        elif self.model_type == 'sincgauss':
-            model = self.sincgauss_model(self.axis_restricted, theta)
-        # Add constant contimuum to model
-        model += theta[-1]
-        sigma2 = yerr ** 2
-        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2)# + np.log(2 * np.pi * sigma2))
-
-    def log_prior(self, theta, model):
-        A_min = 0  # 1e-19
-        A_max = 1.1  # 1e-15
-        x_min = 0#14700
-        x_max = 1e8#15400
-        sigma_min = 0
-        sigma_max = 30
-        continuum_min = 0
-        continuum_max = 1
-        val_prior = 1
-        for model_num in range(len(model)):
-            params = theta[model_num * 3:(model_num + 1) * 3]
-        within_bounds = True  # Boolean to determine if parameters are within bounds
-        for ct, param in enumerate(params):
-            if ct % 3 == 0:  # Amplitude parameter
-                if param > A_min and param < A_max:
-                    val_prior *= (A_max-A_min)
-                else:
-                    within_bounds = False  # Value not in bounds
-                    break
-            if ct % 3 == 1:  # velocity parameter
-                if param > x_min and param < x_max:
-                    val_prior *= (x_max-x_min)
-                else:
-                    within_bounds = False  # Value not in bounds
-                    break
-            if ct % 3 == 2:  # sigma parameter
-                if param > sigma_min and param < sigma_max:
-                    val_prior *= (sigma_max-sigma_min)
-                else:
-                    within_bounds = False  # Value not in bounds
-                    break
-        # Check continuum
-        if theta[-1] > continuum_min and theta[-1] < continuum_max:
-            val_prior *= (continuum_max-continuum_min)
-        else:
-            within_bounds = False  # Value not in bounds
-        if within_bounds:
-
-            return 1/val_prior
-        else:
-            return -np.inf
-        # A_,x_,sigma_ = theta
-        # if A_min < A_ < A_max and x_min < x_ < x_max and sigma_min < sigma_ < sigma_max:
-        #    return 0.0#np.log(1/((t_max-t_min)*(rp_max-rp_min)*(b_max-b_min)))
-        # return -np.inf
-
-    def log_probability(self, theta, x, y, yerr, model):
-        lp = self.log_prior(theta, model)
-        if not np.isfinite(lp):
-            return -np.inf
-        if np.isnan(lp):
-            return -np.inf
-        if np.isnan(lp + self.log_likelihood(theta)):
-            return -np.inf
-        else:
-            return lp + self.log_likelihood(theta)#, x, y, yerr, model)
 
     def calculate_vel(self, ind):
         """
