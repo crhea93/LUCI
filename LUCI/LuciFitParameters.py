@@ -59,8 +59,8 @@ def calculate_broad(self, ind, fit_sol, axis_step):
     Calculate velocity dispersion
 
     .. math::
-        \sigma = (3e5*fit_\sigma * axis\_step)/(fit\_vel)
-    
+        \sigma = (3e5*fit\_\sigma * axis\_step)/(fit\_vel)
+
     where :math:`fit\_sigma` is the gaussian broadening parameter found in the fit, :math:`axis\_step` is defined in the HowLuciWorks section,
     and :math:`fit\_vel` is the shifted position of the line in units of cm-1.
 
