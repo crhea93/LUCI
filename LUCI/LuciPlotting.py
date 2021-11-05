@@ -44,7 +44,7 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_si
         clims: List containing lower and upper limits of colorbar (e.x. [-500, 500])
     """
     if quantity_name == 'broadening' or quantity_name == 'velocity':
-        quantity_name = 'velocity'  # The quantities are the same
+        pass
     elif quantity_name == 'flux':
         quantity_map = np.log10(quantity_map)
     else:

@@ -80,6 +80,14 @@ The output files will be in the following structure:
     :alt: LUCI Output Structure
 
 
+Citing LUCI
+-----------
+If you cite LUCI, please use both the following citations.
+
+Software Citation: Carter Lee Rhea, Laurie Rouseau-Nepton, Julie Hlavacek-Larrondo, Jessica Covington, Benjamin Vigneron, & Louis-Simon Guité. (2021). crhea93/LUCI: RNAAS Submission (v1.0). Zenodo. https://doi.org/10.5281/zenodo.5385351
+
+Paper Citation:  Carter Rhea et al 2021 Res. Notes AAS 5 208
+
 Prerequisites
 ^^^^^^^^^^^^^
     .. toctree::
