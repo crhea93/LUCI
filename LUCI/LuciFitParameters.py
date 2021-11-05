@@ -25,7 +25,7 @@ def calculate_vel(ind, lines, fit_sol, line_dict):
     """
     line_name = lines[ind]
     l_calc = 1e7 / fit_sol[3*ind+1]
-    l_shift = (l_calc - line_dict[line_name]) / l_calc
+    l_shift = (l_calc - line_dict[line_name]) /  line_dict[line_name]
     v = 3e5 * l_shift
     return v
 
