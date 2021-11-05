@@ -129,7 +129,7 @@ class Fit:
         self.x_min = 0 #  14700;
         self.x_max = 1e8 #  15600
         self.sigma_min = 0.001;
-        self.sigma_max = 1
+        self.sigma_max = 50
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()

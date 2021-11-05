@@ -72,6 +72,14 @@ Lines Available
 The available fitting functions are as follows:
 'gaussian', 'sinc', 'sincgauss'
 
+
+The output files will be in the following structure:
+
+.. image:: LuciOutput.svg
+    :width: 800
+    :alt: LUCI Output Structure
+
+
 Prerequisites
 ^^^^^^^^^^^^^
     .. toctree::

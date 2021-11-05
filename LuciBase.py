@@ -46,7 +46,7 @@ class Luci():
         self.Luci_path = Luci_path
         self.check_luci_path()  # Make sure the path is correctly written
         self.cube_path = cube_path
-        self.output_dir = output_dir+'/Luci'
+        self.output_dir = output_dir+'/Luci_outputs'
         if not os.path.exists(self.output_dir):
             os.mkdir(self.output_dir)
         self.object_name = object_name
@@ -434,7 +434,9 @@ class Luci():
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
-        saves the velocity and broadening fits files.
+        saves the velocity and broadening fits files. All the files will be saved
+        in the folder Luci. The files are the fluxes, velocities, broadening, amplitudes,
+        and continuum (and their associated errors) for each line.
 
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
@@ -572,6 +574,9 @@ class Luci():
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
         we step through the cube and only fit the unmasked pixels. Although this may not
         be the most efficient method, it does ensure the fidelity of the wcs system.
+         All the files will be saved
+        in the folder Luci. The files are the fluxes, velocities, broadening, amplitudes,
+        and continuum (and their associated errors) for each line.
 
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])

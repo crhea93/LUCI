@@ -189,7 +189,7 @@ data cubes in mind; however, if you need to fit any emission line spectra, LUCI
 will be able to help!</p>
 <a class="reference external image-reference" href="https://doi.org/10.5281/zenodo.5385351"><img alt="https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg" src="https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg" /></a>
 <p>You can download the example data using the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -0 NGC6946_SN3 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
 </pre></div>
 </div>
 <p>This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
@@ -198,6 +198,8 @@ Note you may need to change the name of the HDF5 file to <cite>NGC6946_SN3.merge
 <p>The region files used in the examples can be
 found in the ‘Examples/regions’ folder. To run the examples, place these region files in the same
 directory as the hdf5 file.</p>
+<p>If you are new to SITELLE, I suggest you start with the Basic Example. If you
+already know how the fitting procedure works, you can go straight to Basic Example Lite.</p>
 <p>Please note that this documentation is not exhaustive. If you have any questions or
 wish to see any new implementation, please send a message to <a class="reference external" href="mailto:carter&#46;rhea&#37;&#52;&#48;umontreal&#46;ca">carter<span>&#46;</span>rhea<span>&#64;</span>umontreal<span>&#46;</span>ca</a>.</p>
 <div class="section" id="lines-available">
@@ -245,6 +247,8 @@ wish to see any new implementation, please send a message to <a class="reference
 </table>
 <p>The available fitting functions are as follows:
 ‘gaussian’, ‘sinc’, ‘sincgauss’</p>
+<p>The output files will be in the following structure:</p>
+<a class="reference internal image-reference" href="_images/LuciOutput.svg"><img alt="LUCI Output Structure" src="_images/LuciOutput.svg" width="800" /></a>
 <div class="section" id="prerequisites">
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
 <blockquote>
