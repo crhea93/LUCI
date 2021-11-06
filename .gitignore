@@ -1,7 +1,13 @@
+# data files
 *.csv
+*.hdf5
+
+# Environment variables and checkpoints
 venv/*
 .venv/*
-*/__pycache__/*
+**/__pycache__/
 .idea/*
-*/.ipynb_checkpoints/*
+**/.ipynb_checkpoints/
+/Examples/.ipynb_checkpoints/
 dist/*
+
