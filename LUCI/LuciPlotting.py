@@ -43,10 +43,11 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_si
         output_dit: Path (absolute or partial) to output directory
         clims: List containing lower and upper limits of colorbar (e.x. [-500, 500])
     """
-    #if quantity_name == 'broadening' or quantity_name == 'velocity':
-    #    quantity_name = 'velocity'  # The quantities are the same
-    if quantity_name == 'flux':
+    if quantity_name == 'broadening' or quantity_name == 'velocity':
+        pass
+    elif quantity_name == 'flux':
         quantity_map = np.log10(quantity_map)
+    else:
         print('Please enter either flux, velocity, or broadening')
     units = {'flux':'ergs/s/cm^2/A','velocity':'km/s', 'broadening':'km/s'}
     if clims is None:

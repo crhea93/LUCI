@@ -341,7 +341,9 @@ or the averaged spectrum for background spectra (True).</p>
 <code class="sig-name descname">fit_cube</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">fit_function</span></em>, <em class="sig-param"><span class="n">vel_rel</span></em>, <em class="sig-param"><span class="n">sigma_rel</span></em>, <em class="sig-param"><span class="n">x_min</span></em>, <em class="sig-param"><span class="n">x_max</span></em>, <em class="sig-param"><span class="n">y_min</span></em>, <em class="sig-param"><span class="n">y_max</span></em>, <em class="sig-param"><span class="n">bkg</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">binning</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bayes_bool</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">output_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">uncertainty_bool</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">n_threads</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_cube" title="Permalink to this definition">¶</a></dt>
 <dd><p>Primary fit call to fit rectangular regions in the data cube. This wraps the
 LuciFits.FIT().fit() call which applies all the fitting steps. This also
-saves the velocity and broadening fits files.</p>
+saves the velocity and broadening fits files. All the files will be saved
+in the folder Luci. The files are the fluxes, velocities, broadening, amplitudes,
+and continuum (and their associated errors) for each line.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -403,6 +405,11 @@ we would run the following:</p>
 it works for ds9 regions. We first create a mask from the ds9 region file. Then
 we step through the cube and only fit the unmasked pixels. Although this may not
 be the most efficient method, it does ensure the fidelity of the wcs system.</p>
+<blockquote>
+<div><p>All the files will be saved</p>
+</div></blockquote>
+<p>in the folder Luci. The files are the fluxes, velocities, broadening, amplitudes,
+and continuum (and their associated errors) for each line.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">

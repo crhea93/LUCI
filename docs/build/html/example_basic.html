@@ -110,6 +110,7 @@
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
 </ul>
 <p class="caption"><span class="caption-text">FAQ:</span></p>
 <ul>
@@ -188,7 +189,7 @@ region of the data cube. In this tutorial, we will outline how to do just that.<
 <p>If you want to see the complete example code, please see the bottom of the page.
 This is also available as a jupyter notebook (complete with output) under <em>Exmples/BasicExamples.ipynb</em> in the main Luci repository.</p>
 <p>You can download the example data using the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -0 NGC6946_SN3 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
 </pre></div>
 </div>
 <p>This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
@@ -224,7 +225,7 @@ define the correct parameters:</p>
 <span class="c1"># Using Machine Learning Algorithm for Initial Guess</span>
 <span class="n">Luci_path</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span>
 <span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI_test&#39;</span>  <span class="c1"># Path to data cube</span>
-<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;NGC6946_SN3.merged.cm1.1.0&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
+<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;NGC6946_SN3&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
 <span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;NGC6946&#39;</span>
 <span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.000133</span>  <span class="c1"># Redshift of M33</span>
 <span class="n">resolution</span> <span class="o">=</span> <span class="mi">1000</span>

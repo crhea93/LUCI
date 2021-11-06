@@ -3,10 +3,11 @@ In this document, you will find a brief description of what `LUCI` is, how to in
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg)](https://doi.org/10.5281/zenodo.5385351)
 
-
+You can find the RNAAS article here:
 [Arxiv Paper: 2108.12428](https://arxiv.org/abs/2108.12428)
 
 ![LuciLogo.png](LuciLogo.png)
+
 
 ## What is LUCI
 `LUCI` is a general purpose fitting pipeline built specifically with [SITELLE IFU](https://www.cfht.hawaii.edu/Instruments/Sitelle/)
@@ -73,3 +74,11 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along with this program. If not, see [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/).
+
+
+## Citing LUCI
+If you cite LUCI, please use both the following citations.
+
+Software Citation: Carter Lee Rhea, Laurie Rouseau-Nepton, Julie Hlavacek-Larrondo, Jessica Covington, Benjamin Vigneron, & Louis-Simon Guité. (2021). crhea93/LUCI: RNAAS Submission (v1.0). Zenodo. https://doi.org/10.5281/zenodo.5385351
+
+Paper Citation:  Carter Rhea et al 2021 Res. Notes AAS 5 208
