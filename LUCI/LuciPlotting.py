@@ -36,12 +36,27 @@ def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name = None, fig
 
 def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_size=(10,8), **kwargs):
     """
-    Function to plot fit map
+    Function to plot fit map. The three options are 'flux', 'velocity', and 'broadening'.
+    The flux map is automatically scaled by log10. The velocity and broadening are not.
+    The plot is saved here: `output_dir+'/'+quantity_name+'_map.png'`
+
     Args:
         quantity_map: 2d numpy array from fit
         quantity_name: Name of quantity (e.x. 'flux')
         output_dit: Path (absolute or partial) to output directory
         clims: List containing lower and upper limits of colorbar (e.x. [-500, 500])
+
+    Example:
+        We can plot the flux assuming a min and max value of 1e-18 and 1e-16.
+
+        >>> lplt.plot_map(flux_map[:,:,0], 'flux', cube_dir, cube.header, clims=[-18, -16])
+
+        Similarly, we can plot the velocity and broadening:
+
+        >>> lplt.plot_map(vel_map[:,:,0], 'veloity', cube_dir, cube.header, clims=[-200, -200])
+
+        >>> lplt.plot_map(broad_map[:,:,0], 'broadening', cube_dir, cube.header, clims=[10, 50])
+
     """
     if quantity_name == 'broadening' or quantity_name == 'velocity':
         pass
@@ -73,6 +88,7 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_si
     plt.clim(c_min, c_max)
     cbar.ax.set_ylabel(units[quantity_name], rotation=270, labelpad=25, fontsize=20, fontweight='bold')
     plt.savefig(output_dir+'/'+quantity_name+'_map.png')
+    retrun None
 
 
 def check_units(unit):

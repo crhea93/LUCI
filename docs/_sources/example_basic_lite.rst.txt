@@ -87,17 +87,28 @@ The output should look something like this:
 .. image:: Fitting.png
     :alt: Fit Output
 
-Let's take a look at the velocity map. We can play with the colorbar limits with the `clims` argument.
+Let's take a look at the velocity map. We can play with the colorbar limits with the `clims` argument. Please note that the
+flux plot is automatically scaled by log10. However, the velocity and broadening maps are not scaled automatically.
 
 .. code-block:: python
 
-    lplt.plot_map(flux_map[:,:,0], 'flux', cube_dir, cube.header, clims=[1e-19, 1e-15])
+    lplt.plot_map(flux_map[:,:,0], 'flux', cube_dir, cube.header, clims=[-19, -15])
 
 And let's see what this looks like!
 
 .. image:: NGC6946_Flux.png
     :alt: NGC6946_Flux
 
+We can also plot the velocity and broadening.
+
+.. code-block:: python
+
+    lplt.plot_map(vel_map[:,:,0], 'velocity', cube_dir, cube.header, clims=[-200, 200])
+
+
+.. code-block:: python
+
+    lplt.plot_map(broad_map[:,:,0], 'broadening', cube_dir, cube.header, clims=[10, 50])
 
 The resulting data maps will be placed in a folder called *luci*. Inside there, you
 will find additional folders containing the Flux, Amplitude, Velocity, and Broadening maps

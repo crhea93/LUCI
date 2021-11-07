@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
@@ -31,10 +33,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -187,68 +189,11 @@
 </div>
 <div class="section" id="id1">
 <h2>Weighted Voronoi Tesselation<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-LUCI.LuciBayesian"></span><p>Set of functions required for Bayesian analysis using LUCI
-These include the likelihood, the prior, and the probability function.</p>
+<span class="target" id="module-LUCI.LuciBayesian"></span><p>Set of functions required for Bayesian analysis using LUCI</p>
 <dl class="py function">
-<dt id="LUCI.LuciBayesian.log_likelihood_bayes">
-<code class="sig-prename descclassname">LUCI.LuciBayesian.</code><code class="sig-name descname">log_likelihood_bayes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">axis_restricted</span></em>, <em class="sig-param"><span class="n">spectrum_restricted</span></em>, <em class="sig-param"><span class="n">yerr</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">line_num</span></em>, <em class="sig-param"><span class="n">sinc_width</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_likelihood_bayes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>theta</strong> – Fit parameters</p></li>
-<li><p><strong>axis_restricted</strong> – Wavelength axis restricted to fitting region</p></li>
-<li><p><strong>spectrum_restricted</strong> – Flux values corresponded to restricted wavelength axis</p></li>
-<li><p><strong>yerr</strong> – Noise in data</p></li>
-<li><p><strong>model_type</strong> – Fitting function (i.e. ‘gaussian’, ‘sinc’, or ‘sincgauss’)</p></li>
-<li><p><strong>line_num</strong> – Number of lines for fit</p></li>
-<li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Gaussian log likelihood function evaluation</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="LUCI.LuciBayesian.log_prior">
-<code class="sig-prename descclassname">LUCI.LuciBayesian.</code><code class="sig-name descname">log_prior</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">line_num</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_prior" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate log prior assuming uniform priors</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>theta</strong> – Fit parameters</p></li>
-<li><p><strong>line_nun</strong> – Number of lines for fit</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>If theta parameters are within the limits, we return the negative log prior value.
-Else we return -np.inf</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="LUCI.LuciBayesian.log_probability">
-<code class="sig-prename descclassname">LUCI.LuciBayesian.</code><code class="sig-name descname">log_probability</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">axis_restricted</span></em>, <em class="sig-param"><span class="n">spectrum_restricted</span></em>, <em class="sig-param"><span class="n">yerr</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">line_num</span></em>, <em class="sig-param"><span class="n">sinc_width</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_probability" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>theta</strong> – Fit parameters</p></li>
-<li><p><strong>axis_restricted</strong> – Wavelength axis restricted to fitting region</p></li>
-<li><p><strong>spectrum_restricted</strong> – Flux values corresponded to restricted wavelength axis</p></li>
-<li><p><strong>yerr</strong> – Noise in data</p></li>
-<li><p><strong>model_type</strong> – Fitting function (i.e. ‘gaussian’, ‘sinc’, or ‘sincgauss’)</p></li>
-<li><p><strong>line_num</strong> – Number of lines for fit</p></li>
-<li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>If not finite or if an nan we return -np.inf. Otherwise, we return the log likelihood + log prior</p>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="LUCI.LuciBayesian.log_likelihood">
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciBayesian.</span></span><span class="sig-name descname"><span class="pre">log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_likelihood" title="Permalink to this definition">¶</a></dt>
+<dd><p>theta - list of parameters for gaussian fit</p>
 </dd></dl>
 
 </div>

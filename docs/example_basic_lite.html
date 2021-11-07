@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
@@ -31,10 +33,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -240,12 +242,20 @@ We are also going to constrain our velocities and sigmas. Furthermore, we will c
 </div>
 <p>The output should look something like this:</p>
 <img alt="Fit Output" src="_images/Fitting.png" />
-<p>Let’s take a look at the velocity map. We can play with the colorbar limits with the <cite>clims</cite> argument.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-19</span><span class="p">,</span> <span class="mf">1e-15</span><span class="p">])</span>
+<p>Let’s take a look at the velocity map. We can play with the colorbar limits with the <cite>clims</cite> argument. Please note that the
+flux plot is automatically scaled by log10. However, the velocity and broadening maps are not scaled automatically.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">19</span><span class="p">,</span> <span class="o">-</span><span class="mi">15</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>And let’s see what this looks like!</p>
 <img alt="NGC6946_Flux" src="_images/NGC6946_Flux.png" />
+<p>We can also plot the velocity and broadening.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">vel_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">broad_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;broadening&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">])</span>
+</pre></div>
+</div>
 <p>The resulting data maps will be placed in a folder called <em>luci</em>. Inside there, you
 will find additional folders containing the Flux, Amplitude, Velocity, and Broadening maps
 for each line and their uncertainties.</p>

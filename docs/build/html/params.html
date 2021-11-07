@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
@@ -31,10 +33,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -111,7 +113,7 @@
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Parameter Calculations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-LUCI.LuciFitParameters">Bayesian Methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#bayesian-methods">Bayesian Methods</a></li>
 </ul>
 </li>
 </ul>
@@ -191,137 +193,8 @@
 and the flux as well as their uncertainties.</p>
 <div class="toctree-wrapper compound">
 </div>
-<div class="section" id="module-LUCI.LuciFitParameters">
-<span id="bayesian-methods"></span><h2>Bayesian Methods<a class="headerlink" href="#module-LUCI.LuciFitParameters" title="Permalink to this headline">¶</a></h2>
-<p>In this file we have the functions used to calculate the velocity, the velocity dispersion (broadening),
-and the flux as well as their uncertainties.</p>
-<dl class="py function">
-<dt id="LUCI.LuciFitParameters.calculate_broad">
-<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_broad</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">axis_step</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate velocity dispersion</p>
-<div class="math">
-<p><img src="_images/math/4141d86fc2c11bc0dd7a88b056355f0c9aae2c83.png" alt="\sigma = (3e5*fit\_\sigma * axis\_step)/(fit\_vel)"/></p>
-</div><p>where <img class="math" src="_images/math/c84a0b116afbd35da601f3798b4d6340263efb09.png" alt="fit\_sigma"/> is the gaussian broadening parameter found in the fit, <img class="math" src="_images/math/0b470d717b5d740c79727fe76384de94d8fbb001.png" alt="axis\_step"/> is defined in the HowLuciWorks section,
-and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915.png" alt="fit\_vel"/> is the shifted position of the line in units of cm-1.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ind</strong> – Index of line in lines</p></li>
-<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
-<li><p><strong>axis_step</strong> – Step due to correction factor (see LuciFit.calculate_correction)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="LUCI.LuciFitParameters.calculate_broad_err">
-<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_broad_err</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">axis_step</span></em>, <em class="sig-param"><span class="n">uncertainties</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad_err" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate velocity dispersion error</p>
-<p>We simply take the difference between the velocity dispersions with and without the uncertainty.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ind</strong> – Index of line in lines</p></li>
-<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
-<li><p><strong>axis_step</strong> – Step due to correction factor (see LuciFit.calculate_correction)</p></li>
-<li><p><strong>uncertaintes</strong> – Uncertainties from fitting algoritm</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="LUCI.LuciFitParameters.calculate_flux">
-<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_flux</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line_amp</span></em>, <em class="sig-param"><span class="n">line_sigma</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">sinc_width</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate flux value given fit of line</p>
-<p>See HowLuciWorks for calculations</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>line_amp</strong> – Amplitude of the line (un-normalized)</p></li>
-<li><p><strong>line_sigma</strong> – Sigma of the line fit</p></li>
-<li><p><strong>model_type</strong> – Fitting function (i.e. ‘gaussian’, ‘sinc’, or ‘sincgauss’)</p></li>
-<li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Flux of the provided line in units of erg/s/cm-2</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="LUCI.LuciFitParameters.calculate_flux_err">
-<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_flux_err</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">uncertainties</span></em>, <em class="sig-param"><span class="n">model_type</span></em>, <em class="sig-param"><span class="n">sinc_width</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux_err" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate flux error</p>
-<p>We simply take the difference between the fluxes with and without the uncertainty.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ind</strong> – Index of line in lines</p></li>
-<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
-<li><p><strong>uncertaintes</strong> – Uncertainties from fitting algoritm</p></li>
-<li><p><strong>model_type</strong> – Fitting function (i.e. ‘gaussian’, ‘sinc’, or ‘sincgauss’)</p></li>
-<li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Error of the provided line in units of ergs/s/cm-2</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="LUCI.LuciFitParameters.calculate_vel">
-<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_vel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">line_dict</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate velocity.</p>
-<div class="math">
-<p><img src="_images/math/2740aaebe5f191139687a2aabc4105ca55d946e7.png" alt="v = 3e5*(l\_calc - l\_rest)/l\_calc"/></p>
-</div><p>Where <img class="math" src="_images/math/e4829235a887bfa0b4b1357b4485dadd9f58a941.png" alt="l\_calc = 1e7/fit\_vel"/> and <img class="math" src="_images/math/932e7ef573df9a38a0bae21fc93e212a3011ae84.png" alt="l\_rest"/> is the rest wavelength of the line.
-<img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915.png" alt="fit\_vel"/> is the shifted position of the line in units of cm-1.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ind</strong> – Index of line in lines</p></li>
-<li><p><strong>lines</strong> – Lines to be fit (e.x. [‘Halpha’])</p></li>
-<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
-<li><p><strong>line_dict</strong> – Dictionary of Line Names and their wavelengths in nm</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Velocity of the Halpha line in units of km/s</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="LUCI.LuciFitParameters.calculate_vel_err">
-<code class="sig-prename descclassname">LUCI.LuciFitParameters.</code><code class="sig-name descname">calculate_vel_err</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ind</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">fit_sol</span></em>, <em class="sig-param"><span class="n">line_dict</span></em>, <em class="sig-param"><span class="n">uncertainties</span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel_err" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate velocity error</p>
-<p>We simply take the difference between the velocities with and without the uncertainty.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ind</strong> – Index of line in lines</p></li>
-<li><p><strong>lines</strong> – Lines to be fit (e.x. [‘Halpha’])</p></li>
-<li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
-<li><p><strong>line_dict</strong> – Dictionary of Line Names and their wavelengths in nm</p></li>
-<li><p><strong>uncertaintes</strong> – Uncertainties from fitting algoritm</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Velocity of the Halpha line in units of km/s</p>
-</dd>
-</dl>
-</dd></dl>
-
+<div class="section" id="bayesian-methods">
+<h2>Bayesian Methods<a class="headerlink" href="#bayesian-methods" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
