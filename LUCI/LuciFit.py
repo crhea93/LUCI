@@ -541,7 +541,7 @@ class Fit:
             init_[:,3*i+2] = np.abs(init_[:,3*i+2])
         init_[:,-1] = np.abs(init_[:,-1])
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
-                                        args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.fit_function, self.line_num, self.sinc_width))
+                                        args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.model_type, self.line_num, self.sinc_width))
         sampler.run_mcmc(init_, 2000, progress=False)
         flat_samples = sampler.get_chain(discard=200, flat=True)
         #fig = corner.corner(
@@ -566,11 +566,11 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         self.fit_sol = parameters_med
         if self.model_type == 'gaussian':
-            self.fit_vector = Gaussian().evaluate(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Gaussian().plot(self.axis, self.fit_sol[:-1], self.line_num) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
-            self.fit_vector = Sinc().evaluate(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
-            self.fit_vector = SincGauss().evaluate(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = SincGauss().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
 
 
 

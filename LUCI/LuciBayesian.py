@@ -1,4 +1,6 @@
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
+import numpy as np
+
 
 def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width):
     """
@@ -27,7 +29,7 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
     sigma2 = yerr ** 2
     return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
-def log_prior(self, theta, line_num):
+def log_prior(theta, line_num):
     """
     Calculate log prior assuming uniform priors
 
@@ -49,7 +51,7 @@ def log_prior(self, theta, line_num):
     continuum_min = 0
     continuum_max = 1
     val_prior = 1
-    for model_num in range(len(line_num)):
+    for model_num in range(line_num):
         params = theta[model_num * 3:(model_num + 1) * 3]
     within_bounds = True  # Boolean to determine if parameters are within bounds
     for ct, param in enumerate(params):
@@ -82,7 +84,7 @@ def log_prior(self, theta, line_num):
         return -np.inf
 
 
-def log_probability(self, theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width):
+def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width):
     """
     Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss
 
@@ -98,12 +100,12 @@ def log_probability(self, theta, axis_restricted, spectrum_restricted, yerr, mod
     Return:
         If not finite or if an nan we return -np.inf. Otherwise, we return the log likelihood + log prior
     """
-    lp = self.log_prior(theta, line_num)
+    lp = log_prior(theta, line_num)
     if not np.isfinite(lp):
         return -np.inf
     if np.isnan(lp):
         return -np.inf
-    if np.isnan(lp + self.log_likelihood(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width)):
+    if np.isnan(lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width)):
         return -np.inf
     else:
-        return lp + self.log_likelihood(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width)
+        return lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width)

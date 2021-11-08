@@ -88,7 +88,7 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_si
     plt.clim(c_min, c_max)
     cbar.ax.set_ylabel(units[quantity_name], rotation=270, labelpad=25, fontsize=20, fontweight='bold')
     plt.savefig(output_dir+'/'+quantity_name+'_map.png')
-    retrun None
+    return None
 
 
 def check_units(unit):
