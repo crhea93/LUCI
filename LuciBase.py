@@ -462,7 +462,7 @@ class Luci():
             over a rectangular region defined in image coordinates as 800<x<1500; 250<y<1250,
             we would run the following:
 
-            >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'sincgauss', 800, 1500, 250, 750, binning=2)
+            >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'sincgauss', [1,1,1,1,1], [1,1,1,1,1], 800, 1500, 250, 750, binning=2)
 
         """
         # Initialize fit solution arrays
@@ -598,11 +598,11 @@ class Luci():
             If we want to fit all five lines in SN3 with a gaussian function and no binning
             over a ds9 region called main.reg, we would run the following:
 
-            >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', region='main.reg')
+            >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1],region='main.reg')
 
             We could also enable uncertainty calculations and parallel fitting:
 
-            >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', region='main.reg', uncertatinty_bool=True, n_threads=4)
+            >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], region='main.reg', uncertatinty_bool=True, n_threads=4)
 
         """
         # Set spatial bounds for entire cube
