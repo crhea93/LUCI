@@ -1,7 +1,3 @@
-"""
-Set of functions required for Bayesian analysis using LUCI
-These include the likelihood, the prior, and the probability function.
-"""
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 
 def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width):

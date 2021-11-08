@@ -124,8 +124,9 @@ Pipeline
 
       fits
       luci
-      bayes
       params
+      plot
+      bayes
 
 
 FAQ & Errors

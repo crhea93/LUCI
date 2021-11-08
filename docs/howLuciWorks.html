@@ -130,8 +130,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
-<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 <li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 </ul>
 <p class="caption"><span class="caption-text">FAQ:</span></p>
 <ul>
@@ -221,10 +222,10 @@ of the line (often described as the velocity dispersion).</p>
 <p>The velocity of a line is calculated using the following equation:
 <img class="math" src="_images/math/99ed672d8feffccc820fa5492ab22b3411022b5d.png" alt="v [km/s] = c [km/s] * \Delta \lambda"/></p>
 <p><em>c</em> is the speed of light in kilometers per second. Delta lambda is the shift of the measured line. Although the line
-position is calculated in units of [cm-1], we translate it into nanometers since <img class="math" src="_images/math/47026d06404449de04abb2b421e0508f83e4a21a.png" alt="\lambda [nm] = \frac{1e7}{\lambda[cm-1]}"/>.</p>
+position is calculated in units of [cm-1], we translate it into nanometers since <img class="math" src="_images/math/47026d06404449de04abb2b421e0508f83e4a21a.png" alt="\lambda [nm] = \frac{1e7}{\lambda[cm-1]}"/>.
+<img class="math" src="_images/math/68666412042da6767370a8ac218ec6b4b773e872.png" alt="\Delta \lambda = (line\_pos[nm]-line\_ref[nm])/line\_ref[nm]"/></p>
 <blockquote>
-<div><p><img class="math" src="_images/math/68666412042da6767370a8ac218ec6b4b773e872.png" alt="\Delta \lambda = (line\_pos[nm]-line\_ref[nm])/line\_ref[nm]"/></p>
-<p>where <img class="math" src="_images/math/857981d4038305ebce975e7b19a9deecb8ace409.png" alt="line\_ref"/> is the natural position of the line (for example; <img class="math" src="_images/math/1d8bb3dacdaf28553049441cc7bff76f999e1ba1.png" alt="line\_ref=656.28 nm"/> for Halpha.)</p>
+<div><p>where <img class="math" src="_images/math/857981d4038305ebce975e7b19a9deecb8ace409.png" alt="line\_ref"/> is the natural position of the line (for example; <img class="math" src="_images/math/1d8bb3dacdaf28553049441cc7bff76f999e1ba1.png" alt="line\_ref=656.28 nm"/> for Halpha.)</p>
 </div></blockquote>
 </div>
 <div class="section" id="velocity-dispersion">

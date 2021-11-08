@@ -80,15 +80,14 @@ Fitting
 
 Now we will use are mask in a fit!
 
-Let's extract a background region and take a look at it. The background region is defined in a ds9 region file.
+Let's extract a background region. The background region is defined in a ds9 region file.
 
 .. code-block:: python
 
     bkg_axis, bkg_sky = cube.extract_spectrum_region(cube_dir+'/bkg.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
     plt.plot(bkg_axis, bkg_sky)
 
-.. image:: M33-SN1-BKG.png
-    :alt: M33 SN1 bkg
+
 
 .. code-block:: python
 

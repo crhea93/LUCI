@@ -11,7 +11,7 @@ and the flux as well as their uncertainties.
    :maxdepth: 2
 
 
-Bayesian Methods
------------------
+Fit Parameter Calculations
+--------------------------
 .. automodule:: LUCI.LuciFitParameters
     :members:

@@ -429,7 +429,6 @@ class Luci():
         y_max = self.cube_final.shape[1]
         self.fit_cube(lines, fit_function,vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
 
-    #@njit(parallel=True)
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False, n_threads=1):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
@@ -574,7 +573,7 @@ class Luci():
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
         we step through the cube and only fit the unmasked pixels. Although this may not
         be the most efficient method, it does ensure the fidelity of the wcs system.
-         All the files will be saved
+        All the files will be saved
         in the folder Luci. The files are the fluxes, velocities, broadening, amplitudes,
         and continuum (and their associated errors) for each line.
 
@@ -600,6 +599,10 @@ class Luci():
             over a ds9 region called main.reg, we would run the following:
 
             >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', region='main.reg')
+
+            We could also enable uncertainty calculations and parallel fitting:
+
+            >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', region='main.reg', uncertatinty_bool=True, n_threads=4)
 
         """
         # Set spatial bounds for entire cube
@@ -745,6 +748,47 @@ class Luci():
         self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
+
+    def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel, pixel_x, pixel_y, bkg=None, bayes_bool=False, output_name=None, uncertainty_bool=False):
+        """
+        Primary fit call to fit a single pixel in the data cube. This wraps the
+        LuciFits.FIT().fit() call which applies all the fitting steps.
+
+        Args:
+            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
+            fit_function: Fitting function to use (e.x. 'gaussian')
+            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
+            pixel_x: X coordinate (physical)
+            pixel_y: Y coordinate (physical)
+            bkg: Background Spectrum (1D numpy array; default None)
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
+            output_name: User defined output path/name (default None)
+            uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+        Return:
+            Returns the x-axis, sky, and fit dictionary
+
+
+        """
+        if binning is not None:
+            sky = self.cube_binned[pixel_x, pixel_y, :]
+        else:
+            sky = self.cube_final[pixel_y, pixel_y, :]
+        if bkg is not None:
+            sky -= bkg  # Subtract background spectrum
+        good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
+        sky = sky[good_sky_inds]
+        axis = self.spectrum_axis[good_sky_inds]
+        # Call fit!
+        fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+            self.model_ML, trans_filter = self.transmission_interpolated,
+            theta=self.interferometer_theta[x_pix, y_pix],
+            delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
+            zpd_index = self.zpd_index,
+            filter = self.hdr_dict['FILTER'],
+            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
+        fit_dict = fit.fit()
+        return axis, sky, fit_dict
 
     def extract_spectrum(self, x_min, x_max, y_min, y_max, bkg=None, binning=None, mean=False):
         """
