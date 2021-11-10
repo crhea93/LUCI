@@ -14,9 +14,9 @@ You can download the example data using the following command:
 
 .. code-block:: bash
 
-    wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
+    wget -0 NGC6946_SN3 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
 
-    
+
 This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
 so the download may take a while.
 Note you may need to change the name of the HDF5 file to `NGC6946_SN3.merged.cm1.1.0`.
@@ -61,7 +61,7 @@ For example:
     # Using Machine Learning Algorithm for Initial Guess
     Luci_path = '/home/carterrhea/Documents/LUCI/'
     cube_dir = '/home/carterrhea/Documents/LUCI_test'  # Path to data cube
-    cube_name = 'NGC6946_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
+    cube_name = 'NGC6946_SN3'  # don't add .hdf5 extension
     object_name = 'NGC6946'
     redshift = 0.000133  # Redshift of M33
     resolution = 1000

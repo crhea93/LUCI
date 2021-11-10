@@ -109,6 +109,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 </ul>
 <p class="caption"><span class="caption-text">FAQ:</span></p>
 <ul>
@@ -191,6 +194,7 @@
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#U"><strong>U</strong></a>
@@ -236,10 +240,10 @@
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_params">calculate_params() (LUCI.LuciFit.Fit method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_vel">calculate_vel() (LUCI.LuciFit.Fit method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_vel_err">calculate_vel_err() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.check_fitting_model">check_fitting_model() (LUCI.LuciFit.Fit method)</a>
@@ -249,6 +253,8 @@
       <li><a href="fits.html#LUCI.LuciFit.Fit.check_lines">check_lines() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.check_luci_path">check_luci_path() (LuciBase.Luci method)</a>
+</li>
+      <li><a href="plot.html#LUCI.LuciPlotting.check_units">check_units() (in module LUCI.LuciPlotting)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.close">close() (LuciBase.Luci method)</a>
 </li>
@@ -322,12 +328,23 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.line_vals_estimate">line_vals_estimate() (LUCI.LuciFit.Fit method)</a>
 </li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.log_likelihood">log_likelihood() (LUCI.LuciFit.Fit method)</a>
+      <li><a href="bayes.html#LUCI.LuciBayesian.log_likelihood">log_likelihood() (in module LUCI.LuciBayesian)</a>, <a href="wvt.html#LUCI.LuciBayesian.log_likelihood">[1]</a>
+
+      <ul>
+        <li><a href="fits.html#LUCI.LuciFit.Fit.log_likelihood">(LUCI.LuciFit.Fit method)</a>
 </li>
+      </ul></li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.log_likelihood_bayes">log_likelihood_bayes() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci">Luci (class in LuciBase)</a>
 </li>
+      <li>
+    LUCI.LuciBayesian
+
+      <ul>
+        <li><a href="bayes.html#module-LUCI.LuciBayesian">module</a>, <a href="wvt.html#module-LUCI.LuciBayesian">[1]</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
@@ -335,6 +352,13 @@
 
       <ul>
         <li><a href="fits.html#module-LUCI.LuciFit">module</a>
+</li>
+      </ul></li>
+      <li>
+    LUCI.LuciPlotting
+
+      <ul>
+        <li><a href="plot.html#module-LUCI.LuciPlotting">module</a>
 </li>
       </ul></li>
       <li>
@@ -354,11 +378,27 @@
     module
 
       <ul>
+        <li><a href="bayes.html#module-LUCI.LuciBayesian">LUCI.LuciBayesian</a>, <a href="wvt.html#module-LUCI.LuciBayesian">[1]</a>
+</li>
         <li><a href="fits.html#module-LUCI.LuciFit">LUCI.LuciFit</a>
+</li>
+        <li><a href="plot.html#module-LUCI.LuciPlotting">LUCI.LuciPlotting</a>
 </li>
         <li><a href="luci.html#module-LuciBase">LuciBase</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="plot.html#LUCI.LuciPlotting.plot_map">plot_map() (in module LUCI.LuciPlotting)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="plot.html#LUCI.LuciPlotting.plot_spectrum">plot_spectrum() (in module LUCI.LuciPlotting)</a>
+</li>
   </ul></td>
 </tr></table>
 

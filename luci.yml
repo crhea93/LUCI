@@ -28,5 +28,4 @@ dependencies:
     - tensorboard-data-server==0.6.1
     - tensorboard-plugin-wit==1.8.0
     - tensorflow-estimator==2.1.0
-
-prefix: /home/carterrhea/miniconda3/envs/luci
+    - numba

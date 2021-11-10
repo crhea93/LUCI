@@ -1,11 +1,13 @@
 # Welcome to LUCI
 In this document, you will find a brief description of what `LUCI` is, how to install it (her), where to go to find examples, documentation, and more!
 
-[![DOI](https://zenodo.org/badge/378741966.svg)](https://zenodo.org/badge/latestdoi/378741966)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg)](https://doi.org/10.5281/zenodo.5385351)
 
+You can find the RNAAS article here:
 [Arxiv Paper: 2108.12428](https://arxiv.org/abs/2108.12428)
 
 ![LuciLogo.png](LuciLogo.png)
+
 
 ## What is LUCI
 `LUCI` is a general purpose fitting pipeline built specifically with [SITELLE IFU](https://www.cfht.hawaii.edu/Instruments/Sitelle/)
@@ -18,13 +20,19 @@ a Bayesian Inference algorithm using MCMC (using `emcee`) to derive uncertainty 
 
 ## Installing `LUCI`
 We have tried to make the installation of `LUCI` as smooth and painless as possible; however, if you have suggestions, please reach out to us.
-Below are instructions for installing on a linux/MacOS-based distribution.
+
+Below are instructions for installing on a linux distribution (only tested on Ubuntu and Pop-OS!).
 
 1. **Clone** this repository. I suggest cloning it in Documents or Applications.
     ```git clone https://github.com/crhea93/LUCI.git```
 2. **Enter repository** wherever you cloned it.
     ```cd LUCI```
 3. **Create** luci environment using the following command: `conda env create -f luci.yml`. Now, whenever you wish to use `LUCI`, you can load the environment by simply typing the following into your terminal: `conda activate luci`.  
+
+
+If you are on a Mac, you will need to change step 3 slightly:
+3.  **Create** luci environment with `conda create -n luci` and then install the requirements with `pip install -r requirements.txt`.
+
 
 Now you are all set to use Luci! To load the module into a python file or jupyter notebook, simply add the following lines:
 ```
@@ -66,3 +74,11 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along with this program. If not, see [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/).
+
+
+## Citing LUCI
+If you cite LUCI, please use both the following citations.
+
+Software Citation: Carter Lee Rhea, Laurie Rouseau-Nepton, Julie Hlavacek-Larrondo, Jessica Covington, Benjamin Vigneron, & Louis-Simon Guité. (2021). crhea93/LUCI: RNAAS Submission (v1.0). Zenodo. https://doi.org/10.5281/zenodo.5385351
+
+Paper Citation:  Carter Rhea et al 2021 Res. Notes AAS 5 208

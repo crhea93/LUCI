@@ -115,6 +115,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 </ul>
 <p class="caption"><span class="caption-text">FAQ:</span></p>
 <ul>
@@ -241,12 +244,11 @@ for M33_FIELD7 SN1.</p>
 <div class="section" id="fitting">
 <h2>Fitting<a class="headerlink" href="#fitting" title="Permalink to this headline">¶</a></h2>
 <p>Now we will use are mask in a fit!</p>
-<p>Let’s extract a background region and take a look at it. The background region is defined in a ds9 region file.</p>
+<p>Let’s extract a background region. The background region is defined in a ds9 region file.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum_region</span><span class="p">(</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/bkg.reg&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># We use mean=True to take the mean of the emission in the region instead of the sum</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="M33 SN1 bkg" src="M33-SN1-BKG.png" />
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fit!</span>
 <span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_region</span><span class="p">([</span><span class="s1">&#39;OII3726&#39;</span><span class="p">,</span> <span class="s1">&#39;OII3729&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mask</span><span class="p">,</span> <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>

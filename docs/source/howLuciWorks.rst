@@ -28,8 +28,9 @@ The velocity of a line is calculated using the following equation:
 
 *c* is the speed of light in kilometers per second. \Delta \lambda is the shift of the measured line. Although the line
 position is calculated in units of [cm-1], we translate it into nanometers since :math:`\lambda [nm] = \frac{1e7}{\lambda[cm-1]}`.
-At the moment we only calculate the velocity for the Halpha line. Therefore :math:`\Delta \lambda = (line\_pos[nm]-656.28)/656.28` where 656.28 nm is the
-natural position of Halpha emission. We plan on extending this to other lines.
+:math:`\Delta \lambda = (line\_pos[nm]-line\_ref[nm])/line\_ref[nm]`
+
+ where :math:`line\_ref` is the natural position of the line (for example; :math:`line\_ref=656.28 nm` for Halpha.)
 
 Velocity Dispersion
 ^^^^^^^^^^^^^^^^^^^

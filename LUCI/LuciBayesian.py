@@ -1,65 +1,111 @@
-"""
-Set of functions required for Bayesian analysis using LUCI
-"""
-from LuciFit import Fit
+from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
+import numpy as np
 
 
-def log_likelihood(theta, x, y, yerr, model):
+def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width):
     """
-    theta - list of parameters for gaussian fit
+    Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss
+
+    Args:
+        theta: Fit parameters
+        axis_restricted: Wavelength axis restricted to fitting region
+        spectrum_restricted: Flux values corresponded to restricted wavelength axis
+        yerr: Noise in data
+        model_type: Fitting function (i.e. 'gaussian', 'sinc', or 'sincgauss')
+        line_num: Number of lines for fit
+        sinc_width: Fixed with of the sinc function
+
+    Return:
+        Gaussian log likelihood function evaluation
     """
-    #if model == 1:
-    #    A_,B_,x_,sigma_ = theta
-    #    model = gaussian_model(x, A_, B_, x_, sigma_)
-    #elif model == 2:
-    #    A_,B_,x_,sigma_, A2_, x2_, sigma2_ = theta
-    #    model = gaussian_model2(x, A_, B_, x_, sigma_, A2_, x2_, sigma2_)
-    model = Fit.gaussian_model(x, theta, model)
+    if model_type == 'gaussian':
+        model = Gaussian().evaluate(axis_restricted, theta, line_num)
+    elif model_type == 'sinc':
+        model = Sinc().evaluate(axis_restricted, theta, line_num , sinc_width)
+    elif model_type == 'sincgauss':
+        model = SincGauss().evaluate(axis_restricted, theta, line_num, sinc_width)
+    # Add constant contimuum to model
+    model += theta[-1]
     sigma2 = yerr ** 2
-    return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(2*np.pi*sigma2))
+    return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
-def log_prior(theta, model):
-    A_min = 0#1e-19
-    A_max = 1.#1e-15
-    x_min = 14700
-    x_max = 15400
+def log_prior(theta, line_num):
+    """
+    Calculate log prior assuming uniform priors
+
+    Args:
+        theta: Fit parameters
+        line_nun: Number of lines for fit
+
+    Return:
+        If theta parameters are within the limits, we return the negative log prior value.
+        Else we return -np.inf
+
+    """
+    A_min = 0  # 1e-19
+    A_max = 1.1  # 1e-15
+    x_min = 0#14700
+    x_max = 1e8#15400
     sigma_min = 0
-    sigma_max = 10
-    for model_num in range(len(model)):
-        params = theta[model_num*3:(model_num+1)*3]
+    sigma_max = 30
+    continuum_min = 0
+    continuum_max = 1
+    val_prior = 1
+    for model_num in range(line_num):
+        params = theta[model_num * 3:(model_num + 1) * 3]
     within_bounds = True  # Boolean to determine if parameters are within bounds
     for ct, param in enumerate(params):
-        if ct%3 == 0:  # Amplitude parameter
+        if ct % 3 == 0:  # Amplitude parameter
             if param > A_min and param < A_max:
-                pass
+                val_prior *= (A_max-A_min)
             else:
                 within_bounds = False  # Value not in bounds
                 break
-        if ct%3 == 1:  # velocity parameter
+        if ct % 3 == 1:  # velocity parameter
             if param > x_min and param < x_max:
-                pass
+                val_prior *= (x_max-x_min)
             else:
                 within_bounds = False  # Value not in bounds
                 break
-        if ct%3 == 2:  # sigma parameter
+        if ct % 3 == 2:  # sigma parameter
             if param > sigma_min and param < sigma_max:
-                pass
+                val_prior *= (sigma_max-sigma_min)
             else:
                 within_bounds = False  # Value not in bounds
                 break
+    # Check continuum
+    if theta[-1] > continuum_min and theta[-1] < continuum_max:
+        val_prior *= (continuum_max-continuum_min)
+    else:
+        within_bounds = False  # Value not in bounds
     if within_bounds:
-        return 0.0
+        return -np.log(val_prior)
     else:
         return -np.inf
-    #A_,x_,sigma_ = theta
-    #if A_min < A_ < A_max and x_min < x_ < x_max and sigma_min < sigma_ < sigma_max:
-    #    return 0.0#np.log(1/((t_max-t_min)*(rp_max-rp_min)*(b_max-b_min)))
-    #return -np.inf
 
 
+def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width):
+    """
+    Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss
 
-def log_probability(theta, x, y, yerr, model):
-    lp = log_prior(theta, model)
+    Args:
+        theta: Fit parameters
+        axis_restricted: Wavelength axis restricted to fitting region
+        spectrum_restricted: Flux values corresponded to restricted wavelength axis
+        yerr: Noise in data
+        model_type: Fitting function (i.e. 'gaussian', 'sinc', or 'sincgauss')
+        line_num: Number of lines for fit
+        sinc_width: Fixed with of the sinc function
+
+    Return:
+        If not finite or if an nan we return -np.inf. Otherwise, we return the log likelihood + log prior
+    """
+    lp = log_prior(theta, line_num)
     if not np.isfinite(lp):
         return -np.inf
-    return lp + log_likelihood(theta, x, y, yerr, model)
+    if np.isnan(lp):
+        return -np.inf
+    if np.isnan(lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width)):
+        return -np.inf
+    else:
+        return lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width)
