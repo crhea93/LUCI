@@ -549,7 +549,7 @@ class Luci():
             continuum_fits[i] = continuum_local
             return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
         # Write outputs (Velocity, Broadening, and Amplitudes)
-        if binning is not None:
+        if binning is not None and binning > 1:
             # Check if deep image exists: if not, create it
             if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
                 self.create_deep_image()
@@ -731,7 +731,7 @@ class Luci():
             return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
             #return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
-        if binning is not None:
+        if binning is not None and binning > 1:
             # Check if deep image exists: if not, create it
             if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
                 self.create_deep_image()

@@ -124,12 +124,12 @@ class Fit:
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
-        self.A_min = 0;
+        self.A_min = -0.5;
         self.A_max = 1.1;
         self.x_min = 0 #  14700;
-        self.x_max = 1e8 #  15600
+        self.x_max = 1e6 #  15600
         self.sigma_min = 0.001;
-        self.sigma_max = 50
+        self.sigma_max = 300
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()
@@ -291,8 +291,8 @@ class Fit:
                                    ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        if self.broad_ml > 50:
-            self.broad_ml = .1
+        #if self.broad_ml > 50:
+        #    self.broad_ml = .1
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
