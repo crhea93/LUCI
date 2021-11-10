@@ -171,6 +171,7 @@ class SincGauss:
         for model_num in range(line_num):
             params = theta[model_num * 3:(model_num + 1) * 3]
             f1 += self.function(channel, params, sinc_width)
+
         return np.real(f1)
 
 

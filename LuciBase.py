@@ -18,6 +18,7 @@ from astroquery.astrometry_net import AstrometryNet
 from astropy.io import fits
 import multiprocessing
 from numba import jit, set_num_threads
+from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 
 
 
@@ -27,7 +28,7 @@ class Luci():
     all io/administrative functionality. The fitting functionality can be found in the
     Fit class (Lucifit.py).
     """
-    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True, mdn=False):
+    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True, mdn=True):
         """
         Initialize our Luci class -- this acts similar to the SpectralCube class
         of astropy or spectral-cube.
@@ -65,7 +66,7 @@ class Luci():
         self.interferometer_theta = None
         self.transmission_interpolated = None
         self.read_in_cube()
-        self.step_nb = self.hdr_dict['STEPNB']# - self.hdr_dict['ZPDINDEX']
+        self.step_nb = self.hdr_dict['STEPNB']
         self.zpd_index = self.hdr_dict['ZPDINDEX']
         self.spectrum_axis_func()
         if ML_bool is True:
@@ -87,16 +88,15 @@ class Luci():
             else:  # mdn == True
                 if self.hdr_dict['FILTER'] == 'SN1':
                     self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN1.fits'%(resolution)
-                    self.model_ML = create_probablistic_bnn_model(hidden_units=[128, 256], num_filters=[4,16], filter_length=[5,3])
+                    self.model_ML = create_MDN_model(len(self.ref_spec), negative_loglikelihood)
                     self.model_ML.load_weights(self.Luci_path+'ML/R%i-PREDICTOR-I-SN1-MDN'%(resolution))
-                    #self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN1-MDN'%(resolution))
                 elif self.hdr_dict['FILTER'] == 'SN2':
                     self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN2.fits'%(resolution)
-                    self.model_ML = create_probablistic_bnn_model(hidden_units=[128, 256], num_filters=[4,16], filter_length=[5,3])
+                    self.model_ML = create_MDN_model(len(self.ref_spec), negative_loglikelihood)
                     self.model_ML.load_weights(self.Luci_path+'ML/R%i-PREDICTOR-I-SN2-MDN'%(resolution))
                 elif self.hdr_dict['FILTER'] == 'SN3':
                     self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
-                    self.model_ML = create_probablistic_bnn_model(hidden_units=[128, 256], num_filters=[4,16], filter_length=[5,3])
+                    self.model_ML = create_MDN_model(len(self.ref_spec), negative_loglikelihood)
                     self.model_ML.load_weights(self.Luci_path+'ML/R%i-PREDICTOR-I-MDN'%(resolution))
                 else:
                     print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')

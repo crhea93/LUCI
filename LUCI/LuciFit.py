@@ -295,9 +295,12 @@ class Fit:
                                    ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        #if self.broad_ml > 50:
-        #    self.broad_ml = .1
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
+        # Update position and sigma_gauss bounds
+        self.x_min = 1e7 / (((self.vel_ml-3*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        self.x_max = 1e7 / (((self.vel_ml+3*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        self.sigma_min =  (line_pos_est * (self.broad_ml-3*self.broad_ml_sigma)) / (3e5)
+        self.sigma_max =  (line_pos_est * (self.broad_ml+3*self.broad_ml_sigma)) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
 
@@ -531,30 +534,37 @@ class Fit:
         for i in range(self.line_num):
             self.fit_sol[i * 3] /= self.spectrum_scale
         self.fit_sol[-1] /= self.spectrum_scale
+        # Set the number of dimensions -- this is somewhat arbitrary
         n_dim = 3 * self.line_num + 1
+        # Set number of MCMC walkers. Again, this is somewhat arbitrary
         n_walkers = n_dim * 3 + 4
+        # Initialize walkers
         random_ = np.random.randn(n_walkers, n_dim)
+        # Scale some of the walkers based on more realistic values
         for i in range(self.line_num):
             random_[3*i] *= 0.05
-            #random_[3*i+1] += 10
             random_[3*i+2] *= 0.1
-        #init_ = (self.fit_sol + self.fit_sol[-1] )* np.random.randn(n_walkers, n_dim)
         init_ = self.fit_sol + self.fit_sol[-1] + random_
+        # Ensure that walkers for amplitude and Gaussian broadening are positive
         for i in range(self.line_num):
             init_[:,3*i] = np.abs(init_[:,3*i])
             init_[:,3*i+2] = np.abs(init_[:,3*i+2])
+        # Ensure continuum values for walkers are positive
         init_[:,-1] = np.abs(init_[:,-1])
+        # Set Ensemble Sampler
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
-                                        args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.model_type, self.line_num, self.sinc_width))
+                                        args=(self.axis_restricted, self.spectrum_restricted,
+                                        self.noise,self.model_type, self.line_num, self.sinc_width,
+                                        [self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma]
+                                        )  # End additional args
+                                        )  # End EnsembleSampler
+        # Call Ensemble Sampler setting 2000 walks
         sampler.run_mcmc(init_, 2000, progress=False)
+        # Obtain Ensemble Sampler results and discard first 200 walks (10%)
         flat_samples = sampler.get_chain(discard=200, flat=True)
-        #fig = corner.corner(
-        #    flat_samples, labels=np.arange(len(self.fit_sol))
-        #);
-        #plt.savefig('test.png')
         parameters_med = []
         parameters_std = []
-        for i in range(n_dim):
+        for i in range(n_dim):  # Calculate and store these results
             median = np.median(flat_samples[:, i])
             std = np.std(flat_samples[:, i])
             parameters_med.append(median)
@@ -569,14 +579,13 @@ class Fit:
         parameters_med[-1] *= self.spectrum_scale
         self.uncertainties[-1] *= self.spectrum_scale
         self.fit_sol = parameters_med
+        # Calculate fit vector using updated values
         if self.model_type == 'gaussian':
             self.fit_vector = Gaussian().plot(self.axis, self.fit_sol[:-1], self.line_num) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
             self.fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
             self.fit_vector = SincGauss().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
-
-
 
     def calc_chisquare(self, fit_vector, init_spectrum, init_errors, n_dof):
         """
