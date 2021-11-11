@@ -29,7 +29,7 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
     sigma2 = yerr ** 2
     return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
-def log_prior(theta, line_num, mu_vel, mu_broad, sigma_vel, sigma_broad):
+def log_prior(theta, axis_restricted, line_num, mu_vel, mu_broad, sigma_vel, sigma_broad):
     """
     Calculate log prior assuming uniform priors on the amplitude and continuum values.
 
@@ -44,6 +44,7 @@ def log_prior(theta, line_num, mu_vel, mu_broad, sigma_vel, sigma_broad):
 
     Args:
         theta: Fit parameters
+        axis_restricted:
         line_nun: Number of lines for fit
 
     Return:
@@ -67,9 +68,9 @@ def log_prior(theta, line_num, mu_vel, mu_broad, sigma_vel, sigma_broad):
                 within_bounds = False  # Value not in bounds
                 break
         if ct % 3 == 1:  # velocity parameter
-            val_prior += np.log(1.0/(np.sqrt(2*np.pi)*sigma_vel))-0.5*(a-mu_vel)**2/sigma_vel**2
+            val_prior += np.log(1.0/(np.sqrt(2*np.pi)*sigma_vel))-0.5*(param-mu_vel)**2/sigma_vel**2
         if ct % 3 == 2:  # sigma parameter
-            val_prior += np.log(1.0/(np.sqrt(2*np.pi)*sigma_broad))-0.5*(a-mu_broad)**2/sigma_broad**2
+            val_prior += np.log(1.0/(np.sqrt(2*np.pi)*sigma_broad))-0.5*(param-mu_broad)**2/sigma_broad**2
     # Check continuum
     if theta[-1] > continuum_min and theta[-1] < continuum_max:
         val_prior -= np.log(continuum_max-continuum_min)
@@ -163,7 +164,7 @@ def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_typ
         If not finite or if an nan we return -np.inf. Otherwise, we return the log likelihood + log prior
     """
     mu_vel, mu_broad, sigma_vel, sigma_broad = prior_gauss
-    lp = log_prior(theta, line_num, mu_vel, mu_broad, sigma_vel, sigma_broad)
+    lp = log_prior(theta, axis_restricted, line_num, mu_vel, mu_broad, sigma_vel, sigma_broad)
     if not np.isfinite(lp):
         return -np.inf
     if np.isnan(lp):

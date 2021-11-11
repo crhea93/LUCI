@@ -51,7 +51,7 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, trans_filter=None, theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3', bayes_bool=False, uncertainty_bool=False):
+                 ML_model, trans_filter=None, theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3', bayes_bool=False, uncertainty_bool=False, mdn=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -71,6 +71,7 @@ class Fit:
             filter: SITELLE filter (e.x. 'SN3')
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+            mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -119,6 +120,7 @@ class Fit:
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
         self.calc_sinc_width()
+        self.mdn = mdn
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
@@ -229,22 +231,32 @@ class Fit:
         self.noise = np.nanstd(spec_noise)
 
 
-    def estimate_priors_ML(self):
+    def estimate_priors_ML(self, mdn=True):
         """
         Apply machine learning algorithm on spectrum in order to estimate the velocity.
         The spectrum fed into this method must be interpolated already onto the
         reference spectrum axis AND normalized as described in Rhea et al. 2020a.
         Args:
+            mdn: Boolean to use MDN or not (default True)
 
         Return:
             Updates self.vel_ml
         """
         Spectrum = self.spectrum_interp_norm.reshape(1, self.spectrum_interp_norm.shape[0], 1)
-        predictions = self.ML_model(Spectrum, training=False)
-        self.vel_ml = float(predictions[0][0])
-        self.vel_ml_sigma = float(predictions[0][1])
-        self.broad_ml = float(predictions[0][2])
-        self.broad_ml_broad = float(predictions[0][3])  # Multiply value by FWHM of a gaussian
+        if self.mdn == True:
+            prediction_distribution = self.ML_model(Spectrum, training=False)
+            prediction_mean = prediction_distribution.mean().numpy().tolist()
+            prediction_stdv = prediction_distribution.stddev().numpy().tolist()
+            self.vel_ml = [pred[0] for pred in prediction_mean][0]
+            self.vel_ml_sigma = [pred[0] for pred in prediction_stdv][0]
+            self.broad_ml = [pred[1] for pred in prediction_mean][0]
+            self.broad_ml_sigma = [pred[1] for pred in prediction_stdv][0]
+        elif self.mdn == False:
+            predictions = self.ML_model(Spectrum, training=False)
+            self.vel_ml = float(predictions[0][0])
+            self.vel_ml_sigma = 0
+            self.broad_ml = float(predictions[0][1])
+            self.broad_ml_sigma = 0
         return None
 
 
@@ -258,7 +270,7 @@ class Fit:
 
         """
         self.spectrum_scale = np.max(self.spectrum)
-        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
+        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_interp_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_interp_scale
@@ -297,10 +309,10 @@ class Fit:
             line_amp_est = self.spectrum_normalized[line_ind]
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
         # Update position and sigma_gauss bounds
-        self.x_min = 1e7 / (((self.vel_ml-3*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
-        self.x_max = 1e7 / (((self.vel_ml+3*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
-        self.sigma_min =  (line_pos_est * (self.broad_ml-3*self.broad_ml_sigma)) / (3e5)
-        self.sigma_max =  (line_pos_est * (self.broad_ml+3*self.broad_ml_sigma)) / (3e5)
+        self.x_min = 0#1e7 / (((self.vel_ml+10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        self.x_max = 1e7 #/ (((self.vel_ml-10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        self.sigma_min =  0#(line_pos_est * (self.broad_ml-10*self.broad_ml_sigma)) / (3e5)
+        self.sigma_max =  100#(line_pos_est * (self.broad_ml+10*self.broad_ml_sigma)) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
 
