@@ -775,10 +775,7 @@ class Luci():
 
 
         """
-        if binning is not None:
-            sky = self.cube_binned[pixel_x, pixel_y, :]
-        else:
-            sky = self.cube_final[pixel_y, pixel_y, :]
+        sky = self.cube_final[pixel_x, pixel_y, :]
         if bkg is not None:
             sky -= bkg  # Subtract background spectrum
         good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
@@ -787,7 +784,7 @@ class Luci():
         # Call fit!
         fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
             self.model_ML, trans_filter = self.transmission_interpolated,
-            theta=self.interferometer_theta[x_pix, y_pix],
+            theta=self.interferometer_theta[pixel_x, pixel_y],
             delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
             zpd_index = self.zpd_index,
             filter = self.hdr_dict['FILTER'],
