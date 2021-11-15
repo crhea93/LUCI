@@ -28,7 +28,7 @@ class Luci():
     all io/administrative functionality. The fitting functionality can be found in the
     Fit class (Lucifit.py).
     """
-    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True, mdn=True):
+    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True, mdn=False):
         """
         Initialize our Luci class -- this acts similar to the SpectralCube class
         of astropy or spectral-cube.
