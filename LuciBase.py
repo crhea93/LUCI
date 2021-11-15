@@ -18,6 +18,7 @@ from astroquery.astrometry_net import AstrometryNet
 from astropy.io import fits
 import multiprocessing
 from numba import jit, set_num_threads
+from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 
 
 
@@ -27,7 +28,7 @@ class Luci():
     all io/administrative functionality. The fitting functionality can be found in the
     Fit class (Lucifit.py).
     """
-    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True):#ref_spec=None, model_ML_name=None):
+    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True, mdn=False):
         """
         Initialize our Luci class -- this acts similar to the SpectralCube class
         of astropy or spectral-cube.
@@ -40,8 +41,7 @@ class Luci():
             redshift: Redshift to the object. (e.x. 0.00428)
             resolution: Resolution requested of machine learning algorithm reference spectrum
             ML_bool: Boolean for applying machine learning; default=True
-            ref_spec: Name of reference spectrum for machine learning algo (e.x. 'Reference-Spectrum-R5000')
-            model_ML_name: Name of pretrained machine learning model
+            mdn: Boolean for using the Mixed Density Network models; If true, then we use the posterior distributions calculated by our network as our priors for bayesian fits
         """
         self.Luci_path = Luci_path
         self.check_luci_path()  # Make sure the path is correctly written
@@ -51,6 +51,7 @@ class Luci():
             os.mkdir(self.output_dir)
         self.object_name = object_name
         self.redshift = redshift
+        self.mdn = mdn
         self.quad_nb = 0  # Number of quadrants in Hdf5
         self.dimx = 0  # X dimension of cube
         self.dimy = 0  # Y dimension of cube
@@ -66,25 +67,26 @@ class Luci():
         self.interferometer_theta = None
         self.transmission_interpolated = None
         self.read_in_cube()
-        self.step_nb = self.hdr_dict['STEPNB']# - self.hdr_dict['ZPDINDEX']
+        self.step_nb = self.hdr_dict['STEPNB']
         self.zpd_index = self.hdr_dict['ZPDINDEX']
+        self.filter = self.hdr_dict['FILTER']
         self.spectrum_axis_func()
         if ML_bool is True:
-            if self.hdr_dict['FILTER'] == 'SN1':
-                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN1.fits'%(resolution)
-                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN1'%(resolution))
-            elif self.hdr_dict['FILTER'] == 'SN2':
-                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-SN2.fits'%(resolution)
-                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-SN2'%(resolution))
-            elif self.hdr_dict['FILTER'] == 'SN3':
-                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
-                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
-            elif self.hdr_dict['FILTER'] == 'C4':
-                self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i.fits'%(resolution)
-                self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I'%(resolution))
-            else:
-                print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
-            self.read_in_reference_spectrum()
+            if self.mdn != True:
+                if self.filter in ['SN1', 'SN2', 'SN3', 'C4']:
+                    self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-%s.fits'%(resolution, self.filter)
+                    self.read_in_reference_spectrum()
+                    self.model_ML = keras.models.load_model(self.Luci_path+'ML/R%i-PREDICTOR-I-%s'%(resolution, self.filter))
+                else:
+                    print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
+            else:  # mdn == True
+                if self.filter in ['SN1', 'SN2', 'SN3']:
+                    self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-%s.fits'%(resolution, self.filter)
+                    self.read_in_reference_spectrum()
+                    self.model_ML = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
+                    self.model_ML.load_weights(self.Luci_path+'ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s'%(resolution, self.filter, resolution, self.filter))
+                else:
+                    print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
         else:
             self.model_ML = None
         self.read_in_transmission()
@@ -522,7 +524,9 @@ class Luci():
                     delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
                     zpd_index = self.zpd_index,
                     filter = self.hdr_dict['FILTER'],
-                    bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
+                    bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
+                    mdn=self.mdn
+                    )
                 fit_dict = fit.fit()
                 # Save local list of fit values
                 ampls_local.append(fit_dict['amplitudes'])
@@ -695,7 +699,8 @@ class Luci():
                             delta_x = self.hdr_dict['STEP'],  n_steps = self.step_nb,
                             zpd_index = self.zpd_index,
                             filter = self.hdr_dict['FILTER'],
-                            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
+                            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
+                            mdn=self.mdn)
                     fit_dict = fit.fit()
                     # Save local list of fit values
                     ampls_local.append(fit_dict['amplitudes'])
@@ -783,7 +788,8 @@ class Luci():
             delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
             zpd_index = self.zpd_index,
             filter = self.hdr_dict['FILTER'],
-            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
+            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
+            mdn=self.mdn)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
@@ -951,7 +957,8 @@ class Luci():
                 delta_x = self.hdr_dict['STEP'],  n_steps = self.step_nb,
                 zpd_index = self.zpd_index,
                 filter = self.hdr_dict['FILTER'],
-                bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
+                bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
+                mdn=self.mdn)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 

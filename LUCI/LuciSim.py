@@ -36,6 +36,7 @@ class Spectrum:
         self.theta = 11.96  # Interferometer angle in degrees
         self.zpd_index  = 0  # Zero Path Difference
         self.lines = lines
+        self.line_num = len(lines)  # Number of  lines to fit
         self.fit_function = fit_function
         self.ampls = ampls
         if not isinstance(velocity, list):
@@ -98,7 +99,7 @@ class Spectrum:
             Value of function given input parameters
 
         """
-        f1 = Gaussian(channel, [amp, pos, sigma]).func
+        f1 =  Gaussian().evaluate(channel, [amp, pos, sigma], 1)  # The last argument is 1 since we add one line at a time
         return f1
 
 
@@ -116,7 +117,7 @@ class Spectrum:
             Value of function given input parameters
 
         """
-        f1 = Sinc(channel, [amp, pos, sigma], self.sinc_width).func
+        f1 = Sinc().evaluate(channel, [amp, pos, sigma], 1, self.sinc_width)
         return f1
 
 
@@ -134,7 +135,7 @@ class Spectrum:
             Value of function given input parameters
 
         """
-        f1 = SincGauss(channel, [amp, pos, sigma], self.sinc_width).func
+        f1 = SincGauss().evaluate(channel, [amp, pos, sigma], 1, self.sinc_width)
         return np.real(f1)
 
     def create_spectrum(self):

@@ -48,7 +48,7 @@ class Test:
         return None
 
     def read_ref_spec(self):
-        ref_spec = fits.open('ML/Reference-Spectrum-R5000.fits')[1].data
+        ref_spec = fits.open('ML/Reference-Spectrum-R5000-SN3.fits')[1].data
         channel = []
         counts = []
         for chan in ref_spec:  # Only want SN3 region
