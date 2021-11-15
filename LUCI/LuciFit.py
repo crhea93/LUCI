@@ -51,7 +51,9 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, trans_filter=None, theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3', bayes_bool=False, uncertainty_bool=False, mdn=False):
+                 ML_model, trans_filter=None,
+                 theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
+                 bayes_bool=False, uncertainty_bool=False, mdn=True):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -257,6 +259,7 @@ class Fit:
             self.vel_ml_sigma = 0
             self.broad_ml = float(predictions[0][1])
             self.broad_ml_sigma = 0
+        print(self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma)
         return None
 
 
@@ -308,11 +311,15 @@ class Fit:
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
-        # Update position and sigma_gauss bounds
-        self.x_min = 0#1e7 / (((self.vel_ml+10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
-        self.x_max = 1e7 #/ (((self.vel_ml-10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
-        self.sigma_min =  0#(line_pos_est * (self.broad_ml-10*self.broad_ml_sigma)) / (3e5)
-        self.sigma_max =  100#(line_pos_est * (self.broad_ml+10*self.broad_ml_sigma)) / (3e5)
+        #if self.mdn == True:
+            # Update position and sigma_gauss bounds
+        #    self.x_min = 1e7 / (((self.vel_ml+10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        #    self.x_max = 1e7/(((self.vel_ml-10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        #    self.sigma_min =  (line_pos_est * (self.broad_ml)) / (3e5) - (line_pos_est * (self.broad_ml_sigma)) / (3e5)
+        #    self.sigma_max =  (line_pos_est * (self.broad_ml)) / (3e5) + (line_pos_est * (self.broad_ml_sigma)) / (3e5)
+        #print(self.x_min, self.x_max)
+        #print(self.sigma_min, self.sigma_max)
+        #print(self.broad_ml, self.broad_ml_sigma)
         return line_amp_est, line_pos_est, line_broad_est
 
 
@@ -551,16 +558,18 @@ class Fit:
         # Set number of MCMC walkers. Again, this is somewhat arbitrary
         n_walkers = n_dim * 3 + 4
         # Initialize walkers
-        random_ = np.random.randn(n_walkers, n_dim)
+        random_ = 1e-4 * np.random.randn(n_walkers, n_dim)
         # Scale some of the walkers based on more realistic values
-        for i in range(self.line_num):
-            random_[3*i] *= 0.05
-            random_[3*i+2] *= 0.1
-        init_ = self.fit_sol + self.fit_sol[-1] + random_
+        #for i in range(self.line_num):
+        #    random_[3*i] *= 0.05
+        #    random_[3*i+2] *= 0.1
+        #random_[-1] *= 0.01
+        init_ = self.fit_sol  + random_ #+ self.fit_sol[-1] + random_
         # Ensure that walkers for amplitude and Gaussian broadening are positive
-        for i in range(self.line_num):
-            init_[:,3*i] = np.abs(init_[:,3*i])
-            init_[:,3*i+2] = np.abs(init_[:,3*i+2])
+        #for i in range(self.line_num):
+        #    init_[:,3*i] = np.abs(init_[:,3*i])
+        #    init_[:,3*i+2] = np.abs(init_[:,3*i+2])
+        #    print(init_[:, 3*i])
         # Ensure continuum values for walkers are positive
         init_[:,-1] = np.abs(init_[:,-1])
         # Set Ensemble Sampler
@@ -571,7 +580,7 @@ class Fit:
                                         )  # End additional args
                                         )  # End EnsembleSampler
         # Call Ensemble Sampler setting 2000 walks
-        sampler.run_mcmc(init_, 2000, progress=False)
+        sampler.run_mcmc(init_, 2000, progress=True)
         # Obtain Ensemble Sampler results and discard first 200 walks (10%)
         flat_samples = sampler.get_chain(discard=200, flat=True)
         parameters_med = []

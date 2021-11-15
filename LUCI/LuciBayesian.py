@@ -27,7 +27,7 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
     # Add constant contimuum to model
     model += theta[-1]
     sigma2 = yerr ** 2
-    return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
+    return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) #+ np.log(2 * np.pi * sigma2))
 
 def log_prior(theta, axis_restricted, line_num, mu_vel, mu_broad, sigma_vel, sigma_broad):
     """
@@ -52,10 +52,10 @@ def log_prior(theta, axis_restricted, line_num, mu_vel, mu_broad, sigma_vel, sig
         Else we return -np.inf
 
     """
-    A_min = -0.5
-    A_max = 1.1
+    A_min = -0.1
+    A_max = 1.0
     continuum_min = 0
-    continuum_max = 1
+    continuum_max = .75
     val_prior = 0
     for model_num in range(line_num):
         params = theta[model_num * 3:(model_num + 1) * 3]
@@ -165,6 +165,7 @@ def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_typ
     """
     mu_vel, mu_broad, sigma_vel, sigma_broad = prior_gauss
     lp = log_prior(theta, axis_restricted, line_num, mu_vel, mu_broad, sigma_vel, sigma_broad)
+    #lp = log_prior_uniform(theta, line_num)
     if not np.isfinite(lp):
         return -np.inf
     if np.isnan(lp):

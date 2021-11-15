@@ -22,7 +22,7 @@ def create_MDN_model(input_length, loss):
         input_length: Length of input spectrum
 
     Return:
-        Probabilistic Bayesian Neural Network
+        Mixture Density Network with a single phase for two parameters
     """
     # Number of nodees in each hidden layer
     hidden_units = [128, 256]

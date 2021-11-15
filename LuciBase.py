@@ -788,7 +788,8 @@ class Luci():
             delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
             zpd_index = self.zpd_index,
             filter = self.hdr_dict['FILTER'],
-            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool)
+            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
+            mdn=self.mdn)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
