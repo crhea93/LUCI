@@ -29,3 +29,4 @@ dependencies:
     - tensorboard-plugin-wit==1.8.0
     - tensorflow-estimator==2.1.0
     - numba
+    - pytest
