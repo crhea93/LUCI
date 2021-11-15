@@ -259,7 +259,6 @@ class Fit:
             self.vel_ml_sigma = 0
             self.broad_ml = float(predictions[0][1])
             self.broad_ml_sigma = 0
-        print(self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma)
         return None
 
 
