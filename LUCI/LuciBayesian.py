@@ -68,9 +68,19 @@ def log_prior(theta, axis_restricted, line_num, mu_vel, mu_broad, sigma_vel, sig
                 within_bounds = False  # Value not in bounds
                 break
         if ct % 3 == 1:  # velocity parameter
-            val_prior += np.log(1.0/(np.sqrt(2*np.pi)*sigma_vel))-0.5*(param-mu_vel)**2/sigma_vel**2
+            #val_prior += np.log(1.0/(np.sqrt(2*np.pi)*sigma_vel))-0.5*(param-mu_vel)**2/sigma_vel**2
+            if param > mu_vel - 3*sigma_vel and param < mu_vel + 3*sigma_vel:
+                val_prior -= np.log(6*sigma_vel)
+            else:
+                within_bounds = False  # Value not in bounds
+                break
         if ct % 3 == 2:  # sigma parameter
-            val_prior += np.log(1.0/(np.sqrt(2*np.pi)*sigma_broad))-0.5*(param-mu_broad)**2/sigma_broad**2
+            #val_prior += np.log(1.0/(np.sqrt(2*np.pi)*sigma_broad))-0.5*(param-mu_broad)**2/sigma_broad**2
+            if param > mu_broad - 3*sigma_broad and param < mu_broad + 3*sigma_broad:
+                val_prior -= np.log(6*sigma_broad)
+            else:
+                within_bounds = False  # Value not in bounds
+                break
     # Check continuum
     if theta[-1] > continuum_min and theta[-1] < continuum_max:
         val_prior -= np.log(continuum_max-continuum_min)
