@@ -51,7 +51,9 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, trans_filter=None, theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3', bayes_bool=False, uncertainty_bool=False):
+                 ML_model, trans_filter=None,
+                 theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
+                 bayes_bool=False, uncertainty_bool=False, mdn=False):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -71,6 +73,7 @@ class Fit:
             filter: SITELLE filter (e.x. 'SN3')
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+            mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -119,8 +122,11 @@ class Fit:
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
         self.calc_sinc_width()
+        self.mdn = mdn
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
+        self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
+        self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
@@ -227,20 +233,32 @@ class Fit:
         self.noise = np.nanstd(spec_noise)
 
 
-    def estimate_priors_ML(self):
+    def estimate_priors_ML(self, mdn=True):
         """
         Apply machine learning algorithm on spectrum in order to estimate the velocity.
         The spectrum fed into this method must be interpolated already onto the
         reference spectrum axis AND normalized as described in Rhea et al. 2020a.
         Args:
+            mdn: Boolean to use MDN or not (default True)
 
         Return:
             Updates self.vel_ml
         """
         Spectrum = self.spectrum_interp_norm.reshape(1, self.spectrum_interp_norm.shape[0], 1)
-        predictions = self.ML_model(Spectrum, training=False)
-        self.vel_ml = float(predictions[0][0])
-        self.broad_ml = float(predictions[0][1])  # Multiply value by FWHM of a gaussian
+        if self.mdn == True:
+            prediction_distribution = self.ML_model(Spectrum, training=False)
+            prediction_mean = prediction_distribution.mean().numpy().tolist()
+            prediction_stdv = prediction_distribution.stddev().numpy().tolist()
+            self.vel_ml = [pred[0] for pred in prediction_mean][0]
+            self.vel_ml_sigma = [pred[0] for pred in prediction_stdv][0]
+            self.broad_ml = [pred[1] for pred in prediction_mean][0]
+            self.broad_ml_sigma = [pred[1] for pred in prediction_stdv][0]
+        elif self.mdn == False:
+            predictions = self.ML_model(Spectrum, training=False)
+            self.vel_ml = float(predictions[0][0])
+            self.vel_ml_sigma = 0
+            self.broad_ml = float(predictions[0][1])
+            self.broad_ml_sigma = 0
         return None
 
 
@@ -254,7 +272,7 @@ class Fit:
 
         """
         self.spectrum_scale = np.max(self.spectrum)
-        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
+        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_interp_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_interp_scale
@@ -291,9 +309,16 @@ class Fit:
                                    ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        #if self.broad_ml > 50:
-        #    self.broad_ml = .1
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
+        #if self.mdn == True:
+            # Update position and sigma_gauss bounds
+        #    self.x_min = 1e7 / (((self.vel_ml+10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        #    self.x_max = 1e7/(((self.vel_ml-10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        #    self.sigma_min =  (line_pos_est * (self.broad_ml)) / (3e5) - (line_pos_est * (self.broad_ml_sigma)) / (3e5)
+        #    self.sigma_max =  (line_pos_est * (self.broad_ml)) / (3e5) + (line_pos_est * (self.broad_ml_sigma)) / (3e5)
+        #print(self.x_min, self.x_max)
+        #print(self.sigma_min, self.sigma_max)
+        #print(self.broad_ml, self.broad_ml_sigma)
         return line_amp_est, line_pos_est, line_broad_est
 
 
@@ -527,30 +552,39 @@ class Fit:
         for i in range(self.line_num):
             self.fit_sol[i * 3] /= self.spectrum_scale
         self.fit_sol[-1] /= self.spectrum_scale
+        # Set the number of dimensions -- this is somewhat arbitrary
         n_dim = 3 * self.line_num + 1
+        # Set number of MCMC walkers. Again, this is somewhat arbitrary
         n_walkers = n_dim * 3 + 4
-        random_ = np.random.randn(n_walkers, n_dim)
-        for i in range(self.line_num):
-            random_[3*i] *= 0.05
-            #random_[3*i+1] += 10
-            random_[3*i+2] *= 0.1
-        #init_ = (self.fit_sol + self.fit_sol[-1] )* np.random.randn(n_walkers, n_dim)
-        init_ = self.fit_sol + self.fit_sol[-1] + random_
-        for i in range(self.line_num):
-            init_[:,3*i] = np.abs(init_[:,3*i])
-            init_[:,3*i+2] = np.abs(init_[:,3*i+2])
+        # Initialize walkers
+        random_ = 1e-4 * np.random.randn(n_walkers, n_dim)
+        # Scale some of the walkers based on more realistic values
+        #for i in range(self.line_num):
+        #    random_[3*i] *= 0.05
+        #    random_[3*i+2] *= 0.1
+        #random_[-1] *= 0.01
+        init_ = self.fit_sol  + random_ #+ self.fit_sol[-1] + random_
+        # Ensure that walkers for amplitude and Gaussian broadening are positive
+        #for i in range(self.line_num):
+        #    init_[:,3*i] = np.abs(init_[:,3*i])
+        #    init_[:,3*i+2] = np.abs(init_[:,3*i+2])
+        #    print(init_[:, 3*i])
+        # Ensure continuum values for walkers are positive
         init_[:,-1] = np.abs(init_[:,-1])
+        # Set Ensemble Sampler
         sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
-                                        args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.model_type, self.line_num, self.sinc_width))
-        sampler.run_mcmc(init_, 2000, progress=False)
+                                        args=(self.axis_restricted, self.spectrum_restricted,
+                                        self.noise,self.model_type, self.line_num, self.sinc_width,
+                                        [self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma]
+                                        )  # End additional args
+                                        )  # End EnsembleSampler
+        # Call Ensemble Sampler setting 2000 walks
+        sampler.run_mcmc(init_, 2000, progress=True)
+        # Obtain Ensemble Sampler results and discard first 200 walks (10%)
         flat_samples = sampler.get_chain(discard=200, flat=True)
-        #fig = corner.corner(
-        #    flat_samples, labels=np.arange(len(self.fit_sol))
-        #);
-        #plt.savefig('test.png')
         parameters_med = []
         parameters_std = []
-        for i in range(n_dim):
+        for i in range(n_dim):  # Calculate and store these results
             median = np.median(flat_samples[:, i])
             std = np.std(flat_samples[:, i])
             parameters_med.append(median)
@@ -565,14 +599,13 @@ class Fit:
         parameters_med[-1] *= self.spectrum_scale
         self.uncertainties[-1] *= self.spectrum_scale
         self.fit_sol = parameters_med
+        # Calculate fit vector using updated values
         if self.model_type == 'gaussian':
             self.fit_vector = Gaussian().plot(self.axis, self.fit_sol[:-1], self.line_num) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
             self.fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
             self.fit_vector = SincGauss().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
-
-
 
     def calc_chisquare(self, fit_vector, init_spectrum, init_errors, n_dof):
         """

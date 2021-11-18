@@ -212,11 +212,31 @@ Else it will throw an error</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_map">
 <span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_map" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to plot fit map
-:param quantity_map: 2d numpy array from fit
-:param quantity_name: Name of quantity (e.x. ‘flux’)
-:param output_dit: Path (absolute or partial) to output directory
-:param clims: List containing lower and upper limits of colorbar (e.x. [-500, 500])</p>
+<dd><p>Function to plot fit map. The three options are ‘flux’, ‘velocity’, and ‘broadening’.
+The flux map is automatically scaled by log10. The velocity and broadening are not.
+The plot is saved here: <cite>output_dir+’/’+quantity_name+’_map.png’</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>quantity_map</strong> – 2d numpy array from fit</p></li>
+<li><p><strong>quantity_name</strong> – Name of quantity (e.x. ‘flux’)</p></li>
+<li><p><strong>output_dit</strong> – Path (absolute or partial) to output directory</p></li>
+<li><p><strong>clims</strong> – List containing lower and upper limits of colorbar (e.x. [-500, 500])</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>We can plot the flux assuming a min and max value of 1e-18 and 1e-16.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">18</span><span class="p">,</span> <span class="o">-</span><span class="mi">16</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Similarly, we can plot the velocity and broadening:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">vel_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;veloity&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="o">-</span><span class="mi">200</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">broad_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;broadening&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">])</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
