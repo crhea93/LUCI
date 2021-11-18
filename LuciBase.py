@@ -3,6 +3,7 @@ import h5py
 import os
 from astropy.wcs import WCS
 from astropy.wcs.utils import pixel_to_skycoord
+import astropy.units as u
 from tqdm import tqdm
 import numpy as np
 import keras
@@ -1112,7 +1113,7 @@ class Luci():
         CFHT = EarthLocation.of_site('CFHT')
         sc = SkyCoord(ra=self.hdr_dict['CRVAL1']*u.deg, dec=self.hdr_dict['CRVAL2']*u.deg)
         heliocorr = sc.radial_velocity_correction('heliocentric', obstime=Time(self.hdr_dict['DATE-OBS']), location=CFHT)
-        heli0_kms = heliocorr.to(u.km/u.s)
+        helio_kms = heliocorr.to(u.km/u.s)
         return helio_kms
 
 
