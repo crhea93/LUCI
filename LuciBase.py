@@ -17,6 +17,8 @@ import astropy.stats as astrostats
 from astroquery.astrometry_net import AstrometryNet
 from astropy.io import fits
 import multiprocessing
+from astropy.time import Time
+from astropy.coordinates import SkyCoord, EarthLocation
 from numba import jit, set_num_threads
 
 
@@ -1093,6 +1095,18 @@ class Luci():
         else:
             # Code to execute when solve fails
             print('Astronomy.net failed to solve. This astrometry has not been updated!')
+
+
+    def heliocentric_correction(self):
+        """
+        Calculate heliocentric correction for observation given the location of SITELLE/CFHT
+        and the time of the observation
+        """
+        CFHT = EarthLocation.of_site('CFHT')
+        sc = SkyCoord(ra=self.hdr_dict['CRVAL1']*u.deg, dec=self.hdr_dict['CRVAL2']*u.deg)
+        heliocorr = sc.radial_velocity_correction('heliocentric', obstime=Time(self.hdr_dict['DATE-OBS']), location=CFHT)
+        heli0_kms = heliocorr.to(u.km/u.s)
+        return helio_kms
 
 
     def close(self):
