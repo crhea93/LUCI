@@ -431,7 +431,10 @@ class Luci():
         y_max = self.cube_final.shape[1]
         self.fit_cube(lines, fit_function,vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
 
-    def fit_cube(self, lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False, n_threads=1):
+    def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
+                 x_min, x_max, y_min, y_max, bkg=None, binning=None,
+                 bayes_bool=False, bayes_method='emcee',
+                 output_name=None, uncertainty_bool=False, n_threads=1):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -451,6 +454,7 @@ class Luci():
             bkg: Background Spectrum (1D numpy array; default None)
             binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
+            bayes_method = Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             output_name: User defined output path/name (default None)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
@@ -524,7 +528,8 @@ class Luci():
                     delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
                     zpd_index = self.zpd_index,
                     filter = self.hdr_dict['FILTER'],
-                    bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
+                    bayes_bool=bayes_bool, bayes_method=bayes_method,
+                    uncertainty_bool=uncertainty_bool,
                     mdn=self.mdn
                     )
                 fit_dict = fit.fit()
@@ -571,7 +576,9 @@ class Luci():
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
 
 
-    def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, binning=None, bayes_bool=False, output_name=None, uncertainty_bool=False, n_threads=1):
+    def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
+                    bkg=None, binning=None, bayes_bool=False, bayes_method='emcee',
+                    output_name=None, uncertainty_bool=False, n_threads=1):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -590,6 +597,7 @@ class Luci():
             bkg: Background Spectrum (1D numpy array; default None)
             binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
+            bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             output_name: User defined output path/name
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
@@ -754,7 +762,10 @@ class Luci():
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
 
-    def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel, pixel_x, pixel_y, bkg=None, bayes_bool=False, output_name=None, uncertainty_bool=False):
+    def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
+                  pixel_x, pixel_y, bkg=None,
+                  bayes_bool=False, bayes_method='emcee',
+                  output_name=None, uncertainty_bool=False):
         """
         Primary fit call to fit a single pixel in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps.
@@ -768,6 +779,7 @@ class Luci():
             pixel_y: Y coordinate (physical)
             bkg: Background Spectrum (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
+            bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             output_name: User defined output path/name (default None)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
         Return:
@@ -788,7 +800,8 @@ class Luci():
             delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
             zpd_index = self.zpd_index,
             filter = self.hdr_dict['FILTER'],
-            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
+            bayes_bool=bayes_bool, bayes_method=bayes_method,
+            uncertainty_bool=uncertainty_bool,
             mdn=self.mdn)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
@@ -896,7 +909,10 @@ class Luci():
 
 
 
-    def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel, region, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False):
+    def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel,
+                            region, bkg=None,
+                            bayes_bool=False, bayes_method='emcee',
+                            uncertainty_bool=False, mean=False):
         """
         Fit spectrum in region.
         The spectra in the region are summed and then averaged (if mean is selected).
@@ -911,6 +927,9 @@ class Luci():
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             bkg: Background Spectrum (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
+            bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
+            uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+            mean: Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.
 
         Return:
             X-axis and spectral axis of region.
@@ -957,7 +976,8 @@ class Luci():
                 delta_x = self.hdr_dict['STEP'],  n_steps = self.step_nb,
                 zpd_index = self.zpd_index,
                 filter = self.hdr_dict['FILTER'],
-                bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
+                bayes_bool=bayes_bool, bayes_method=bayes_method,
+                uncertainty_bool=uncertainty_bool,
                 mdn=self.mdn)
         fit_dict = fit.fit()
         return axis, sky, fit_dict

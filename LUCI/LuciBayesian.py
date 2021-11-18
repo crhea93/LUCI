@@ -27,7 +27,7 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
     # Add constant contimuum to model
     model += theta[-1]
     sigma2 = yerr ** 2
-    return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) #+ np.log(2 * np.pi * sigma2))
+    return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
 def log_prior(theta, axis_restricted, line_num, mu_vel, mu_broad, sigma_vel, sigma_broad):
     """
@@ -151,9 +151,51 @@ def log_prior_uniform(theta, line_num):
     else:
         within_bounds = False  # Value not in bounds
     if within_bounds:
-        return -np.log(val_prior)
+        return -val_prior
     else:
         return -np.inf
+
+def prior_transform_nestle(theta):
+    A_min = -0.5
+    A_max = 1.1
+    x_min = 0
+    x_max = 1e6
+    sigma_min = 0
+    sigma_max = 30
+    continuum_min = 0
+    continuum_max = 1
+    prior_list = []
+    for ct, param in enumerate(theta[:-1]):  # Don't include continuum
+        if ct % 3 == 0:  # Amplitude parameter
+            prior_list.append(A_max-A_min)
+        if ct % 3 == 1:  # velocity parameter
+            prior_list.append(x_max-x_min)
+        if ct % 3 == 2:  # sigma parameter
+            prior_list.append(sigma_max-sigma_min)
+    prior_list.append(continuum_max-continuum_min)  # Include continuum
+    return tuple(np.array(prior_list) * theta)
+
+
+def prior_transform(u):
+    A_min = -0.5
+    A_max = 1.1
+    x_min = 1e4
+    x_max = 1e5
+    sigma_min = 0.01
+    sigma_max = 100
+    continuum_min = 0.001
+    continuum_max = 0.9
+    prior_list = []
+    for ct, param in enumerate(u[:-1]):  # Don't include continuum
+        if ct % 3 == 0:  # Amplitude parameter
+            prior_list.append(u[ct])
+        if ct % 3 == 1:  # velocity parameter
+            prior_list.append((x_max)*u[ct])
+        if ct % 3 == 2:  # sigma parameter
+            prior_list.append((sigma_max)*u[ct]+0.01)
+    prior_list.append((continuum_max)*u[ct])  # Include continuum
+    #print(prior_list)
+    return prior_list
 
 
 def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, prior_gauss):

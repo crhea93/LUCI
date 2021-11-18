@@ -10,12 +10,16 @@ import scipy.stats as spst
 import astropy.stats as astrostats
 import warnings
 import matplotlib.pyplot as plt
-#import corner
+import corner
 warnings.filterwarnings("ignore")
+import nestle
+import dynesty
+from dynesty import utils as dyfunc
+
 
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, calculate_flux, calculate_flux_err
-from LUCI.LuciBayesian import log_probability
+from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
 
 
 
@@ -53,7 +57,9 @@ class Fit:
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
                  ML_model, trans_filter=None,
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
-                 bayes_bool=False, uncertainty_bool=False, mdn=False):
+                 bayes_bool=False, bayes_method='emcee',
+                 uncertainty_bool=False, mdn=False,
+                 ):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -72,6 +78,7 @@ class Fit:
             zpd_index: Zero Path Difference index
             filter: SITELLE filter (e.x. 'SN3')
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
+            bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
         """
@@ -118,6 +125,7 @@ class Fit:
         # ADD ML_MODEL
         self.ML_model = ML_model
         self.bayes_bool = bayes_bool
+        self.bayes_method = bayes_method
         self.uncertainty_bool = uncertainty_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
@@ -136,6 +144,7 @@ class Fit:
         self.x_max = 1e6 #  15600
         self.sigma_min = 0.001;
         self.sigma_max = 300
+        self.flat_samples = None
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()
@@ -541,7 +550,9 @@ class Fit:
                     'velocities': vels, 'sigmas': sigmas,
                     'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                     'axis_step': self.axis_step, 'corr': self.correction_factor,
-                    'continuum': self.fit_sol[-1], 'scale':self.spectrum_scale}
+                    'continuum': self.fit_sol[-1], 'scale':self.spectrum_scale,
+                    'flat_samples': self.flat_samples
+                    }
         return fit_dict
 
     def fit_Bayes(self):
@@ -555,50 +566,73 @@ class Fit:
         # Set the number of dimensions -- this is somewhat arbitrary
         n_dim = 3 * self.line_num + 1
         # Set number of MCMC walkers. Again, this is somewhat arbitrary
-        n_walkers = n_dim * 3 + 4
+        n_walkers = 200#n_dim * 3 + 4
         # Initialize walkers
         random_ = 1e-4 * np.random.randn(n_walkers, n_dim)
-        # Scale some of the walkers based on more realistic values
-        #for i in range(self.line_num):
-        #    random_[3*i] *= 0.05
-        #    random_[3*i+2] *= 0.1
-        #random_[-1] *= 0.01
         init_ = self.fit_sol  + random_ #+ self.fit_sol[-1] + random_
-        # Ensure that walkers for amplitude and Gaussian broadening are positive
-        #for i in range(self.line_num):
-        #    init_[:,3*i] = np.abs(init_[:,3*i])
-        #    init_[:,3*i+2] = np.abs(init_[:,3*i+2])
-        #    print(init_[:, 3*i])
         # Ensure continuum values for walkers are positive
         init_[:,-1] = np.abs(init_[:,-1])
-        # Set Ensemble Sampler
-        sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
-                                        args=(self.axis_restricted, self.spectrum_restricted,
-                                        self.noise,self.model_type, self.line_num, self.sinc_width,
-                                        [self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma]
-                                        )  # End additional args
-                                        )  # End EnsembleSampler
-        # Call Ensemble Sampler setting 2000 walks
-        sampler.run_mcmc(init_, 2000, progress=True)
-        # Obtain Ensemble Sampler results and discard first 200 walks (10%)
-        flat_samples = sampler.get_chain(discard=200, flat=True)
-        parameters_med = []
-        parameters_std = []
-        for i in range(n_dim):  # Calculate and store these results
-            median = np.median(flat_samples[:, i])
-            std = np.std(flat_samples[:, i])
-            parameters_med.append(median)
-            parameters_std.append(std)
-        self.fit_sol = parameters_med
-        self.uncertainties = parameters_std
-        # We now must unscale the amplitude
+        if self.bayes_method == 'dynesty':
+            # Run nested sampling
+            '''f = lambda theta: log_likelihood_bayes(theta, self.axis_restricted, self.spectrum_restricted,
+                                                    self.noise,self.model_type, self.line_num, self.sinc_width,
+                                                  )
+            res = nestle.sample(f, prior_transform, n_dim, method='classic',
+                                npoints=100)
+            print(res.summary())
+            # weighted average and covariance:
+            p, cov = nestle.mean_and_cov(res.samples, res.weights)
+            print(p)
+            print(cov)
+            parameters_med = p
+            parameters_std = cov'''
+            #f = lambda theta: log_likelihood_bayes(theta, self.axis_restricted, self.spectrum_restricted,
+            #                                        self.noise,self.model_type, self.line_num, self.sinc_width,
+            #                                      )
+            dsampler = dynesty.NestedSampler(log_likelihood_bayes, prior_transform, ndim=n_dim, logl_args=(self.axis_restricted, self.spectrum_restricted,
+                                                    self.noise,self.model_type, self.line_num, self.sinc_width), sample='rwalk', maxiter=1000, bound='balls')
+            dsampler.run_nested()
+            dres = dsampler.results
+            samples, weights = dres.samples, np.exp(dres.logwt - dres.logz[-1])
+            mean, cov = dyfunc.mean_and_cov(samples, weights)
+            std = np.sqrt(np.diag(cov))
+            parameters_med = mean
+            parameters_std = std
+        elif self.bayes_method == 'emcee':
+            # Set Ensemble Sampler
+            sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
+                                            args=(self.axis_restricted, self.spectrum_restricted,
+                                            self.noise,self.model_type, self.line_num, self.sinc_width,
+                                            [self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma]
+                                            )  # End additional args
+                                            )  # End EnsembleSampler
+            # Call Ensemble Sampler setting 2000 walks
+            sampler.run_mcmc(init_, 20000, progress=True)
+            # Obtain Ensemble Sampler results and discard first 200 walks (10%)
+            flat_samples = sampler.get_chain(discard=500, flat=True)
+            parameters_med = []
+            parameters_std = []
+            self.flat_samples = flat_samples
+            for i in range(n_dim):  # Calculate and store these results
+                median = np.median(flat_samples[:, i])
+                std = np.std(flat_samples[:, i])
+                parameters_med.append(median)
+                parameters_std.append(std)
+            #self.fit_sol = parameters_med
+            #self.uncertainties = parameters_std
+        else:
+            print("The bayes_method parameter has been incorrectly set to '%s'"%self.bayes_method)
+            print("Please enter either 'emcee' or 'dynesty' instead.")
+        # We now must scale the amplitude
         for i in range(self.line_num):
             parameters_med[i * 3] *= self.spectrum_scale
-            self.uncertainties[i*3] *= self.spectrum_scale
+            parameters_std[i*3] *= self.spectrum_scale
         # Scale continuum
         parameters_med[-1] *= self.spectrum_scale
-        self.uncertainties[-1] *= self.spectrum_scale
+        parameters_std[-1] *= self.spectrum_scale
+
         self.fit_sol = parameters_med
+        self.uncertainties = parameters_std
         # Calculate fit vector using updated values
         if self.model_type == 'gaussian':
             self.fit_vector = Gaussian().plot(self.axis, self.fit_sol[:-1], self.line_num) + self.fit_sol[-1]
