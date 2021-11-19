@@ -97,6 +97,7 @@ Prerequisites
        howLuciWorks
        uncertainties
        fit_options
+       wavelength_corrections
        license
 
 Examples

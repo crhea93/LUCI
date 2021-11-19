@@ -3,6 +3,7 @@ import h5py
 import os
 from astropy.wcs import WCS
 from astropy.wcs.utils import pixel_to_skycoord
+import astropy.units as u
 from tqdm import tqdm
 import numpy as np
 import keras
@@ -17,6 +18,8 @@ import astropy.stats as astrostats
 from astroquery.astrometry_net import AstrometryNet
 from astropy.io import fits
 import multiprocessing
+from astropy.time import Time
+from astropy.coordinates import SkyCoord, EarthLocation
 from numba import jit, set_num_threads
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 
@@ -1120,6 +1123,18 @@ class Luci():
         else:
             # Code to execute when solve fails
             print('Astronomy.net failed to solve. This astrometry has not been updated!')
+
+
+    def heliocentric_correction(self):
+        """
+        Calculate heliocentric correction for observation given the location of SITELLE/CFHT
+        and the time of the observation
+        """
+        CFHT = EarthLocation.of_site('CFHT')
+        sc = SkyCoord(ra=self.hdr_dict['CRVAL1']*u.deg, dec=self.hdr_dict['CRVAL2']*u.deg)
+        heliocorr = sc.radial_velocity_correction('heliocentric', obstime=Time(self.hdr_dict['DATE-OBS']), location=CFHT)
+        helio_kms = heliocorr.to(u.km/u.s)
+        return helio_kms
 
 
     def close(self):
