@@ -310,15 +310,12 @@ class Fit:
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
-        #if self.mdn == True:
+        if self.mdn == True:
             # Update position and sigma_gauss bounds
-        #    self.x_min = 1e7 / (((self.vel_ml+10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
-        #    self.x_max = 1e7/(((self.vel_ml-10*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
-        #    self.sigma_min =  (line_pos_est * (self.broad_ml)) / (3e5) - (line_pos_est * (self.broad_ml_sigma)) / (3e5)
-        #    self.sigma_max =  (line_pos_est * (self.broad_ml)) / (3e5) + (line_pos_est * (self.broad_ml_sigma)) / (3e5)
-        #print(self.x_min, self.x_max)
-        #print(self.sigma_min, self.sigma_max)
-        #print(self.broad_ml, self.broad_ml_sigma)
+            self.x_min = 1e7 / (((self.vel_ml+3*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+            self.x_max = 1e7/(((self.vel_ml-3*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+            self.sigma_min =  (line_pos_est * (self.broad_ml)) / (3e5) - 3*(line_pos_est * (self.broad_ml_sigma)) / (3e5)
+            self.sigma_max =  (line_pos_est * (self.broad_ml)) / (3e5) + 3*(line_pos_est * (self.broad_ml_sigma)) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
 
@@ -328,7 +325,7 @@ class Fit:
 
         Function to estimate the continuum level. We use a sigma clipping algorithm over the
         restricted axis/spectrum to effectively ignore emission lines. Therefore, we
-        are left with the continuum. We take the medium value of this continuum as the initial
+        are left with the continuum. We take the min value of this continuum as the initial
         guess.
 
         Args:
@@ -341,7 +338,7 @@ class Fit:
         # Clip values at given sigma level (defined by sigma_level)
         clipped_spec = astrostats.sigma_clip(self.spectrum_restricted, sigma=sigma_level, masked=False, copy=False, maxiters=3)
         # Now take the mean value to serve as the continuum value
-        cont_val = np.median(clipped_spec)
+        cont_val = np.min(clipped_spec)
         return cont_val
 
 

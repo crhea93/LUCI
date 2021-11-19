@@ -94,6 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Example Modules:</span></p>
@@ -312,7 +313,7 @@ Else it will throw an error</p>
 <dd><p>TODO: Test</p>
 <p>Function to estimate the continuum level. We use a sigma clipping algorithm over the
 restricted axis/spectrum to effectively ignore emission lines. Therefore, we
-are left with the continuum. We take the medium value of this continuum as the initial
+are left with the continuum. We take the min value of this continuum as the initial
 guess.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
