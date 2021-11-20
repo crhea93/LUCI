@@ -78,7 +78,7 @@ class Fit:
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
-                          'Hbeta': 486.133}
+                          'Hbeta': 486.133, 'OH':649.873}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.spectrum = spectrum
         self.spectrum_clean = spectrum/ np.max(spectrum)  # Clean normalized spectrum that will be used for calculating the noise
@@ -489,57 +489,88 @@ class Fit:
 
 
 
-    def fit(self):
+    def fit(self, sky_line=False):
         """
         Primary function call for a spectrum. This will estimate the velocity using
         our machine learning algorithm described in Rhea et al. 2020a. Then we will
         fit our lines using scipy.optimize.minimize.
+
+        Args:
+            sky_line: Boolean to fit sky lines (default False)
 
         Return:
             dictionary of parameters returned by the fit. The dictionary has the following form:
             {"fit_vector": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
-        if self.ML_model != None:
-            # Interpolate Spectrum
-            self.interpolate_spectrum()
-            # Estimate the priors using machine learning algorithm
-            self.estimate_priors_ML()
-        else:
+        if sky_line != True:
+            if self.ML_model != None:
+                # Interpolate Spectrum
+                self.interpolate_spectrum()
+                # Estimate the priors using machine learning algorithm
+                self.estimate_priors_ML()
+            else:
+                self.spectrum_scale = np.max(self.spectrum)
+            # Apply Fit
+            self.calculate_params()
+            # Check if Bayesian approach is required
+            if self.bayes_bool == True:
+                self.fit_Bayes()
+            # Calculate fit statistic
+            chi_sqr, red_chi_sqr = self.calc_chisquare(self.fit_vector, self.spectrum, self.noise, 3*self.line_num+1)
+            # Collect Amplitudes
+            ampls = []
+            fluxes = []
+            vels = []
+            sigmas = []
+            vels_errors = []
+            sigmas_errors = []
+            flux_errors = []
+            for line_ct, line_ in enumerate(self.lines):  # Step through each line
+                ampls.append(self.fit_sol[line_ct * 3])
+                # Calculate flux
+                fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.model_type, self.sinc_width))
+                vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
+                sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
+                vels_errors.append(calculate_vel_err(line_ct,  self.lines, self.fit_sol, self.line_dict, self.uncertainties))
+                sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
+                flux_errors.append(calculate_flux_err(line_ct, self.fit_sol, self.uncertainties, self.model_type, self.sinc_width))
+            # Collect parameters to return in a dictionary
+            fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
+                        'fit_vector': self.fit_vector, 'fit_axis':self.axis,
+                        'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
+                        'velocities': vels, 'sigmas': sigmas,
+                        'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
+                        'axis_step': self.axis_step, 'corr': self.correction_factor,
+                        'continuum': self.fit_sol[-1], 'scale':self.spectrum_scale}
+            return fit_dict
+        else:  # Fit sky line
             self.spectrum_scale = np.max(self.spectrum)
-        # Apply Fit
-        self.calculate_params()
-        # Check if Bayesian approach is required
-        if self.bayes_bool == True:
-            self.fit_Bayes()
-        # Calculate fit statistic
-        chi_sqr, red_chi_sqr = self.calc_chisquare(self.fit_vector, self.spectrum, self.noise, 3*self.line_num+1)
-        # Collect Amplitudes
-        ampls = []
-        fluxes = []
-        vels = []
-        sigmas = []
-        vels_errors = []
-        sigmas_errors = []
-        flux_errors = []
-        for line_ct, line_ in enumerate(self.lines):  # Step through each line
-            ampls.append(self.fit_sol[line_ct * 3])
-            # Calculate flux
-            fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.model_type, self.sinc_width))
-            vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
-            sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
-            vels_errors.append(calculate_vel_err(line_ct,  self.lines, self.fit_sol, self.line_dict, self.uncertainties))
-            sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
-            flux_errors.append(calculate_flux_err(line_ct, self.fit_sol, self.uncertainties, self.model_type, self.sinc_width))
-        # Collect parameters to return in a dictionary
-        fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
-                    'fit_vector': self.fit_vector, 'fit_axis':self.axis,
-                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
-                    'velocities': vels, 'sigmas': sigmas,
-                    'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
-                    'axis_step': self.axis_step, 'corr': self.correction_factor,
-                    'continuum': self.fit_sol[-1], 'scale':self.spectrum_scale}
-        return fit_dict
+            # Apply Fit
+            nll = lambda *args: -self.log_likelihood(*args)
+            initial = np.ones((4))
+            bounds_ = []
+            initial[-1] = self.cont_estimate(sigma_level=2.0)  # Add continuum constant and intialize it
+            initial[0] = 5*self.cont_estimate(sigma_level=2.0)  # Make sure it is well above the continuum
+            initial[1] = -80  # Theoretical value
+            initial[2] = 10  # Doesn't matter since we are fitting a sinc with a fixed width
+            bounds_.append((self.A_min, self.A_max))
+            bounds_.append((self.x_min, self.x_max))
+            bounds_.append((self.sigma_min, self.sigma_max))
+            bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
+            bounds_u = [val[1] for val in bounds_] + [0.75]  # Continuum Constraint
+            bounds = Bounds(bounds_l, bounds_u)
+            self.inital_values = initial
+            sigma_cons = self.sigma_constraints()
+            vel_cons = self.vel_constraints()
+            #vel_cons_multiple = self.multiple_component_vel_constraint()
+            cons = (sigma_cons + vel_cons)# + vel_cons_multiple)
+            soln = minimize(nll, initial, method='SLSQP',
+                            options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-8,
+                            args=(), constraints=cons)
+            parameters = soln.x
+            velocity = parameters[1]
+            return velocity
 
     def fit_Bayes(self):
         """
