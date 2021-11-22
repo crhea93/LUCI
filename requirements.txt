@@ -22,3 +22,6 @@ tensorflow-estimator
 tensorflow-probability
 numba
 pytest
+tensorflow
+corner
+dynesty
