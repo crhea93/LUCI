@@ -525,7 +525,7 @@ class Luci():
                 sky = sky[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                try:
+                if len(sky) > 0:  # Ensure that there are values in sky
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                         self.model_ML, trans_filter = self.transmission_interpolated,
                         theta=self.interferometer_theta[x_pix, y_pix],
@@ -549,7 +549,7 @@ class Luci():
                     corr_local.append(fit_dict['corr'])
                     step_local.append(fit_dict['axis_step'])
                     continuum_local.append(fit_dict['continuum'])
-                except:
+                else:
                     ampls_local.append([0]*len(lines))
                     flux_local.append([0]*len(lines))
                     flux_errs_local.append([0]*len(lines))
