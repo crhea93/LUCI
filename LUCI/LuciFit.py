@@ -12,7 +12,6 @@ import warnings
 import matplotlib.pyplot as plt
 import corner
 warnings.filterwarnings("ignore")
-import nestle
 import dynesty
 from dynesty import utils as dyfunc
 
