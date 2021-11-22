@@ -1150,6 +1150,63 @@ class Luci():
         return helio_kms
 
 
+    def skyline_calibration(self, n_grid):
+        """
+        Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
+        of the telescope lead to minor offset that can be measured by high resolution
+        spectra (R~5000). This function divides the FOV into a grid of NxN spaxel regions
+        of 10x10 pixels to increase the signal. The function will output a map of the
+        velocity offset. The initial velocity guess is set to 80 km/s. Additionally,
+        we fit with a simple sinc function.
+
+        Args:
+            n_grid: NxN grid (int)
+
+        Return:
+            Velocity offset map
+        """
+        # Calculate grid
+        x_min = 0
+        x_max = self.cube_final.shape[0]
+        x_step = (x_max - x_min)/n_grid
+        y_min = 0
+        y_max = self.cube_final.shape[1]
+        y_step = (y_max - y_min)/n_grid
+        vel_grid = np.zeros((n_grid, n_grid))
+        for x_grid in range(len(n_grid)):  # Step through x steps
+            for y_grid in range(len(n_grid)):  # Step through y steps
+                # Collect spectrum in 10x10 region
+                x_center = x_min + int(0.5*x_step*x_grid)
+                y_center = y_min + int(0.5*y_step*y_grid)
+                integrated_spectrum = self.cube_final[x_center-5:x_center+5, y_center-5:y_center+5, :].mean(axis=0).mean(axis=0)
+                # Collapse to single spectrum
+                good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
+                sky = integrated_spectrum[good_sky_inds]
+                axis = self.spectrum_axis[good_sky_inds]
+                # Call fit!
+                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH'], [1], [1],
+                        self.model_ML, trans_filter = self.transmission_interpolated,
+                        theta = self.interferometer_theta[x_pix, y_pix],
+                        delta_x = self.hdr_dict['STEP'],  n_steps = self.step_nb,
+                        zpd_index = self.zpd_index,
+                        filter = self.hdr_dict['FILTER'],
+                        bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
+                        mdn=self.mdn)
+                velocity = fit.fit(sky_line=True)
+                vel_grid[x_grid, y_grid] = float(velocity)
+        # Now that we have the grid, we need to reproject it onto the original pixel grid
+        vel_grid_final = np.zeros((x_max, y_max))
+        for x_grid in range(len(n_grid)):  # Step through x steps
+            for y_grid in range(len(n_grid)):  # Step through y steps
+                # Collect spectrum in 10x10 region
+                x_center = x_min + int(0.5*x_step*x_grid)
+                y_center = y_min + int(0.5*y_step*y_grid)
+                vel_grid_final[x_center-5:x_center+5, y_center-5:y_center+5] = vel_grid[x_grid, y_grid]
+        fits.writeto(self.output_dir+'/velocity_correction.fits', vel_grid, self.header, overwrite=True)
+
+
+
+
     def close(self):
         """
         Functionality to delete Luci object (and thus the cube) from memory
