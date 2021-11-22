@@ -525,29 +525,42 @@ class Luci():
                 sky = sky[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                    self.model_ML, trans_filter = self.transmission_interpolated,
-                    theta=self.interferometer_theta[x_pix, y_pix],
-                    delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
-                    zpd_index = self.zpd_index,
-                    filter = self.hdr_dict['FILTER'],
-                    bayes_bool=bayes_bool, bayes_method=bayes_method,
-                    uncertainty_bool=uncertainty_bool,
-                    mdn=self.mdn
-                    )
-                fit_dict = fit.fit()
-                # Save local list of fit values
-                ampls_local.append(fit_dict['amplitudes'])
-                flux_local.append(fit_dict['fluxes'])
-                flux_errs_local.append(fit_dict['flux_errors'])
-                vels_local.append(fit_dict['velocities'])
-                broads_local.append(fit_dict['sigmas'])
-                vels_errs_local.append(fit_dict['vels_errors'])
-                broads_errs_local.append(fit_dict['sigmas_errors'])
-                chi2_local.append(fit_dict['chi2'])
-                corr_local.append(fit_dict['corr'])
-                step_local.append(fit_dict['axis_step'])
-                continuum_local.append(fit_dict['continuum'])
+                try:
+                    fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+                        self.model_ML, trans_filter = self.transmission_interpolated,
+                        theta=self.interferometer_theta[x_pix, y_pix],
+                        delta_x = self.hdr_dict['STEP'], n_steps = self.step_nb,
+                        zpd_index = self.zpd_index,
+                        filter = self.hdr_dict['FILTER'],
+                        bayes_bool=bayes_bool, bayes_method=bayes_method,
+                        uncertainty_bool=uncertainty_bool,
+                        mdn=self.mdn
+                        )
+                    fit_dict = fit.fit()
+                    # Save local list of fit values
+                    ampls_local.append(fit_dict['amplitudes'])
+                    flux_local.append(fit_dict['fluxes'])
+                    flux_errs_local.append(fit_dict['flux_errors'])
+                    vels_local.append(fit_dict['velocities'])
+                    broads_local.append(fit_dict['sigmas'])
+                    vels_errs_local.append(fit_dict['vels_errors'])
+                    broads_errs_local.append(fit_dict['sigmas_errors'])
+                    chi2_local.append(fit_dict['chi2'])
+                    corr_local.append(fit_dict['corr'])
+                    step_local.append(fit_dict['axis_step'])
+                    continuum_local.append(fit_dict['continuum'])
+                except:
+                    ampls_local.append([0]*len(lines))
+                    flux_local.append([0]*len(lines))
+                    flux_errs_local.append([0]*len(lines))
+                    vels_local.append([0]*len(lines))
+                    broads_local.append([0]*len(lines))
+                    vels_errs_local.append([0]*len(lines))
+                    broads_errs_local.append([0]*len(lines))
+                    chi2_local.append(0)
+                    corr_local.append(0)
+                    step_local.append(0)
+                    continuum_local.append(0)
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
             flux_errors_fits[i] = flux_errs_local

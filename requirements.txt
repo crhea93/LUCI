@@ -1,7 +1,6 @@
 pillow==8.3.1
 scikit-image==0.17.2
 scipy
-tensorflow
 tqdm
 urllib3==1.26.6
 astropy
@@ -20,5 +19,6 @@ tensorboard==2.5.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.0
 tensorflow-estimator
+tensorflow-probability
 numba
 pytest

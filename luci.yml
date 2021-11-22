@@ -8,8 +8,9 @@ dependencies:
   - python=3.9.5
   - scikit-image=0.17.2
   - scipy=1.6.2
-  - tensorflow=2.4.1
-  - tensorflow-base=2.4.1
+  - tensorflow=2.7
+  - tensorflow-base
+  - tensorflow-probability
   - tqdm
   - urllib3=1.26.6
   - pip:

@@ -177,7 +177,7 @@ def prior_transform_nestle(theta):
 
 
 def prior_transform(u):
-    A_min = -0.5
+    A_min = 0.001
     A_max = 1.1
     x_min = 1e4
     x_max = 1e5
