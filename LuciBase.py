@@ -1168,40 +1168,50 @@ class Luci():
         # Calculate grid
         x_min = 0
         x_max = self.cube_final.shape[0]
-        x_step = (x_max - x_min)/n_grid
+        x_step = int((x_max - x_min)/n_grid)
         y_min = 0
         y_max = self.cube_final.shape[1]
-        y_step = (y_max - y_min)/n_grid
+        y_step = int((y_max - y_min)/n_grid)
         vel_grid = np.zeros((n_grid, n_grid))
-        for x_grid in range(len(n_grid)):  # Step through x steps
-            for y_grid in range(len(n_grid)):  # Step through y steps
+        for x_grid in range(n_grid):  # Step through x steps
+            for y_grid in range(n_grid):  # Step through y steps
                 # Collect spectrum in 10x10 region
-                x_center = x_min + int(0.5*x_step*x_grid)
-                y_center = y_min + int(0.5*y_step*y_grid)
-                integrated_spectrum = self.cube_final[x_center-5:x_center+5, y_center-5:y_center+5, :].mean(axis=0).mean(axis=0)
+                x_center = x_min + int(0.5*(x_step)*(x_grid+1))
+                y_center = y_min + int(0.5*(y_step)*(y_grid+1))
+                #print(x_center, y_center)
+                integrated_spectrum = np.zeros_like(self.cube_final[x_center, y_center, :])  # Initialize as zeros
+                for i in range(5):  # Take 5x5 bins
+                    for j in range(5):
+                        integrated_spectrum += self.cube_final[x_center+i, y_center+i, :]
+                #print(self.cube_final[x_center, y_center, :])
+                #integrated_spectrum = self.cube_final[x_center, y_center, :].mean(axis=0).mean(axis=0)
+                #print(integrated_spectrum)
                 # Collapse to single spectrum
                 good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
                 sky = integrated_spectrum[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH'], [1], [1],
+                fit = Fit(sky, axis, self.wavenumbers_syn, 'gaussian', ['OH'], [1], [1],
                         self.model_ML, trans_filter = self.transmission_interpolated,
-                        theta = self.interferometer_theta[x_pix, y_pix],
+                        theta = self.interferometer_theta[x_center, y_center],
                         delta_x = self.hdr_dict['STEP'],  n_steps = self.step_nb,
                         zpd_index = self.zpd_index,
                         filter = self.hdr_dict['FILTER'],
-                        bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
-                        mdn=self.mdn)
+                        )
+                #plt.plot(axis, sky)
+                #plt.show()
+                #plt.clf()
                 velocity = fit.fit(sky_line=True)
                 vel_grid[x_grid, y_grid] = float(velocity)
         # Now that we have the grid, we need to reproject it onto the original pixel grid
+        print(vel_grid)
         vel_grid_final = np.zeros((x_max, y_max))
-        for x_grid in range(len(n_grid)):  # Step through x steps
-            for y_grid in range(len(n_grid)):  # Step through y steps
+        for x_grid in range(n_grid):  # Step through x steps
+            for y_grid in range(n_grid):  # Step through y steps
                 # Collect spectrum in 10x10 region
-                x_center = x_min + int(0.5*x_step*x_grid)
-                y_center = y_min + int(0.5*y_step*y_grid)
-                vel_grid_final[x_center-5:x_center+5, y_center-5:y_center+5] = vel_grid[x_grid, y_grid]
+                x_center = x_min + int(0.5*(x_step)*(x_grid+1))
+                y_center = y_min + int(0.5*(y_step)*(y_grid+1))
+                vel_grid_final[x_center-x_step:x_center+x_step, y_center-y_step:y_center+y_step] = vel_grid[x_grid, y_grid]
         fits.writeto(self.output_dir+'/velocity_correction.fits', vel_grid, self.header, overwrite=True)
 
 
