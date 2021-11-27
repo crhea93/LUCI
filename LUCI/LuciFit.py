@@ -628,7 +628,8 @@ class Fit:
             sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
                                             args=(self.axis_restricted, self.spectrum_restricted,
                                             self.noise,self.model_type, self.line_num, self.sinc_width,
-                                            [self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma]
+                                            [self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma],
+                                            self.vel_rel, self.sigma_rel
                                             )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
@@ -645,6 +646,7 @@ class Fit:
                 parameters_std.append(std)
             #self.fit_sol = parameters_med
             #self.uncertainties = parameters_std
+            print(parameters_med)
         else:
             print("The bayes_method parameter has been incorrectly set to '%s'"%self.bayes_method)
             print("Please enter either 'emcee' or 'dynesty' instead.")
