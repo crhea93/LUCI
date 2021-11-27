@@ -345,6 +345,8 @@ class Fit:
         """
         # Clip values at given sigma level (defined by sigma_level)
         clipped_spec = astrostats.sigma_clip(self.spectrum_restricted, sigma=sigma_level, masked=False, copy=False, maxiters=3)
+        if len(clipped_spec) < 1:
+            clipped_spec = self.spectrum_restricted
         # Now take the mean value to serve as the continuum value
         cont_val = np.min(clipped_spec)
         return cont_val
@@ -558,10 +560,10 @@ class Fit:
             nll = lambda *args: -self.log_likelihood(*args)
             initial = np.ones((4))
             bounds_ = []
-            initial[-1] = self.cont_estimate(sigma_level=2.0)  # Add continuum constant and intialize it
-            initial[0] = 5*self.cont_estimate(sigma_level=2.0)  # Make sure it is well above the continuum
-            initial[1] = -80  # Theoretical value
+            initial[0] = 2*self.cont_estimate(sigma_level=2.0)  # Make sure it is well above the continuum
+            initial[1] = 1539.4  # Theoretical value corresponding to -80 km/s for our OH line
             initial[2] = 10  # Doesn't matter since we are fitting a sinc with a fixed width
+            initial[3] = self.cont_estimate(sigma_level=2.0)  # Add continuum constant and intialize it
             bounds_.append((self.A_min, self.A_max))
             bounds_.append((self.x_min, self.x_max))
             bounds_.append((self.sigma_min, self.sigma_max))
@@ -569,15 +571,11 @@ class Fit:
             bounds_u = [val[1] for val in bounds_] + [0.75]  # Continuum Constraint
             bounds = Bounds(bounds_l, bounds_u)
             self.inital_values = initial
-            sigma_cons = self.sigma_constraints()
-            vel_cons = self.vel_constraints()
-            #vel_cons_multiple = self.multiple_component_vel_constraint()
-            cons = (sigma_cons + vel_cons)# + vel_cons_multiple)
-            soln = minimize(nll, initial, method='SLSQP',
+            soln = minimize(nll, initial, method='BFGS',
                             options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-8,
-                            args=(), constraints=cons)
+                            args=())
             parameters = soln.x
-            velocity = parameters[1]
+            velocity = 1e7/3e5*((parameters[1]-self.line_dict['OH'])/self.line_dict['OH'])
             return velocity
 
     def fit_Bayes(self):
