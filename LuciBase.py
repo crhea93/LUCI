@@ -83,13 +83,13 @@ class Luci():
                 else:
                     print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
             else:  # mdn == True
-                if self.filter in ['SN1', 'SN2', 'SN3']:
+                if self.filter in ['SN3']:
                     self.ref_spec = self.Luci_path+'ML/Reference-Spectrum-R%i-%s.fits'%(resolution, self.filter)
                     self.read_in_reference_spectrum()
                     self.model_ML = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
                     self.model_ML.load_weights(self.Luci_path+'ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s'%(resolution, self.filter, resolution, self.filter))
                 else:
-                    print('LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
+                    print('LUCI does not support machine learning parameter estimates using a MDN for the filter you entered. Please set ML_bool=False or mdn=False.')
         else:
             self.model_ML = None
         self.read_in_transmission()
@@ -232,7 +232,7 @@ class Luci():
             xmin,xmax,ymin,ymax = self.get_quadrant_dims(iquad)
             iquad_data = file['quad00%i'%iquad]['data'][:]  # Save data to intermediate array
             iquad_data[(np.isfinite(iquad_data) == False)]= 1e-22 # Set infinite values to 1-e22
-            iquad_data[(iquad_data < -1e-16)]= -1e-22 # Set high negative flux values to 1e-22
+            iquad_data[(iquad_data < -1e-16)]= 1e-22 # Set high negative flux values to 1e-22
             iquad_data[(iquad_data > 1e-9)]= 1e-22 # Set unrealistically high positive flux values to 1e-22
             self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
         self.cube_final = self.cube_final#.transpose(1, 0, 2)
@@ -475,11 +475,12 @@ class Luci():
 
         """
         # Initialize fit solution arrays
-        if binning != None and binning > 1:
+        if binning != None and binning != 1:
             self.bin_cube(binning, x_min, x_max, y_min, y_max)
-            #x_min_bin = int(x_min/binning) ; y_min_bin = int(y_min/binning) ; x_max_bin = int(x_max/binning) ;  y_max_bin = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
             x_min = 0 ; y_min = 0
+        elif binning == 1:
+            pass  # Don't do anything if binning is set to 1
         chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
@@ -512,7 +513,7 @@ class Luci():
             continuum_local = []
             for j in range(x_max-x_min):
                 x_pix = x_min+j
-                if binning is not None:
+                if binning is not None and binning != 1:
                     sky = self.cube_binned[x_pix, y_pix, :]
                 else:
                     sky = self.cube_final[x_pix, y_pix, :]
@@ -574,7 +575,7 @@ class Luci():
             continuum_fits[i] = continuum_local
             return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
         # Write outputs (Velocity, Broadening, and Amplitudes)
-        if binning is not None and binning > 1:
+        if binning is not None and binning != 1:
             # Check if deep image exists: if not, create it
             if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
                 self.create_deep_image()
@@ -639,7 +640,7 @@ class Luci():
         y_min = 0
         y_max = self.cube_final.shape[1]
         # Initialize fit solution arrays
-        if binning != None and binning > 1:
+        if binning != None and binning != 1:
             self.bin_cube(binning, x_min, x_max, y_min, y_max)
             #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
@@ -703,7 +704,7 @@ class Luci():
                 # Check if pixel is in the mask or not
                 # If so, fit as normal. Else, set values to zero
                 if mask[x_pix, y_pix] == True:
-                    if binning is not None:
+                    if binning is not None and binning != 1:
                         sky = self.cube_binned[x_pix, y_pix, :]
                     else:
                         sky = self.cube_final[x_pix, y_pix, :]
@@ -758,7 +759,6 @@ class Luci():
             step_fits[i] = step_local
             continuum_fits[i] = continuum_local
             return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
-            #return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, continuum_local
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None and binning > 1:
             # Check if deep image exists: if not, create it
@@ -771,7 +771,6 @@ class Luci():
                 self.create_deep_image()
             wcs = WCS(self.header, naxis=2)
         cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-        #res_parallel = Parallel(n_jobs=n_threads, mmap_mode='w+')(delayed(fit_calc)(i,ct) for i in tqdm(range(y_max-y_min)))
         for step_i in tqdm(range(y_max-y_min)):
             fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits, broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
         self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
@@ -803,6 +802,7 @@ class Luci():
 
 
         """
+        sky = None
         sky = self.cube_final[pixel_x, pixel_y, :]
         if bkg is not None:
             sky -= bkg  # Subtract background spectrum
@@ -844,12 +844,13 @@ class Luci():
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
         spec_ct = 0
         # Initialize fit solution arrays
-        if binning != None:
+        if binning != None and binning != 1:
             self.bin_cube(binning, x_min, x_max, y_min, y_max)
             #x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max-x_min)/binning) ;  y_max = int((y_max-y_min)/binning)
             x_min = 0 ; y_min = 0
         for i in tqdm(range(y_max-y_min)):
+            sky = None
             y_pix = y_min + i
             vel_local = []
             broad_local = []
@@ -858,7 +859,7 @@ class Luci():
             chi2_local = []
             for j in range(x_max-x_min):
                 x_pix = x_min+j
-                if binning is not None:
+                if binning is not None and binning != 1:
                     sky = self.cube_binned[x_pix, y_pix, :]
                 else:
                     sky = self.cube_final[x_pix, y_pix, :]
@@ -1198,10 +1199,12 @@ class Luci():
                         zpd_index = self.zpd_index,
                         filter = self.hdr_dict['FILTER'],
                         )
+
+                velocity, fit_vector = fit.fit(sky_line=True)
                 #plt.plot(axis, sky)
+                #plt.plot(axis, fit_vector)
                 #plt.show()
                 #plt.clf()
-                velocity = fit.fit(sky_line=True)
                 vel_grid[x_grid, y_grid] = float(velocity)
         # Now that we have the grid, we need to reproject it onto the original pixel grid
         print(vel_grid)

@@ -309,11 +309,12 @@ class Fit:
         line_pos_est = 1e7 / ((self.vel_ml / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
-            line_amp_est = np.max([self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
+            line_amp_est = np.max([
+                                   #[self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
                                    self.spectrum_normalized[line_ind - 2], self.spectrum_normalized[line_ind - 1],
                                    self.spectrum_normalized[line_ind],
                                    self.spectrum_normalized[line_ind + 1], self.spectrum_normalized[line_ind + 2],
-                                   self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
+                                   #self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
                                    ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
@@ -376,7 +377,7 @@ class Fit:
         # Add constant contimuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
+        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
     def fun_der(self, theta, yerr):
         return Jacobian(lambda theta: self.log_likelihood(theta, yerr))(theta).ravel()
@@ -412,8 +413,8 @@ class Fit:
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     expr_dict = {'type': 'eq',
-                             'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - self.line_dict.values()[3*ind_unique+1]) / (1e7 / x[3*ind_unique+1])) - 3e5 * (
-                                     (1e7 / x[3*ind_0+1] - self.line_dict.values()[3*ind_0+1]) / (1e7 / x[3*ind_0+1]))}
+                             'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - self.line_dict.values()[3*ind_unique+1]) / (self.line_dict.values()[3*ind_unique+1])) - 3e5 * (
+                                     (1e7 / x[3*ind_0+1] - self.line_dict.values()[3*ind_0+1]) / (self.line_dict.values()[3*ind_unique+1]))}
         return vel_dict_list
 
 
@@ -561,22 +562,30 @@ class Fit:
             initial = np.ones((4))
             bounds_ = []
             initial[0] = 2*self.cont_estimate(sigma_level=2.0)  # Make sure it is well above the continuum
-            initial[1] = 1539.4  # Theoretical value corresponding to -80 km/s for our OH line
+            initial[1] = 15383  # Theoretical value corresponding to -80 km/s for our OH line
             initial[2] = 10  # Doesn't matter since we are fitting a sinc with a fixed width
             initial[3] = self.cont_estimate(sigma_level=2.0)  # Add continuum constant and intialize it
-            bounds_.append((self.A_min, self.A_max))
-            bounds_.append((self.x_min, self.x_max))
+            bounds_.append((0, self.A_max))
+            bounds_.append((15370, 15395))
             bounds_.append((self.sigma_min, self.sigma_max))
             bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
-            bounds_u = [val[1] for val in bounds_] + [0.75]  # Continuum Constraint
+            bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum Constraint
             bounds = Bounds(bounds_l, bounds_u)
             self.inital_values = initial
-            soln = minimize(nll, initial, method='BFGS',
-                            options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-8,
+            soln = minimize(nll, initial, method='SLSQP',
+                            options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-2,
                             args=())
             parameters = soln.x
-            velocity = 1e7/3e5*((parameters[1]-self.line_dict['OH'])/self.line_dict['OH'])
-            return velocity
+            # We now must unscale the amplitude
+            for i in range(self.line_num):
+                parameters[i * 3] *= self.spectrum_scale
+                self.uncertainties[i*3] *= self.spectrum_scale
+            # Scale continuum
+            parameters[-1] *= self.spectrum_scale
+            print(parameters)
+            velocity = 3e5*((1e7/parameters[1]-self.line_dict['OH'])/self.line_dict['OH'])
+            fit_vector = Sinc().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[-1]
+            return velocity, fit_vector
 
     def fit_Bayes(self):
         """
