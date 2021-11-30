@@ -38,6 +38,24 @@ class Gaussian:
             f1 += self.function(channel, params)
         return f1
 
+    def evaluate_bayes(self, channel, theta):
+        """
+        Function to initiate the model calculation for Bayesian Analysis
+
+        Args:
+            channel: Wavelength Axis in cm-1
+            theta: List of parameters for all the models in the following order
+                            [amplitude, line location, sigma]
+
+        Return:
+            Value of function given input parameters (theta)
+
+        """
+        f1 = 0.0
+        params = theta[model_num * 3:(model_num + 1) * 3]
+        f1 += self.function(channel, params)
+        return f1
+
     def plot(self, channel, theta, line_num):
         """
         Function to initiate the correct number of models to fit
@@ -98,6 +116,25 @@ class Sinc:
         for model_num in range(line_num):
             params = theta[model_num * 3:(model_num + 1) * 3]
             f1 += np.array(self.function(channel, params, sinc_width))
+        return f1
+
+    def evaluate_bayes(self, channel, theta, sinc_width):
+        """
+        Function to initiate the model calculation for Bayesian Analysis
+
+        Args:
+            channel: Wavelength Axis in cm-1
+            theta: List of parameters for all the models in the following order
+                            [amplitude, line location, sigma]
+            sinc_width: Fixed with of the sinc function
+
+        Return:
+            Value of function given input parameters (theta)
+
+        """
+        f1 = 0.0
+        params = theta[model_num * 3:(model_num + 1) * 3]
+        f1 += np.array(self.function(channel, params, sinc_width))
         return f1
 
 
@@ -172,6 +209,25 @@ class SincGauss:
             params = theta[model_num * 3:(model_num + 1) * 3]
             f1 += self.function(channel, params, sinc_width)
 
+        return np.real(f1)
+
+    def evaluate_bayes(self, channel, theta, sinc_width):
+        """
+        Function to initiate the model calculation for Bayesian Analysis
+
+        Args:
+            channel: Wavelength Axis in cm-1
+            theta: List of parameters for all the models in the following order
+                            [amplitude, line location, sigma]
+            sinc_width: Fixed with of the sinc function
+
+        Return:
+            Value of function given input parameters (theta)
+
+        """
+        f1 = 0.0
+        params = theta[model_num * 3:(model_num + 1) * 3]
+        f1 += self.function(channel, params, sinc_width)
         return np.real(f1)
 
 

@@ -10,7 +10,7 @@ emcee==3.1.0
 h5py~=2.10.0
 keras==2.4.3
 numdifftools==0.9.40
-numpy==1.19.5
+numpy
 joblib==1.0.1
 jupyterlab==3.0.16
 pytest==6.2.4

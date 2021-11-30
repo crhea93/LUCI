@@ -2,7 +2,9 @@ from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 import numpy as np
 
 
-def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width):
+
+
+def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, vel_rel, sigma_rel):
     """
     Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss
 
@@ -14,16 +16,40 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
         model_type: Fitting function (i.e. 'gaussian', 'sinc', or 'sincgauss')
         line_num: Number of lines for fit
         sinc_width: Fixed with of the sinc function
+        vel_rel:
+        sigma_rel
 
     Return:
         Gaussian log likelihood function evaluation
     """
-    if model_type == 'gaussian':
-        model = Gaussian().evaluate(axis_restricted, theta, line_num)
-    elif model_type == 'sinc':
-        model = Sinc().evaluate(axis_restricted, theta, line_num , sinc_width)
-    elif model_type == 'sincgauss':
-        model = SincGauss().evaluate(axis_restricted, theta, line_num, sinc_width)
+    model = 0  # Initialize
+    unique_vel_ct = 0  # Ct of how many uniques used for velocity
+    unique_broad_ct = 0  # Ct of how many uniques used for broadening
+    for line_ct in range(line_num):  # Each line
+        amp = theta[3*line_ct]  # Amplitude
+        vel = theta[3*line_ct+1]  # Velocity
+        broad = theta[3*line_ct+2]  # Broadening
+        if line_ct > 0:  # Only check for lines that aren't the first line being fit.
+            if vel_rel[line_ct] == vel_rel[line_ct - 1]:  # if  the vel is tied to the previous one
+                unique_vel_ct += 1
+                vel = theta[3*(line_ct-unique_vel_ct)]  # Velocity from the first of the uniques
+            else:
+                unique_vel_ct = 0  # Reset unique velocities
+            if broad_rel[line_ct] == broad_rel[line_ct - 1]:  # if  the vel is tied to the previous one
+                unique_broad_ct += 1
+                broad = theta[3*(line_ct-unique_broad_ct)]
+            else:
+                unique_broad_ct = 0  # Reset unique broadening
+        else:  # First line in list
+            pass
+        # Now get actual values
+        theta_line = [amp, vel, broad]
+        if model_type == 'gaussian':
+            model = Gaussian().evaluate_bayes(axis_restricted, theta_line)
+        elif model_type == 'sinc':
+            model = Sinc().evaluate_bayes(axis_restricted, theta_line, sinc_width)
+        elif model_type == 'sincgauss':
+            model = SincGauss().evaluate_bayes(axis_restricted, theta_line, sinc_width)
     # Add constant contimuum to model
     model += theta[-1]
     sigma2 = yerr ** 2
@@ -198,7 +224,7 @@ def prior_transform(u):
     return prior_list
 
 
-def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, prior_gauss):
+def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, prior_gauss, vel_rel, sigma_rel):
     """
     Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss
 
@@ -211,6 +237,8 @@ def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_typ
         line_num: Number of lines for fit
         sinc_width: Fixed with of the sinc function
         prior_gauss: Parameters for Gaussian priors [mu_vel, mu_broad, sigma_vel, sigma_broad]
+        vel_rel:
+        sigma_rel:
 
     Return:
         If not finite or if an nan we return -np.inf. Otherwise, we return the log likelihood + log prior
@@ -222,7 +250,7 @@ def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_typ
         return -np.inf
     if np.isnan(lp):
         return -np.inf
-    if np.isnan(lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width)):
+    if np.isnan(lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, vel_rel, sigma_rel)):
         return -np.inf
     else:
-        return lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width)
+        return lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, vel_rel, sigma_rel)
