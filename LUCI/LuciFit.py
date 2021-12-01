@@ -611,7 +611,8 @@ class Fit:
             dsampler = dynesty.NestedSampler(log_likelihood_bayes, prior_transform, ndim=n_dim,
                                                     logl_args=(self.axis_restricted, self.spectrum_restricted,
                                                     self.noise,self.model_type, self.line_num, self.sinc_width,self.vel_rel, self.sigma_rel),
-                                                    #sample='rwalk', maxiter=1000, bound='balls'
+                                                    sample='rwalk',
+                                                    #maxiter=1000, bound='balls'
                                                     )
             dsampler.run_nested()
             dres = dsampler.results

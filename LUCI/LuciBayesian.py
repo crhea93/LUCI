@@ -59,6 +59,11 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
         model = SincGauss().evaluate(axis_restricted, theta, line_num, sinc_width)
     model += theta[-1]
     sigma2 = yerr ** 2
+    #print(theta)
+    #print(axis_restricted)
+    #print(model)
+    #print(sigma2)
+    #exit()
     return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
 def log_prior(theta, axis_restricted, line_num, line, line_dict, mu_vel, mu_broad, sigma_vel, sigma_broad):
@@ -90,9 +95,6 @@ def log_prior(theta, axis_restricted, line_num, line, line_dict, mu_vel, mu_broa
     continuum_min = 0
     continuum_max = .75
     val_prior = 0
-
-    #for model_num in range(line_num):
-    #    params = theta[model_num * 3:(model_num + 1) * 3]
     within_bounds = True  # Boolean to determine if parameters are within bounds
     line_num = -1  # Current line  -- initialization
     for ct, param in enumerate(theta):
@@ -105,7 +107,6 @@ def log_prior(theta, axis_restricted, line_num, line, line_dict, mu_vel, mu_broa
                 within_bounds = False  # Value not in bounds
                 break
         if ct % 3 == 1:  # velocity parameter
-            #val_prior += np.log(1.0/(np.sqrt(2*np.pi)*sigma_vel))-0.5*(param-mu_vel)**2/sigma_vel**2
             mu_vel_min = (mu_vel/3e5+10*sigma_vel/3e5)*line_dict[line[line_num]] + line_dict[line[line_num]]  # Convert to position in nm
             mu_vel_min = 1e7/mu_vel_min  # Convert to cm-1
             mu_vel_max = (mu_vel/3e5-10*sigma_vel/3e5)*line_dict[line[line_num]] + line_dict[line[line_num]]  # Convert to position in nm
@@ -122,12 +123,6 @@ def log_prior(theta, axis_restricted, line_num, line, line_dict, mu_vel, mu_broa
                 #print('broad: %i'%param)
                 within_bounds = False  # Value not in bounds
                 break
-    # Check continuum
-    #if theta[-1] > continuum_min and theta[-1] < continuum_max:
-    #    val_prior -= np.log(continuum_max-continuum_min)
-    #else:
-    #    print('Continuum %.2E'%theta[-1])
-    #    within_bounds = False  # Value not in bounds
     if within_bounds:
         return -val_prior
     else:
@@ -197,47 +192,32 @@ def log_prior_uniform(theta, line_num):
     else:
         return -np.inf
 
-def prior_transform_nestle(theta):
-    A_min = -0.5
-    A_max = 1.1
-    x_min = 0
-    x_max = 1e6
-    sigma_min = 0
-    sigma_max = 30
-    continuum_min = 0
-    continuum_max = 1
-    prior_list = []
-    for ct, param in enumerate(theta[:-1]):  # Don't include continuum
-        if ct % 3 == 0:  # Amplitude parameter
-            prior_list.append(A_max-A_min)
-        if ct % 3 == 1:  # velocity parameter
-            prior_list.append(x_max-x_min)
-        if ct % 3 == 2:  # sigma parameter
-            prior_list.append(sigma_max-sigma_min)
-    prior_list.append(continuum_max-continuum_min)  # Include continuum
-    return tuple(np.array(prior_list) * theta)
-
 
 def prior_transform(u):
     A_min = 0.001
     A_max = 1.1
     x_min = 1e4
-    x_max = 1e5
+    x_max = 1e7
     sigma_min = 0.01
     sigma_max = 100
     continuum_min = 0.001
     continuum_max = 0.9
     prior_list = []
-    for ct, param in enumerate(u[:-1]):  # Don't include continuum
+    '''for ct, param in enumerate(u[:-1]):  # Don't include continuum
         if ct % 3 == 0:  # Amplitude parameter
             prior_list.append(u[ct])
         if ct % 3 == 1:  # velocity parameter
             prior_list.append((x_max)*u[ct])
         if ct % 3 == 2:  # sigma parameter
-            prior_list.append((sigma_max)*u[ct]+0.01)
-    prior_list.append((continuum_max)*u[ct])  # Include continuum
-    #print(prior_list)
-    return prior_list
+            prior_list.append((sigma_max)*u[ct]+0.01)'''
+    uA, usigma, ux0, ucont = u
+    A = 3*uA
+    sigma = 50*usigma
+    x0 = 1e7*(ux0)
+    cont = ucont
+    return A, x0, sigma, cont
+    #prior_list.append((continuum_max)*u[ct])  # Include continuum
+    #return prior_list
 
 
 def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, lines, line_dict, sinc_width, prior_gauss, vel_rel, sigma_rel, mdn):
