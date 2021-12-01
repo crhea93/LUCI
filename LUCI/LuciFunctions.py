@@ -52,7 +52,7 @@ class Gaussian:
 
         """
         f1 = 0.0
-        params = theta[model_num * 3:(model_num + 1) * 3]
+        params = theta
         f1 += self.function(channel, params)
         return f1
 
@@ -133,7 +133,7 @@ class Sinc:
 
         """
         f1 = 0.0
-        params = theta[model_num * 3:(model_num + 1) * 3]
+        params = theta
         f1 += np.array(self.function(channel, params, sinc_width))
         return f1
 
@@ -226,7 +226,7 @@ class SincGauss:
 
         """
         f1 = 0.0
-        params = theta[model_num * 3:(model_num + 1) * 3]
+        params = theta
         f1 += self.function(channel, params, sinc_width)
         return np.real(f1)
 

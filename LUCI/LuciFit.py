@@ -332,7 +332,7 @@ class Fit:
         """
         TODO: Test
 
-        Function to estimate the continuum level. We use a sigma clipping algorithm over the
+        Function to estimate the continuum level. We use a sigma clipping algorithm over the(mu_vel/3e5)*line_dict[line[ct]] + line_dict[line[ct]]
         restricted axis/spectrum to effectively ignore emission lines. Therefore, we
         are left with the continuum. We take the min value of this continuum as the initial
         guess.
@@ -600,29 +600,19 @@ class Fit:
         # Set number of MCMC walkers. Again, this is somewhat arbitrary
         n_walkers = 200#n_dim * 3 + 4
         # Initialize walkers
-        random_ = 1e-4 * np.random.randn(n_walkers, n_dim)
+        random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
+        for i in range(self.line_num):
+            random_[:, 3*i+1] *= 1e3
         init_ = self.fit_sol  + random_ #+ self.fit_sol[-1] + random_
         # Ensure continuum values for walkers are positive
         init_[:,-1] = np.abs(init_[:,-1])
         if self.bayes_method == 'dynesty':
             # Run nested sampling
-            '''f = lambda theta: log_likelihood_bayes(theta, self.axis_restricted, self.spectrum_restricted,
-                                                    self.noise,self.model_type, self.line_num, self.sinc_width,
-                                                  )
-            res = nestle.sample(f, prior_transform, n_dim, method='classic',
-                                npoints=100)
-            print(res.summary())
-            # weighted average and covariance:
-            p, cov = nestle.mean_and_cov(res.samples, res.weights)
-            print(p)
-            print(cov)
-            parameters_med = p
-            parameters_std = cov'''
-            #f = lambda theta: log_likelihood_bayes(theta, self.axis_restricted, self.spectrum_restricted,
-            #                                        self.noise,self.model_type, self.line_num, self.sinc_width,
-            #                                      )
-            dsampler = dynesty.NestedSampler(log_likelihood_bayes, prior_transform, ndim=n_dim, logl_args=(self.axis_restricted, self.spectrum_restricted,
-                                                    self.noise,self.model_type, self.line_num, self.sinc_width), sample='rwalk', maxiter=1000, bound='balls')
+            dsampler = dynesty.NestedSampler(log_likelihood_bayes, prior_transform, ndim=n_dim,
+                                                    logl_args=(self.axis_restricted, self.spectrum_restricted,
+                                                    self.noise,self.model_type, self.line_num, self.sinc_width,self.vel_rel, self.sigma_rel),
+                                                    #sample='rwalk', maxiter=1000, bound='balls'
+                                                    )
             dsampler.run_nested()
             dres = dsampler.results
             samples, weights = dres.samples, np.exp(dres.logwt - dres.logz[-1])
@@ -634,9 +624,9 @@ class Fit:
             # Set Ensemble Sampler
             sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
                                             args=(self.axis_restricted, self.spectrum_restricted,
-                                            self.noise,self.model_type, self.line_num, self.sinc_width,
+                                            self.noise, self.model_type, self.line_num, self.lines, self.line_dict, self.sinc_width,
                                             [self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma],
-                                            self.vel_rel, self.sigma_rel
+                                            self.vel_rel, self.sigma_rel, self.mdn
                                             )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
