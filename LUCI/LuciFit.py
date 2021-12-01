@@ -198,7 +198,7 @@ class Fit:
         elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
-            bound_lower = 14500
+            bound_lower = 14950 #LYA mod - originally the same as SN3 restrictions
             bound_upper = 15400
         else:
             print('The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
@@ -230,8 +230,8 @@ class Fit:
         elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
-            bound_lower = 14300
-            bound_upper = 14500
+            bound_lower = 14600 #LYA mods, originally the same as SN3
+            bound_upper = 14950
         else:
             print('The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
         # Calculate standard deviation
