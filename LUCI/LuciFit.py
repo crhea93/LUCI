@@ -409,10 +409,13 @@ class Fit:
         vel_dict_list = []
         unique_rels = np.unique(self.vel_rel)  # List of unique groups
         for unique_ in unique_rels:  # Step through each unique group
+            #print('Current rel id %i'%unique_)
             inds_unique = [i for i, e in enumerate(self.vel_rel) if e == unique_]  # Obtain line indices in group
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
+                #print("unique 0: %i"%ind_0)
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
+                    #print('unique: %i'%ind_unique)
                     expr_dict = {'type': 'eq',
                              'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) - 3e5 * (
                                      (1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
@@ -427,13 +430,16 @@ class Fit:
         Return:
             Constraint on NII doublet relative amplitudes
         """
+        nii_doublet_constraints = []
         # First we have to figure out which lines correspond to the doublet
         nii_6548_index = np.argwhere(self.lines=='NII6548')
         nii_6583_index = np.argwhere(self.lines=='NII6583')
         # Now tie the amplitudes together s/t that amplitude of the NII6548 line is
         # always 1/3 that of the NII6583 line
-        expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
-        return [expr_dict]
+        for i in range(self.line_num-1):  # We have to put it self.line_num - 1 times to be the same size as the other constraints!
+            expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
+            nii_doublet_constraints.append(expr_dict)
+        return nii_doublet_constraints
 
 
     def multiple_component_vel_constraint(self):
