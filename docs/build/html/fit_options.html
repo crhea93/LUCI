@@ -43,7 +43,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="MIT License" href="license.html" />
+    <link rel="next" title="Wavelength Correction" href="wavelength_corrections.html" />
     <link rel="prev" title="Uncertainties" href="uncertainties.html" /> 
 </head>
 
@@ -94,6 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Example Modules:</span></p>
@@ -105,11 +106,15 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 </ul>
 <p class="caption"><span class="caption-text">FAQ:</span></p>
 <ul>
@@ -185,7 +190,7 @@
 <span id="id1"></span><h1>Fit Options<a class="headerlink" href="#fit-options" title="Permalink to this headline">¶</a></h1>
 <p><cite>LUCI</cite> has several options that can either be included or not when fitting. The details of these
 options is explained in the <cite>howLuciWorks</cite> page, but we wanted to reiterate them here.</p>
-<p>The fitting methods in <cite>LUCI</cite> are: <cite>cube.fit_cube(), cube.fit_entire_cube(), cube.fit_region(), cube.fit_spectrum_region()</cite>.
+<p>The fitting methods in <cite>LUCI</cite> are: <cite>cube.fit_cube(), cube.fit_entire_cube(), cube.fit_region(), cube.fit_spectrum_region(), cube.fit_pixel()</cite>.
 With the exception of <cite>cube.fit_spectrum_region()</cite>, these methods fit each pixel in a predefined region of the cube.</p>
 <p>In addition to the required arguments, we have the following set of optional arguments:</p>
 <ul class="simple">
@@ -195,6 +200,7 @@ With the exception of <cite>cube.fit_spectrum_region()</cite>, these methods fit
 <li><p>output_name: If you want a different output suffix, please add that information here. (i.e. <cite>output_name=’SuperCoolName’</cite>)</p></li>
 <li><p>uncertainty_bool: This is if you don’t want to wait for the full Bayesian inference to run. Instead, it calculates the inverse Hessian of the fit matrix and takes its diagonals as the errors on the fit parameters.</p></li>
 <li><p>n_threads: This sets the number of threads that will be used in the fits. Choose this based on the number of threads available to you. I like <cite>n_threads=4</cite>. <strong>Note that this frequently doesn’t work in a jupyter notebook setting</strong>.</p></li>
+<li><p>mdn: This boolean determines whether or not a mixture density model is used to obtain the initial guesses. Details on this algorithm can be found at (). The default value is False.</p></li>
 </ul>
 </div>
 
@@ -204,7 +210,7 @@ With the exception of <cite>cube.fit_spectrum_region()</cite>, these methods fit
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="license.html" class="btn btn-neutral float-right" title="MIT License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="wavelength_corrections.html" class="btn btn-neutral float-right" title="Wavelength Correction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="uncertainties.html" class="btn btn-neutral float-left" title="Uncertainties" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 

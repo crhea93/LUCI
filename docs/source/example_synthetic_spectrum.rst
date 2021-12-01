@@ -53,7 +53,7 @@ This is done with one simple command!
 
 Then we plot:
 
-.. code-block:: language
+.. code-block:: python
 
   plt.figure(figsize=(10,6))
   plt.plot(spectrum_axis, spectrum, color='black', label='Spectrum')

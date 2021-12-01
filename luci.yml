@@ -8,8 +8,9 @@ dependencies:
   - python=3.9.5
   - scikit-image=0.17.2
   - scipy=1.6.2
-  - tensorflow=2.4.1
-  - tensorflow-base=2.4.1
+  - tensorflow
+  - tensorflow-base
+  - tensorflow-probability
   - tqdm
   - urllib3=1.26.6
   - pip:
@@ -19,7 +20,7 @@ dependencies:
     - h5py==3.1.0
     - keras==2.4.3
     - numdifftools==0.9.40
-    - numpy==1.19.5
+    - numpy
     - joblib==1.0.1
     - jupyterlab==3.0.16
     - pytest==6.2.4
@@ -28,5 +29,7 @@ dependencies:
     - tensorboard-data-server==0.6.1
     - tensorboard-plugin-wit==1.8.0
     - tensorflow-estimator==2.1.0
-
-prefix: /home/carterrhea/miniconda3/envs/luci
+    - numba
+    - pytest
+    - corner
+    - dynesty

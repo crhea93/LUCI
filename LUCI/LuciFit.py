@@ -9,12 +9,16 @@ import scipy.special as sps
 import scipy.stats as spst
 import astropy.stats as astrostats
 import warnings
-from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 import matplotlib.pyplot as plt
 import corner
 warnings.filterwarnings("ignore")
+import dynesty
+from dynesty import utils as dyfunc
 
 
+from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
+from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, calculate_flux, calculate_flux_err
+from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
 
 
 
@@ -23,6 +27,13 @@ class Fit:
     Class that defines the functions necessary for the modelling aspect. This includes
     the gaussian fit functions, the prior definitions, the log likelihood, and the
     definition of the posterior (log likelihood times prior).
+
+    All the functions (gauss, sinc, and sincgauss) are stored in `LuciFuncitons.py`.
+
+    All functions for calculating the velocity, broadening, and flux are in 'LuciFitParameters.py'.
+
+    All the functions for Bayesian Inference with the exception of the fit call
+    are in 'LuciBayesian.py'.
 
     The initial arguments are as follows:
     Args:
@@ -43,7 +54,11 @@ class Fit:
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, trans_filter=None, theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3', bayes_bool=False, uncertainty_bool=False):
+                 ML_model, trans_filter=None,
+                 theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
+                 bayes_bool=False, bayes_method='emcee',
+                 uncertainty_bool=False, mdn=False,
+                 ):
         """
         Args:
             spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
@@ -62,12 +77,14 @@ class Fit:
             zpd_index: Zero Path Difference index
             filter: SITELLE filter (e.x. 'SN3')
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
+            bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+            mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
-                          'Hbeta': 486.133}
+                          'Hbeta': 486.133, 'OH':649.873}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.spectrum = spectrum
         self.spectrum_clean = spectrum/ np.max(spectrum)  # Clean normalized spectrum that will be used for calculating the noise
@@ -90,7 +107,7 @@ class Fit:
         #except ValueError:  # self.spectrum_restricted is empty
         #    self.spectrum_restricted_norm = self.spectrum_restricted
         self.theta = theta
-        self.cos_theta = np.abs(np.cos(self.theta))
+        self.cos_theta = np.abs(np.cos(np.deg2rad(self.theta)))
         self.correction_factor = 1.0  # Initialize Correction factor
         self.axis_step = 0.0  # Initialize
         self.delta_x = delta_x
@@ -107,21 +124,26 @@ class Fit:
         # ADD ML_MODEL
         self.ML_model = ML_model
         self.bayes_bool = bayes_bool
+        self.bayes_method = bayes_method
         self.uncertainty_bool = uncertainty_bool
         self.spectrum_scale = 0.0  # Sacling factor used to normalize spectrum
         self.sinc_width = 0.0  # Width of the sinc function -- Initialize to zero
         self.calc_sinc_width()
+        self.mdn = mdn
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
+        self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
+        self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
-        self.A_min = 0;
+        self.A_min = -0.5;
         self.A_max = 1.1;
         self.x_min = 0 #  14700;
-        self.x_max = 1e8 #  15600
+        self.x_max = 1e6 #  15600
         self.sigma_min = 0.001;
-        self.sigma_max = 1
+        self.sigma_max = 300
+        self.flat_samples = None
         # Check that lines inputted by user are in line_dict
         self.check_lines()
         self.check_fitting_model()
@@ -219,20 +241,32 @@ class Fit:
         self.noise = np.nanstd(spec_noise)
 
 
-    def estimate_priors_ML(self):
+    def estimate_priors_ML(self, mdn=True):
         """
         Apply machine learning algorithm on spectrum in order to estimate the velocity.
         The spectrum fed into this method must be interpolated already onto the
         reference spectrum axis AND normalized as described in Rhea et al. 2020a.
         Args:
+            mdn: Boolean to use MDN or not (default True)
 
         Return:
             Updates self.vel_ml
         """
         Spectrum = self.spectrum_interp_norm.reshape(1, self.spectrum_interp_norm.shape[0], 1)
-        predictions = self.ML_model(Spectrum, training=False)
-        self.vel_ml = float(predictions[0][0])
-        self.broad_ml = float(predictions[0][1])  # Multiply value by FWHM of a gaussian
+        if self.mdn == True:
+            prediction_distribution = self.ML_model(Spectrum, training=False)
+            prediction_mean = prediction_distribution.mean().numpy().tolist()
+            prediction_stdv = prediction_distribution.stddev().numpy().tolist()
+            self.vel_ml = [pred[0] for pred in prediction_mean][0]
+            self.vel_ml_sigma = [pred[0] for pred in prediction_stdv][0]
+            self.broad_ml = [pred[1] for pred in prediction_mean][0]
+            self.broad_ml_sigma = [pred[1] for pred in prediction_stdv][0]
+        elif self.mdn == False:
+            predictions = self.ML_model(Spectrum, training=False)
+            self.vel_ml = float(predictions[0][0])
+            self.vel_ml_sigma = 0
+            self.broad_ml = float(predictions[0][1])
+            self.broad_ml_sigma = 0
         return None
 
 
@@ -246,7 +280,7 @@ class Fit:
 
         """
         self.spectrum_scale = np.max(self.spectrum)
-        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
+        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_interp_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_interp_scale
@@ -275,17 +309,22 @@ class Fit:
         line_pos_est = 1e7 / ((self.vel_ml / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
-            line_amp_est = np.max([self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
+            line_amp_est = np.max([
+                                   #[self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
                                    self.spectrum_normalized[line_ind - 2], self.spectrum_normalized[line_ind - 1],
                                    self.spectrum_normalized[line_ind],
                                    self.spectrum_normalized[line_ind + 1], self.spectrum_normalized[line_ind + 2],
-                                   self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
+                                   #self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
                                    ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        if self.broad_ml > 50:
-            self.broad_ml = .1
         line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
+        if self.mdn == True:
+            # Update position and sigma_gauss bounds
+            self.x_min = 1e7 / (((self.vel_ml+3*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+            self.x_max = 1e7/(((self.vel_ml-3*self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+            self.sigma_min =  (line_pos_est * (self.broad_ml)) / (3e5) - 3*(line_pos_est * (self.broad_ml_sigma)) / (3e5)
+            self.sigma_max =  (line_pos_est * (self.broad_ml)) / (3e5) + 3*(line_pos_est * (self.broad_ml_sigma)) / (3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
 
@@ -293,9 +332,9 @@ class Fit:
         """
         TODO: Test
 
-        Function to estimate the continuum level. We use a sigma clipping algorithm over the
+        Function to estimate the continuum level. We use a sigma clipping algorithm over the(mu_vel/3e5)*line_dict[line[ct]] + line_dict[line[ct]]
         restricted axis/spectrum to effectively ignore emission lines. Therefore, we
-        are left with the continuum. We take the medium value of this continuum as the initial
+        are left with the continuum. We take the min value of this continuum as the initial
         guess.
 
         Args:
@@ -307,138 +346,12 @@ class Fit:
         """
         # Clip values at given sigma level (defined by sigma_level)
         clipped_spec = astrostats.sigma_clip(self.spectrum_restricted, sigma=sigma_level, masked=False, copy=False, maxiters=3)
+        if len(clipped_spec) < 1:
+            clipped_spec = self.spectrum_restricted
         # Now take the mean value to serve as the continuum value
-        cont_val = np.median(clipped_spec)
+        cont_val = np.min(clipped_spec)
         return cont_val
 
-
-    def gaussian_model(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            params = theta[model_num * 3:(model_num + 1) * 3]
-            f1 += Gaussian(channel, params).func
-        #f1 += theta[-1]
-        return f1
-
-
-    def gaussian_model_plot(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
-            pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
-            f1 += Gaussian(channel, params).func
-        #f1 += theta[-1]
-        return f1
-
-
-
-    def sinc_model(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            params = theta[model_num * 3:(model_num + 1) * 3]
-            f1 += np.array(Sinc(channel, params, self.sinc_width).func)
-        return f1
-
-
-    def sinc_model_plot(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
-            pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
-            f1 += np.array(Sinc(channel, params, self.sinc_width).func)
-        return f1
-
-
-    def sincgauss_model(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            params = theta[model_num * 3:(model_num + 1) * 3]
-            f1 += SincGauss(channel, params, self.sinc_width).func
-        return np.real(f1)
-
-
-    def sincgauss_model_plot(self, channel, theta):
-        """
-        Function to initiate the correct number of models to fit
-
-        Args:
-            channel: Wavelength Axis in cm-1
-            theta: List of parameters for all the models in the following order
-                            [amplitude, line location, sigma]
-
-        Return:
-            Value of function given input parameters (theta)
-
-        """
-        f1 = 0.0
-        for model_num in range(self.line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
-            pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
-            f1 += SincGauss(channel, params, self.sinc_width).func
-        return np.real(f1)
 
 
     def log_likelihood(self, theta):
@@ -456,15 +369,15 @@ class Fit:
         """
         global model
         if self.model_type == 'gaussian':
-            model = self.gaussian_model(self.axis_restricted, theta)
+            model = Gaussian().evaluate(self.axis_restricted, theta, self.line_num)
         elif self.model_type == 'sinc':
-            model = self.sinc_model(self.axis_restricted, theta)
+            model = Sinc().evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
         elif self.model_type == 'sincgauss':
-            model = self.sincgauss_model(self.axis_restricted, theta)
+            model = SincGauss().evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
         # Add constant contimuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
+        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
     def fun_der(self, theta, yerr):
         return Jacobian(lambda theta: self.log_likelihood(theta, yerr))(theta).ravel()
@@ -500,8 +413,8 @@ class Fit:
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     expr_dict = {'type': 'eq',
-                             'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - self.line_dict.values()[3*ind_unique+1]) / (1e7 / x[3*ind_unique+1])) - 3e5 * (
-                                     (1e7 / x[3*ind_0+1] - self.line_dict.values()[3*ind_0+1]) / (1e7 / x[3*ind_0+1]))}
+                             'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - self.line_dict.values()[3*ind_unique+1]) / (self.line_dict.values()[3*ind_unique+1])) - 3e5 * (
+                                     (1e7 / x[3*ind_0+1] - self.line_dict.values()[3*ind_0+1]) / (self.line_dict.values()[3*ind_unique+1]))}
         return vel_dict_list
 
 
@@ -577,70 +490,102 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         self.fit_sol = parameters
         if self.model_type == 'gaussian':
-            self.fit_vector = self.gaussian_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Gaussian().plot(self.axis, self.fit_sol[:-1], self.line_num) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
-            self.fit_vector = self.sinc_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
-            self.fit_vector = self.sincgauss_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = SincGauss().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
 
         return None
 
 
 
-    def fit(self):
+    def fit(self, sky_line=False):
         """
         Primary function call for a spectrum. This will estimate the velocity using
         our machine learning algorithm described in Rhea et al. 2020a. Then we will
         fit our lines using scipy.optimize.minimize.
+
+        Args:
+            sky_line: Boolean to fit sky lines (default False)
 
         Return:
             dictionary of parameters returned by the fit. The dictionary has the following form:
             {"fit_vector": Fitted spectrum, "velocity": Velocity of the line in km/s (float),
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
-        if self.ML_model != None:
-            # Interpolate Spectrum
-            self.interpolate_spectrum()
-            # Estimate the priors using machine learning algorithm
-            self.estimate_priors_ML()
-        else:
+        if sky_line != True:
+            if self.ML_model != None:
+                # Interpolate Spectrum
+                self.interpolate_spectrum()
+                # Estimate the priors using machine learning algorithm
+                self.estimate_priors_ML()
+            else:
+                self.spectrum_scale = np.max(self.spectrum)
+            # Apply Fit
+            self.calculate_params()
+            # Check if Bayesian approach is required
+            if self.bayes_bool == True:
+                self.fit_Bayes()
+            # Calculate fit statistic
+            chi_sqr, red_chi_sqr = self.calc_chisquare(self.fit_vector, self.spectrum, self.noise, 3*self.line_num+1)
+            # Collect Amplitudes
+            ampls = []
+            fluxes = []
+            vels = []
+            sigmas = []
+            vels_errors = []
+            sigmas_errors = []
+            flux_errors = []
+            for line_ct, line_ in enumerate(self.lines):  # Step through each line
+                ampls.append(self.fit_sol[line_ct * 3])
+                # Calculate flux
+                fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.model_type, self.sinc_width))
+                vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
+                sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
+                vels_errors.append(calculate_vel_err(line_ct,  self.lines, self.fit_sol, self.line_dict, self.uncertainties))
+                sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
+                flux_errors.append(calculate_flux_err(line_ct, self.fit_sol, self.uncertainties, self.model_type, self.sinc_width))
+            # Collect parameters to return in a dictionary
+            fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
+                        'fit_vector': self.fit_vector, 'fit_axis':self.axis,
+                        'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
+                        'velocities': vels, 'sigmas': sigmas,
+                        'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
+                        'axis_step': self.axis_step, 'corr': self.correction_factor,
+                        'continuum': self.fit_sol[-1], 'scale':self.spectrum_scale}
+            return fit_dict
+        else:  # Fit sky line
             self.spectrum_scale = np.max(self.spectrum)
-        # Apply Fit
-        self.calculate_params()
-        # Check if Bayesian approach is required
-        if self.bayes_bool == True:
-            self.fit_Bayes()
-        # Calculate fit statistic
-        chi_sqr, red_chi_sqr = self.calc_chisquare(self.fit_vector, self.spectrum, self.noise, 3*self.line_num+1)
-        # Collect Amplitudes
-        ampls = []
-        fluxes = []
-        vels = []
-        sigmas = []
-        vels_errors = []
-        sigmas_errors = []
-        flux_errors = []
-        for line_ct, line_ in enumerate(self.lines):  # Step through each line
-            ampls.append(self.fit_sol[line_ct * 3])
-            # Calculate flux
-            fluxes.append(self.calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2]))
-            vels.append(self.calculate_vel(line_ct))
-            sigmas.append(self.calculate_broad(line_ct))
-            vels_errors.append(self.calculate_vel_err(line_ct))
-            sigmas_errors.append(self.calculate_broad_err(line_ct))
-            flux_errors.append(self.calculate_flux_err(line_ct))
-        # Collect parameters to return in a dictionary
-        fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
-                    'fit_vector': self.fit_vector, 'fit_axis':self.axis,
-                    'velocity': self.calculate_vel(0), 'broadening': self.calculate_broad(0),
-                    'velocity_err': self.calculate_vel_err(0),
-                    'broadening_err': self.calculate_broad_err(0),
-                    'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
-                    'velocities': vels, 'sigmas': sigmas,
-                    'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
-                    'axis_step': self.axis_step, 'corr': self.correction_factor,
-                    'continuum': self.fit_sol[-1], 'scale':self.spectrum_scale}
-        return fit_dict
+            # Apply Fit
+            nll = lambda *args: -self.log_likelihood(*args)
+            initial = np.ones((4))
+            bounds_ = []
+            initial[0] = 2*self.cont_estimate(sigma_level=2.0)  # Make sure it is well above the continuum
+            initial[1] = 15383  # Theoretical value corresponding to -80 km/s for our OH line
+            initial[2] = 10  # Doesn't matter since we are fitting a sinc with a fixed width
+            initial[3] = self.cont_estimate(sigma_level=2.0)  # Add continuum constant and intialize it
+            bounds_.append((0, self.A_max))
+            bounds_.append((15370, 15395))
+            bounds_.append((self.sigma_min, self.sigma_max))
+            bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
+            bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum Constraint
+            bounds = Bounds(bounds_l, bounds_u)
+            self.inital_values = initial
+            soln = minimize(nll, initial, method='SLSQP',
+                            options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-2,
+                            args=())
+            parameters = soln.x
+            # We now must unscale the amplitude
+            for i in range(self.line_num):
+                parameters[i * 3] *= self.spectrum_scale
+                self.uncertainties[i*3] *= self.spectrum_scale
+            # Scale continuum
+            parameters[-1] *= self.spectrum_scale
+            print(parameters)
+            velocity = 3e5*((1e7/parameters[1]-self.line_dict['OH'])/self.line_dict['OH'])
+            fit_vector = Sinc().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[-1]
+            return velocity, fit_vector
 
     def fit_Bayes(self):
         """
@@ -650,252 +595,75 @@ class Fit:
         for i in range(self.line_num):
             self.fit_sol[i * 3] /= self.spectrum_scale
         self.fit_sol[-1] /= self.spectrum_scale
+        # Set the number of dimensions -- this is somewhat arbitrary
         n_dim = 3 * self.line_num + 1
-        n_walkers = n_dim * 3 + 4
-        random_ = np.random.randn(n_walkers, n_dim)
+        # Set number of MCMC walkers. Again, this is somewhat arbitrary
+        n_walkers = 200#n_dim * 3 + 4
+        # Initialize walkers
+        random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
         for i in range(self.line_num):
-            random_[3*i] *= 0.05
-            #random_[3*i+1] += 10
-            random_[3*i+2] *= 0.1
-        #init_ = (self.fit_sol + self.fit_sol[-1] )* np.random.randn(n_walkers, n_dim)
-        init_ = self.fit_sol + self.fit_sol[-1] + random_
-        for i in range(self.line_num):
-            init_[:,3*i] = np.abs(init_[:,3*i])
-            init_[:,3*i+2] = np.abs(init_[:,3*i+2])
+            random_[:, 3*i+1] *= 1e3
+        init_ = self.fit_sol  + random_ #+ self.fit_sol[-1] + random_
+        # Ensure continuum values for walkers are positive
         init_[:,-1] = np.abs(init_[:,-1])
-        sampler = emcee.EnsembleSampler(n_walkers, n_dim, self.log_probability,
-                                        args=(self.axis_restricted, self.spectrum_restricted, self.noise, self.lines))
-        sampler.run_mcmc(init_, 2000, progress=True)
-        flat_samples = sampler.get_chain(discard=200, flat=True)
-        #fig = corner.corner(
-        #    flat_samples, labels=np.arange(len(self.fit_sol))
-        #);
-        #plt.savefig('test.png')
-        parameters_med = []
-        parameters_std = []
-        for i in range(n_dim):
-            median = np.median(flat_samples[:, i])
-            std = np.std(flat_samples[:, i])
-            parameters_med.append(median)
-            parameters_std.append(std)
-        self.fit_sol = parameters_med
-        self.uncertainties = parameters_std
-        # We now must unscale the amplitude
+        if self.bayes_method == 'dynesty':
+            # Run nested sampling
+            dsampler = dynesty.NestedSampler(log_likelihood_bayes, prior_transform, ndim=n_dim,
+                                                    logl_args=(self.axis_restricted, self.spectrum_restricted,
+                                                    self.noise,self.model_type, self.line_num, self.sinc_width,self.vel_rel, self.sigma_rel),
+                                                    #sample='rwalk', maxiter=1000, bound='balls'
+                                                    )
+            dsampler.run_nested()
+            dres = dsampler.results
+            samples, weights = dres.samples, np.exp(dres.logwt - dres.logz[-1])
+            mean, cov = dyfunc.mean_and_cov(samples, weights)
+            std = np.sqrt(np.diag(cov))
+            parameters_med = mean
+            parameters_std = std
+        elif self.bayes_method == 'emcee':
+            # Set Ensemble Sampler
+            sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
+                                            args=(self.axis_restricted, self.spectrum_restricted,
+                                            self.noise, self.model_type, self.line_num, self.lines, self.line_dict, self.sinc_width,
+                                            [self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma],
+                                            self.vel_rel, self.sigma_rel, self.mdn
+                                            )  # End additional args
+                                            )  # End EnsembleSampler
+            # Call Ensemble Sampler setting 2000 walks
+            sampler.run_mcmc(init_, 2000, progress=True)
+            # Obtain Ensemble Sampler results and discard first 200 walks (10%)
+            flat_samples = sampler.get_chain(discard=200, flat=True)
+            parameters_med = []
+            parameters_std = []
+            self.flat_samples = flat_samples
+            for i in range(n_dim):  # Calculate and store these results
+                median = np.median(flat_samples[:, i])
+                std = np.std(flat_samples[:, i])
+                parameters_med.append(median)
+                parameters_std.append(std)
+            #self.fit_sol = parameters_med
+            #self.uncertainties = parameters_std
+            print(parameters_med)
+        else:
+            print("The bayes_method parameter has been incorrectly set to '%s'"%self.bayes_method)
+            print("Please enter either 'emcee' or 'dynesty' instead.")
+        # We now must scale the amplitude
         for i in range(self.line_num):
             parameters_med[i * 3] *= self.spectrum_scale
-            self.uncertainties[i*3] *= self.spectrum_scale
+            parameters_std[i*3] *= self.spectrum_scale
         # Scale continuum
         parameters_med[-1] *= self.spectrum_scale
-        self.uncertainties[-1] *= self.spectrum_scale
+        parameters_std[-1] *= self.spectrum_scale
+
         self.fit_sol = parameters_med
+        self.uncertainties = parameters_std
+        # Calculate fit vector using updated values
         if self.model_type == 'gaussian':
-            self.fit_vector = self.gaussian_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Gaussian().plot(self.axis, self.fit_sol[:-1], self.line_num) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
-            self.fit_vector = self.sinc_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
+            self.fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
-            self.fit_vector = self.sincgauss_model_plot(self.axis, self.fit_sol[:-1]) + self.fit_sol[-1]
-
-
-
-    def log_likelihood_bayes(self, theta, x, y, yerr, model__):
-        """
-        """
-        # model = self.gaussian_model(x, theta, model)
-        if self.model_type == 'gaussian':
-            model = self.gaussian_model(self.axis_restricted, theta)
-        elif self.model_type == 'sinc':
-            model = self.sinc_model(self.axis_restricted, theta)
-        elif self.model_type == 'sincgauss':
-            model = self.sincgauss_model(self.axis_restricted, theta)
-        # Add constant contimuum to model
-        model += theta[-1]
-        sigma2 = yerr ** 2
-        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2)# + np.log(2 * np.pi * sigma2))
-
-    def log_prior(self, theta, model):
-        A_min = 0  # 1e-19
-        A_max = 1.1  # 1e-15
-        x_min = 0#14700
-        x_max = 1e8#15400
-        sigma_min = 0
-        sigma_max = 30
-        continuum_min = 0
-        continuum_max = 1
-        val_prior = 1
-        for model_num in range(len(model)):
-            params = theta[model_num * 3:(model_num + 1) * 3]
-        within_bounds = True  # Boolean to determine if parameters are within bounds
-        for ct, param in enumerate(params):
-            if ct % 3 == 0:  # Amplitude parameter
-                if param > A_min and param < A_max:
-                    val_prior *= (A_max-A_min)
-                else:
-                    within_bounds = False  # Value not in bounds
-                    break
-            if ct % 3 == 1:  # velocity parameter
-                if param > x_min and param < x_max:
-                    val_prior *= (x_max-x_min)
-                else:
-                    within_bounds = False  # Value not in bounds
-                    break
-            if ct % 3 == 2:  # sigma parameter
-                if param > sigma_min and param < sigma_max:
-                    val_prior *= (sigma_max-sigma_min)
-                else:
-                    within_bounds = False  # Value not in bounds
-                    break
-        # Check continuum
-        if theta[-1] > continuum_min and theta[-1] < continuum_max:
-            val_prior *= (continuum_max-continuum_min)
-        else:
-            within_bounds = False  # Value not in bounds
-        if within_bounds:
-
-            return 1/val_prior
-        else:
-            return -np.inf
-        # A_,x_,sigma_ = theta
-        # if A_min < A_ < A_max and x_min < x_ < x_max and sigma_min < sigma_ < sigma_max:
-        #    return 0.0#np.log(1/((t_max-t_min)*(rp_max-rp_min)*(b_max-b_min)))
-        # return -np.inf
-
-    def log_probability(self, theta, x, y, yerr, model):
-        lp = self.log_prior(theta, model)
-        if not np.isfinite(lp):
-            return -np.inf
-        if np.isnan(lp):
-            return -np.inf
-        if np.isnan(lp + self.log_likelihood(theta)):
-            return -np.inf
-        else:
-            return lp + self.log_likelihood(theta)#, x, y, yerr, model)
-
-    def calculate_vel(self, ind):
-        """
-        Calculate velocity
-
-        Args:
-            ind: Index of line in lines
-        Return:
-            Velocity of the Halpha line in units of km/s
-        """
-        line_name = self.lines[ind]
-        l_calc = 1e7 / self.fit_sol[3*ind+1]
-        l_shift = (l_calc - self.line_dict[line_name]) / l_calc
-        v = 3e5 * l_shift
-        return v
-
-
-    def calculate_vel_err(self, ind):
-        """
-        Calculate velocity error
-        TODO: Test
-
-        Args:
-            ind: Index of line in lines
-        Return:
-            Velocity of the Halpha line in units of km/s
-        """
-        line_name = self.lines[ind]
-        l_calc1 = 1e7 / (self.fit_sol[3*ind+1])
-        l_calc2 = 1e7 / (self.fit_sol[3*ind+1] + self.uncertainties[3*ind+1])
-        l_shift1 = (l_calc1 - self.line_dict[line_name]) / l_calc1
-        l_shift2 = (l_calc2 - self.line_dict[line_name]) / l_calc2
-        v1 = 3e5 * l_shift1
-        v2 = 3e5 * l_shift2
-        return np.abs(v1 - v2)
-
-
-    def calculate_broad(self, ind):
-        """
-        Calculate velocity dispersion
-        TODO: Test
-
-        Args:
-            ind: Index of line in lines
-        Return:
-            Velocity Dispersion of the Halpha line in units of km/s
-        """
-        broad = (3e5 * self.axis_step*self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
-        return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
-
-
-    def calculate_broad_err(self, ind):
-        """
-        Calculate velocity dispersion error
-
-        Args:
-            ind: Index of line in lines
-        Return:
-            Velocity Dispersion of the Halpha line in units of km/s
-        """
-        broad1 = (3e5 * self.fit_sol[3*ind+2]) / self.fit_sol[3*ind+1]
-        broad1 /= abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
-        broad2 = (3e5 * (self.fit_sol[3*ind+2]+self.uncertainties[3*ind+2])) / (self.fit_sol[3*ind+1]+self.uncertainties[3*ind+1])
-        broad2 /= abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
-        return np.abs(broad1-broad2)
-
-
-    def calculate_flux(self, line_amp, line_sigma):
-        """
-        Calculate flux value given fit of line
-        TODO: Test
-
-        Args:
-            line_amp: Amplitude of the line (un-normalized)
-            line_sigma: Sigma of the line fit
-        Return:
-            Flux of the provided line in units of erg/s/cm-2
-        """
-        flux = 0.0  # Initialize
-        if self.model_type == 'gaussian':
-            flux = np.sqrt(2 * np.pi) * line_amp * line_sigma
-        elif self.model_type == 'sinc':
-            flux = np.sqrt(np.pi) * line_amp * line_sigma
-        elif self.model_type == 'sincgauss':
-            flux = line_amp * ((np.sqrt(2*np.pi)*line_sigma)/(sps.erf((line_sigma)/(np.sqrt(2)*self.sinc_width))))
-        else:
-            print("ERROR: INCORRECT FIT FUNCTION")
-        return flux
-
-
-    def calculate_flux_err(self, ind):
-        """
-        Calculate flux error
-
-        Args:
-            ind: Index of line in lines
-
-        Return:
-            Error of the provided line in units of ergs/s/cm-2
-        """
-
-        p0 = self.fit_sol[3*ind]
-        p2 = self.fit_sol[3*ind + 2]
-        p0_err = self.uncertainties[3*ind]
-        p2_err = self.uncertainties[3*ind + 2]
-
-
-        if self.model_type == 'gaussian':
-            flux_err = np.sqrt(2*np.pi) * self.calculate_flux(p0 , p2) * \
-                       np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
-
-        elif self.model_type == 'sinc':
-            flux_err = np.sqrt(np.pi) * self.calculate_flux(p0 , p2) * \
-                       np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
-
-        elif self.model_type == 'sincgauss':
-            erf_func = sps.erf(p2 / (np.sqrt(2)*self.sinc_width)) #Shortcut for the error function
-            flux_err = np.sqrt(2*np.pi) * np.sqrt(   (p2*p0_err / erf_func)**2 + \
-                       (  p0*p2_err *  (erf_func - (np.sqrt(2)*p2*np.exp(-(p2/(np.sqrt(2)*self.sinc_width))**2)/np.sqrt(np.pi))) / erf_func**2  )**2  )
-
-        else:
-            print('The fit function you have entered, %s, does not exist!'%self.model_type)
-            print('The program is terminating!')
-            exit()
-
-        return flux_err
-
+            self.fit_vector = SincGauss().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
 
     def calc_chisquare(self, fit_vector, init_spectrum, init_errors, n_dof):
         """
@@ -917,6 +685,8 @@ class Fit:
         chi2 = np.sum((z ** 2))#/(self.spectrum_scale))
         chi2dof = chi2 / (n_dof - 1)
         return chi2, chi2dof
+
+
 
     def check_lines(self):
         """

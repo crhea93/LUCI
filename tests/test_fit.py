@@ -7,11 +7,16 @@ import keras
 from scipy import interpolate
 
 from LUCI.LuciFit import Fit
-from LUCI.LuciFit import Gaussian
+from LUCI.LuciFunctions import Gaussian
+from LUCI.LuciFitParameters import calculate_vel, calculate_broad
 
 
 class Test:
     def __init__(self):
+        self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
+                          'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
+                          'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
+                          'Hbeta': 486.133}
         self.amp = 1
         self.pos = 15234  # Corresponds to a velocity of 68.55 km/s
         self.sigma = 0.5  # Corresponds to a broadening of 9.85 km/s
@@ -39,11 +44,11 @@ class Test:
 
     def make_spectrum(self):
         self.axis = np.linspace(14400, 15800, 10000)
-        self.spectrum = Gaussian(self.axis, [self.amp, self.pos, self.sigma]).func
+        self.spectrum = Gaussian().evaluate(self.axis, [self.amp, self.pos, self.sigma], 1)  # 1 because only fitting a single line
         return None
 
     def read_ref_spec(self):
-        ref_spec = fits.open('ML/Reference-Spectrum-R5000.fits')[1].data
+        ref_spec = fits.open('ML/Reference-Spectrum-R5000-SN3.fits')[1].data
         channel = []
         counts = []
         for chan in ref_spec:  # Only want SN3 region
@@ -62,13 +67,12 @@ class Test:
         # Check that amplitude of the fit is within 10% of the true value which is 1
         assert self.LuciFit_.fit_sol[0]-1 < 0.1
         # Check that velocity of the fit is within 10% of the true value which is 68.55 km/s
-        assert np.abs((self.LuciFit_.calculate_vel(0) - 68.55)/68.55) < 1
+        assert np.abs((calculate_vel(0, self.lines, self.LuciFit_.fit_sol, self.line_dict) - 68.55)/68.55) < 1
         # Check that broadening of the fit is within 10% of the true value which is 9.85 km/s
-        assert np.abs((self.LuciFit_.calculate_broad(0) - 9.85)/9.85) < 1
+        assert np.abs((calculate_broad(0, self.LuciFit_.fit_sol, self.LuciFit_.axis_step) - 9.85)/9.85) < 1
 
     def test_ML(self):
         self.LuciFit_.fit()
-        print(self.LuciFit_.broad_ml, self.LuciFit_.vel_ml)
         # Check that velocity of the fit is within 10% of the true value which is 68.55 km/s
         assert np.abs((self.LuciFit_.vel_ml - 68.55)/68.55) < 1
         # Check that broadening of the fit is within 10% of the true value which is 9.85 km/s

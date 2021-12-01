@@ -115,6 +115,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 </ul>
 <p class="caption"><span class="caption-text">FAQ:</span></p>
 <ul>
@@ -231,19 +234,19 @@ found as a jupyter notebook in “LUCI/Examples/Create-Mock-Spectrum.ipynb”.</
 </pre></div>
 </div>
 <p>Then we plot:</p>
-<div class="highlight-language notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,6))
-plt.plot(spectrum_axis, spectrum, color=&#39;black&#39;, label=&#39;Spectrum&#39;)
-plt.xlim(14750, 15400)
-plt.xlabel(&#39;Wavelength (cm-1)&#39;, fontsize=14)
-plt.ylabel(&#39;Amplitude&#39;, fontsize=14)
-plt.axvline(1e7/656.3, label=&#39;Halpha&#39;, color=&#39;blue&#39;, linestyle=&#39;--&#39;)
-plt.axvline(1e7/658.3, label=&#39;NII6583&#39;, color=&#39;teal&#39;, linestyle=&#39;--&#39;)
-plt.axvline(1e7/654.8, label=&#39;NII6548&#39;, color=&#39;green&#39;, linestyle=&#39;--&#39;)
-plt.axvline(1e7/671.6, label=&#39;NII6716&#39;, color=&#39;magenta&#39;, linestyle=&#39;--&#39;)
-plt.axvline(1e7/673.1, label=&#39;NII6731&#39;, color=&#39;violet&#39;, linestyle=&#39;--&#39;)
-plt.legend(ncol=2)
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Spectrum&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">14750</span><span class="p">,</span> <span class="mi">15400</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (cm-1)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">656.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">658.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;teal&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">654.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">671.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6716&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;magenta&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">673.1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6731&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;violet&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
-plt.show()
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 <img alt="Mock SN3 Spectrum" src="_images/Mock_SN3.png" />

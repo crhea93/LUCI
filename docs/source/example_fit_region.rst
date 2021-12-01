@@ -10,9 +10,10 @@ You can download the example data using the following command:
 
     wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
 
+
 We will read in the data as usual using a LUCI cube object. We then will extract a background region and plot it.
 We will then extract a spectrum from a square region around 1357<x<1367 and 608<y<618.
- Finally, we use the LuciFit Fit object to fit the region.
+Finally, we use the LuciFit Fit object to fit the region.
 
 
 

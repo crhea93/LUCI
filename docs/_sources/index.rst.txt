@@ -14,12 +14,15 @@ LUCI is a general purpose fitting pipeline built specifically with SITELLE IFU
 data cubes in mind; however, if you need to fit any emission line spectra, LUCI
 will be able to help!
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg
+   :target: https://doi.org/10.5281/zenodo.5385351
+
 You can download the example data using the following command:
 
 
 .. code-block:: bash
 
-    wget https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
+    wget -0 NGC6946_SN3 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
 
 This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
 so the download may take a while.
@@ -29,6 +32,9 @@ The region files used in the examples can be
 found in the 'Examples/regions' folder. To run the examples, place these region files in the same
 directory as the hdf5 file.
 
+
+If you are new to SITELLE, I suggest you start with the Basic Example. If you
+already know how the fitting procedure works, you can go straight to Basic Example Lite.
 
 
 Please note that this documentation is not exhaustive. If you have any questions or
@@ -66,6 +72,22 @@ Lines Available
 The available fitting functions are as follows:
 'gaussian', 'sinc', 'sincgauss'
 
+
+The output files will be in the following structure:
+
+.. image:: LuciOutput.svg
+    :width: 800
+    :alt: LUCI Output Structure
+
+
+Citing LUCI
+-----------
+If you cite LUCI, please use both the following citations.
+
+Software Citation: Carter Lee Rhea, Laurie Rouseau-Nepton, Julie Hlavacek-Larrondo, Jessica Covington, Benjamin Vigneron, & Louis-Simon Guité. (2021). crhea93/LUCI: RNAAS Submission (v1.0). Zenodo. https://doi.org/10.5281/zenodo.5385351
+
+Paper Citation:  Carter Rhea et al 2021 Res. Notes AAS 5 208
+
 Prerequisites
 ^^^^^^^^^^^^^
     .. toctree::
@@ -75,6 +97,7 @@ Prerequisites
        howLuciWorks
        uncertainties
        fit_options
+       wavelength_corrections
        license
 
 Examples
@@ -102,6 +125,9 @@ Pipeline
 
       fits
       luci
+      params
+      plot
+      bayes
 
 
 FAQ & Errors
