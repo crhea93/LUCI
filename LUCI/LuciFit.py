@@ -397,6 +397,7 @@ class Fit:
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     sigma_dict_list.append({'type': 'eq', 'fun': lambda x: x[3*ind_0+2] - x[3*ind_unique+2]})
+
         return sigma_dict_list
 
     def vel_constraints(self):
@@ -413,9 +414,26 @@ class Fit:
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     expr_dict = {'type': 'eq',
-                             'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - self.line_dict.values()[3*ind_unique+1]) / (self.line_dict.values()[3*ind_unique+1])) - 3e5 * (
-                                     (1e7 / x[3*ind_0+1] - self.line_dict.values()[3*ind_0+1]) / (self.line_dict.values()[3*ind_unique+1]))}
+                             'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) - 3e5 * (
+                                     (1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
+                    vel_dict_list.append(expr_dict)
         return vel_dict_list
+
+
+    def NII_constraints(self):
+        """
+        Enforce the constraint that the NII6548 lines has an amplitude that is 1/3 the amplitude of NII6583.
+
+        Return:
+            Constraint on NII doublet relative amplitudes
+        """
+        # First we have to figure out which lines correspond to the doublet
+        nii_6548_index = np.argwhere(self.lines=='NII6548')
+        nii_6583_index = np.argwhere(self.lines=='NII6583')
+        # Now tie the amplitudes together s/t that amplitude of the NII6548 line is
+        # always 1/3 that of the NII6583 line
+        expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
+        return [expr_dict]
 
 
     def multiple_component_vel_constraint(self):
@@ -466,8 +484,17 @@ class Fit:
         self.inital_values = initial
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
+        print(sigma_cons)
+        print(vel_cons)
         #vel_cons_multiple = self.multiple_component_vel_constraint()
-        cons = (sigma_cons + vel_cons)# + vel_cons_multiple)
+        # CONSTRAINTS
+        if 'NII6548' in self.lines and 'NII6583' in self.lines:  # Add additional constraint on NII doublet relative amplitudes
+            NII_constraints = self.NII_constraints()
+            print(NII_constraints)
+            cons = (sigma_cons + vel_cons)# + NII_constraints)# + vel_cons_multiple)
+            print(cons)
+        else:
+            cons = (sigma_cons + vel_cons)
         soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-8,
                         args=(), constraints=cons)
@@ -582,7 +609,6 @@ class Fit:
                 self.uncertainties[i*3] *= self.spectrum_scale
             # Scale continuum
             parameters[-1] *= self.spectrum_scale
-            print(parameters)
             velocity = 3e5*((1e7/parameters[1]-self.line_dict['OH'])/self.line_dict['OH'])
             fit_vector = Sinc().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[-1]
             return velocity, fit_vector
@@ -631,9 +657,9 @@ class Fit:
                                             )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
-            sampler.run_mcmc(init_, 2000, progress=True)
+            sampler.run_mcmc(init_, 2, progress=True)
             # Obtain Ensemble Sampler results and discard first 200 walks (10%)
-            flat_samples = sampler.get_chain(discard=200, flat=True)
+            flat_samples = sampler.get_chain(discard=0, flat=True)
             parameters_med = []
             parameters_std = []
             self.flat_samples = flat_samples
@@ -645,6 +671,7 @@ class Fit:
             #self.fit_sol = parameters_med
             #self.uncertainties = parameters_std
             print(parameters_med)
+            print(parameters_std)
         else:
             print("The bayes_method parameter has been incorrectly set to '%s'"%self.bayes_method)
             print("Please enter either 'emcee' or 'dynesty' instead.")

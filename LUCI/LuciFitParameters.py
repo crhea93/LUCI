@@ -48,10 +48,13 @@ def calculate_vel_err(ind, lines, fit_sol, line_dict, uncertainties):
     line_name = lines[ind]
     l_calc1 = 1e7 / (fit_sol[3*ind+1])
     l_calc2 = 1e7 / (fit_sol[3*ind+1] + uncertainties[3*ind+1])
-    l_shift1 = (l_calc1 - line_dict[line_name]) / l_calc1
-    l_shift2 = (l_calc2 - line_dict[line_name]) / l_calc2
+    #print(l_calc1, l_calc2)
+    l_shift1 = (l_calc1 - line_dict[line_name]) / line_dict[line_name]
+    l_shift2 = (l_calc2 - line_dict[line_name]) / line_dict[line_name]
+    #print(l_shift1, l_shift2)
     v1 = 3e5 * l_shift1
     v2 = 3e5 * l_shift2
+    #print(v1, v2)
     return np.abs(v1 - v2)
 
 
