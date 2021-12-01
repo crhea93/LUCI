@@ -432,13 +432,13 @@ class Fit:
         """
         nii_doublet_constraints = []
         # First we have to figure out which lines correspond to the doublet
-        nii_6548_index = np.argwhere(self.lines=='NII6548')
-        nii_6583_index = np.argwhere(self.lines=='NII6583')
+        nii_6548_index = np.argwhere(np.array(self.lines)=='NII6548')[0][0]
+        nii_6583_index = np.argwhere(np.array(self.lines)=='NII6583')[0][0]
         # Now tie the amplitudes together s/t that amplitude of the NII6548 line is
         # always 1/3 that of the NII6583 line
-        for i in range(self.line_num-1):  # We have to put it self.line_num - 1 times to be the same size as the other constraints!
-            expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
-            nii_doublet_constraints.append(expr_dict)
+        #for i in range(self.line_num-2):  # We have to put it self.line_num - 1 times to be the same size as the other constraints!
+        expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
+        nii_doublet_constraints.append(expr_dict)
         return nii_doublet_constraints
 
 
@@ -490,15 +490,11 @@ class Fit:
         self.inital_values = initial
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
-        print(sigma_cons)
-        print(vel_cons)
         #vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines:  # Add additional constraint on NII doublet relative amplitudes
             NII_constraints = self.NII_constraints()
-            print(NII_constraints)
-            cons = (sigma_cons + vel_cons)# + NII_constraints)# + vel_cons_multiple)
-            print(cons)
+            cons = (sigma_cons + vel_cons + NII_constraints)# + vel_cons_multiple)
         else:
             cons = (sigma_cons + vel_cons)
         soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
