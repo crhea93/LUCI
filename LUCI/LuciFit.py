@@ -436,8 +436,15 @@ class Fit:
         nii_6583_index = np.argwhere(np.array(self.lines)=='NII6583')[0][0]
         # Now tie the amplitudes together s/t that amplitude of the NII6548 line is
         # always 1/3 that of the NII6583 line
-        #for i in range(self.line_num-2):  # We have to put it self.line_num - 1 times to be the same size as the other constraints!
-        expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
+        #expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
+        if self.model_type == 'gaussian':
+            func_ = lambda x: (1/3)*(x[3*nii_6548_index] * x[3*nii_6548_index+2]) - x[3*nii_6583_index] * x[3*nii_6583_index+2]
+        elif self.model_type == 'sinc':
+            func_ = lambda x: (1/3)*(x[3*nii_6548_index] * x[3*nii_6548_index+2]) - x[3*nii_6583_index] * x[3*nii_6583_index+2]
+        elif self.model_type == 'sincgauss':
+            func_ = lambda x: (1/3)*(x[3*nii_6548_index] * ((np.sqrt(2*np.pi)*x[3*nii_6548_index+2])/(sps.erf((x[3*nii_6548_index+2])/(np.sqrt(2)*self.sinc_width))))) - \
+                              x[3*nii_6583_index] * ((np.sqrt(2*np.pi)*x[3*nii_6583_index+2])/(sps.erf((x[3*nii_6583_index+2])/(np.sqrt(2)*self.sinc_width))))
+        expr_dict = {'type': 'eq','fun': func_}
         nii_doublet_constraints.append(expr_dict)
         return nii_doublet_constraints
 
@@ -524,6 +531,8 @@ class Fit:
             self.fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
             self.fit_vector = SincGauss().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
+        else:
+            print("Somehow all the checks missed the fact that you didn't enter a valid fit function...")
 
         return None
 
