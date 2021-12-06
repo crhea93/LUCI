@@ -312,9 +312,9 @@ class Fit:
             line_amp_est = np.max([
                                    #[self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
                                    #self.spectrum_normalized[line_ind - 2],
-                                   self.spectrum_normalized[line_ind - 1],
+                                   #self.spectrum_normalized[line_ind - 1],
                                    self.spectrum_normalized[line_ind],
-                                   self.spectrum_normalized[line_ind + 1],
+                                   #self.spectrum_normalized[line_ind + 1],
                                    #self.spectrum_normalized[line_ind + 2],
                                    #self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
                                    ])
@@ -469,9 +469,10 @@ class Fit:
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    expr_dict_amp = {'type': 'ineq', 'fun': lambda x: x[3*ind_unique+1] - x[3*ind_0+1]-100}
-                    expr_dict_vel = {'type': 'ineq', 'fun': lambda x: x[3*ind_unique] - x[3*ind_0]}
-                    vel_dict_list.append(expr_dict_amp)
+                    #expr_dict_amp = {'type': 'ineq', 'fun': lambda x: x[3*ind_unique+1] - x[3*ind_0+1]-100}
+                    expr_dict_vel = {'type': 'ineq', 'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) - 3e5 * (
+                            (1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
+                    #vel_dict_list.append(expr_dict_amp)
                     vel_dict_list.append(expr_dict_vel)
         return vel_dict_list
 
@@ -490,11 +491,18 @@ class Fit:
         initial = np.ones((3 * self.line_num + 1))
         bounds_ = []
         initial[-1] = self.cont_estimate(sigma_level=2.0)  # Add continuum constant and intialize it
+        lines_fit = []  # List of lines which already have been set up for fits
         for mod in range(self.line_num):
             #val = 3 * mod + 1
+            lines_fit.append(self.lines[mod])
             amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])
             initial[3 * mod] = amp_est - initial[-1]
-            initial[3 * mod + 1] = vel_est
+            # If line has already shown up we need to shift the velocity estimate
+            if lines_fit.count(self.lines[mod]) >= 1:
+                # This means multiple components were fit to this line
+                initial[3 * mod + 1] = vel_est + 0  # perturb fit by 100 km/s
+            else:
+                initial[3 * mod + 1] = vel_est
             initial[3 * mod + 2] = sigma_est
             bounds_.append((self.A_min, self.A_max))
             bounds_.append((self.x_min, self.x_max))
@@ -509,11 +517,11 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines:  # Add additional constraint on NII doublet relative amplitudes
             NII_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + vel_cons_multiple + NII_constraints)# + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons + vel_cons_multiple)# + NII_constraints)# + vel_cons_multiple)
         else:
             cons = (sigma_cons + vel_cons + vel_cons_multiple)
         soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
-                        options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-8,
+                        options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-4,
                         args=(), constraints=cons)
         parameters = soln.x
         if self.uncertainty_bool == True:
