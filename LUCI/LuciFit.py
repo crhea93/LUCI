@@ -311,9 +311,11 @@ class Fit:
         try:
             line_amp_est = np.max([
                                    #[self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
-                                   self.spectrum_normalized[line_ind - 2], self.spectrum_normalized[line_ind - 1],
+                                   #self.spectrum_normalized[line_ind - 2],
+                                   self.spectrum_normalized[line_ind - 1],
                                    self.spectrum_normalized[line_ind],
-                                   self.spectrum_normalized[line_ind + 1], self.spectrum_normalized[line_ind + 2],
+                                   self.spectrum_normalized[line_ind + 1],
+                                   #self.spectrum_normalized[line_ind + 2],
                                    #self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
                                    ])
         except:
@@ -438,12 +440,14 @@ class Fit:
         # always 1/3 that of the NII6583 line
         #expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
         if self.model_type == 'gaussian':
-            func_ = lambda x: (1/3)*(x[3*nii_6548_index] * x[3*nii_6548_index+2]) - x[3*nii_6583_index] * x[3*nii_6583_index+2]
+            func_ = lambda x: (1/3)*(x[3*nii_6583_index] * x[3*nii_6583_index+2]) - x[3*nii_6548_index] * x[3*nii_6548_index+2]
         elif self.model_type == 'sinc':
-            func_ = lambda x: (1/3)*(x[3*nii_6548_index] * x[3*nii_6548_index+2]) - x[3*nii_6583_index] * x[3*nii_6583_index+2]
+            func_ = lambda x: (1/3)*(x[3*nii_6583_index] * x[3*nii_6583_index+2]) - x[3*nii_6548_index] * x[3*nii_6548_index+2]
         elif self.model_type == 'sincgauss':
             func_ = lambda x: (1/3)*(x[3*nii_6548_index] * ((np.sqrt(2*np.pi)*x[3*nii_6548_index+2])/(sps.erf((x[3*nii_6548_index+2])/(np.sqrt(2)*self.sinc_width))))) - \
                               x[3*nii_6583_index] * ((np.sqrt(2*np.pi)*x[3*nii_6583_index+2])/(sps.erf((x[3*nii_6583_index+2])/(np.sqrt(2)*self.sinc_width))))
+            func_ = lambda x: (1/3)*(x[3*nii_6583_index] * ((np.sqrt(2*np.pi)*x[3*nii_6583_index+2])/(sps.erf((x[3*nii_6583_index+2])/(np.sqrt(2)*self.sinc_width))))) - \
+                              x[3*nii_6548_index] * ((np.sqrt(2*np.pi)*x[3*nii_6548_index+2])/(sps.erf((x[3*nii_6548_index+2])/(np.sqrt(2)*self.sinc_width)))) #LYA mod, this is the correct one thank you so much for putting this in Carter!!
         expr_dict = {'type': 'eq','fun': func_}
         nii_doublet_constraints.append(expr_dict)
         return nii_doublet_constraints
@@ -456,6 +460,7 @@ class Fit:
         we require that the first component has a higher velocity than the second component.
         This forces the solver to find the two components instead of simply fitting the same
         component twice.
+        This should work for three or more components, but I haven't tested it.
         """
         vel_dict_list = []
         unique_rels = np.unique(self.lines)  # List of unique groups
@@ -464,7 +469,10 @@ class Fit:
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    expr_dict = {'type': 'ineq', 'fun': lambda x: x[3*ind_unique+1] - x[3*ind_0+1] - 10}
+                    expr_dict_amp = {'type': 'ineq', 'fun': lambda x: x[3*ind_unique+1] - x[3*ind_0+1]-100}
+                    expr_dict_vel = {'type': 'ineq', 'fun': lambda x: x[3*ind_unique] - x[3*ind_0]}
+                    vel_dict_list.append(expr_dict_amp)
+                    vel_dict_list.append(expr_dict_vel)
         return vel_dict_list
 
 
@@ -497,13 +505,13 @@ class Fit:
         self.inital_values = initial
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
-        #vel_cons_multiple = self.multiple_component_vel_constraint()
+        vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines:  # Add additional constraint on NII doublet relative amplitudes
             NII_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + NII_constraints)# + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons + vel_cons_multiple + NII_constraints)# + vel_cons_multiple)
         else:
-            cons = (sigma_cons + vel_cons)
+            cons = (sigma_cons + vel_cons + vel_cons_multiple)
         soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-8,
                         args=(), constraints=cons)

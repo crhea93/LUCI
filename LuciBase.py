@@ -398,7 +398,12 @@ class Luci():
             output_name = self.object_name + "_" + str(binning)
         else:
             output_name = self.object_name
+        lines_fit = []  # List of lines which already have maps
         for ct,line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
+            if lines_fit.count(line_) >= 1:  # If the line is already present in the list of lines create
+                # This means multiple components were fit of this line so they need to be nammed appropriately
+                line_number = lines_fit.count(line_) + 1
+                line_ += '_'+line_num
             fits.writeto(self.output_dir + '/Amplitudes/'+ output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
             fits.writeto(self.output_dir + '/Fluxes/'+ output_name +'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
             fits.writeto(self.output_dir + '/Fluxes/'+ output_name +'_'+line_+'_Flux_err.fits', flux_errors_fits[:,:,ct], header, overwrite=True)
@@ -1032,7 +1037,6 @@ class Luci():
             flux_min = 26550; flux_max = 27550; noise_min = 25300; noise_max = 25700
         else:
             print('SNR Calculation for this filter has not been implemented')
-        #for i in range(y_max-y_min):
         def SNR_calc(i):
             y_pix = y_min + i
             snr_local = np.zeros(2048)
@@ -1069,12 +1073,9 @@ class Luci():
                     else:
                         pass
                 snr_local[x_pix] = snr
-            #SNR[y_pix] = snr_local
             return snr_local,i
 
-        #res = Parallel(n_jobs=n_threads, backend="threading", batch_size=int((x_max-x_min)/n_threads))(delayed(SNR_calc)(i) for i in tqdm(range(y_max-y_min)));
         res = Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(i) for i in tqdm(range(y_max-y_min)));
-        #end = time.time()
         # Save
         for snr_ind in res:
             snr_vals, step_i = snr_ind
@@ -1179,14 +1180,10 @@ class Luci():
                 # Collect spectrum in 10x10 region
                 x_center = x_min + int(0.5*(x_step)*(x_grid+1))
                 y_center = y_min + int(0.5*(y_step)*(y_grid+1))
-                #print(x_center, y_center)
                 integrated_spectrum = np.zeros_like(self.cube_final[x_center, y_center, :])  # Initialize as zeros
                 for i in range(5):  # Take 5x5 bins
                     for j in range(5):
                         integrated_spectrum += self.cube_final[x_center+i, y_center+i, :]
-                #print(self.cube_final[x_center, y_center, :])
-                #integrated_spectrum = self.cube_final[x_center, y_center, :].mean(axis=0).mean(axis=0)
-                #print(integrated_spectrum)
                 # Collapse to single spectrum
                 good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
                 sky = integrated_spectrum[good_sky_inds]
@@ -1201,10 +1198,6 @@ class Luci():
                         )
 
                 velocity, fit_vector = fit.fit(sky_line=True)
-                #plt.plot(axis, sky)
-                #plt.plot(axis, fit_vector)
-                #plt.show()
-                #plt.clf()
                 vel_grid[x_grid, y_grid] = float(velocity)
         # Now that we have the grid, we need to reproject it onto the original pixel grid
         print(vel_grid)
@@ -1217,6 +1210,49 @@ class Luci():
                 vel_grid_final[x_center-x_step:x_center+x_step, y_center-y_step:y_center+y_step] = vel_grid[x_grid, y_grid]
         fits.writeto(self.output_dir+'/velocity_correction.fits', vel_grid, self.header, overwrite=True)
 
+
+    def create_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, n_threads=2):
+        """
+        Create component map of a given region following our third paper. If no bounds are given,
+        a map of the entire cube is calculated.
+
+        Args:
+            x_min: Minimal X value (default 0)
+            x_max: Maximal X value (default 2048)
+            y_min: Minimal Y value (default 0)
+            y_max: Maximal Y value (default 2064)
+            method: Method used to calculate SNR (default 1; options 1 or 2)
+            n_threads: Number of threads to use
+        Return:
+            component_map: component map
+
+        """
+        # Calculate bounds for SNR calculation
+        # Step through spectra
+        Comps = np.zeros((2048, 2064), dtype=np.float32).T
+        if self.hdr_dict['FILTER'] == 'SN3':
+            flux_min = 15150; flux_max = 15300; noise_min = 14250; noise_max = 14400
+        else:
+            print('Component Calculation has only been implemented in SN3!')
+            print('Terminating program!')
+            exit()
+        def component_calc(i):
+            y_pix = y_min + i
+            comps_local = np.zeros(2048)
+            for j in range(x_max-x_min):
+                x_pix = x_min+j
+                # Calculate how many components are present in SN3 using a convolutional neural network
+                #comps =
+                comps_local[x_pix] = comps
+            return comps_local,i
+
+        res = Parallel(n_jobs=n_threads, backend="threading")(delayed(component_calc)(i) for i in tqdm(range(y_max-y_min)));
+        # Save
+        for comp_ind in res:
+            comp_vals, step_i = comp_ind
+            Comps[y_min+step_i] = comp_vals
+
+        fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', Comps, self.header, overwrite=True)
 
 
 
