@@ -398,7 +398,7 @@ class Fit:
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x: x[3*ind_0+2] - x[3*ind_unique+2]})
+                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3*ind_0+2] - x[3*ind_unique+2]})
 
         return sigma_dict_list
 
@@ -419,7 +419,7 @@ class Fit:
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     #print('unique: %i'%ind_unique)
                     expr_dict = {'type': 'eq',
-                             'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) - 3e5 * (
+                             'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: 3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) - 3e5 * (
                                      (1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
                     vel_dict_list.append(expr_dict)
         return vel_dict_list
@@ -444,8 +444,6 @@ class Fit:
         elif self.model_type == 'sinc':
             func_ = lambda x: (1/3)*(x[3*nii_6583_index] * x[3*nii_6583_index+2]) - x[3*nii_6548_index] * x[3*nii_6548_index+2]
         elif self.model_type == 'sincgauss':
-            func_ = lambda x: (1/3)*(x[3*nii_6548_index] * ((np.sqrt(2*np.pi)*x[3*nii_6548_index+2])/(sps.erf((x[3*nii_6548_index+2])/(np.sqrt(2)*self.sinc_width))))) - \
-                              x[3*nii_6583_index] * ((np.sqrt(2*np.pi)*x[3*nii_6583_index+2])/(sps.erf((x[3*nii_6583_index+2])/(np.sqrt(2)*self.sinc_width))))
             func_ = lambda x: (1/3)*(x[3*nii_6583_index] * ((np.sqrt(2*np.pi)*x[3*nii_6583_index+2])/(sps.erf((x[3*nii_6583_index+2])/(np.sqrt(2)*self.sinc_width))))) - \
                               x[3*nii_6548_index] * ((np.sqrt(2*np.pi)*x[3*nii_6548_index+2])/(sps.erf((x[3*nii_6548_index+2])/(np.sqrt(2)*self.sinc_width)))) #LYA mod, this is the correct one thank you so much for putting this in Carter!!
         expr_dict = {'type': 'eq','fun': func_}
@@ -516,13 +514,17 @@ class Fit:
         vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines:  # Add additional constraint on NII doublet relative amplitudes
-            NII_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + vel_cons_multiple)# + NII_constraints)# + vel_cons_multiple)
+            nii_constraints = self.NII_constraints()
+            cons = (sigma_cons + vel_cons + nii_constraints + vel_cons_multiple)
         else:
             cons = (sigma_cons + vel_cons + vel_cons_multiple)
-        soln = minimize(nll, initial, method='SLSQP', #method='SLSQP',# jac=self.fun_der(),
+        soln = minimize(nll, initial,# method='Nelder-Mead',
+                        #method='BFGS',
+                        method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-4,
-                        args=(), constraints=cons)
+                        args=(), constraints=cons
+                        )
+        print(soln)
         parameters = soln.x
         if self.uncertainty_bool == True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
@@ -602,12 +604,15 @@ class Fit:
                 flux_errors.append(calculate_flux_err(line_ct, self.fit_sol, self.uncertainties, self.model_type, self.sinc_width))
             # Collect parameters to return in a dictionary
             fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
-                        'fit_vector': self.fit_vector, 'fit_axis':self.axis,
                         'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
                         'velocities': vels, 'sigmas': sigmas,
                         'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                         'axis_step': self.axis_step, 'corr': self.correction_factor,
-                        'continuum': self.fit_sol[-1], 'scale':self.spectrum_scale}
+                        'continuum': self.fit_sol[-1], 'scale':self.spectrum_scale,
+                        'vel_ml': self.vel_ml, 'vel_ml_sigma':self.vel_ml_sigma,
+                        'broad_ml': self.broad_ml, 'broad_ml_sigma': self.broad_ml_sigma,
+                        'fit_vector': self.fit_vector, 'fit_axis': self.axis,
+                        }
             return fit_dict
         else:  # Fit sky line
             self.spectrum_scale = np.max(self.spectrum)
@@ -629,6 +634,7 @@ class Fit:
             soln = minimize(nll, initial, method='SLSQP',
                             options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-2,
                             args=())
+            print(soln)
             parameters = soln.x
             # We now must unscale the amplitude
             for i in range(self.line_num):

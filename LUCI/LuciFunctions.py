@@ -72,7 +72,7 @@ class Gaussian:
         """
         f1 = 0.0
         for model_num in range(line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1])) - 1
+            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
             f1 += self.function(channel, params)
@@ -155,7 +155,7 @@ class Sinc:
         """
         f1 = 0.0
         for model_num in range(line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1])) - 1
+            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
             f1 += np.array(self.function(channel, params, sinc_width))
@@ -248,7 +248,7 @@ class SincGauss:
         """
         f1 = 0.0
         for model_num in range(line_num):
-            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))-1
+            min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
             f1 += self.function(channel, params, sinc_width)

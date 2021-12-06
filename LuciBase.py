@@ -22,7 +22,7 @@ from astropy.time import Time
 from astropy.coordinates import SkyCoord, EarthLocation
 from numba import jit, set_num_threads
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
-
+import numpy.ma as ma
 
 
 class Luci():
@@ -54,6 +54,7 @@ class Luci():
             os.mkdir(self.output_dir)
         self.object_name = object_name
         self.redshift = redshift
+        self.resolution = resolution
         self.mdn = mdn
         self.quad_nb = 0  # Number of quadrants in Hdf5
         self.dimx = 0  # X dimension of cube
@@ -677,8 +678,6 @@ class Luci():
                 output_name = self.output_dir+'/'+self.object_name+'_mask'
 
         chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
@@ -718,7 +717,6 @@ class Luci():
                             sky -= bkg * binning**2  # Subtract background spectrum
                         else:
                             sky -= bkg  # Subtract background spectrum
-                    ct += 1
                     good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
                     sky = sky[good_sky_inds]
                     axis = self.spectrum_axis[good_sky_inds]
@@ -760,8 +758,6 @@ class Luci():
             velocities_errors_fits[i] = vels_errs_local
             broadenings_errors_fits[i] = broads_errs_local
             chi2_fits[i] = chi2_local
-            corr_fits[i] = corr_local
-            step_fits[i] = step_local
             continuum_fits[i] = continuum_local
             return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
         # Write outputs (Velocity, Broadening, and Amplitudes)
@@ -777,7 +773,7 @@ class Luci():
             wcs = WCS(self.header, naxis=2)
         cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
         for step_i in tqdm(range(y_max-y_min)):
-            fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits, broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
+            fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits, broadenings_fits, broadenings_errors_fits, chi2_fits, continuum_fits)
         self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
@@ -1005,7 +1001,6 @@ class Luci():
         return axis, sky, fit_dict
 
 
-
     def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, n_threads=2):
         """
         Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
@@ -1073,16 +1068,21 @@ class Luci():
                     else:
                         pass
                 snr_local[x_pix] = snr
-            return snr_local,i
+            return snr_local, i
 
         res = Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(i) for i in tqdm(range(y_max-y_min)));
         # Save
         for snr_ind in res:
             snr_vals, step_i = snr_ind
             SNR[y_min+step_i] = snr_vals
-
         fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR, self.header, overwrite=True)
 
+        # Save masks for SNr 3, 5, and 10
+        for snr_val in [3, 5, 10]:
+            mask = ma.masked_where(SNR >=snr_val, SNR)
+            np.save("%s/SNR_%i_mask.npy" % (self.output_dir, snr_val), mask.mask)
+
+        return None
 
 
     def update_astrometry(self, api_key):
@@ -1211,7 +1211,7 @@ class Luci():
         fits.writeto(self.output_dir+'/velocity_correction.fits', vel_grid, self.header, overwrite=True)
 
 
-    def create_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, n_threads=2):
+    def create_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2):
         """
         Create component map of a given region following our third paper. If no bounds are given,
         a map of the entire cube is calculated.
@@ -1221,7 +1221,7 @@ class Luci():
             x_max: Maximal X value (default 2048)
             y_min: Minimal Y value (default 0)
             y_max: Maximal Y value (default 2064)
-            method: Method used to calculate SNR (default 1; options 1 or 2)
+            bkg: Background Spectrum (1D numpy array; default None)
             n_threads: Number of threads to use
         Return:
             component_map: component map
@@ -1231,28 +1231,44 @@ class Luci():
         # Step through spectra
         Comps = np.zeros((2048, 2064), dtype=np.float32).T
         if self.hdr_dict['FILTER'] == 'SN3':
-            flux_min = 15150; flux_max = 15300; noise_min = 14250; noise_max = 14400
+            # Read in machine learning algorithm
+            comps_model = keras.models.load_model(self.Luci_path+'ML/R%i-COMPONENTS-%s.h5'%(self.resolution, self.filter))
         else:
             print('Component Calculation has only been implemented in SN3!')
             print('Terminating program!')
             exit()
+
         def component_calc(i):
             y_pix = y_min + i
             comps_local = np.zeros(2048)
             for j in range(x_max-x_min):
                 x_pix = x_min+j
                 # Calculate how many components are present in SN3 using a convolutional neural network
-                #comps =
-                comps_local[x_pix] = comps
-            return comps_local,i
+                sky = self.cube_final[x_pix, y_pix, :]
+                good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
+                if bkg is not None:
+                    sky = sky[good_sky_inds] - bkg[good_sky_inds]
+                else:
+                    sky = sky[good_sky_inds]
+                axis = self.spectrum_axis[good_sky_inds]
+                # Interpolate
+                f = interpolate.interp1d(axis, sky, kind='slinear', fill_value='extrapolate')
+                spectrum_interpolated = f(self.wavenumbers_syn[2:-2])
+                spectrum_scaled = spectrum_interpolated / np.max(spectrum_interpolated)
+                Spectrum = spectrum_scaled.reshape(1, spectrum_scaled.shape[0], 1)
+                predictions = comps_model(Spectrum, training=False)
+                max_ind = np.argmax(predictions[0])  # ID of outcome (0 -> single; 1 -> double)
+                comp = max_ind + 1  # 1 -> single; 2 -> double
+                comps_local[x_pix] = comp
+            return comps_local, i
 
-        res = Parallel(n_jobs=n_threads, backend="threading")(delayed(component_calc)(i) for i in tqdm(range(y_max-y_min)));
+        res = Parallel(n_jobs=n_threads, backend="threading")(delayed(component_calc)(i) for i in tqdm(range(y_max-y_min)))
         # Save
         for comp_ind in res:
             comp_vals, step_i = comp_ind
             Comps[y_min+step_i] = comp_vals
 
-        fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', Comps, self.header, overwrite=True)
+        fits.writeto(self.output_dir+'/'+self.object_name+'_comps.fits', Comps, self.header, overwrite=True)
 
 
 
