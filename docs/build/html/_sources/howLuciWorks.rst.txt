@@ -98,12 +98,14 @@ to be between 0.001 and 1.1, the position of the line to be between 14700 and 15
 and the sigma of the Gaussian to be between 0.001 and 10. By applying these bounds,
 we constrain the optimization problem. The fit returns the amplitude of the line
 (which we then scale to be correct for the un-normalized spectrum), the velocity in km/s,
-and the velocity dispersion in km/s. If the user choses, the line velocities and velocity dispersions
-can be coupled.
+and the velocity dispersion in km/s. If the user chooses, the line velocities and velocity dispersions
+can be coupled. Additionally, we automatically include the constraint on the NII-doublet flux ratio
+(setting NII_6583 = 3*NII_6548) using the `nii_cons` boolean. This can be changed by adding
+`nii_cons=False` as an argument to any of the fitting functions.
 
 Available Models
 ^^^^^^^^^^^^^^^^
-For the moment, we only have a Gaussian implemented. We plan on adding a sinc and sincgauss.
+We have implemented three functions: `gaussian`, `sinc`, and `sincgauss`.
 
 Gaussian
 ########
