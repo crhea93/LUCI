@@ -120,6 +120,7 @@ class Fit:
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
+        self.inital_values = None  #Initialize initial values
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
@@ -440,19 +441,22 @@ class Fit:
         component twice.
         This should work for three or more components, but I haven't tested it.
         """
-        vel_dict_list = []
-        unique_rels = np.unique(self.lines)  # List of unique groups
-        for unique_ in unique_rels:  # Step through each unique group
+        multi_dict_list = []
+        unique_lines = np.unique(self.lines)  # List of unique groups
+        print(unique_lines)
+        for unique_ in unique_lines:  # Step through each unique group
             inds_unique = [i for i, e in enumerate(self.lines) if e == unique_]  # Obtain line indices in group
             if len(inds_unique) > 1:  # If there is more than one element in the group
+                print(unique_, inds_unique)
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     #expr_dict_amp = {'type': 'ineq', 'fun': lambda x: x[3*ind_unique+1] - x[3*ind_0+1]-100}
-                    expr_dict_vel = {'type': 'ineq', 'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) - 3e5 * (
-                            (1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
+                    expr_dict_vel = {'type': 'ineq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3*ind_unique+1] - x[3*ind_0+1]}
+                            #3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) + 3e5 * (
+                            ##(1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
                     #vel_dict_list.append(expr_dict_amp)
-                    vel_dict_list.append(expr_dict_vel)
-        return vel_dict_list
+                    multi_dict_list.append(expr_dict_vel)
+        return multi_dict_list
 
 
     def calculate_params(self):
@@ -495,16 +499,16 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + nii_constraints)   #  + vel_cons_multiple
+            cons = (sigma_cons + vel_cons + nii_constraints + vel_cons_multiple)
         else:
             cons = (sigma_cons + vel_cons)# + vel_cons_multiple)
         soln = minimize(nll, initial,
-                        method='SLSQP',# jac=self.fun_der(),
+                        method='SLSQP',
                         options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-4,
                         args=(), constraints=cons
                         )
         parameters = soln.x
-        if self.uncertainty_bool == True:
+        if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
             try:
                 hessian = Hessian(nll)

@@ -65,6 +65,7 @@ Now we can go about fitting this spectrum. To do this, we have to do the interpo
 Please note that this is all done internally in LUCI normally.
 
 .. code-block:: python
+
   # Machine Learning Reference Spectrum
   ref_spec = fits.open('/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R5000-SN3.fits')[1].data
   channel = []
@@ -81,10 +82,46 @@ Please note that this is all done internally in LUCI normally.
   sky_corr = sky_corr/sky_corr_scale
 
 
+Let's plot this
+
+.. code-block:: python
+
+    plt.figure(figsize=(10,6))
+    plt.plot(spectrum_axis, spectrum, color='black', label='Spectrum')
+    plt.xlim(14750, 15400)
+    plt.xlabel('Wavelength (cm-1)', fontsize=14)
+    plt.ylabel('Amplitude', fontsize=14)
+    plt.axvline(1e7/656.3, label='Halpha', color='blue', linestyle='--')
+    plt.axvline(1e7/658.3, label='NII6583', color='teal', linestyle='--')
+    plt.axvline(1e7/654.8, label='NII6548', color='green', linestyle='--')
+    plt.axvline(1e7/671.6, label='NII6716', color='magenta', linestyle='--')
+    plt.axvline(1e7/673.1, label='NII6731', color='violet', linestyle='--')
+    plt.legend(ncol=2)
+    plt.show()
+
+.. image:: DoubleSpectrum.png
+    :alt: Double component Halpha
+
+
 We can now fit the spectrum
 
 .. code-block:: python
-  fit = lfit.Fit(spectrum, spectrum_axis, wavenumbers_syn, 'sincgauss', ['Halpha', 'Halpha', 'NII6583', 'NII6548','SII6716', 'SII6731'], [1,2,1,1,1,1], [1,2,1,1,1,1],
-                keras.models.load_model('/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I-SN3')
+
+  fit = lfit.Fit(spectrum, spectrum_axis, wavenumbers_syn, 'sincgauss',
+                 ['Halpha', 'NII6583', 'NII6548','SII6716', 'SII6731', 'Halpha'],
+                 [1,1,1,1,1,2], [1,1,1,1,1,2],
+                 keras.models.load_model('/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I-SN3')
                )
   fit_dict = fit.fit()
+
+And let's visualize that fit..
+
+.. code-block:: python
+
+    plt.plot(spectrum_axis, spectrum, label='spectrum')
+    plt.plot(spectrum_axis, fit_dict['fit_vector'], label='fit vector', linestyle='--')
+    plt.xlim(14800, 15300)
+    plt.legend()
+
+.. image:: DoubleFit.png
+    :alt: Double component Halpha fit
