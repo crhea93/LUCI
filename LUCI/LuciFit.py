@@ -137,7 +137,7 @@ class Fit:
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
-        self.A_min = -0.5;
+        self.A_min = 0.;
         self.A_max = 1.1;
         self.x_min = 0 #  14700;
         self.x_max = 1e6 #  15600
@@ -172,8 +172,6 @@ class Fit:
     def calc_sinc_width(self,):
         """
         Calculate sinc width of the sincgauss function
-
-
         """
         MPD = self.cos_theta*self.delta_x*(self.n_steps-self.zpd_index)/1e7
         self.sinc_width = 1/(2*MPD)
@@ -310,13 +308,13 @@ class Fit:
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
             line_amp_est = np.max([
-                                   #[self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
-                                   #self.spectrum_normalized[line_ind - 2],
-                                   #self.spectrum_normalized[line_ind - 1],
+                                   self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
+                                   self.spectrum_normalized[line_ind - 2],
+                                   self.spectrum_normalized[line_ind - 1],
                                    self.spectrum_normalized[line_ind],
-                                   #self.spectrum_normalized[line_ind + 1],
-                                   #self.spectrum_normalized[line_ind + 2],
-                                   #self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
+                                   self.spectrum_normalized[line_ind + 1],
+                                   self.spectrum_normalized[line_ind + 2],
+                                   self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
                                    ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
@@ -398,8 +396,7 @@ class Fit:
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3*ind_0+2] - x[3*ind_unique+2]})
-
+                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: (3e5*x[3*ind_0+2])/x[3*ind_0+1] - (3e5*x[3*ind_unique+2])/x[3*ind_unique+1]})
         return sigma_dict_list
 
     def vel_constraints(self):
@@ -411,13 +408,10 @@ class Fit:
         vel_dict_list = []
         unique_rels = np.unique(self.vel_rel)  # List of unique groups
         for unique_ in unique_rels:  # Step through each unique group
-            #print('Current rel id %i'%unique_)
             inds_unique = [i for i, e in enumerate(self.vel_rel) if e == unique_]  # Obtain line indices in group
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
-                #print("unique 0: %i"%ind_0)
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    #print('unique: %i'%ind_unique)
                     expr_dict = {'type': 'eq',
                              'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: 3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) - 3e5 * (
                                      (1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
@@ -515,7 +509,7 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + nii_constraints + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons + vel_cons_multiple + nii_constraints)
         else:
             cons = (sigma_cons + vel_cons + vel_cons_multiple)
         soln = minimize(nll, initial,

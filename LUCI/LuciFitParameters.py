@@ -78,7 +78,7 @@ def calculate_broad(ind, fit_sol, axis_step):
     #broad = (3e5 * fit_sol[3*ind+2] * axis_step) / fit_sol[3*ind+1]
     #return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
     broad = (3e5 * fit_sol[3*ind+2]) / fit_sol[3*ind+1]
-    return np.abs(broad)  # Add FWHM correction
+    return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))   # Add FWHM correction
 
 
 def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
