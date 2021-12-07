@@ -445,7 +445,7 @@ class Luci():
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
-                 output_name=None, uncertainty_bool=False, n_threads=1):
+                 output_name=None, uncertainty_bool=False, n_threads=1, nii_cons=True):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -469,6 +469,7 @@ class Luci():
             output_name: User defined output path/name (default None)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
+            nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -543,7 +544,7 @@ class Luci():
                         filter = self.hdr_dict['FILTER'],
                         bayes_bool=bayes_bool, bayes_method=bayes_method,
                         uncertainty_bool=uncertainty_bool,
-                        mdn=self.mdn
+                        mdn=self.mdn, nii_con=nii_cons
                         )
                     fit_dict = fit.fit()
                     # Save local list of fit values
@@ -603,7 +604,7 @@ class Luci():
 
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
                     bkg=None, binning=None, bayes_bool=False, bayes_method='emcee',
-                    output_name=None, uncertainty_bool=False, n_threads=1):
+                    output_name=None, uncertainty_bool=False, n_threads=1, nii_cons=True):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -626,6 +627,7 @@ class Luci():
             output_name: User defined output path/name
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
+            nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -729,8 +731,9 @@ class Luci():
                             delta_x = self.hdr_dict['STEP'],  n_steps = self.step_nb,
                             zpd_index = self.zpd_index,
                             filter = self.hdr_dict['FILTER'],
-                            bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool,
-                            mdn=self.mdn)
+                            bayes_bool=bayes_bool, bayes_method=bayes_method,
+                            uncertainty_bool=uncertainty_bool,
+                            mdn=self.mdn, nii_cons=nii_cons)
                     fit_dict = fit.fit()
                     # Save local list of fit values
                     ampls_local.append(fit_dict['amplitudes'])
@@ -783,7 +786,8 @@ class Luci():
     def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
                   pixel_x, pixel_y, bkg=None,
                   bayes_bool=False, bayes_method='emcee',
-                  output_name=None, uncertainty_bool=False):
+                  output_name=None, uncertainty_bool=False,
+                  nii_cons=True):
         """
         Primary fit call to fit a single pixel in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps.
@@ -800,6 +804,7 @@ class Luci():
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             output_name: User defined output path/name (default None)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+            nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
         Return:
             Returns the x-axis, sky, and fit dictionary
 
@@ -821,7 +826,7 @@ class Luci():
             filter = self.hdr_dict['FILTER'],
             bayes_bool=bayes_bool, bayes_method=bayes_method,
             uncertainty_bool=uncertainty_bool,
-            mdn=self.mdn)
+            mdn=self.mdn, nii_cons=nii_cons)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
@@ -932,7 +937,8 @@ class Luci():
     def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel,
                             region, bkg=None,
                             bayes_bool=False, bayes_method='emcee',
-                            uncertainty_bool=False, mean=False):
+                            uncertainty_bool=False, mean=False, nii_cons=True
+                            ):
         """
         Fit spectrum in region.
         The spectra in the region are summed and then averaged (if mean is selected).
@@ -950,6 +956,7 @@ class Luci():
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             mean: Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.
+            nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
 
         Return:
             X-axis and spectral axis of region.
@@ -997,7 +1004,7 @@ class Luci():
                 zpd_index = self.zpd_index,
                 filter = self.hdr_dict['FILTER'],
                 bayes_bool=bayes_bool, bayes_method=bayes_method,
-                uncertainty_bool=uncertainty_bool,
+                uncertainty_bool=uncertainty_bool, nii_cons=nii_cons,
                 mdn=self.mdn)
         fit_dict = fit.fit()
         return axis, sky, fit_dict

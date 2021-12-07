@@ -34,23 +34,6 @@ class Fit:
 
     All the functions for Bayesian Inference with the exception of the fit call
     are in 'LuciBayesian.py'.
-
-    The initial arguments are as follows:
-    Args:
-
-        spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
-
-        axis: Wavelength Axis of Spectrum (numpy array)
-
-        wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
-
-        model_type: Type of model ('gaussian')
-
-        lines: Lines to fit (must be in line_dict)
-
-        sigma_rel: Constraints on sigma (must be list)
-
-        ML_model: Tensorflow/keras machine learning model
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
@@ -58,6 +41,7 @@ class Fit:
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
+                 nii_cons=True,
                  ):
         """
         Args:
@@ -80,12 +64,14 @@ class Fit:
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
+            nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
                           'Hbeta': 486.133, 'OH':649.873}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
+        self.nii_cons = nii_cons
         self.spectrum = spectrum
         self.spectrum_clean = spectrum/ np.max(spectrum)  # Clean normalized spectrum that will be used for calculating the noise
         self.axis = axis  # Redshifted axis
@@ -507,11 +493,11 @@ class Fit:
         vel_cons = self.vel_constraints()
         vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
-        if 'NII6548' in self.lines and 'NII6583' in self.lines:  # Add additional constraint on NII doublet relative amplitudes
+        if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + vel_cons_multiple + nii_constraints)
+            cons = (sigma_cons + vel_cons + nii_constraints)   #  + vel_cons_multiple
         else:
-            cons = (sigma_cons + vel_cons + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons)# + vel_cons_multiple)
         soln = minimize(nll, initial,
                         method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-4,
