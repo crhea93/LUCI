@@ -199,7 +199,7 @@
 <span id="fitting-functions"></span><h2>Fitting Functions<a class="headerlink" href="#module-LUCI.LuciFit" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFit.</span></span><span class="sig-name descname"><span class="pre">Fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2943</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">842</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zpd_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">169</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SN3'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFit.</span></span><span class="sig-name descname"><span class="pre">Fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2943</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">842</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zpd_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">169</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SN3'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class that defines the functions necessary for the modelling aspect. This includes
 the gaussian fit functions, the prior definitions, the log likelihood, and the
 definition of the posterior (log likelihood times prior).</p>
@@ -215,6 +215,17 @@ are in ‘LuciBayesian.py’.</p>
 :param lines: Lines to fit (must be in line_dict)
 :param sigma_rel: Constraints on sigma (must be list)
 :param ML_model: Tensorflow/keras machine learning model</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.NII_constraints">
+<span class="sig-name descname"><span class="pre">NII_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.NII_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enforce the constraint that the NII6548 lines has an amplitude that is 1/3 the amplitude of NII6583.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Constraint on NII doublet relative amplitudes</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.apply_transmission">
 <span class="sig-name descname"><span class="pre">apply_transmission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.apply_transmission" title="Permalink to this definition">¶</a></dt>
@@ -311,7 +322,7 @@ Else it will throw an error</p>
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.cont_estimate">
 <span class="sig-name descname"><span class="pre">cont_estimate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.cont_estimate" title="Permalink to this definition">¶</a></dt>
 <dd><p>TODO: Test</p>
-<p>Function to estimate the continuum level. We use a sigma clipping algorithm over the
+<p>Function to estimate the continuum level. We use a sigma clipping algorithm over the(mu_vel/3e5)*line_dict[line[ct]] + line_dict[line[ct]]
 restricted axis/spectrum to effectively ignore emission lines. Therefore, we
 are left with the continuum. We take the min value of this continuum as the initial
 guess.</p>
@@ -341,17 +352,20 @@ reference spectrum axis AND normalized as described in Rhea et al. 2020a.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LUCI.LuciFit.Fit.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.fit" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sky_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Primary function call for a spectrum. This will estimate the velocity using
 our machine learning algorithm described in Rhea et al. 2020a. Then we will
 fit our lines using scipy.optimize.minimize.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>{“fit_vector”: Fitted spectrum, “velocity”: Velocity of the line in km/s (float),
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sky_line</strong> – Boolean to fit sky lines (default False)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>{“fit_vector”: Fitted spectrum, “velocity”: Velocity of the line in km/s (float),
 “broadening”: Velocity Dispersion of the line in km/s (float)}</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>dictionary of parameters returned by the fit. The dictionary has the following form</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dictionary of parameters returned by the fit. The dictionary has the following form</p>
 </dd>
 </dl>
 </dd></dl>
@@ -414,7 +428,8 @@ The continuum constant is always the last argument regardless of the number of l
 If there are two components (i.e. the user passes the same line twice),
 we require that the first component has a higher velocity than the second component.
 This forces the solver to find the two components instead of simply fitting the same
-component twice.</p>
+component twice.
+This should work for three or more components, but I haven’t tested it.</p>
 </dd></dl>
 
 <dl class="py method">

@@ -67,6 +67,7 @@ class Luci():
         self.spectrum_axis = None
         self.spectrum_axis_unshifted = None  # Spectrum axis without redshift change
         self.wavenumbers_syn = None
+        self.wavenumbers_syn_full = None  # Unclipped reference spectrum
         self.hdr_dict = None
         self.interferometer_theta = None
         self.transmission_interpolated = None
@@ -290,6 +291,7 @@ class Luci():
             print('Terminating program!')
             exit()
         self.wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
+        self.wavenumbers_syn_full = np.array(channel, dtype=np.float32)
 
 
     def read_in_transmission(self):
@@ -1253,7 +1255,7 @@ class Luci():
                 axis = self.spectrum_axis[good_sky_inds]
                 # Interpolate
                 f = interpolate.interp1d(axis, sky, kind='slinear', fill_value='extrapolate')
-                spectrum_interpolated = f(self.wavenumbers_syn[2:-2])
+                spectrum_interpolated = f(self.wavenumbers_syn_full[2:-2])
                 spectrum_scaled = spectrum_interpolated / np.max(spectrum_interpolated)
                 Spectrum = spectrum_scaled.reshape(1, spectrum_scaled.shape[0], 1)
                 predictions = comps_model(Spectrum, training=False)

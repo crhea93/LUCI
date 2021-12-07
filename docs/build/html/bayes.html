@@ -94,6 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Example Modules:</span></p>
@@ -196,7 +197,7 @@
 <h2>Bayesian Methods<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-LUCI.LuciBayesian"></span><dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciBayesian.log_likelihood_bayes">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciBayesian.</span></span><span class="sig-name descname"><span class="pre">log_likelihood_bayes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_likelihood_bayes" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciBayesian.</span></span><span class="sig-name descname"><span class="pre">log_likelihood_bayes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_likelihood_bayes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -208,6 +209,8 @@
 <li><p><strong>model_type</strong> – Fitting function (i.e. ‘gaussian’, ‘sinc’, or ‘sincgauss’)</p></li>
 <li><p><strong>line_num</strong> – Number of lines for fit</p></li>
 <li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
+<li><p><strong>vel_rel</strong> – </p></li>
+<li><p><strong>sigma_rel</strong> – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -218,12 +221,13 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciBayesian.log_prior">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciBayesian.</span></span><span class="sig-name descname"><span class="pre">log_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_broad</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_broad</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_prior" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciBayesian.</span></span><span class="sig-name descname"><span class="pre">log_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_broad</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_broad</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_prior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate log prior assuming uniform priors on the amplitude and continuum values.</p>
 <p>The uniform prior on the amplitude is 1/(A_max-A_min)</p>
 <p>The uniform prior on the continuum is 1/(C_min-C_max)</p>
 <p>The priors on the line position and Gaussian broadening are defined by Gaussian Priors
 The mu and std of these priors are calculated using a MDN (see LuciNetwork).</p>
+<p>TODO: The velocity and broadening need to be updated to be in cm^-1 using the formulas in LuciDocs</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -264,7 +268,7 @@ Else we return -np.inf</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciBayesian.log_probability">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciBayesian.</span></span><span class="sig-name descname"><span class="pre">log_probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_gauss</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_probability" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciBayesian.</span></span><span class="sig-name descname"><span class="pre">log_probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_restricted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_gauss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_probability" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -275,8 +279,13 @@ Else we return -np.inf</p>
 <li><p><strong>yerr</strong> – Noise in data</p></li>
 <li><p><strong>model_type</strong> – Fitting function (i.e. ‘gaussian’, ‘sinc’, or ‘sincgauss’)</p></li>
 <li><p><strong>line_num</strong> – Number of lines for fit</p></li>
+<li><p><strong>lines</strong> – List of lines to fit</p></li>
+<li><p><strong>line_dict</strong> – Dictionary of available lines with wavelength in nm</p></li>
 <li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
 <li><p><strong>prior_gauss</strong> – Parameters for Gaussian priors [mu_vel, mu_broad, sigma_vel, sigma_broad]</p></li>
+<li><p><strong>vel_rel</strong> – </p></li>
+<li><p><strong>sigma_rel</strong> – </p></li>
+<li><p><strong>mdn</strong> – Boolean for MDN</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

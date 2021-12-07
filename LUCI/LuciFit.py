@@ -518,13 +518,11 @@ class Fit:
             cons = (sigma_cons + vel_cons + nii_constraints + vel_cons_multiple)
         else:
             cons = (sigma_cons + vel_cons + vel_cons_multiple)
-        soln = minimize(nll, initial,# method='Nelder-Mead',
-                        #method='BFGS',
+        soln = minimize(nll, initial,
                         method='SLSQP',# jac=self.fun_der(),
                         options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-4,
                         args=(), constraints=cons
                         )
-        print(soln)
         parameters = soln.x
         if self.uncertainty_bool == True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
