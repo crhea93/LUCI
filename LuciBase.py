@@ -232,16 +232,16 @@ class Luci():
             for i in range(x_shape_new):
                 for j in range(y_shape_new):
                     # Bin
-                    summed_deep = self.deep_image[x_min+int(i*binning):x_min+int((i+1)*binning), y_min+int(j*binning):y_min+int((j+1)*binning), :]
-                    summed_deep = np.nansum(summed_spec, axis=0)  # Sum along x
-                    summed_spec = np.nansum(summed_spec, axis=0)  # Sum along y
-                    binned_deep[i,j] = summed_deep  # Set to global
+                    summed_deep = self.deep_image[x_min+int(i*binning):x_min+int((i+1)*binning), y_min+int(j*binning):y_min+int((j+1)*binning)]
+                    summed_deep = np.nansum(summed_deep, axis=0)  # Sum along x
+                    summed_deep = np.nansum(summed_deep, axis=0)  # Sum along y
+                    binned_deep[i, j] = summed_deep  # Set to global
             # Update header information
             header_binned = self.header
-            header_binned['CRPIX1'] = self.header_binned['CRPIX1']/binning
-            header_binned['CRPIX2'] = self.header_binned['CRPIX2']/binning
-            header_binned['CDELT1'] = self.header_binned['CDELT1']*binning
-            header_binned['CDELT2'] = self.header_binned['CDELT2']*binning
+            header_binned['CRPIX1'] = header_binned['CRPIX1']/binning
+            header_binned['CRPIX2'] = header_binned['CRPIX2']/binning
+            header_binned['CDELT1'] = header_binned['CDELT1']*binning
+            header_binned['CDELT2'] = header_binned['CDELT2']*binning
             self.deep_image = binned_deep / (binning**2)
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
@@ -437,7 +437,7 @@ class Luci():
             if lines_fit.count(line_) >= 1:  # If the line is already present in the list of lines create
                 # This means multiple components were fit of this line so they need to be nammed appropriately
                 line_number = lines_fit.count(line_) + 1
-                line_ += '_'+line_num
+                line_ += '_' + str(line_number)
             fits.writeto(self.output_dir + '/Amplitudes/'+ output_name+'_'+line_+'_Amplitude.fits', ampls_fits[:,:,ct], header, overwrite=True)
             fits.writeto(self.output_dir + '/Fluxes/'+ output_name +'_'+line_+'_Flux.fits', flux_fits[:,:,ct], header, overwrite=True)
             fits.writeto(self.output_dir + '/Fluxes/'+ output_name +'_'+line_+'_Flux_err.fits', flux_errors_fits[:,:,ct], header, overwrite=True)
