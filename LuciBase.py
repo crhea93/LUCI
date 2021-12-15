@@ -1247,7 +1247,8 @@ class Luci():
         helio_kms = heliocorr.to(u.km / u.s)
         return helio_kms
 
-    def skyline_calibration(self, n_grid):
+
+    def skyline_calibration(self, n_grid, bin_size=30):
         """
         Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
         of the telescope lead to minor offset that can be measured by high resolution
@@ -1258,6 +1259,7 @@ class Luci():
 
         Args:
             n_grid: NxN grid (int)
+            bin_size: Size of grouping used for each region (optional int; default=30)
 
         Return:
             Velocity offset map
@@ -1276,9 +1278,9 @@ class Luci():
                 x_center = x_min + int(0.5 * (x_step) * (x_grid + 1))
                 y_center = y_min + int(0.5 * (y_step) * (y_grid + 1))
                 integrated_spectrum = np.zeros_like(self.cube_final[x_center, y_center, :])  # Initialize as zeros
-                for i in range(5):  # Take 5x5 bins
-                    for j in range(5):
-                        integrated_spectrum += self.cube_final[x_center + i, y_center + i, :]
+                for i in range(bin_size):  # Take bin_size x bin_size bins
+                    for j in range(bin_size):
+                        integrated_spectrum += self.cube_final[x_center+i, y_center+i, :]
                 # Collapse to single spectrum
                 good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
                 sky = integrated_spectrum[good_sky_inds]
