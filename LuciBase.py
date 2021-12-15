@@ -188,11 +188,16 @@ class Luci():
         #self.header.insert('NAXIS1', ('NAXIS2', 2048), after=True)
         self.hdr_dict = hdr_dict
 
-    def create_deep_image(self, output_name=None):
+    def create_deep_image(self, output_name=None, binning=None):
         """
         Create deep image fits file of the cube. This takes the cube and sums
         the spectral axis. Then the deep image is saved as a fits file with the following
-        naming convention: output_dir+'/'+object_name+'_deep.fits'
+        naming convention: output_dir+'/'+object_name+'_deep.fits'. We also allow for
+        the binning of the deep image -- this is used primarily for astrometry purposes.
+
+        Args:
+            output_name: Full path to output (optional)
+            binning: Binning number (optional integer; default=None)
         """
         #hdu = fits.PrimaryHDU()
         # We are going to break up this calculation into chunks so that  we can have a progress bar
@@ -200,11 +205,11 @@ class Luci():
 
         hdf5_file = h5py.File(self.cube_path+'.hdf5', 'r') # Open and read hdf5 file
 
-        if 'deep_frame' in hdf5_file:
+        if 'deep_frame' in hdf5_file:  # A deep image already exists
                 print('Existing deep frame extracted from hdf5 file.')
                 self.deep_image = hdf5_file['deep_frame'][:]
                 self.deep_image *= self.dimz
-        else:
+        else:  # Create new deep image
             print('New deep frame created from data.')
             self.deep_image = np.zeros((self.cube_final.shape[0], self.cube_final.shape[1]))#np.sum(self.cube_final, axis=2).T
             iterations_ = 10
@@ -212,6 +217,32 @@ class Luci():
             for i in tqdm(range(10)):
                 self.deep_image[step_size*i:step_size*(i+1)] = np.nansum(self.cube_final[step_size*i:step_size*(i+1)], axis=2)
         self.deep_image = self.deep_image.T
+        # Bin data
+        if binning != None and binning != 1:
+            # Get cube size
+            x_min = 0
+            x_max = self.cube_final.shape[0]
+            y_min = 0
+            y_max = self.cube_final.shape[1]
+            # Get new bin shape
+            x_shape_new = int((x_max-x_min)/binning)
+            y_shape_new = int((y_max-y_min)/binning)
+            # Set to zero
+            binned_deep = np.zeros((x_shape_new, y_shape_new))
+            for i in range(x_shape_new):
+                for j in range(y_shape_new):
+                    # Bin
+                    summed_deep = self.deep_image[x_min+int(i*binning):x_min+int((i+1)*binning), y_min+int(j*binning):y_min+int((j+1)*binning), :]
+                    summed_deep = np.nansum(summed_spec, axis=0)  # Sum along x
+                    summed_spec = np.nansum(summed_spec, axis=0)  # Sum along y
+                    binned_deep[i,j] = summed_deep  # Set to global
+            # Update header information
+            header_binned = self.header
+            header_binned['CRPIX1'] = self.header_binned['CRPIX1']/binning
+            header_binned['CRPIX2'] = self.header_binned['CRPIX2']/binning
+            header_binned['CDELT1'] = self.header_binned['CDELT1']*binning
+            header_binned['CDELT2'] = self.header_binned['CDELT2']*binning
+            self.deep_image = binned_deep / (binning**2)
         if output_name == None:
             output_name = self.output_dir+'/'+self.object_name+'_deep.fits'
         fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
