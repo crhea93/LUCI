@@ -7,6 +7,13 @@ Sometimes a emission line is categorized by more than a single line of site emis
 we are going to create two Halpha components (and the other usual emission lines in SN3). We will then
 fit the double components and the other lines.
 
+A very natural question is: how does LUCI fit multiple components?
+
+You will see that the commands are identical to previous fitting commands. The main difference comes from an additional
+constraint that is imposed on the fit algorithm: if a line appears twice then the velocities of the two lines cannot be equivalent.
+This is a very light constraint and, thus, doesn't always work! However, it imposes the least amount
+of constraints on the fitting algorithm. If you have thoughts on other methods to do this, please let me know!
+
 Let's start of with the usual slew of commands.
 
 .. code-block:: python
@@ -65,6 +72,7 @@ Now we can go about fitting this spectrum. To do this, we have to do the interpo
 Please note that this is all done internally in LUCI normally.
 
 .. code-block:: python
+
   # Machine Learning Reference Spectrum
   ref_spec = fits.open('/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R5000-SN3.fits')[1].data
   channel = []
@@ -81,10 +89,51 @@ Please note that this is all done internally in LUCI normally.
   sky_corr = sky_corr/sky_corr_scale
 
 
-We can now fit the spectrum
+Let's plot this
 
 .. code-block:: python
-  fit = lfit.Fit(spectrum, spectrum_axis, wavenumbers_syn, 'sincgauss', ['Halpha', 'Halpha', 'NII6583', 'NII6548','SII6716', 'SII6731'], [1,2,1,1,1,1], [1,2,1,1,1,1],
-                keras.models.load_model('/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I-SN3')
+
+    plt.figure(figsize=(10,6))
+    plt.plot(spectrum_axis, spectrum, color='black', label='Spectrum')
+    plt.xlim(14750, 15400)
+    plt.xlabel('Wavelength (cm-1)', fontsize=14)
+    plt.ylabel('Amplitude', fontsize=14)
+    plt.axvline(1e7/656.3, label='Halpha', color='blue', linestyle='--')
+    plt.axvline(1e7/658.3, label='NII6583', color='teal', linestyle='--')
+    plt.axvline(1e7/654.8, label='NII6548', color='green', linestyle='--')
+    plt.axvline(1e7/671.6, label='NII6716', color='magenta', linestyle='--')
+    plt.axvline(1e7/673.1, label='NII6731', color='violet', linestyle='--')
+    plt.legend(ncol=2)
+    plt.show()
+
+.. image:: DoubleSpectrum.png
+    :alt: Double component Halpha
+
+
+We can now fit the spectrum. After much testing of fitting double components, I find that setting the Bayesian analysis is
+really helpful here. Without setting it, the results are not always correct (there is some stochasticity in the fitting algorithm).
+On the other hand, the Bayesian approach seems to always achieve the correct values. If you find any descrepencies at all, please let me know!
+
+
+
+.. code-block:: python
+
+  fit = lfit.Fit(spectrum, spectrum_axis, wavenumbers_syn, 'sincgauss',
+                 ['Halpha', 'NII6583', 'NII6548','SII6716', 'SII6731', 'Halpha'],
+                 [1,1,1,1,1,2], [1,1,1,1,1,2],
+                 keras.models.load_model('/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I-SN3')
+                 bayes_bool=True
                )
   fit_dict = fit.fit()
+
+And let's visualize that fit..
+
+.. code-block:: python
+
+    plt.plot(spectrum_axis, spectrum, label='spectrum')
+    plt.plot(spectrum_axis, fit_dict['fit_vector'], label='fit vector', linestyle='--')
+    plt.xlim(14800, 15300)
+    plt.legend()
+
+.. image:: DoubleFit.png
+    :alt: Double component Halpha fit

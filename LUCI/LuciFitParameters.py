@@ -78,21 +78,19 @@ def calculate_broad(ind, fit_sol, axis_step):
     #broad = (3e5 * fit_sol[3*ind+2] * axis_step) / fit_sol[3*ind+1]
     #return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
     broad = (3e5 * fit_sol[3*ind+2]) / fit_sol[3*ind+1]
-    return np.abs(broad)  # Add FWHM correction
+    return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))   # Add FWHM correction
 
 
 def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
     """
     Calculate velocity dispersion error
-
     We simply take the difference between the velocity dispersions with and without the uncertainty.
-
 
     Args:
         ind: Index of line in lines
         fit_sol: Solution from fitting algorithm
         axis_step: Step due to correction factor (see LuciFit.calculate_correction)
-        uncertaintes: Uncertainties from fitting algoritm
+        uncertaintes: Uncertainties from fitting algorithm
     Return:
         Velocity Dispersion of the Halpha line in units of km/s
     """
@@ -106,7 +104,6 @@ def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
 def calculate_flux(line_amp, line_sigma, model_type, sinc_width):
     """
     Calculate flux value given fit of line
-
     See HowLuciWorks for calculations
 
     Args:

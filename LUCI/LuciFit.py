@@ -34,23 +34,6 @@ class Fit:
 
     All the functions for Bayesian Inference with the exception of the fit call
     are in 'LuciBayesian.py'.
-
-    The initial arguments are as follows:
-    Args:
-
-        spectrum: Spectrum of interest. This should not be the interpolated spectrum nor normalized(numpy array)
-
-        axis: Wavelength Axis of Spectrum (numpy array)
-
-        wavenumbers_syn: Wavelength Axis of Reference Spectrum (numpy array)
-
-        model_type: Type of model ('gaussian')
-
-        lines: Lines to fit (must be in line_dict)
-
-        sigma_rel: Constraints on sigma (must be list)
-
-        ML_model: Tensorflow/keras machine learning model
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
@@ -58,6 +41,7 @@ class Fit:
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
+                 nii_cons=True,
                  ):
         """
         Args:
@@ -80,12 +64,14 @@ class Fit:
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
+            nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
                           'Hbeta': 486.133, 'OH':649.873}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
+        self.nii_cons = nii_cons
         self.spectrum = spectrum
         self.spectrum_clean = spectrum/ np.max(spectrum)  # Clean normalized spectrum that will be used for calculating the noise
         self.axis = axis  # Redshifted axis
@@ -134,10 +120,11 @@ class Fit:
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
+        self.inital_values = None  #Initialize initial values
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
-        self.A_min = -0.5;
+        self.A_min = 0.;
         self.A_max = 1.1;
         self.x_min = 0 #  14700;
         self.x_max = 1e6 #  15600
@@ -172,8 +159,6 @@ class Fit:
     def calc_sinc_width(self,):
         """
         Calculate sinc width of the sincgauss function
-
-
         """
         MPD = self.cos_theta*self.delta_x*(self.n_steps-self.zpd_index)/1e7
         self.sinc_width = 1/(2*MPD)
@@ -310,13 +295,13 @@ class Fit:
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
             line_amp_est = np.max([
-                                   #[self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
-                                   #self.spectrum_normalized[line_ind - 2],
-                                   #self.spectrum_normalized[line_ind - 1],
+                                   self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
+                                   self.spectrum_normalized[line_ind - 2],
+                                   self.spectrum_normalized[line_ind - 1],
                                    self.spectrum_normalized[line_ind],
-                                   #self.spectrum_normalized[line_ind + 1],
-                                   #self.spectrum_normalized[line_ind + 2],
-                                   #self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
+                                   self.spectrum_normalized[line_ind + 1],
+                                   self.spectrum_normalized[line_ind + 2],
+                                   self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
                                    ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
@@ -398,8 +383,7 @@ class Fit:
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3*ind_0+2] - x[3*ind_unique+2]})
-
+                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: (3e5*x[3*ind_0+2])/x[3*ind_0+1] - (3e5*x[3*ind_unique+2])/x[3*ind_unique+1]})
         return sigma_dict_list
 
     def vel_constraints(self):
@@ -411,13 +395,10 @@ class Fit:
         vel_dict_list = []
         unique_rels = np.unique(self.vel_rel)  # List of unique groups
         for unique_ in unique_rels:  # Step through each unique group
-            #print('Current rel id %i'%unique_)
             inds_unique = [i for i, e in enumerate(self.vel_rel) if e == unique_]  # Obtain line indices in group
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
-                #print("unique 0: %i"%ind_0)
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    #print('unique: %i'%ind_unique)
                     expr_dict = {'type': 'eq',
                              'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: 3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) - 3e5 * (
                                      (1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
@@ -460,19 +441,22 @@ class Fit:
         component twice.
         This should work for three or more components, but I haven't tested it.
         """
-        vel_dict_list = []
-        unique_rels = np.unique(self.lines)  # List of unique groups
-        for unique_ in unique_rels:  # Step through each unique group
+        multi_dict_list = []
+        unique_lines = np.unique(self.lines)  # List of unique groups
+        print(unique_lines)
+        for unique_ in unique_lines:  # Step through each unique group
             inds_unique = [i for i, e in enumerate(self.lines) if e == unique_]  # Obtain line indices in group
             if len(inds_unique) > 1:  # If there is more than one element in the group
+                print(unique_, inds_unique)
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     #expr_dict_amp = {'type': 'ineq', 'fun': lambda x: x[3*ind_unique+1] - x[3*ind_0+1]-100}
-                    expr_dict_vel = {'type': 'ineq', 'fun': lambda x: 3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) - 3e5 * (
-                            (1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
+                    expr_dict_vel = {'type': 'ineq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3*ind_unique+1] - x[3*ind_0+1]}
+                            #3e5 * ((1e7 / x[3*ind_unique+1] - list(self.line_dict.values())[ind_unique]) / (list(self.line_dict.values())[ind_unique])) + 3e5 * (
+                            ##(1e7 / x[3*ind_0+1] - list(self.line_dict.values())[ind_0]) / (list(self.line_dict.values())[ind_0]))}
                     #vel_dict_list.append(expr_dict_amp)
-                    vel_dict_list.append(expr_dict_vel)
-        return vel_dict_list
+                    multi_dict_list.append(expr_dict_vel)
+        return multi_dict_list
 
 
     def calculate_params(self):
@@ -513,18 +497,18 @@ class Fit:
         vel_cons = self.vel_constraints()
         vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
-        if 'NII6548' in self.lines and 'NII6583' in self.lines:  # Add additional constraint on NII doublet relative amplitudes
+        if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
             cons = (sigma_cons + vel_cons + nii_constraints + vel_cons_multiple)
         else:
-            cons = (sigma_cons + vel_cons + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons)# + vel_cons_multiple)
         soln = minimize(nll, initial,
-                        method='SLSQP',# jac=self.fun_der(),
+                        method='SLSQP',
                         options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-4,
                         args=(), constraints=cons
                         )
         parameters = soln.x
-        if self.uncertainty_bool == True:
+        if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
             try:
                 hessian = Hessian(nll)

@@ -113,6 +113,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Example Modules:</span></p>
@@ -279,12 +280,14 @@ to be between 0.001 and 1.1, the position of the line to be between 14700 and 15
 and the sigma of the Gaussian to be between 0.001 and 10. By applying these bounds,
 we constrain the optimization problem. The fit returns the amplitude of the line
 (which we then scale to be correct for the un-normalized spectrum), the velocity in km/s,
-and the velocity dispersion in km/s. If the user choses, the line velocities and velocity dispersions
-can be coupled.</p>
+and the velocity dispersion in km/s. If the user chooses, the line velocities and velocity dispersions
+can be coupled. Additionally, we automatically include the constraint on the NII-doublet flux ratio
+(setting NII_6583 = 3*NII_6548) using the <cite>nii_cons</cite> boolean. This can be changed by adding
+<cite>nii_cons=False</cite> as an argument to any of the fitting functions.</p>
 </div>
 <div class="section" id="available-models">
 <h3>Available Models<a class="headerlink" href="#available-models" title="Permalink to this headline">¶</a></h3>
-<p>For the moment, we only have a Gaussian implemented. We plan on adding a sinc and sincgauss.</p>
+<p>We have implemented three functions: <cite>gaussian</cite>, <cite>sinc</cite>, and <cite>sincgauss</cite>.</p>
 <div class="section" id="gaussian">
 <h4>Gaussian<a class="headerlink" href="#gaussian" title="Permalink to this headline">¶</a></h4>
 <p>We assume a standard form of a Gaussian:
