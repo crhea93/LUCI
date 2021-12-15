@@ -1127,9 +1127,15 @@ class Luci():
 
     def update_astrometry(self, api_key):
         """
-        Use astronomy.net to update the astrometry in the header
+        Use astronomy.net to update the astrometry in the header using the deep image.
         If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
         the header is not updated and an exception is thrown.
+
+        This automatically updates the deep images header! If you want the header to be binned, then you can bin it
+        using the standard creation mechanisms (for this example binning at 2x2) and then run this code:
+
+        >>> cube.create_deep_image(binning=2)
+        >>> cube.update_astrometry(api_key)
 
         Args:
             api_key: Astronomy.net user api key
