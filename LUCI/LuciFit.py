@@ -315,7 +315,7 @@ class Fit:
                 3e5)
         return line_amp_est, line_pos_est, line_broad_est
 
-    def cont_estimate(self, sigma_level):
+    def cont_estimate(self, sigma_level=3):
         """
         TODO: Test
 
@@ -325,7 +325,7 @@ class Fit:
         guess.
 
         Args:
-            sigma_level: Sigma level to clip (Default=1)
+            sigma_level: Sigma level to clip (Default=3)
 
         Return:
             Initial guess for continuum
@@ -609,31 +609,34 @@ class Fit:
             self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
             nll = lambda *args: -self.log_likelihood(*args)
-            initial = np.ones((4))
+            initial = np.ones(4)
             bounds_ = []
-            initial[0] = 2 * self.cont_estimate(sigma_level=2.0)  # Make sure it is well above the continuum
-            initial[1] = 15383  # Theoretical value corresponding to -80 km/s for our OH line
+            initial[0] = np.abs(2 * self.cont_estimate())  # Make sure it is well above the continuum
+            initial[1] = 15390  #15383  # Theoretical value corresponding to -80 km/s for our OH line
             initial[2] = 10  # Doesn't matter since we are fitting a sinc with a fixed width
-            initial[3] = self.cont_estimate(sigma_level=2.0)  # Add continuum constant and intialize it
+            initial[3] = np.abs(self.cont_estimate())  # Add continuum constant and intialize it
             bounds_.append((0, self.A_max))
-            bounds_.append((15370, 15395))
+            bounds_.append((15250, 15450))
             bounds_.append((self.sigma_min, self.sigma_max))
             bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
-            bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum Constraint
+            bounds_u = [val[1] for val in bounds_] + [0.95]  # Continuum Constraint
             bounds = Bounds(bounds_l, bounds_u)
             self.inital_values = initial
             soln = minimize(nll, initial, method='SLSQP',
-                            options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-2,
+                            options={'disp': False, 'maxiter': 5000},  bounds=bounds, tol=1e-2,
                             args=())
             parameters = soln.x
+
             # We now must unscale the amplitude
             for i in range(self.line_num):
                 parameters[i * 3] *= self.spectrum_scale
                 self.uncertainties[i * 3] *= self.spectrum_scale
             # Scale continuum
             parameters[-1] *= self.spectrum_scale
-            velocity = 3e5 * ((1e7 / parameters[1] - self.line_dict['OH']) / self.line_dict['OH'])
-            fit_vector = Sinc().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[-1]
+            self.fit_sol = parameters
+            self.fit_Bayes()
+            velocity = 3e5 * ((1e7 / self.fit_sol[1] - self.line_dict['OH']) / self.line_dict['OH'])
+            fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + parameters[-1]
             return velocity, fit_vector
 
     def fit_Bayes(self):

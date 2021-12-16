@@ -1286,12 +1286,12 @@ class Luci():
                 sky = integrated_spectrum[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                fit = Fit(sky, axis, self.wavenumbers_syn, 'gaussian', ['OH'], [1], [1],
+                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH'], [1], [1],
                           self.model_ML, trans_filter=self.transmission_interpolated,
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
                           zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'],
+                          filter=self.hdr_dict['FILTER'], bayes_bool=True, bayes_method='emcee'
                           )
 
                 velocity, fit_vector = fit.fit(sky_line=True)
