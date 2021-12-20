@@ -121,7 +121,7 @@ class Fit:
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
-        self.inital_values = None  # Initialize initial values
+        self.initial_values = None  # Initialize initial values
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
@@ -397,17 +397,13 @@ class Fit:
             inds_unique = [i for i, e in enumerate(self.vel_rel) if e == unique_]  # Obtain line indices in group
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
+                ind_0_line = self.lines[ind_0]
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
+                    ind_unique_line = self.lines[ind_unique]
                     expr_dict = {'type': 'eq',
-                                 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: 3e5 * ((1e7 / x[
-                                     3 * ind_unique + 1] - list(self.line_dict.values())[ind_unique]) / (list(
-                                     self.line_dict.values())[ind_unique])) - 3e5 * (
-                                                                                              (1e7 / x[3 * ind_0 + 1] -
-                                                                                               list(
-                                                                                                   self.line_dict.values())[
-                                                                                                   ind_0]) / (list(
-                                                                                          self.line_dict.values())[
-                                                                                          ind_0]))}
+                                 'fun': lambda x, ind_unique_=ind_unique, ind_0_=ind_0, ind_unique_line_=ind_unique_line, ind_0_line_=ind_0_line:
+                                 3e5 * ((1e7 / x[3 * ind_unique_ + 1] - self.line_dict[ind_unique_line_]) / (self.line_dict[ind_unique_line_]))
+                                 - 3e5 * ((1e7 / x[3 * ind_0_ + 1] - self.line_dict[ind_0_line_]) / (self.line_dict[ind_0_line_]))}
                     vel_dict_list.append(expr_dict)
         return vel_dict_list
 
@@ -418,6 +414,7 @@ class Fit:
         Return:
             Constraint on NII doublet relative amplitudes
         """
+        global func_
         nii_doublet_constraints = []
         # First we have to figure out which lines correspond to the doublet
         nii_6548_index = np.argwhere(np.array(self.lines) == 'NII6548')[0][0]
@@ -497,16 +494,16 @@ class Fit:
         bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
         bounds_u = [val[1] for val in bounds_] + [0.75]  # Continuum Constraint
         bounds = Bounds(bounds_l, bounds_u)
-        self.inital_values = initial
+        self.initial_values = initial
         sigma_cons = self.sigma_constraints()
         vel_cons = self.vel_constraints()
         vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + nii_constraints + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons)#(sigma_cons + vel_cons)# + nii_constraints + vel_cons_multiple)
         else:
-            cons = (sigma_cons + vel_cons)  # + vel_cons_multiple)
+            cons = (sigma_cons)#(sigma_cons + vel_cons)  # + vel_cons_multiple)
         soln = minimize(nll, initial,
                         method='SLSQP',
                         options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-4,
@@ -621,7 +618,7 @@ class Fit:
             bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
             bounds_u = [val[1] for val in bounds_] + [0.95]  # Continuum Constraint
             bounds = Bounds(bounds_l, bounds_u)
-            self.inital_values = initial
+            self.initial_values = initial
             soln = minimize(nll, initial, method='SLSQP',
                             options={'disp': False, 'maxiter': 5000},  bounds=bounds, tol=1e-2,
                             args=())
