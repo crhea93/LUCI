@@ -734,10 +734,10 @@ class Luci():
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
                 region = region.split('/')[-1]
-            if output_name == None:
+            if output_name is None:
                 output_name = self.output_dir + '/' + self.object_name + '_' + region.split('.')[0]
         else:  # Passed mask not region file
-            if output_name == None:
+            if output_name is None:
                 output_name = self.output_dir + '/' + self.object_name + '_mask'
 
         chi2_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
@@ -758,7 +758,7 @@ class Luci():
 
         @jit(nopython=False)
         def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
-                     chi2_fit, corr_fit, step_fit, continuum_fit):
+                     chi2_fit, continuum_fit):
             # for i in tqdm(range(y_max-y_min)):
             y_pix = y_min + i
             ampls_local = []
@@ -827,7 +827,7 @@ class Luci():
             broadenings_errors_fits[i] = broads_errs_local
             chi2_fits[i] = chi2_local
             continuum_fits[i] = continuum_local
-            return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
+            return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, continuum_fit
 
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None and binning > 1:
