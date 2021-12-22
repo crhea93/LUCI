@@ -41,7 +41,7 @@ class Fit:
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
-                 nii_cons=True,
+                 nii_cons=True, sky_lines=None
                  ):
         """
         Args:
@@ -65,12 +65,14 @@ class Fit:
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
+            sky_lines: Dictionary of sky lines {OH_num: wavelength in nanometers}
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
                           'Hbeta': 486.133, 'OH': 649.873}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
+        self.sky_lines = sky_lines
         self.nii_cons = nii_cons
         self.spectrum = spectrum
         self.spectrum_clean = spectrum / np.max(
@@ -608,13 +610,21 @@ class Fit:
             nll = lambda *args: -self.log_likelihood(*args)
             initial = np.ones(4)
             bounds_ = []
-            initial[0] = np.abs(2 * self.cont_estimate())  # Make sure it is well above the continuum
+            '''initial[0] = np.abs(2 * self.cont_estimate())  # Make sure it is well above the continuum
             initial[1] = 15390  #15383  # Theoretical value corresponding to -80 km/s for our OH line
             initial[2] = 10  # Doesn't matter since we are fitting a sinc with a fixed width
             initial[3] = np.abs(self.cont_estimate())  # Add continuum constant and intialize it
             bounds_.append((0, self.A_max))
             bounds_.append((15250, 15450))
-            bounds_.append((self.sigma_min, self.sigma_max))
+            bounds_.append((self.sigma_min, self.sigma_max))'''
+            for mod in range(self.line_num):
+                initial[3 * mod] = 2*self.cont_estimate()
+                initial[3 * mod] = 1e7/((80*(self.sky_lines[mod])/3e5)+self.sky_lines[mod])
+                initial[3 * mod + 2] = 10
+                bounds_.append((self.A_min, self.A_max))
+                bounds_.append((self.x_min, self.x_max))
+                bounds_.append((self.sigma_min, self.sigma_max))
+            initial[-1] = self.cont_estimate()
             bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
             bounds_u = [val[1] for val in bounds_] + [0.95]  # Continuum Constraint
             bounds = Bounds(bounds_l, bounds_u)

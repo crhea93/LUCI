@@ -1,3 +1,4 @@
+import pandas as pd
 from astropy.io import fits
 import h5py
 import os
@@ -1264,14 +1265,22 @@ class Luci():
         Return:
             Velocity offset map
         """
+        # Read in sky lines
+        sky_lines_df = pd.read_csv('Data/sky_lines.csv', skiprows=2)
+        sky_lines = sky_lines_df['Wavelength']  # Get wavelengths
+        sky_lines = [sky_line/10 for sky_line in sky_lines]  # Convert from angstroms to nanometers
+        # Create skyline dictionary
+        sky_line_dict = {}  #  {OH_num: wavelength in nm}
+        for line_ct, line_wvl in enumerate(sky_lines):
+            sky_line_dict['OH_%i' % line_ct] = line_wvl
         # Calculate grid
         x_min = 0
         x_max = self.cube_final.shape[0]
-        x_step = int((x_max - x_min) / n_grid)
+        x_step = int((x_max - x_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         y_min = 0
         y_max = self.cube_final.shape[1]
-        y_step = int((y_max - y_min) / n_grid)
-        vel_grid = np.zeros((n_grid, n_grid))
+        y_step = int((y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
+        vel_grid = np.zeros((n_grid, n_grid))  # Initialize velocity grid
         for x_grid in range(n_grid):  # Step through x steps
             for y_grid in range(n_grid):  # Step through y steps
                 # Collect spectrum in 10x10 region
@@ -1286,12 +1295,12 @@ class Luci():
                 sky = integrated_spectrum[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH'], [1], [1],
+                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH_%i' % num for num in len(sky_lines)], [1], [1],
                           self.model_ML, trans_filter=self.transmission_interpolated,
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
                           zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'], bayes_bool=True, bayes_method='emcee'
+                          filter=self.hdr_dict['FILTER'], bayes_bool=True, bayes_method='emcee', sky_lines=sky_line_dict
                           )
 
                 velocity, fit_vector = fit.fit(sky_line=True)
