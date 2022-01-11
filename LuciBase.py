@@ -554,14 +554,12 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        # if output_name == None:
-        # output_name = self.output_dir+'/'+self.object_name
         set_num_threads(n_threads)
-
         @jit(nopython=False)
         def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
                      chi2_fit, corr_fit, step_fit, continuum_fit):
-            y_pix = y_min + i
+            y_pix = y_min + i  # Step y coordinate
+            # Set up all the local lists for the current y_pixel step
             ampls_local = []
             flux_local = []
             flux_errs_local = []
@@ -573,20 +571,21 @@ class Luci():
             corr_local = []
             step_local = []
             continuum_local = []
+            # Step through x coordinates
             for j in range(x_max - x_min):
-                x_pix = x_min + j
-                if binning is not None and binning != 1:
+                x_pix = x_min + j  # Set current x pixel
+                if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
                     sky = self.cube_binned[x_pix, y_pix, :]
-                else:
+                else:  # If not, then take from the unbinned cube
                     sky = self.cube_final[x_pix, y_pix, :]
-                if bkg is not None:
-                    if binning:
+                if bkg is not None:  # If there is a background variable subtract the bkg spectrum
+                    if binning:  # If binning, then we have to take into account how many pixels are in each bin
                         sky -= bkg * binning ** 2  # Subtract background spectrum
-                    else:
+                    else:  # No binning so just subtract the background directly
                         sky -= bkg  # Subtract background spectrum
-                good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
-                sky = sky[good_sky_inds]
-                axis = self.spectrum_axis[good_sky_inds]
+                good_sky_inds = [~np.isnan(sky)]  #  Find all NaNs in sky spectrum
+                sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
+                axis = self.spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
                 # Call fit!
                 if len(sky) > 0:  # Ensure that there are values in sky
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
@@ -599,7 +598,7 @@ class Luci():
                               uncertainty_bool=uncertainty_bool,
                               mdn=self.mdn, nii_cons=nii_cons
                               )
-                    fit_dict = fit.fit()
+                    fit_dict = fit.fit()  # Collect fit dictionary
                     # Save local list of fit values
                     ampls_local.append(fit_dict['amplitudes'])
                     flux_local.append(fit_dict['fluxes'])
@@ -612,7 +611,7 @@ class Luci():
                     corr_local.append(fit_dict['corr'])
                     step_local.append(fit_dict['axis_step'])
                     continuum_local.append(fit_dict['continuum'])
-                else:
+                else:  # If the sky is empty (this rarely rarely rarely happens), then return zeros for everything
                     ampls_local.append([0] * len(lines))
                     flux_local.append([0] * len(lines))
                     flux_errs_local.append([0] * len(lines))
@@ -875,11 +874,10 @@ class Luci():
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
         Return:
-            Returns the x-axis, sky, and fit dictionary
+            Returns the x-axis (redshifted), sky, and fit dictionary
 
 
         """
-        sky = None
         sky = self.cube_final[pixel_x, pixel_y, :]
         if bkg is not None:
             sky -= bkg  # Subtract background spectrum
@@ -915,11 +913,12 @@ class Luci():
             binning:  Value by which to bin (default None)
             mean: Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.
         Return:
-            X-axis and spectral axis of region.
+            X-axis (redshifted) and spectral axis of region.
 
         """
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
         spec_ct = 0
+        axis = None  # Initialize
         # Initialize fit solution arrays
         if binning != None and binning != 1:
             self.bin_cube(binning, x_min, x_max, y_min, y_max)
@@ -929,13 +928,7 @@ class Luci():
             x_min = 0;
             y_min = 0
         for i in tqdm(range(y_max - y_min)):
-            sky = None
             y_pix = y_min + i
-            vel_local = []
-            broad_local = []
-            ampls_local = []
-            flux_local = []
-            chi2_local = []
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 if binning is not None and binning != 1:
@@ -952,7 +945,7 @@ class Luci():
                 if spec_ct == 0:
                     axis = self.spectrum_axis[good_sky_inds]
                     spec_ct += 1
-        if mean == True:
+        if mean:
             integrated_spectrum /= spec_ct
         return axis, integrated_spectrum
 
@@ -993,12 +986,12 @@ class Luci():
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 # Check if pixel is in the mask or not
-                if mask[x_pix, y_pix] == True:
+                if mask[x_pix, y_pix]:
                     integrated_spectrum += self.cube_final[x_pix, y_pix, :]
                     spec_ct += 1
                 else:
                     pass
-        if mean == True:
+        if mean:
             integrated_spectrum /= spec_ct
         return self.spectrum_axis, integrated_spectrum
 
@@ -1031,6 +1024,7 @@ class Luci():
 
         """
         # Create mask
+        mask = None  # Initialize
         if '.reg' in region:
             shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
@@ -1052,12 +1046,12 @@ class Luci():
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 # Check if pixel is in the mask or not
-                if mask[x_pix, y_pix] == True:
+                if mask[x_pix, y_pix]:
                     integrated_spectrum += self.cube_final[x_pix, y_pix, :]
                     spec_ct += 1
                 else:
                     pass
-        if mean == True:
+        if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
             integrated_spectrum -= bkg  # Subtract background spectrum
