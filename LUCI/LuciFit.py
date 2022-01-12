@@ -367,7 +367,7 @@ class Fit:
         # Add constant continuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+        return 0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
 
     def sigma_constraints(self):
@@ -478,7 +478,7 @@ class Fit:
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
         bounds_ = []  # Initialize bounds used for fittin
-        initial[-1] = self.cont_estimate(sigma_level=2.0)  # Add continuum constant and intialize it
+        initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and intialize it
         lines_fit = []  # List of lines which already have been set up for fits
         for mod in range(self.line_num):  # Step through each line
             # val = 3 * mod + 1
@@ -488,7 +488,7 @@ class Fit:
             # If line has already shown up we need to shift the velocity estimate
             if lines_fit.count(self.lines[mod]) >= 1:
                 # This means multiple components were fit to this line
-                initial[3 * mod + 1] = vel_est + 10  # perturb fit by 10 cm^-1
+                initial[3 * mod + 1] = vel_est + 0  # perturb fit by 10 cm^-1
             else:
                 initial[3 * mod + 1] = vel_est  # Set wavenumber
             initial[3 * mod + 2] = sigma_est  # Set sigma
@@ -507,7 +507,7 @@ class Fit:
             nii_constraints = self.NII_constraints()
             cons = (sigma_cons + vel_cons)  # (sigma_cons + vel_cons)# + nii_constraints + vel_cons_multiple)
         else:
-            cons = sigma_cons  # (sigma_cons + vel_cons)  # + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons)  # + vel_cons_multiple)
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
