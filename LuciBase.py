@@ -1,3 +1,4 @@
+import pandas as pd
 from astropy.io import fits
 import h5py
 import os
@@ -553,14 +554,12 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        # if output_name == None:
-        # output_name = self.output_dir+'/'+self.object_name
         set_num_threads(n_threads)
-
         @jit(nopython=False)
         def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
                      chi2_fit, corr_fit, step_fit, continuum_fit):
-            y_pix = y_min + i
+            y_pix = y_min + i  # Step y coordinate
+            # Set up all the local lists for the current y_pixel step
             ampls_local = []
             flux_local = []
             flux_errs_local = []
@@ -572,20 +571,21 @@ class Luci():
             corr_local = []
             step_local = []
             continuum_local = []
+            # Step through x coordinates
             for j in range(x_max - x_min):
-                x_pix = x_min + j
-                if binning is not None and binning != 1:
+                x_pix = x_min + j  # Set current x pixel
+                if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
                     sky = self.cube_binned[x_pix, y_pix, :]
-                else:
+                else:  # If not, then take from the unbinned cube
                     sky = self.cube_final[x_pix, y_pix, :]
-                if bkg is not None:
-                    if binning:
+                if bkg is not None:  # If there is a background variable subtract the bkg spectrum
+                    if binning:  # If binning, then we have to take into account how many pixels are in each bin
                         sky -= bkg * binning ** 2  # Subtract background spectrum
-                    else:
+                    else:  # No binning so just subtract the background directly
                         sky -= bkg  # Subtract background spectrum
-                good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
-                sky = sky[good_sky_inds]
-                axis = self.spectrum_axis[good_sky_inds]
+                good_sky_inds = [~np.isnan(sky)]  #  Find all NaNs in sky spectrum
+                sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
+                axis = self.spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
                 # Call fit!
                 if len(sky) > 0:  # Ensure that there are values in sky
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
@@ -598,7 +598,7 @@ class Luci():
                               uncertainty_bool=uncertainty_bool,
                               mdn=self.mdn, nii_cons=nii_cons
                               )
-                    fit_dict = fit.fit()
+                    fit_dict = fit.fit()  # Collect fit dictionary
                     # Save local list of fit values
                     ampls_local.append(fit_dict['amplitudes'])
                     flux_local.append(fit_dict['fluxes'])
@@ -611,7 +611,7 @@ class Luci():
                     corr_local.append(fit_dict['corr'])
                     step_local.append(fit_dict['axis_step'])
                     continuum_local.append(fit_dict['continuum'])
-                else:
+                else:  # If the sky is empty (this rarely rarely rarely happens), then return zeros for everything
                     ampls_local.append([0] * len(lines))
                     flux_local.append([0] * len(lines))
                     flux_errs_local.append([0] * len(lines))
@@ -734,10 +734,10 @@ class Luci():
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
                 region = region.split('/')[-1]
-            if output_name == None:
+            if output_name is None:
                 output_name = self.output_dir + '/' + self.object_name + '_' + region.split('.')[0]
         else:  # Passed mask not region file
-            if output_name == None:
+            if output_name is None:
                 output_name = self.output_dir + '/' + self.object_name + '_mask'
 
         chi2_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
@@ -758,7 +758,7 @@ class Luci():
 
         @jit(nopython=False)
         def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
-                     chi2_fit, corr_fit, step_fit, continuum_fit):
+                     chi2_fit, continuum_fit):
             # for i in tqdm(range(y_max-y_min)):
             y_pix = y_min + i
             ampls_local = []
@@ -827,7 +827,7 @@ class Luci():
             broadenings_errors_fits[i] = broads_errs_local
             chi2_fits[i] = chi2_local
             continuum_fits[i] = continuum_local
-            return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
+            return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, continuum_fit
 
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None and binning > 1:
@@ -875,7 +875,7 @@ class Luci():
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
         Return:
-            Returns the x-axis, sky, and fit dictionary
+            Returns the x-axis (redshifted), sky, and fit dictionary
 
 
         """
@@ -920,11 +920,12 @@ class Luci():
             binning:  Value by which to bin (default None)
             mean: Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.
         Return:
-            X-axis and spectral axis of region.
+            X-axis (redshifted) and spectral axis of region.
 
         """
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
         spec_ct = 0
+        axis = None  # Initialize
         # Initialize fit solution arrays
         if binning != None and binning != 1:
             self.bin_cube(binning, x_min, x_max, y_min, y_max)
@@ -934,13 +935,7 @@ class Luci():
             x_min = 0;
             y_min = 0
         for i in tqdm(range(y_max - y_min)):
-            sky = None
             y_pix = y_min + i
-            vel_local = []
-            broad_local = []
-            ampls_local = []
-            flux_local = []
-            chi2_local = []
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 if binning is not None and binning != 1:
@@ -957,7 +952,7 @@ class Luci():
                 if spec_ct == 0:
                     axis = self.spectrum_axis[good_sky_inds]
                     spec_ct += 1
-        if mean == True:
+        if mean:
             integrated_spectrum /= spec_ct
         return axis, integrated_spectrum
 
@@ -998,12 +993,12 @@ class Luci():
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 # Check if pixel is in the mask or not
-                if mask[x_pix, y_pix] == True:
+                if mask[x_pix, y_pix]:
                     integrated_spectrum += self.cube_final[x_pix, y_pix, :]
                     spec_ct += 1
                 else:
                     pass
-        if mean == True:
+        if mean:
             integrated_spectrum /= spec_ct
         return self.spectrum_axis, integrated_spectrum
 
@@ -1036,6 +1031,7 @@ class Luci():
 
         """
         # Create mask
+        mask = None  # Initialize
         if '.reg' in region:
             shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
@@ -1057,12 +1053,12 @@ class Luci():
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 # Check if pixel is in the mask or not
-                if mask[x_pix, y_pix] == True:
+                if mask[x_pix, y_pix]:
                     integrated_spectrum += self.cube_final[x_pix, y_pix, :]
                     spec_ct += 1
                 else:
                     pass
-        if mean == True:
+        if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
             integrated_spectrum -= bkg  # Subtract background spectrum
@@ -1253,7 +1249,8 @@ class Luci():
         helio_kms = heliocorr.to(u.km / u.s)
         return helio_kms
 
-    def skyline_calibration(self, n_grid):
+
+    def skyline_calibration(self, n_grid, bin_size=30):
         """
         Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
         of the telescope lead to minor offset that can be measured by high resolution
@@ -1264,38 +1261,47 @@ class Luci():
 
         Args:
             n_grid: NxN grid (int)
+            bin_size: Size of grouping used for each region (optional int; default=30)
 
         Return:
             Velocity offset map
         """
+        # Read in sky lines
+        sky_lines_df = pd.read_csv('Data/sky_lines.csv', skiprows=2)
+        sky_lines = sky_lines_df['Wavelength']  # Get wavelengths
+        sky_lines = [sky_line/10 for sky_line in sky_lines]  # Convert from angstroms to nanometers
+        # Create skyline dictionary
+        sky_line_dict = {}  #  {OH_num: wavelength in nm}
+        for line_ct, line_wvl in enumerate(sky_lines):
+            sky_line_dict['OH_%i' % line_ct] = line_wvl
         # Calculate grid
         x_min = 0
         x_max = self.cube_final.shape[0]
-        x_step = int((x_max - x_min) / n_grid)
+        x_step = int((x_max - x_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         y_min = 0
         y_max = self.cube_final.shape[1]
-        y_step = int((y_max - y_min) / n_grid)
-        vel_grid = np.zeros((n_grid, n_grid))
+        y_step = int((y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
+        vel_grid = np.zeros((n_grid, n_grid))  # Initialize velocity grid
         for x_grid in range(n_grid):  # Step through x steps
             for y_grid in range(n_grid):  # Step through y steps
                 # Collect spectrum in 10x10 region
                 x_center = x_min + int(0.5 * (x_step) * (x_grid + 1))
                 y_center = y_min + int(0.5 * (y_step) * (y_grid + 1))
                 integrated_spectrum = np.zeros_like(self.cube_final[x_center, y_center, :])  # Initialize as zeros
-                for i in range(5):  # Take 5x5 bins
-                    for j in range(5):
-                        integrated_spectrum += self.cube_final[x_center + i, y_center + i, :]
+                for i in range(bin_size):  # Take bin_size x bin_size bins
+                    for j in range(bin_size):
+                        integrated_spectrum += self.cube_final[x_center+i, y_center+i, :]
                 # Collapse to single spectrum
                 good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
                 sky = integrated_spectrum[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                fit = Fit(sky, axis, self.wavenumbers_syn, 'gaussian', ['OH'], [1], [1],
+                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH_%i' % num for num in len(sky_lines)], [1], [1],
                           self.model_ML, trans_filter=self.transmission_interpolated,
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
                           zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'],
+                          filter=self.hdr_dict['FILTER'], bayes_bool=True, bayes_method='emcee', sky_lines=sky_line_dict
                           )
 
                 velocity, fit_vector = fit.fit(sky_line=True)

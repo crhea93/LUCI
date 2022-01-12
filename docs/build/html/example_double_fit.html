@@ -192,6 +192,11 @@
 <p>Sometimes a emission line is categorized by more than a single line of site emission feature. In this example,
 we are going to create two Halpha components (and the other usual emission lines in SN3). We will then
 fit the double components and the other lines.</p>
+<p>A very natural question is: how does LUCI fit multiple components?</p>
+<p>You will see that the commands are identical to previous fitting commands. The main difference comes from an additional
+constraint that is imposed on the fit algorithm: if a line appears twice then the velocities of the two lines cannot be equivalent.
+This is a very light constraint and, thus, doesn’t always work! However, it imposes the least amount
+of constraints on the fitting algorithm. If you have thoughts on other methods to do this, please let me know!</p>
 <p>Let’s start of with the usual slew of commands.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
 <span class="kn">import</span> <span class="nn">sys</span>
@@ -266,11 +271,14 @@ Please note that this is all done internally in LUCI normally.</p>
 </pre></div>
 </div>
 <img alt="Double component Halpha" src="_images/DoubleSpectrum.png" />
-<p>We can now fit the spectrum</p>
+<p>We can now fit the spectrum. After much testing of fitting double components, I find that setting the Bayesian analysis is
+really helpful here. Without setting it, the results are not always correct (there is some stochasticity in the fitting algorithm).
+On the other hand, the Bayesian approach seems to always achieve the correct values. If you find any descrepencies at all, please let me know!</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fit</span> <span class="o">=</span> <span class="n">lfit</span><span class="o">.</span><span class="n">Fit</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">wavenumbers_syn</span><span class="p">,</span> <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
                <span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span><span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">,</span> <span class="s1">&#39;Halpha&#39;</span><span class="p">],</span>
                <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
                <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I-SN3&#39;</span><span class="p">)</span>
+               <span class="n">bayes_bool</span><span class="o">=</span><span class="kc">True</span>
              <span class="p">)</span>
 <span class="n">fit_dict</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
 </pre></div>

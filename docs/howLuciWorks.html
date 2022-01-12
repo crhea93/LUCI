@@ -126,6 +126,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -244,7 +245,9 @@ for the correction factor is as follows:</p>
 <p><em>Flux for a Sinc Function</em>:</p>
 <p><img class="math" src="_images/math/4492ab0988f66cf485ba298f581b522d998d467e.png" alt="Flux [erg/s/cm^2/Ang] = \pi p_0p_2"/></p>
 <p><em>Flux for a SincGauss Function</em>:</p>
-<p><img class="math" src="_images/math/c9f8f1b720f3632af8b1bf785a686f0a9216c130.png" alt="Flux [erg/s/cm^2/Ang] = p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}"/></p>
+<p><img class="math" src="_images/math/ecac1cb2de56af7ff8b349c5bd4f2fc3aa599eac.png" alt="Flux [erg/s/cm^2/Ang] = \text{coeff} * p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}"/></p>
+<p>Note that $text{coeff}=frac{1.20671}{pi*FWHM_COEFF}$ where the FWHM_COEFF equals $2sqrt{2log{2}}, the $pi$
+is there because of the sinc function’s definition, and the 1.20671 is the factor used to go between FWHM and sigma.</p>
 </div>
 </div>
 <div class="section" id="how-we-calculate">
