@@ -17,6 +17,8 @@ from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_b
 
 warnings.filterwarnings("ignore")
 
+# Define Constants #
+SPEED_OF_LIGHT = 299792  # km/s
 
 class Fit:
     """
@@ -290,11 +292,11 @@ class Fit:
         line_theo = self.line_dict[line_name]
         if self.ML_model is None or self.model_type == '':
             max_flux = np.argmax(self.spectrum_normalized)
-            self.vel_ml = np.abs(3e5 * ((1e7 / self.axis[max_flux] - line_theo) / line_theo))
+            self.vel_ml = np.abs(SPEED_OF_LIGHT * ((1e7 / self.axis[max_flux] - line_theo) / line_theo))
             self.broad_ml = 10.0  # Best for now
         else:
             pass  # vel_ml and broad_ml already set using ML algorithm
-        line_pos_est = 1e7 / ((self.vel_ml / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
+        line_pos_est = 1e7 / ((self.vel_ml / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
             line_amp_est = np.max([
@@ -308,20 +310,20 @@ class Fit:
             ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
-        line_broad_est = (line_pos_est * self.broad_ml) / (3e5)
+        line_broad_est = (line_pos_est * self.broad_ml) / (SPEED_OF_LIGHT)
         if self.mdn:
             # Update position and sigma_gauss bounds -- looks gross but it's the usual transformation
-            self.x_min = 1e7 / (((self.vel_ml + 3 * self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
-            self.x_max = 1e7 / (((self.vel_ml - 3 * self.vel_ml_sigma) / 3e5) * line_theo + line_theo)  # Estimate of position of line in cm-1
-            self.sigma_min = (line_pos_est * self.broad_ml) / 3e5 - 3 * (line_pos_est * self.broad_ml_sigma) / 3e5
-            self.sigma_max = (line_pos_est * self.broad_ml) / 3e5 + 3 * (line_pos_est * self.broad_ml_sigma) / 3e5
+            self.x_min = 1e7 / (((self.vel_ml + 3 * self.vel_ml_sigma) / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
+            self.x_max = 1e7 / (((self.vel_ml - 3 * self.vel_ml_sigma) / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
+            self.sigma_min = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT - 3 * (line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
+            self.sigma_max = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT + 3 * (line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
         return line_amp_est, line_pos_est, line_broad_est
 
     def cont_estimate(self, sigma_level=3):
         """
         TODO: Test
 
-        Function to estimate the continuum level. We use a sigma clipping algorithm over the(mu_vel/3e5)*line_dict[line[ct]] + line_dict[line[ct]]
+        Function to estimate the continuum level. We use a sigma clipping algorithm over the(mu_vel/SPEED_OF_LIGHT)*line_dict[line[ct]] + line_dict[line[ct]]
         restricted axis/spectrum to effectively ignore emission lines. Therefore, we
         are left with the continuum. We take the minimum value of this continuum as the initial
         guess.
@@ -381,8 +383,8 @@ class Fit:
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0 = inds_unique[0]  # Get first element
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: (3e5 * x[
-                        3 * ind_0 + 2]) / x[3 * ind_0 + 1] - (3e5 * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]})
+                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: (SPEED_OF_LIGHT * x[
+                        3 * ind_0 + 2]) / x[3 * ind_0 + 1] - (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]})
         return sigma_dict_list
 
     def vel_constraints(self):
@@ -403,9 +405,9 @@ class Fit:
                     expr_dict = {'type': 'eq',
                                  'fun': lambda x, ind_unique_=ind_unique, ind_0_=ind_0,
                                                ind_unique_line_=ind_unique_line, ind_0_line_=ind_0_line:
-                                 3e5 * ((1e7 / x[3 * ind_unique_ + 1] - self.line_dict[ind_unique_line_]) / (
+                                 SPEED_OF_LIGHT * ((1e7 / x[3 * ind_unique_ + 1] - self.line_dict[ind_unique_line_]) / (
                                  self.line_dict[ind_unique_line_]))
-                                 - 3e5 * ((1e7 / x[3 * ind_0_ + 1] - self.line_dict[ind_0_line_]) / (
+                                 - SPEED_OF_LIGHT * ((1e7 / x[3 * ind_0_ + 1] - self.line_dict[ind_0_line_]) / (
                                  self.line_dict[ind_0_line_]))}
                     vel_dict_list.append(expr_dict)
         return vel_dict_list
@@ -622,7 +624,7 @@ class Fit:
             bounds_.append((self.sigma_min, self.sigma_max))'''
             for mod in range(self.line_num):
                 initial[3 * mod] = 2 * self.cont_estimate()
-                initial[3 * mod] = 1e7 / ((80 * (self.sky_lines[mod]) / 3e5) + self.sky_lines[mod])
+                initial[3 * mod] = 1e7 / ((80 * (self.sky_lines[mod]) / SPEED_OF_LIGHT) + self.sky_lines[mod])
                 initial[3 * mod + 2] = 10
                 bounds_.append((self.A_min, self.A_max))
                 bounds_.append((self.x_min, self.x_max))
@@ -645,7 +647,7 @@ class Fit:
             parameters[-1] *= self.spectrum_scale
             self.fit_sol = parameters
             self.fit_Bayes()
-            velocity = 3e5 * ((1e7 / self.fit_sol[1] - self.line_dict['OH']) / self.line_dict['OH'])
+            velocity = SPEED_OF_LIGHT * ((1e7 / self.fit_sol[1] - self.line_dict['OH']) / self.line_dict['OH'])
             fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + parameters[-1]
             return velocity, fit_vector
 

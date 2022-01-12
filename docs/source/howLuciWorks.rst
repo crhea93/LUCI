@@ -59,8 +59,10 @@ Similarly, we define the flux for each fitting function as the following:
 
 *Flux for a SincGauss Function*:
 
-:math:`Flux [erg/s/cm^2/Ang] = p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}`
+:math:`Flux [erg/s/cm^2/Ang] = \text{coeff} * p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}`
 
+Note that $\text{coeff}=\frac{1.20671}{\pi*FWHM\_COEFF}$ where the FWHM\_COEFF equals $2\sqrt{2\log{2}}, the $\pi$
+is there because of the sinc function's definition, and the 1.20671 is the factor used to go between FWHM and sigma.
 
 
 How we calculate
