@@ -852,7 +852,7 @@ class Luci():
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
     def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
-                  pixel_x, pixel_y, bkg=None,
+                  pixel_x, pixel_y, bin=None, bkg=None,
                   bayes_bool=False, bayes_method='emcee',
                   output_name=None, uncertainty_bool=False,
                   nii_cons=True):
@@ -867,6 +867,7 @@ class Luci():
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             pixel_x: X coordinate (physical)
             pixel_y: Y coordinate (physical)
+            bin: Number of pixels to take around coordinate (i.e. bin=1 will take all pixels touching the X and Y coordinates.
             bkg: Background Spectrum (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
@@ -878,12 +879,18 @@ class Luci():
 
 
         """
-        sky = self.cube_final[pixel_x, pixel_y, :]
-        if bkg is not None:
-            sky -= bkg  # Subtract background spectrum
+        sky = None
+        if bin is not None and bin != 1:  # If data is binned
+            sky = self.cube_final[pixel_x-bin:pixel_x+bin, pixel_y-bin:pixel_y+bin, :]
+            if bkg is not None:
+                sky -= bkg * (2 + bin)**2  # Subtract background times number of pixels
+        else:
+            sky = self.cube_final[pixel_x, pixel_y, :]
+            if bkg is not None:
+                sky -= bkg  # Subtract background spectrum
         good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
-        sky = sky[good_sky_inds]
-        axis = self.spectrum_axis[good_sky_inds]
+        sky = sky[good_sky_inds]  # Apply clean to sky
+        axis = self.spectrum_axis[good_sky_inds]  # Apply clean to axis
         # Call fit!
         fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                   self.model_ML, trans_filter=self.transmission_interpolated,
