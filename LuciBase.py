@@ -402,7 +402,7 @@ class Luci():
                 summed_spec = np.nansum(summed_spec, axis=0)
                 summed_spec = np.nansum(summed_spec, axis=0)
                 binned_mask[i, j] = summed_spec[:]
-        binned_mask = binned_mask / (binning ** 2)
+        self.binned_mask = binned_mask / (binning ** 2)
 
     def save_fits(self, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits,
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, header, binning):
@@ -492,7 +492,7 @@ class Luci():
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
-                 output_name=None, uncertainty_bool=False, n_threads=1, nii_cons=True):
+                 uncertainty_bool=False, n_threads=1, nii_cons=True):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -513,7 +513,6 @@ class Luci():
             binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             bayes_method = Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
-            output_name: User defined output path/name (default None)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
@@ -854,7 +853,7 @@ class Luci():
     def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
                   pixel_x, pixel_y, bin=None, bkg=None,
                   bayes_bool=False, bayes_method='emcee',
-                  output_name=None, uncertainty_bool=False,
+                  uncertainty_bool=False,
                   nii_cons=True):
         """
         Primary fit call to fit a single pixel in the data cube. This wraps the
@@ -871,7 +870,6 @@ class Luci():
             bkg: Background Spectrum (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
-            output_name: User defined output path/name (default None)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
         Return:
@@ -882,6 +880,8 @@ class Luci():
         sky = None
         if bin is not None and bin != 1:  # If data is binned
             sky = self.cube_final[pixel_x-bin:pixel_x+bin, pixel_y-bin:pixel_y+bin, :]
+            sky = np.nansum(sky, axis=0)
+            sky = np.nansum(sky, axis=0)
             if bkg is not None:
                 sky -= bkg * (2 + bin)**2  # Subtract background times number of pixels
         else:
