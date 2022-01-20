@@ -45,13 +45,47 @@ def test_bin_cube():
     assert cube.cube_binned.shape[0] == 5
     assert cube.cube_binned.shape[1] == 5
 
-def test_fit_cube():
+def test_fit_cube_sincgauss():
     """
     Test to make sure that fit_cube() works
     """
     cube = Test().cube
     lines = ['Halpha']
     fit_function = 'sincgauss'
+    vel_rel = [1]
+    sigma_rel = [1]
+    x_min = 100
+    x_max = 101
+    y_min = 100
+    y_max = 101
+    cube.fit_cube(lines, fit_function, vel_rel, sigma_rel,
+             x_min, x_max, y_min, y_max)
+
+
+def test_fit_cube_gauss():
+    """
+    Test to make sure that fit_cube() works
+    """
+    cube = Test().cube
+    lines = ['Halpha']
+    fit_function = 'gaussian'
+    vel_rel = [1]
+    sigma_rel = [1]
+    x_min = 100
+    x_max = 101
+    y_min = 100
+    y_max = 101
+    cube.fit_cube(lines, fit_function, vel_rel, sigma_rel,
+             x_min, x_max, y_min, y_max)
+
+
+def test_fit_cube_sinc():
+    """
+    Test to make sure that fit_cube() works
+    """
+    cube = Test().cube
+    lines = ['Halpha']
+    fit_function = 'sinc'
     vel_rel = [1]
     sigma_rel = [1]
     x_min = 100
