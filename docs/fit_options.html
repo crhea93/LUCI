@@ -107,6 +107,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -201,6 +202,7 @@ With the exception of <cite>cube.fit_spectrum_region()</cite>, these methods fit
 <li><p>uncertainty_bool: This is if you don’t want to wait for the full Bayesian inference to run. Instead, it calculates the inverse Hessian of the fit matrix and takes its diagonals as the errors on the fit parameters.</p></li>
 <li><p>n_threads: This sets the number of threads that will be used in the fits. Choose this based on the number of threads available to you. I like <cite>n_threads=4</cite>. <strong>Note that this frequently doesn’t work in a jupyter notebook setting</strong>.</p></li>
 <li><p>mdn: This boolean determines whether or not a mixture density model is used to obtain the initial guesses. Details on this algorithm can be found at (). The default value is False.</p></li>
+<li><p>nii_cons: This boolean determines whether or not we constrain the NII doublet emission to the 1/3rds rule. By default, this is included.</p></li>
 </ul>
 </div>
 

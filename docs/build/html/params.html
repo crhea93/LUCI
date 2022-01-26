@@ -94,6 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Example Modules:</span></p>
@@ -106,6 +107,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
@@ -203,7 +205,7 @@ and the flux as well as their uncertainties.</p>
 <span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate velocity dispersion</p>
 <div class="math">
-<p><img src="_images/math/4141d86fc2c11bc0dd7a88b056355f0c9aae2c83.png" alt="\sigma = (3e5*fit\_\sigma * axis\_step)/(fit\_vel)"/></p>
+<p><img src="_images/math/1633140c7447797f3b981afa8abac6df2f22cb34.png" alt="\sigma = (SPEED_OF_LIGHT*fit\_\sigma * axis\_step)/(fit\_vel)"/></p>
 </div><p>where <img class="math" src="_images/math/c84a0b116afbd35da601f3798b4d6340263efb09.png" alt="fit\_sigma"/> is the gaussian broadening parameter found in the fit, <img class="math" src="_images/math/0b470d717b5d740c79727fe76384de94d8fbb001.png" alt="axis\_step"/> is defined in the HowLuciWorks section,
 and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915.png" alt="fit\_vel"/> is the shifted position of the line in units of cm-1.</p>
 <dl class="field-list simple">
@@ -223,15 +225,15 @@ and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_broad_err">
 <span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad_err" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate velocity dispersion error</p>
-<p>We simply take the difference between the velocity dispersions with and without the uncertainty.</p>
+<dd><p>Calculate velocity dispersion error
+We simply take the difference between the velocity dispersions with and without the uncertainty.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ind</strong> – Index of line in lines</p></li>
 <li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
 <li><p><strong>axis_step</strong> – Step due to correction factor (see LuciFit.calculate_correction)</p></li>
-<li><p><strong>uncertaintes</strong> – Uncertainties from fitting algoritm</p></li>
+<li><p><strong>uncertaintes</strong> – Uncertainties from fitting algorithm</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -243,8 +245,8 @@ and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_flux">
 <span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_flux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate flux value given fit of line</p>
-<p>See HowLuciWorks for calculations</p>
+<dd><p>Calculate flux value given fit of line
+See HowLuciWorks for calculations</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -286,7 +288,7 @@ and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915
 <span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate velocity.</p>
 <div class="math">
-<p><img src="_images/math/2740aaebe5f191139687a2aabc4105ca55d946e7.png" alt="v = 3e5*(l\_calc - l\_rest)/l\_calc"/></p>
+<p><img src="_images/math/2c29c6f6fb849c4dcca734010a377e5e09912a86.png" alt="v = SPEED_OF_LIGHT*(l\_calc - l\_rest)/l\_calc"/></p>
 </div><p>Where <img class="math" src="_images/math/e4829235a887bfa0b4b1357b4485dadd9f58a941.png" alt="l\_calc = 1e7/fit\_vel"/> and <img class="math" src="_images/math/932e7ef573df9a38a0bae21fc93e212a3011ae84.png" alt="l\_rest"/> is the rest wavelength of the line.
 <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915.png" alt="fit\_vel"/> is the shifted position of the line in units of cm-1.</p>
 <dl class="field-list simple">

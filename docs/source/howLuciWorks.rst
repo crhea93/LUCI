@@ -59,8 +59,10 @@ Similarly, we define the flux for each fitting function as the following:
 
 *Flux for a SincGauss Function*:
 
-:math:`Flux [erg/s/cm^2/Ang] = p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}`
+:math:`Flux [erg/s/cm^2/Ang] = \text{coeff} * p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}`
 
+Note that $\text{coeff}=\frac{1.20671}{\pi*FWHM\_COEFF}$ where the FWHM\_COEFF equals $2\sqrt{2\log{2}}, the $\pi$
+is there because of the sinc function's definition, and the 1.20671 is the factor used to go between FWHM and sigma.
 
 
 How we calculate
@@ -98,12 +100,14 @@ to be between 0.001 and 1.1, the position of the line to be between 14700 and 15
 and the sigma of the Gaussian to be between 0.001 and 10. By applying these bounds,
 we constrain the optimization problem. The fit returns the amplitude of the line
 (which we then scale to be correct for the un-normalized spectrum), the velocity in km/s,
-and the velocity dispersion in km/s. If the user choses, the line velocities and velocity dispersions
-can be coupled.
+and the velocity dispersion in km/s. If the user chooses, the line velocities and velocity dispersions
+can be coupled. Additionally, we automatically include the constraint on the NII-doublet flux ratio
+(setting NII_6583 = 3*NII_6548) using the `nii_cons` boolean. This can be changed by adding
+`nii_cons=False` as an argument to any of the fitting functions.
 
 Available Models
 ^^^^^^^^^^^^^^^^
-For the moment, we only have a Gaussian implemented. We plan on adding a sinc and sincgauss.
+We have implemented three functions: `gaussian`, `sinc`, and `sincgauss`.
 
 Gaussian
 ########

@@ -1,0 +1,344 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Fitting Double Components &mdash; LUCI v.1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="_static/LuciLogo.png"/>
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Fitting Algorithm" href="fits.html" />
+    <link rel="prev" title="Example Synthetic Spectrum" href="example_synthetic_spectrum.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html">
+          
+
+          
+            
+            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Prerequisites:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Fitting Double Components</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
+</ul>
+<p class="caption"><span class="caption-text">FAQ:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Fitting Double Components</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/example_double_fit.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="fitting-double-components">
+<span id="example-double-fit"></span><h1>Fitting Double Components<a class="headerlink" href="#fitting-double-components" title="Permalink to this headline">¶</a></h1>
+<p>Sometimes a emission line is categorized by more than a single line of site emission feature. In this example,
+we are going to create two Halpha components (and the other usual emission lines in SN3). We will then
+fit the double components and the other lines.</p>
+<p>A very natural question is: how does LUCI fit multiple components?</p>
+<p>You will see that the commands are identical to previous fitting commands. The main difference comes from an additional
+constraint that is imposed on the fit algorithm: if a line appears twice then the velocities of the two lines cannot be equivalent.
+This is a very light constraint and, thus, doesn’t always work! However, it imposes the least amount
+of constraints on the fitting algorithm. If you have thoughts on other methods to do this, please let me know!</p>
+<p>Let’s start of with the usual slew of commands.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;/media/carterrhea/carterrhea/SIGNALS/LUCI/&#39;</span><span class="p">)</span>  <span class="c1"># Location of Luci</span>
+<span class="kn">from</span> <span class="nn">LUCI.LuciSim</span> <span class="kn">import</span> <span class="n">Spectrum</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="kn">import</span> <span class="n">fits</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">LUCI.LuciFit</span> <span class="k">as</span> <span class="nn">lfit</span>
+<span class="kn">import</span> <span class="nn">keras</span>
+</pre></div>
+</div>
+<p>We now will set the required parameters. You can find a more detailed discussion on how to
+create synthetic spectra in the example on synthetic spectra!</p>
+<p>Let’s first create the single component spectrum</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">]</span>
+<span class="n">fit_function</span> <span class="o">=</span> <span class="s1">&#39;sincgauss&#39;</span>
+<span class="n">ampls</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">]</span>  <span class="c1"># Just randomly choosing these</span>
+<span class="n">velocity</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># km/s</span>
+<span class="n">broadening</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># km/s</span>
+<span class="n">filter_</span> <span class="o">=</span> <span class="s1">&#39;SN3&#39;</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="mi">5000</span>
+<span class="n">snr</span> <span class="o">=</span> <span class="mi">100</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span> <span class="o">=</span> <span class="n">Spectrum</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">ampls</span><span class="p">,</span> <span class="n">velocity</span><span class="p">,</span> <span class="n">broadening</span><span class="p">,</span> <span class="n">filter_</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">snr</span><span class="p">)</span><span class="o">.</span><span class="n">create_spectrum</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now we can add another Halpha line :) To do this, we just need to add an additional line,
+an additional amplitude, and a different velocity.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">]</span>
+<span class="n">ampls</span> <span class="o">=</span> <span class="p">[</span><span class="mi">6</span><span class="p">]</span>  <span class="c1"># Just randomly chosen</span>
+<span class="n">velocity</span> <span class="o">=</span> <span class="mi">50</span>  <span class="c1"># km/s</span>
+
+<span class="n">spectrum_axis2</span><span class="p">,</span> <span class="n">spectrum2</span> <span class="o">=</span> <span class="n">Spectrum</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">ampls</span><span class="p">,</span> <span class="n">velocity</span><span class="p">,</span> <span class="n">broadening</span><span class="p">,</span> <span class="n">filter_</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">snr</span><span class="p">)</span><span class="o">.</span><span class="n">create_spectrum</span><span class="p">()</span>
+
+<span class="c1"># Add them together</span>
+<span class="n">spectrum</span> <span class="o">+=</span> <span class="n">spectrum2</span>
+</pre></div>
+</div>
+<p>Now we can go about fitting this spectrum. To do this, we have to do the interpolation on the reference spectrum used for our machine learning algorithm manually.
+Please note that this is all done internally in LUCI normally.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Machine Learning Reference Spectrum</span>
+<span class="n">ref_spec</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/Reference-Spectrum-R5000-SN3.fits&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+<span class="n">channel</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">chan</span> <span class="ow">in</span> <span class="n">ref_spec</span><span class="p">:</span>  <span class="c1"># Only want SN3 region</span>
+  <span class="n">channel</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chan</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+  <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">chan</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">min_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span><span class="o">-</span><span class="mi">14700</span><span class="p">))</span>
+<span class="n">max_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span><span class="o">-</span><span class="mi">15600</span><span class="p">))</span>
+<span class="n">wavenumbers_syn</span> <span class="o">=</span> <span class="n">channel</span><span class="p">[</span><span class="n">min_</span><span class="p">:</span><span class="n">max_</span><span class="p">]</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;slinear&#39;</span><span class="p">)</span>
+<span class="n">sky_corr</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">wavenumbers_syn</span><span class="p">))</span>
+<span class="n">sky_corr_scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">sky_corr</span><span class="p">)</span>
+<span class="n">sky_corr</span> <span class="o">=</span> <span class="n">sky_corr</span><span class="o">/</span><span class="n">sky_corr_scale</span>
+</pre></div>
+</div>
+<p>Let’s plot this</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Spectrum&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">14750</span><span class="p">,</span> <span class="mi">15400</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (cm-1)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">656.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">658.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;teal&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">654.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">671.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6716&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;magenta&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span><span class="o">/</span><span class="mf">673.1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6731&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;violet&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="Double component Halpha" src="_images/DoubleSpectrum.png" />
+<p>We can now fit the spectrum. After much testing of fitting double components, I find that setting the Bayesian analysis is
+really helpful here. Without setting it, the results are not always correct (there is some stochasticity in the fitting algorithm).
+On the other hand, the Bayesian approach seems to always achieve the correct values. If you find any descrepencies at all, please let me know!</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fit</span> <span class="o">=</span> <span class="n">lfit</span><span class="o">.</span><span class="n">Fit</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">wavenumbers_syn</span><span class="p">,</span> <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
+               <span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span><span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">,</span> <span class="s1">&#39;Halpha&#39;</span><span class="p">],</span>
+               <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
+               <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I-SN3&#39;</span><span class="p">)</span>
+               <span class="n">bayes_bool</span><span class="o">=</span><span class="kc">True</span>
+             <span class="p">)</span>
+<span class="n">fit_dict</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>And let’s visualize that fit..</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;spectrum&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">fit_dict</span><span class="p">[</span><span class="s1">&#39;fit_vector&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fit vector&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">14800</span><span class="p">,</span> <span class="mi">15300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="Double component Halpha fit" src="_images/DoubleFit.png" />
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="fits.html" class="btn btn-neutral float-right" title="Fitting Algorithm" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="example_synthetic_spectrum.html" class="btn btn-neutral float-left" title="Example Synthetic Spectrum" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Carter L. Rhea.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
