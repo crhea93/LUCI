@@ -1,9 +1,9 @@
 """
-Suite of tests for Luci
+Suite of tests for Luci fitting function on a single synthetic spectrum just to test that the fitting algorithm isn't
+giving crazy values!
 """
 import numpy as np
 from astropy.io import fits
-import keras
 from scipy import interpolate
 
 from LUCI.LuciFit import Fit
@@ -62,20 +62,6 @@ class Test:
         self.spectrum = Gaussian().evaluate(self.axis, [self.amp, self.pos, self.sigma], 1)  # 1 because only fitting a single line
         return None
 
-    def make_spectra(self):
-        """
-        Make several spectra
-
-        TODO: IMPLEMENT
-        Returns:
-
-        """
-        self.axis = np.linspace(14400, 15800, 10000)
-        for line_ in self.lines:
-            self.spectrum += Gaussian().evaluate(self.axis, [self.amp, self.pos[line_], self.sigma],
-                                                 1)  # 1 because only fitting a single line
-
-        return None
 
     def read_ref_spec(self):
         ref_spec = fits.open('ML/Reference-Spectrum-R5000-SN3.fits')[1].data
@@ -133,6 +119,7 @@ def test_spec_length():
     Test_.luci_fit_single()
     Test_.test_spec_length()
 
+
 def test_fit_single():
     """
     Test to call Test.test_fit_single
@@ -141,6 +128,7 @@ def test_fit_single():
     Test_.luci_fit_single()
     Test_.test_fit_single()
 
+
 def test_ML_single():
     """
     Test to call Test.test_ML_single
@@ -148,3 +136,13 @@ def test_ML_single():
     Test_ = Test()
     Test_.luci_fit_single()
     Test_.test_ML_single()
+
+
+def test_create_spectrum():
+    """
+    Test to call Test.make_spectrum
+    """
+    Test_ = Test()
+    Test_.luci_fit_single()
+    Test_.make_spectrum()
+

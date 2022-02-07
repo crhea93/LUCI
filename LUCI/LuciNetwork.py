@@ -2,7 +2,6 @@
 File containing the definitions required to train our Bayesian CNN
 The functions are taken from https://keras.io/examples/keras_recipes/bayesian_neural_networks/#probabilistic-bayesian-neural-networks
 """
-import tensorflow as tf
 import tensorflow.keras as keras
 import tensorflow_probability as tfp
 from tensorflow.keras.optimizers import Adam
