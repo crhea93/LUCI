@@ -510,7 +510,6 @@ class Fit:
                         options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-2,
                         args=(), constraints=cons
                         )
-        print(soln)
         parameters = soln.x
         if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
