@@ -137,7 +137,7 @@ class Fit:
         self.x_min = 0  # 14700;
         self.x_max = 1e6  # 15600
         self.sigma_min = 0.001
-        self.sigma_max = 300
+        self.sigma_max = 5
         self.flat_samples = None
         # Check that lines inputted by user are in line_dict
         self.check_lines()
@@ -177,7 +177,7 @@ class Fit:
         # Determine filter
         global bound_lower, bound_upper
         if self.filter == 'SN3':
-            bound_lower = 14500
+            bound_lower = 14750
             bound_upper = 15400
         elif self.filter == 'SN2':
             bound_lower = 19500
@@ -342,7 +342,7 @@ class Fit:
         if len(clipped_spec) < 1:
             clipped_spec = self.spectrum_restricted
         # Now take the minimum value to serve as the continuum value
-        cont_val = np.min(clipped_spec)
+        cont_val = np.mean(clipped_spec)
         return cont_val
 
     def log_likelihood(self, theta):
@@ -357,7 +357,6 @@ class Fit:
             Value of log likelihood
 
         """
-        global model
         if self.model_type == 'gaussian':
             model = Gaussian().evaluate(self.axis_restricted, theta, self.line_num)
         elif self.model_type == 'sinc':
@@ -367,7 +366,7 @@ class Fit:
         # Add constant continuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        return 0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
 
     def sigma_constraints(self):
@@ -381,9 +380,9 @@ class Fit:
         for unique_ in unique_rels:  # Step through each unique group
             inds_unique = [i for i, e in enumerate(self.sigma_rel) if e == unique_]  # Obtain line indices in group
             if len(inds_unique) > 1:  # If there is more than one element in the group
-                ind_0 = inds_unique[0]  # Get first element
-                for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: (SPEED_OF_LIGHT * x[
+                ind_0_ = inds_unique[0]  # Get first element
+                for ind_unique_ in inds_unique[1:]:  # Step through group elements except for the first one
+                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique_, ind_0=ind_0_: (SPEED_OF_LIGHT * x[
                         3 * ind_0 + 2]) / x[3 * ind_0 + 1] - (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]})
         return sigma_dict_list
 
@@ -478,7 +477,7 @@ class Fit:
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
         bounds_ = []  # Initialize bounds used for fittin
-        initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and intialize it
+        initial[-1] = self.cont_estimate(sigma_level=3)  # Add continuum constant and intialize it
         lines_fit = []  # List of lines which already have been set up for fits
         for mod in range(self.line_num):  # Step through each line
             # val = 3 * mod + 1
@@ -486,17 +485,13 @@ class Fit:
             amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])  # Estimate initial values
             initial[3 * mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
             # If line has already shown up we need to shift the velocity estimate
-            if lines_fit.count(self.lines[mod]) >= 1:
-                # This means multiple components were fit to this line
-                initial[3 * mod + 1] = vel_est + 0  # perturb fit by 10 cm^-1
-            else:
-                initial[3 * mod + 1] = vel_est  # Set wavenumber
+            initial[3 * mod + 1] = vel_est  # Set wavenumber
             initial[3 * mod + 2] = sigma_est  # Set sigma
             bounds_.append((self.A_min, self.A_max))  # Set bounds for amplitude
             bounds_.append((self.x_min, self.x_max))  # Set bounds for wavenumber
             bounds_.append((self.sigma_min, self.sigma_max))  # Set bounds for sigma
         bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum bound Lower
-        bounds_u = [val[1] for val in bounds_] + [0.75]  # Continuum bound Higher
+        bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum bound Higher
         bounds = Bounds(bounds_l, bounds_u)  # Define bounds
         self.initial_values = initial
         sigma_cons = self.sigma_constraints()  # Call sigma constaints
@@ -505,16 +500,17 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons)  # (sigma_cons + vel_cons)# + nii_constraints + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons + nii_constraints )
         else:
             cons = (sigma_cons + vel_cons)  # + vel_cons_multiple)
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
                         method='SLSQP',
-                        options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-4,
+                        options={'disp': True, 'maxiter': 10000}, bounds=bounds, tol=1e-2,
                         args=(), constraints=cons
                         )
+        print(soln)
         parameters = soln.x
         if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
@@ -610,7 +606,8 @@ class Fit:
                         }
             return fit_dict
         else:  # Fit sky line
-            self.spectrum_scale = np.max(self.spectrum)
+            pass
+            """self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
             nll = lambda *args: -self.log_likelihood(*args)
             initial = np.ones(4)
@@ -649,7 +646,7 @@ class Fit:
             self.fit_Bayes()
             velocity = SPEED_OF_LIGHT * ((1e7 / self.fit_sol[1] - self.line_dict['OH']) / self.line_dict['OH'])
             fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + parameters[-1]
-            return velocity, fit_vector
+            return velocity, fit_vector"""
 
     def fit_Bayes(self):
         """
