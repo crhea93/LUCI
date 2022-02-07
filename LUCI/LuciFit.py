@@ -507,7 +507,7 @@ class Fit:
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
                         method='SLSQP',
-                        options={'disp': True, 'maxiter': 10000}, bounds=bounds, tol=1e-2,
+                        options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-2,
                         args=(), constraints=cons
                         )
         print(soln)
