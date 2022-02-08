@@ -22,11 +22,11 @@ You can download the example data using the following command:
 
 .. code-block:: bash
 
-    wget -0 NGC6946_SN3 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
+    wget -O NGC6946_SN3.hdf5 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
 
 This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
 so the download may take a while.
-Note you may need to change the name of the HDF5 file to `NGC6946_SN3.merged.cm1.1.0`.
+Note you may need to change the name of the HDF5 file to `NGC6946_SN3.merged.cm1.1.0.hdf5`.
 
 The region files used in the examples can be
 found in the 'Examples/regions' folder. To run the examples, place these region files in the same
