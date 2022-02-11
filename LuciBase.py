@@ -1,4 +1,3 @@
-import pandas as pd
 from astropy.io import fits
 import h5py
 import os
@@ -492,7 +491,7 @@ class Luci():
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
-                 uncertainty_bool=False, n_threads=1, nii_cons=True):
+                 uncertainty_bool=False, n_threads=1, nii_cons=True, initial_values=False):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -516,6 +515,7 @@ class Luci():
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
+            initial_values: List of files containing initial conditions (default False)
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -554,6 +554,15 @@ class Luci():
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         set_num_threads(n_threads)
+        # Initialize initiatl conditions for velocity and broadening as False --> Assuming we don't have them
+        vel_init = False
+        broad_init = False
+        # TODO: READ IN INITIAL CONDITIONS
+        if initial_values is not False:
+            # Obtain initial condition maps from files
+            vel_init = fits.open(initial_values[0])[0].data
+            broad_init = fits.open(initial_values[0])[0].data
+
         @jit(nopython=False)
         def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
                      chi2_fit, corr_fit, step_fit, continuum_fit):
@@ -585,6 +594,9 @@ class Luci():
                 good_sky_inds = [~np.isnan(sky)]  #  Find all NaNs in sky spectrum
                 sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
                 axis = self.spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
+                # TODO: PASS INITIAL CONDITIONS
+                if vel_init is not False and broad_init is not False:  # If initial conditions were passed
+                    initial_conditions = [vel_init[x_pix, y_pix], broad_init[x_pix, y_pix]]
                 # Call fit!
                 if len(sky) > 0:  # Ensure that there are values in sky
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
@@ -595,7 +607,7 @@ class Luci():
                               filter=self.hdr_dict['FILTER'],
                               bayes_bool=bayes_bool, bayes_method=bayes_method,
                               uncertainty_bool=uncertainty_bool,
-                              mdn=self.mdn, nii_cons=nii_cons
+                              mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values
                               )
                     fit_dict = fit.fit()  # Collect fit dictionary
                     # Save local list of fit values
