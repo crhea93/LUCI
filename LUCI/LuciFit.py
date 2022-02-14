@@ -567,7 +567,7 @@ class Fit:
             # Apply Fit
             self.calculate_params()
             # Check if Bayesian approach is required
-            if self.bayes_bool == True:
+            if self.bayes_bool:
                 self.fit_Bayes()
             # Calculate fit statistic
             chi_sqr, red_chi_sqr = self.calc_chisquare(self.fit_vector, self.spectrum, self.noise,
@@ -605,8 +605,7 @@ class Fit:
                         }
             return fit_dict
         else:  # Fit sky line
-            pass
-            """self.spectrum_scale = np.max(self.spectrum)
+            self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
             nll = lambda *args: -self.log_likelihood(*args)
             initial = np.ones(4)
@@ -645,7 +644,7 @@ class Fit:
             self.fit_Bayes()
             velocity = SPEED_OF_LIGHT * ((1e7 / self.fit_sol[1] - self.line_dict['OH']) / self.line_dict['OH'])
             fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + parameters[-1]
-            return velocity, fit_vector"""
+            return velocity, fit_vector
 
     def fit_Bayes(self):
         """
