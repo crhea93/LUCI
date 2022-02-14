@@ -137,7 +137,7 @@ class Fit:
         self.x_min = 0  # 14700;
         self.x_max = 1e6  # 15600
         self.sigma_min = 0.001
-        self.sigma_max = 5
+        self.sigma_max = 3
         self.flat_samples = None
         # Check that lines inputted by user are in line_dict
         self.check_lines()
@@ -300,13 +300,15 @@ class Fit:
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
             line_amp_est = np.max([
-                self.spectrum_normalized[line_ind - 4], self.spectrum_normalized[line_ind - 3],
+                #self.spectrum_normalized[line_ind - 4],
+                self.spectrum_normalized[line_ind - 3],
                 self.spectrum_normalized[line_ind - 2],
                 self.spectrum_normalized[line_ind - 1],
                 self.spectrum_normalized[line_ind],
                 self.spectrum_normalized[line_ind + 1],
                 self.spectrum_normalized[line_ind + 2],
-                self.spectrum_normalized[line_ind + 3], self.spectrum_normalized[line_ind + 4]
+                self.spectrum_normalized[line_ind + 3],
+                #self.spectrum_normalized[line_ind + 4]
             ])
         except:
             line_amp_est = self.spectrum_normalized[line_ind]
