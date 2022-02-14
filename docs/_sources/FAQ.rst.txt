@@ -53,3 +53,5 @@ environment. This can be simply remedied by reinstalling numpy.
 `pip uninstall numpy`
 
 `pip install numpy`
+
+

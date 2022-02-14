@@ -1,75 +1,36 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>Parameter Calculations &mdash; LUCI v.1.0.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-
-  
-  
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
-  
-
-  
-  
-
-  
-
-  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Ploting Functions" href="plot.html" />
     <link rel="prev" title="Core Functionality" href="luci.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="index.html">
-          
-
-          
-            
             <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
-          
           </a>
-
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -77,19 +38,8 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">Prerequisites:</span></p>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
@@ -97,7 +47,7 @@
 <li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
@@ -109,7 +59,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
@@ -120,89 +70,48 @@
 <li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 </ul>
-<p class="caption"><span class="caption-text">FAQ:</span></p>
+<p class="caption" role="heading"><span class="caption-text">FAQ:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">LUCI</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-        
       <li>Parameter Calculations</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/params.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="parameter-calculations">
-<span id="params"></span><h1>Parameter Calculations<a class="headerlink" href="#parameter-calculations" title="Permalink to this headline">¶</a></h1>
+             
+  <section id="parameter-calculations">
+<span id="params"></span><h1>Parameter Calculations<a class="headerlink" href="#parameter-calculations" title="Permalink to this headline"></a></h1>
 <p>In this file we have the functions used to calculate the velocity, the velocity dispersion (broadening),
 and the flux as well as their uncertainties.</p>
 <div class="toctree-wrapper compound">
 </div>
-<div class="section" id="module-LUCI.LuciFitParameters">
-<span id="fit-parameter-calculations"></span><h2>Fit Parameter Calculations<a class="headerlink" href="#module-LUCI.LuciFitParameters" title="Permalink to this headline">¶</a></h2>
+<section id="module-LUCI.LuciFitParameters">
+<span id="fit-parameter-calculations"></span><h2>Fit Parameter Calculations<a class="headerlink" href="#module-LUCI.LuciFitParameters" title="Permalink to this headline"></a></h2>
 <p>In this file we have the functions used to calculate the velocity, the velocity dispersion (broadening),
 and the flux as well as their uncertainties.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_broad">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate velocity dispersion</p>
 <div class="math">
 <p><img src="_images/math/1633140c7447797f3b981afa8abac6df2f22cb34.png" alt="\sigma = (SPEED_OF_LIGHT*fit\_\sigma * axis\_step)/(fit\_vel)"/></p>
@@ -224,7 +133,7 @@ and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_broad_err">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad_err" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad_err" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate velocity dispersion error
 We simply take the difference between the velocity dispersions with and without the uncertainty.</p>
 <dl class="field-list simple">
@@ -244,7 +153,7 @@ We simply take the difference between the velocity dispersions with and without 
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_flux">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_flux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_flux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate flux value given fit of line
 See HowLuciWorks for calculations</p>
 <dl class="field-list simple">
@@ -264,7 +173,7 @@ See HowLuciWorks for calculations</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_flux_err">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_flux_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux_err" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_flux_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux_err" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate flux error</p>
 <p>We simply take the difference between the fluxes with and without the uncertainty.</p>
 <dl class="field-list simple">
@@ -285,7 +194,7 @@ See HowLuciWorks for calculations</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_vel">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate velocity.</p>
 <div class="math">
 <p><img src="_images/math/2c29c6f6fb849c4dcca734010a377e5e09912a86.png" alt="v = SPEED_OF_LIGHT*(l\_calc - l\_rest)/l\_calc"/></p>
@@ -308,7 +217,7 @@ See HowLuciWorks for calculations</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_vel_err">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_vel_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel_err" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_vel_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel_err" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate velocity error</p>
 <p>We simply take the difference between the velocities with and without the uncertainty.</p>
 <dl class="field-list simple">
@@ -327,55 +236,38 @@ See HowLuciWorks for calculations</p>
 </dl>
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="plot.html" class="btn btn-neutral float-right" title="Ploting Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="luci.html" class="btn btn-neutral float-left" title="Core Functionality" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="plot.html" class="btn btn-neutral float-right" title="Ploting Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2021, Carter L. Rhea.
-
-    </p>
+    <p>&#169; Copyright 2021, Carter L. Rhea.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

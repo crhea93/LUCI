@@ -14,7 +14,7 @@ You can download the example data using the following command:
 
 .. code-block:: bash
 
-    wget -0 NGC6946_SN3 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
+    wget -O NGC6946_SN3.hdf5 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID=xc9le6u8llecp7fp
 
 
 This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
