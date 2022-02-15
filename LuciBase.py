@@ -1400,15 +1400,15 @@ class Luci():
             print("We have added a trailing '/' to your Luci_path variable.\n")
             print("Please add this in the future.\n")
      
-    def create_wvt(self, x_min, x_max, y_min, y_max, pixel_size, StN_target, roundness_crit, ToL):
+    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL):
         """
         """
         print("#----------------WVT Algorithm----------------#")
         Pixels = []
-        self.create_snr_map(x_min, x_max, y_min, y_max, method=2, n_threads=1)
+        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=2, n_threads=1)
         print("#----------------Algorithm Part 1----------------#")
-        SNR_map = fits.open(self.output_dir+'/'+self.object_name+'_SNR.fits')[0].data.T
-        SNR_map = SNR_map[x_min:x_max,y_min:y_max]
+        SNR_map = fits.open(self.output_dir+'/'+self.object_name+'_SNR.fits')[0].data
+        SNR_map = SNR_map[y_min_init:y_max_init,x_min_init:x_max_init]
         fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR_map, overwrite=True)
         Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir+'/'+self.object_name+'_SNR.fits')
         Nearest_Neighbors(Pixels)
@@ -1437,7 +1437,7 @@ class Luci():
         for pix_x, pix_y in zip(pixel_x,pixel_y):
             bin_map[pix_x,pix_y] = int(bins[i])
             i += 1
-        bin_map = np.rot90(bin_map)
+        #bin_map = np.rot90(bin_map)
         print("#----------------Numpy Bin Mapping--------------#")
         if not os.path.exists(self.output_dir+'/Numpy_Voronoi_Bins'):
             os.mkdir(self.output_dir+'/Numpy_Voronoi_Bins')
@@ -1447,16 +1447,17 @@ class Luci():
                 os.remove(f)
         for bin_num in list(range(len(Final_Bins))):
             print("We're at bin number : ", bin_num)
-            bool_bin_map = np.zeros((y_max-y_min, x_max-x_min), dtype=bool)
-            for a,b in zip(np.where(bin_map == bin_num)[0],np.where(bin_map == bin_num)[1]):
-                bool_bin_map[a,b] = True
-            canvas = np.zeros((2048, 2064)).T
-            canvas[y_min:y_max,x_min:x_max]=bool_bin_map
-            bool_bin_map = canvas.astype(bool)
-            np.save(self.output_dir+'/Numpy_Voronoi_Bins/bool_bin_map_%i'%j, bool_bin_map.T)
+            bool_bin_map = np.zeros((2048, 2064), dtype=bool)
+            for a,b in zip(np.where(bin_map == bin_num)[0][:],np.where(bin_map == bin_num)[1][:]):
+                bool_bin_map[x_min_init + a,y_min_init + b] = True
+            np.save(self.output_dir+'/Numpy_Voronoi_Bins/bool_bin_map_%i'%j, bool_bin_map)
             j+=1
 
-    def fit_wvt(self, x_min, x_max, y_min, y_max, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1):
+    def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1):
+        x_min = 0
+        x_max = self.cube_final.shape[0]
+        y_min = 0
+        y_max = self.cube_final.shape[1]
         chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
@@ -1479,12 +1480,9 @@ class Luci():
         for bin_num in list(range(len(os.listdir(self.output_dir+'/Numpy_Voronoi_Bins/')))):
             print("We're at bin number : ", bin_num)
             bool_bin_map = self.output_dir+'/Numpy_Voronoi_Bins/bool_bin_map_%i.npy'%bin_num
-            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel, region= bool_bin_map, bkg=bkg, bayes_bool=False, uncertainty_bool=False, mean=False)
+            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel, region= bool_bin_map, bkg=bkg, bayes_bool=False, uncertainty_bool=False, mean=True)
             index = np.where(np.load(bool_bin_map) == True)
             for a, b in zip(index[0], index[1]):
-                print("a = ", a)
-                print("b = ", b)
-                print(bin_fit_dict['velocities'])
                 ampls_fits[a,b] = bin_fit_dict['amplitudes']
                 flux_fits[a,b] = bin_fit_dict['fluxes']
                 flux_errors_fits[a,b] = bin_fit_dict['flux_errors']
