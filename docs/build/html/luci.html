@@ -1,75 +1,36 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>Core Functionality &mdash; LUCI v.1.0.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-
-  
-  
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
-  
-
-  
-  
-
-  
-
-  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Parameter Calculations" href="params.html" />
     <link rel="prev" title="Fitting Algorithm" href="fits.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="index.html">
-          
-
-          
-            
             <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
-          
           </a>
-
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -77,19 +38,8 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">Prerequisites:</span></p>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
@@ -97,7 +47,7 @@
 <li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Example Modules:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
@@ -109,7 +59,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Python Modules:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Core Functionality</a><ul>
@@ -120,93 +70,52 @@
 <li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 </ul>
-<p class="caption"><span class="caption-text">FAQ:</span></p>
+<p class="caption" role="heading"><span class="caption-text">FAQ:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">LUCI</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-        
       <li>Core Functionality</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/luci.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="core-functionality">
-<span id="luci"></span><h1>Core Functionality<a class="headerlink" href="#core-functionality" title="Permalink to this headline">¶</a></h1>
+             
+  <section id="core-functionality">
+<span id="luci"></span><h1>Core Functionality<a class="headerlink" href="#core-functionality" title="Permalink to this headline"></a></h1>
 <p>This section contains the wrapper for reading datacubes and fitting them using the
 functions in <cite>LuciFit.py</cite>.</p>
 <div class="toctree-wrapper compound">
 </div>
-<div class="section" id="module-LuciBase">
-<span id="core-functions"></span><h2>Core Functions<a class="headerlink" href="#module-LuciBase" title="Permalink to this headline">¶</a></h2>
+<section id="module-LuciBase">
+<span id="core-functions"></span><h2>Core Functions<a class="headerlink" href="#module-LuciBase" title="Permalink to this headline"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="LuciBase.Luci">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">LuciBase.</span></span><span class="sig-name descname"><span class="pre">Luci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Luci_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cube_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">LuciBase.</span></span><span class="sig-name descname"><span class="pre">Luci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Luci_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cube_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci" title="Permalink to this definition"></a></dt>
 <dd><p>This is the primary class for the general purpose line fitting code LUCI. This contains
 all io/administrative functionality. The fitting functionality can be found in the
 Fit class (Lucifit.py).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.bin_cube">
-<span class="sig-name descname"><span class="pre">bin_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.bin_cube" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">bin_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.bin_cube" title="Permalink to this definition"></a></dt>
 <dd><p>Function to bin cube into bin x bin sub cubes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -226,7 +135,7 @@ Fit class (Lucifit.py).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.bin_mask">
-<span class="sig-name descname"><span class="pre">bin_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.bin_mask" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">bin_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.bin_mask" title="Permalink to this definition"></a></dt>
 <dd><p>Function to bin mask. This is effectively the same as <cite>self.bin_cube</cite> with
 the exception that it is for the mask only. For now, this function is only
 triggered when the mask is in the form of a ‘.npy’ file. Region files
@@ -251,7 +160,7 @@ the binned header information.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.check_luci_path">
-<span class="sig-name descname"><span class="pre">check_luci_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.check_luci_path" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">check_luci_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.check_luci_path" title="Permalink to this definition"></a></dt>
 <dd><p>Functionality to check that the user has included the trailing “/” to Luci_path.
 If they have not, we add it.
 TODO: TEST</p>
@@ -259,13 +168,13 @@ TODO: TEST</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.close">
-<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.close" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.close" title="Permalink to this definition"></a></dt>
 <dd><p>Functionality to delete Luci object (and thus the cube) from memory</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.create_component_map">
-<span class="sig-name descname"><span class="pre">create_component_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2064</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_component_map" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">create_component_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2064</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_component_map" title="Permalink to this definition"></a></dt>
 <dd><p>Create component map of a given region following our third paper. If no bounds are given,
 a map of the entire cube is calculated.</p>
 <dl class="field-list simple">
@@ -290,7 +199,7 @@ a map of the entire cube is calculated.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.create_deep_image">
-<span class="sig-name descname"><span class="pre">create_deep_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_deep_image" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">create_deep_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_deep_image" title="Permalink to this definition"></a></dt>
 <dd><p>Create deep image fits file of the cube. This takes the cube and sums
 the spectral axis. Then the deep image is saved as a fits file with the following
 naming convention: output_dir+’/’+object_name+’_deep.fits’. We also allow for
@@ -307,7 +216,7 @@ the binning of the deep image – this is used primarily for astrometry purposes
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.create_snr_map">
-<span class="sig-name descname"><span class="pre">create_snr_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2064</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_snr_map" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">create_snr_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2064</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_snr_map" title="Permalink to this definition"></a></dt>
 <dd><p>Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
 a map of the entire cube is calculated.</p>
 <dl class="field-list simple">
@@ -332,7 +241,7 @@ a map of the entire cube is calculated.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.extract_spectrum">
-<span class="sig-name descname"><span class="pre">extract_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.extract_spectrum" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">extract_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.extract_spectrum" title="Permalink to this definition"></a></dt>
 <dd><p>Extract spectrum in region. This is primarily used to extract background regions.
 The spectra in the region are summed and then averaged (if mean is selected).
 Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
@@ -357,7 +266,7 @@ or the averaged spectrum for background spectra (True).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.extract_spectrum_region">
-<span class="sig-name descname"><span class="pre">extract_spectrum_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.extract_spectrum_region" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">extract_spectrum_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.extract_spectrum_region" title="Permalink to this definition"></a></dt>
 <dd><p>Extract spectrum in region. This is primarily used to extract background regions.
 The spectra in the region are summed and then averaged (if mean is selected).
 Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
@@ -377,7 +286,7 @@ or the averaged spectrum for background spectra (True).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_cube">
-<span class="sig-name descname"><span class="pre">fit_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_cube" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fit_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_cube" title="Permalink to this definition"></a></dt>
 <dd><p>Primary fit call to fit rectangular regions in the data cube. This wraps the
 LuciFits.FIT().fit() call which applies all the fitting steps. This also
 saves the velocity and broadening fits files. All the files will be saved
@@ -397,9 +306,8 @@ and continuum (and their associated errors) for each line.</p>
 <li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
 <li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
 <li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default False)</p></li>
-<li><p><strong>= Bayesian Inference method. Options are '</strong><strong>[</strong><strong>emcee'</strong> (<em>bayes_method</em>) – </p></li>
+<li><p><strong>'</strong><strong>[</strong><strong>emcee'</strong> (<em>bayes_method = Bayesian Inference method. Options are</em>) – </p></li>
 <li><p><strong>'dynesty'</strong><strong>]</strong> (<em>default 'emcee'</em>) – </p></li>
-<li><p><strong>output_name</strong> – User defined output path/name (default None)</p></li>
 <li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
 <li><p><strong>n_threads</strong> – Number of threads to be passed to joblib for parallelization (default = 1)</p></li>
 <li><p><strong>nii_cons</strong> – Boolean to turn on or off NII doublet ratio constraint (default True)</p></li>
@@ -421,7 +329,7 @@ we would run the following:</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_entire_cube">
-<span class="sig-name descname"><span class="pre">fit_entire_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_entire_cube" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fit_entire_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_entire_cube" title="Permalink to this definition"></a></dt>
 <dd><p>Fit the entire cube (all spatial dimensions)
 :param lines: Lines to fit (e.x. [‘Halpha’, ‘NII6583’])
 :param fit_function: Fitting function to use (e.x. ‘gaussian’)
@@ -442,7 +350,7 @@ we would run the following:</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_pixel">
-<span class="sig-name descname"><span class="pre">fit_pixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_pixel" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fit_pixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_pixel" title="Permalink to this definition"></a></dt>
 <dd><p>Primary fit call to fit a single pixel in the data cube. This wraps the
 LuciFits.FIT().fit() call which applies all the fitting steps.</p>
 <dl class="field-list simple">
@@ -454,10 +362,10 @@ LuciFits.FIT().fit() call which applies all the fitting steps.</p>
 <li><p><strong>sigma_rel</strong> – Constraints on sigma (must be list; e.x. [1, 2, 1])</p></li>
 <li><p><strong>pixel_x</strong> – X coordinate (physical)</p></li>
 <li><p><strong>pixel_y</strong> – Y coordinate (physical)</p></li>
+<li><p><strong>bin</strong> – Number of pixels to take around coordinate (i.e. bin=1 will take all pixels touching the X and Y coordinates.</p></li>
 <li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
 <li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default False)</p></li>
 <li><p><strong>bayes_method</strong> – Bayesian Inference method. Options are ‘[emcee’, ‘dynesty’] (default ‘emcee’)</p></li>
-<li><p><strong>output_name</strong> – User defined output path/name (default None)</p></li>
 <li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
 <li><p><strong>nii_cons</strong> – Boolean to turn on or off NII doublet ratio constraint (default True)</p></li>
 </ul>
@@ -470,7 +378,7 @@ LuciFits.FIT().fit() call which applies all the fitting steps.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_region">
-<span class="sig-name descname"><span class="pre">fit_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_region" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fit_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_region" title="Permalink to this definition"></a></dt>
 <dd><p>Fit the spectrum in a region. This is an extremely similar command to fit_cube except
 it works for ds9 regions. We first create a mask from the ds9 region file. Then
 we step through the cube and only fit the unmasked pixels. Although this may not
@@ -515,7 +423,7 @@ over a ds9 region called main.reg, we would run the following:</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_spectrum_region">
-<span class="sig-name descname"><span class="pre">fit_spectrum_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_spectrum_region" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fit_spectrum_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_spectrum_region" title="Permalink to this definition"></a></dt>
 <dd><p>Fit spectrum in region.
 The spectra in the region are summed and then averaged (if mean is selected).
 Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
@@ -544,7 +452,7 @@ or the averaged spectrum for background spectra (True).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.get_interferometer_angles">
-<span class="sig-name descname"><span class="pre">get_interferometer_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.get_interferometer_angles" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_interferometer_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.get_interferometer_angles" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the interferometer angle 2d array for the entire cube. We use
 the following equation:
 cos(theta) = lambda_ref/lambda
@@ -558,7 +466,7 @@ where lambda_ref is the reference laser wavelength and lambda is the measured ca
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.get_quadrant_dims">
-<span class="sig-name descname"><span class="pre">get_quadrant_dims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quad_number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.get_quadrant_dims" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_quadrant_dims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quad_number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.get_quadrant_dims" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the x and y limits of a given quadrant in the HDF5 file. The
 data cube is saved in 9 individual arrays in the original HDF5 cube. This
 function gets the bouunds for each quadrant.</p>
@@ -577,14 +485,14 @@ function gets the bouunds for each quadrant.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.heliocentric_correction">
-<span class="sig-name descname"><span class="pre">heliocentric_correction</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.heliocentric_correction" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">heliocentric_correction</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.heliocentric_correction" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate heliocentric correction for observation given the location of SITELLE/CFHT
 and the time of the observation</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.read_in_cube">
-<span class="sig-name descname"><span class="pre">read_in_cube</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_cube" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">read_in_cube</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_cube" title="Permalink to this definition"></a></dt>
 <dd><p>Function to read the hdf5 data into a 3d numpy array (data cube). We also
 translate the header to standard wcs format by calling the update_header function.
 Note that the data are saved in several quadrants which is why we have to loop
@@ -593,7 +501,7 @@ through them and place all the spectra in a single cube.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.read_in_reference_spectrum">
-<span class="sig-name descname"><span class="pre">read_in_reference_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_reference_spectrum" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">read_in_reference_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_reference_spectrum" title="Permalink to this definition"></a></dt>
 <dd><p>Read in the reference spectrum that will be used in the machine learning
 algorithm to interpolate the true spectra so that they
 wil all have the same size (required for our CNN). The reference spectrum
@@ -602,14 +510,14 @@ will be saved as self.wavenumbers_syn [cm-1].</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.read_in_transmission">
-<span class="sig-name descname"><span class="pre">read_in_transmission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_transmission" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">read_in_transmission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_transmission" title="Permalink to this definition"></a></dt>
 <dd><p>Read in the transmission spectrum for the filter. Then apply interpolation
 on it to make it have the same x-axis as the spectra.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.save_fits">
-<span class="sig-name descname"><span class="pre">save_fits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadenings_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadenings_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuum_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.save_fits" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save_fits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadenings_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadenings_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuum_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.save_fits" title="Permalink to this definition"></a></dt>
 <dd><p>Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
 amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
 defined when the cube is initiated.</p>
@@ -619,7 +527,7 @@ defined when the cube is initiated.</p>
 <li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
 <li><p><strong>ampls_fits</strong> – 3D Numpy array of amplitude values</p></li>
 <li><p><strong>flux_fis</strong> – 3D Numpy array of flux values</p></li>
-<li><p><strong>3D numpy array of flux errors</strong> (<em>flux_errors_fits</em>) – </p></li>
+<li><p><strong>errors</strong> (<em>flux_errors_fits 3D numpy array of flux</em>) – </p></li>
 <li><p><strong>velocities_fits</strong> – 3D Numpy array of velocity values</p></li>
 <li><p><strong>broadenings_fits</strong> – 3D Numpy array of broadening values</p></li>
 <li><p><strong>velocities_errors_fits</strong> – 3D Numpy array of velocity errors</p></li>
@@ -636,7 +544,7 @@ defined when the cube is initiated.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.skyline_calibration">
-<span class="sig-name descname"><span class="pre">skyline_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.skyline_calibration" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">skyline_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.skyline_calibration" title="Permalink to this definition"></a></dt>
 <dd><p>Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
 of the telescope lead to minor offset that can be measured by high resolution
 spectra (R~5000). This function divides the FOV into a grid of NxN spaxel regions
@@ -658,14 +566,14 @@ we fit with a simple sinc function.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.spectrum_axis_func">
-<span class="sig-name descname"><span class="pre">spectrum_axis_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.spectrum_axis_func" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">spectrum_axis_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.spectrum_axis_func" title="Permalink to this definition"></a></dt>
 <dd><p>Create the x-axis for the spectra. We must construct this from header information
 since each pixel only has amplitudes of the spectra at each point.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.update_astrometry">
-<span class="sig-name descname"><span class="pre">update_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.update_astrometry" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">update_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.update_astrometry" title="Permalink to this definition"></a></dt>
 <dd><p>Use astronomy.net to update the astrometry in the header using the deep image.
 If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
 the header is not updated and an exception is thrown.</p>
@@ -684,7 +592,7 @@ using the standard creation mechanisms (for this example binning at 2x2) and the
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.update_header">
-<span class="sig-name descname"><span class="pre">update_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.update_header" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">update_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.update_header" title="Permalink to this definition"></a></dt>
 <dd><p>Create a standard WCS header from the HDF5 header. To do this we clean up the
 header data (which is initially stored in individual arrays). We then create
 a new header dictionary with the old cleaned header info. Finally, we use
@@ -700,55 +608,38 @@ as self.hdr_dict.</p>
 
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="params.html" class="btn btn-neutral float-right" title="Parameter Calculations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="fits.html" class="btn btn-neutral float-left" title="Fitting Algorithm" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="params.html" class="btn btn-neutral float-right" title="Parameter Calculations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2021, Carter L. Rhea.
-
-    </p>
+    <p>&#169; Copyright 2021, Carter L. Rhea.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

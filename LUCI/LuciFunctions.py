@@ -1,5 +1,8 @@
 import numpy as np
 from scipy import special as sps
+import math
+
+FWHM_COEFF = 2.*math.sqrt(2. * math.log(2.))
 
 
 class Gaussian:
@@ -92,7 +95,7 @@ class Sinc:
 
     def function(self, channel, params, sinc_width):
         p0 = params[0];
-        p1 = params[1];
+        p1 = params[1]
         p2 = sinc_width
         u = (channel - p1) / p2
         return [p0 * np.sinc(u_) if u_ != 0 else p0 for u_ in u]
@@ -248,6 +251,6 @@ class SincGauss:
         for model_num in range(line_num):
             min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
+            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]/FWHM_COEFF]
             f1 += self.function(channel, params, sinc_width)
         return np.real(f1)
