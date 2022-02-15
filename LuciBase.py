@@ -2,6 +2,7 @@ import pandas as pd
 from astropy.io import fits
 import h5py
 import os
+import glob
 from astropy.wcs import WCS
 from astropy.wcs.utils import pixel_to_skycoord
 import astropy.units as u
@@ -1398,3 +1399,98 @@ class Luci():
             self.Luci_path += '/'
             print("We have added a trailing '/' to your Luci_path variable.\n")
             print("Please add this in the future.\n")
+     
+    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL):
+        """
+        """
+        print("#----------------WVT Algorithm----------------#")
+        Pixels = []
+        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=2, n_threads=1)
+        print("#----------------Algorithm Part 1----------------#")
+        SNR_map = fits.open(self.output_dir+'/'+self.object_name+'_SNR.fits')[0].data
+        SNR_map = SNR_map[y_min_init:y_max_init,x_min_init:x_max_init]
+        fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR_map, overwrite=True)
+        Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir+'/'+self.object_name+'_SNR.fits')
+        Nearest_Neighbors(Pixels)
+        Init_bins = Bin_Acc(Pixels, pixel_size, StN_target, roundness_crit)
+        plot_Bins(Init_bins, x_min, x_max, y_min, y_max, StN_target, self.output_dir, "bin_acc")
+        print("#----------------Algorithm Part 2----------------#")
+        Final_Bins = WVT(Init_bins, Pixels, StN_target, ToL, pixel_size, self.output_dir)
+        print("#----------------Algorithm Complete--------------#")
+        plot_Bins(Final_Bins, x_min, x_max, y_min, y_max, StN_target, self.output_dir,"final")
+        Bin_data(Final_Bins, Pixels, x_min, y_min, self.output_dir, "WVT_data")
+        print("#----------------Bin Mapping--------------#")
+        pixel_x = []
+        pixel_y = []
+        bins = []
+        bin_map = np.zeros((x_max-x_min, y_max-y_min))
+        j = 0
+        i = 0
+        with open (self.output_dir+'/WVT_data.txt', 'rt') as myfile:
+            myfile = myfile.readlines()[3:]
+            for myline in myfile:
+                myline = myline.strip(' \n')
+                data = [int(s) for s in myline.split() if s.isdigit()]
+                pixel_x.append(data[0])
+                pixel_y.append(data[1])
+                bins.append(data[2])
+        for pix_x, pix_y in zip(pixel_x,pixel_y):
+            bin_map[pix_x,pix_y] = int(bins[i])
+            i += 1
+        #bin_map = np.rot90(bin_map)
+        print("#----------------Numpy Bin Mapping--------------#")
+        if not os.path.exists(self.output_dir+'/Numpy_Voronoi_Bins'):
+            os.mkdir(self.output_dir+'/Numpy_Voronoi_Bins')
+        if os.path.exists(self.output_dir+'/Numpy_Voronoi_Bins'):
+            files = glob.glob(self.output_dir+'/Numpy_Voronoi_Bins/*.npy')
+            for f in files:
+                os.remove(f)
+        for bin_num in list(range(len(Final_Bins))):
+            print("We're at bin number : ", bin_num)
+            bool_bin_map = np.zeros((2048, 2064), dtype=bool)
+            for a,b in zip(np.where(bin_map == bin_num)[0][:],np.where(bin_map == bin_num)[1][:]):
+                bool_bin_map[x_min_init + a,y_min_init + b] = True
+            np.save(self.output_dir+'/Numpy_Voronoi_Bins/bool_bin_map_%i'%j, bool_bin_map)
+            j+=1
+
+    def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1):
+        x_min = 0
+        x_max = self.cube_final.shape[0]
+        y_min = 0
+        y_max = self.cube_final.shape[1]
+        chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        # First two dimensions are the X and Y dimensions.
+        #The third dimension corresponds to the line in the order of the lines input parameter.
+        ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        flux_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        velocities_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        broadenings_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        velocities_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        broadenings_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
+        continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        ct = 0
+        set_num_threads(n_threads)
+        if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
+            self.create_deep_image()
+        wcs = WCS(self.header, naxis=2)
+        cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
+        for bin_num in list(range(len(os.listdir(self.output_dir+'/Numpy_Voronoi_Bins/')))):
+            print("We're at bin number : ", bin_num)
+            bool_bin_map = self.output_dir+'/Numpy_Voronoi_Bins/bool_bin_map_%i.npy'%bin_num
+            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel, region= bool_bin_map, bkg=bkg, bayes_bool=False, uncertainty_bool=False, mean=True)
+            index = np.where(np.load(bool_bin_map) == True)
+            for a, b in zip(index[0], index[1]):
+                ampls_fits[a,b] = bin_fit_dict['amplitudes']
+                flux_fits[a,b] = bin_fit_dict['fluxes']
+                flux_errors_fits[a,b] = bin_fit_dict['flux_errors']
+                broadenings_fits[a,b] = bin_fit_dict['sigmas']
+                broadenings_errors_fits[a,b] = bin_fit_dict['sigmas_errors']
+                chi2_fits[a,b] = bin_fit_dict['chi2']
+                continuum_fits[a,b] = bin_fit_dict['continuum']
+                velocities_fits[a,b] = bin_fit_dict['velocities']
+                velocities_errors_fits[a,b] = bin_fit_dict['vels_errors']
+        self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning = 1)
+        return velocities_fits, broadenings_fits, flux_fits, chi2_fits
