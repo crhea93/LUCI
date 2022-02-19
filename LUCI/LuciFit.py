@@ -337,8 +337,19 @@ class Fit:
             Initial guess for continuum
 
         """
+        # Define continuum regions
+        if self.filter == 'SN3':
+            min_ = 14950
+            max_ = 15050
+        elif self.filter == 'SN2':
+            min_ = 19500
+            max_ = 19550
+        elif self.filter == 'SN1':
+            min_ = 26000
+            max_ = 26250
+
         # Clip values at given sigma level (defined by sigma_level)
-        clipped_spec = astrostats.sigma_clip(self.spectrum_restricted, sigma=sigma_level,
+        clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
                                              masked=False, copy=False,
                                              maxiters=3)
         if len(clipped_spec) < 1:
