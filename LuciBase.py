@@ -1338,6 +1338,7 @@ class Luci():
         # Calculate bounds for SNR calculation
         # Step through spectra
         Comps = np.zeros((2048, 2064), dtype=np.float32).T
+        Preds = np.zeros((2048, 2064), dtype=np.float32).T
         if self.hdr_dict['FILTER'] == 'SN3':
             # Read in machine learning algorithm
             comps_model = keras.models.load_model(
@@ -1350,6 +1351,7 @@ class Luci():
         def component_calc(i):
             y_pix = y_min + i
             comps_local = np.zeros(2048)
+            preds_local = np.zeros(2048)
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 # Calculate how many components are present in SN3 using a convolutional neural network
@@ -1369,14 +1371,17 @@ class Luci():
                 max_ind = np.argmax(predictions[0])  # ID of outcome (0 -> single; 1 -> double)
                 comp = max_ind + 1  # 1 -> single; 2 -> double
                 comps_local[x_pix] = comp
-            return comps_local, i
+                #print(predictions)
+                preds_local[x_pix] = predictions[0][comp-1]
+            return comps_local, preds_local, i
 
         res = Parallel(n_jobs=n_threads, backend="threading")(
             delayed(component_calc)(i) for i in tqdm(range(y_max - y_min)))
         # Save
         for comp_ind in res:
-            comp_vals, step_i = comp_ind
+            comp_vals, preds_vals, step_i = comp_ind
             Comps[y_min + step_i] = comp_vals
+            Preds[y_min + step_i] = preds_vals
 
         fits.writeto(self.output_dir + '/' + self.object_name + '_comps.fits', Comps, self.header, overwrite=True)
 
@@ -1399,7 +1404,7 @@ class Luci():
             self.Luci_path += '/'
             print("We have added a trailing '/' to your Luci_path variable.\n")
             print("Please add this in the future.\n")
-     
+
     def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL):
         """
         """
