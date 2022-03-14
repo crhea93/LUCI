@@ -32,6 +32,11 @@ Below are instructions for installing on a linux distribution (only tested on Ub
 
 If you are on a Mac, you will need to change step 3 slightly:
 3.  **Create** luci environment with `conda create -n luci` and then install the requirements with `pip install -r requirements.txt`.
+    
+    **OR**
+    
+    **Create** luci environment with `conda env create -f luci_macOS-11.6` which 
+    was kindly created by Johanna Hartke.
 
 
 Now you are all set to use Luci! To load the module into a python file or jupyter notebook, simply add the following lines:
