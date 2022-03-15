@@ -4,6 +4,7 @@ A hodge-podge of convenience functions for luci
 """
 import numpy as np
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
+import pyregion
 
 
 def get_individual_components(fit_dictionary):
@@ -44,3 +45,12 @@ def get_individual_components(fit_dictionary):
     # Add continuum
     fit_vectors['continuum'] = fit_solution[:-1]*np.ones(len(fit_axis))
     return fit_vectors
+
+def reg_to_mask(region, header):
+    """
+    Utility function to convert a .reg file to a mask the fitting algorithm can use
+    """
+    shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+    r = pyregion.open(region).as_imagecoord(header)  # Obtain pyregion region
+    mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
+    return mask
