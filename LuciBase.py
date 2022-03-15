@@ -1393,6 +1393,7 @@ class Luci():
             Preds[y_min + step_i] = preds_vals
 
         fits.writeto(self.output_dir + '/' + self.object_name + '_comps.fits', Comps, self.header, overwrite=True)
+        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_probs.fits', Preds, self.header, overwrite=True)
 
     def close(self):
         """
