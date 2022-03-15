@@ -404,7 +404,7 @@ class Luci():
         self.binned_mask = binned_mask / (binning ** 2)
 
     def save_fits(self, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits,
-                  velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, header, binning):
+                  velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, header, binning, suffix=''):
         """
         Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
         amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
@@ -424,6 +424,7 @@ class Luci():
             header: Header object (either binned or unbinned)
             output_name: Output directory and naming convention
             binning: Value by which to bin (default None)
+            suffix: Additional suffix to add (e.x. '_wvt')
 
         """
         # Make sure output dirs exist for amps, flux, vel, and broad
@@ -435,11 +436,9 @@ class Luci():
             os.mkdir(self.output_dir + '/Velocity')
         if not os.path.exists(self.output_dir + '/Broadening'):
             os.mkdir(self.output_dir + '/Broadening')
-
+        output_name = self.object_name + suffix
         if binning is not None:
-            output_name = self.object_name + "_" + str(binning)
-        else:
-            output_name = self.object_name
+            output_name +=  "_" + str(binning)
         lines_fit = []  # List of lines which already have maps
         for ct, line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
             if lines_fit.count(line_) >= 1:  # If the line is already present in the list of lines create
@@ -1554,13 +1553,19 @@ class Luci():
             j+=1
 
     def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1):
+        """
+        Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
+
+        Args:
+
+        """
         x_min = 0
         x_max = self.cube_final.shape[0]
         y_min = 0
         y_max = self.cube_final.shape[1]
         chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        corr_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        step_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        component_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
+        component_prob_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         # First two dimensions are the X and Y dimensions.
         #The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
@@ -1580,7 +1585,8 @@ class Luci():
         for bin_num in list(range(len(os.listdir(self.output_dir+'/Numpy_Voronoi_Bins/')))):
             print("We're at bin number : ", bin_num)
             bool_bin_map = self.output_dir+'/Numpy_Voronoi_Bins/bool_bin_map_%i.npy'%bin_num
-            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel, region= bool_bin_map, bkg=bkg, bayes_bool=False, uncertainty_bool=False, mean=True)
+            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel, region= bool_bin_map, bkg=bkg, bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool, mean=mean)
+            component_dict = self.calculate_components_in_region(bool_bin_map, bkg=bkg)
             index = np.where(np.load(bool_bin_map) == True)
             for a, b in zip(index[0], index[1]):
                 ampls_fits[a,b] = bin_fit_dict['amplitudes']
@@ -1592,5 +1598,9 @@ class Luci():
                 continuum_fits[a,b] = bin_fit_dict['continuum']
                 velocities_fits[a,b] = bin_fit_dict['velocities']
                 velocities_errors_fits[a,b] = bin_fit_dict['vels_errors']
-        self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning = 1)
+                component_fits[a,b] = component_dict['components']
+                component_prob_fits[a,b] = component_dict['component_probability']
+        self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits,
+                       broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(),
+                       binning=1, suffix='_wvt')
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
