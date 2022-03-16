@@ -134,7 +134,6 @@ class Fit:
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
         self.initial_conditions = initial_conditions  # List for initial conditions (or default False)
-        self.initial_values = None  # Initialize initial values
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
@@ -296,9 +295,12 @@ class Fit:
 
         """
         line_theo = self.line_dict[line_name]
-        if self.ML_model is None or self.model_type == '' or self.initial_conditions is not False:
-            self.vel_ml = self.initial_conditions[0]  # Velocity component of initial conditions in km/s
-            self.broad_ml = self.initial_conditions[1]  # Broadening component of initial conditions in km/s
+        if self.ML_model is None or self.model_type == '':
+            if self.initial_conditions is not False:
+                self.vel_ml = self.initial_conditions[0]  # Velocity component of initial conditions in km/s
+                self.broad_ml = self.initial_conditions[1]  # Broadening component of initial conditions in km/s
+            else:
+                pass
         else:
             pass  # vel_ml and broad_ml already set using ML algorithm
         line_pos_est = 1e7 / ((self.vel_ml / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1

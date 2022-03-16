@@ -529,6 +529,7 @@ class Luci():
 
         """
         # Initialize fit solution arrays
+        initial_conditions = False
         if binning != None and binning != 1:
             self.bin_cube(binning, x_min, x_max, y_min, y_max)
             x_max = int((x_max - x_min) / binning);
@@ -564,7 +565,8 @@ class Luci():
 
         @jit(nopython=False)
         def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
-                     chi2_fit, corr_fit, step_fit, continuum_fit):
+                     chi2_fit, corr_fit, step_fit, continuum_fit, initial_conditions=initial_conditions):
+
             y_pix = y_min + i  # Step y coordinate
             # Set up all the local lists for the current y_pixel step
             ampls_local = []
@@ -606,7 +608,7 @@ class Luci():
                               filter=self.hdr_dict['FILTER'],
                               bayes_bool=bayes_bool, bayes_method=bayes_method,
                               uncertainty_bool=uncertainty_bool,
-                              mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values
+                              mdn=self.mdn, nii_cons=nii_cons, initial_conditions=initial_conditions
                               )
                     fit_dict = fit.fit()  # Collect fit dictionary
                     # Save local list of fit values
