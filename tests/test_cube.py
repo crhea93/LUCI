@@ -41,7 +41,7 @@ def test_bin_cube():
     Test to call bin cube. We do 2x2 binning on a region of the cube (10<x<20, 10<y<20)
     """
     cube = Test().cube
-    cube.bin_cube(binning=2, x_min=10, x_max=20, y_min=10, y_max=20)
+    cube.bin_cube(binning=2, x_min=10, x_max=20, y_min=10, y_max=20, cube_final=cube.cube_final, header=cube.header)
     assert cube.cube_binned.shape[0] == 5
     assert cube.cube_binned.shape[1] == 5
 
