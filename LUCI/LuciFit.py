@@ -134,7 +134,7 @@ class Fit:
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
 
-        self.initial_conditions = initial_conditions  # List for initial conditions (or default False)
+        self.initial_conditions = initial_values  # List for initial conditions (or default False)
 
         self.initial_values = initial_values  # List for initial values (or default False)
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit

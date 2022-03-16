@@ -339,7 +339,7 @@ class Luci():
                               filter=self.hdr_dict['FILTER'],
                               bayes_bool=bayes_bool, bayes_method=bayes_method,
                               uncertainty_bool=uncertainty_bool,
-                              mdn=self.mdn, nii_cons=nii_cons, initial_conditions=initial_conditions
+                              mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_conditions
                               )
                     fit_dict = fit.fit()  # Collect fit dictionary
                     # Save local list of fit values
