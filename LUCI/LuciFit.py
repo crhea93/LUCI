@@ -35,8 +35,8 @@ class Fit:
 
     The returned axis is the redshifted axis.
 
-    If the initial_conditions argument is passed, then the fit algorithm will use these values [velocity, broadening] as
-    the initial conditions for the fit **instead** of the machine learning algorithm. See example 'intial_conditions' for
+    If the initial_values argument is passed, then the fit algorithm will use these values [velocity, broadening] as
+    the initial conditions for the fit **instead** of the machine learning algorithm. See example 'initial_values' for
     more details on the implementation.
     """
 
@@ -45,7 +45,7 @@ class Fit:
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
-                 nii_cons=True, sky_lines=None, initial_conditions=False
+                 nii_cons=True, sky_lines=None, initial_values=False
                  ):
         """
         Args:
@@ -70,7 +70,7 @@ class Fit:
             mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
             sky_lines: Dictionary of sky lines {OH_num: wavelength in nanometers}
-            initial_conditions: List of initial conditions for the velocity and broadening; [velocity, broadening]
+            initial_values: List of initial conditions for the velocity and broadening; [velocity, broadening]
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -133,8 +133,7 @@ class Fit:
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
-        self.initial_conditions = initial_conditions  # List for initial conditions (or default False)
-        self.initial_values = None  # Initialize initial values
+        self.initial_values = initial_values  # List for initial values (or default False)
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
@@ -296,9 +295,13 @@ class Fit:
 
         """
         line_theo = self.line_dict[line_name]
-        if self.ML_model is None or self.model_type == '' or self.initial_conditions is not False:
-            self.vel_ml = self.initial_conditions[0]  # Velocity component of initial conditions in km/s
-            self.broad_ml = self.initial_conditions[1]  # Broadening component of initial conditions in km/s
+        if self.ML_model is None or self.ML_model == '':
+            if self.initial_values is not False:
+                print(self.initial_values)
+                self.vel_ml = self.initial_values[0]  # Velocity component of initial conditions in km/s
+                self.broad_ml = self.initial_values[1]  # Broadening component of initial conditions in km/s
+            else:
+                pass
         else:
             pass  # vel_ml and broad_ml already set using ML algorithm
         line_pos_est = 1e7 / ((self.vel_ml / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
@@ -575,7 +578,7 @@ class Fit:
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
         if sky_line != True:
-            if self.ML_model != None and self.initial_conditions is False:
+            if self.ML_model != None and self.initial_values is False:
                 # Interpolate Spectrum
                 self.interpolate_spectrum()
                 # Estimate the priors using machine learning algorithm

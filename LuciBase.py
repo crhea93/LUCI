@@ -1,14 +1,13 @@
 import h5py
 import glob
-
 import pandas
 from astropy.wcs import WCS
 import astropy.units as u
 from tqdm import tqdm
 import keras
-from scipy import interpolate
 from joblib import Parallel, delayed
 
+from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
 from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
 from astropy.nddata import Cutout2D
@@ -19,8 +18,9 @@ import numpy.ma as ma
 from astropy.coordinates import SkyCoord, EarthLocation
 from numba import jit, set_num_threads
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
+from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
+    read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
 from LUCI.LuciWVT import *
-
 
 
 class Luci():
@@ -45,8 +45,9 @@ class Luci():
             ML_bool: Boolean for applying machine learning; default=True
             mdn: Boolean for using the Mixed Density Network models; If true, then we use the posterior distributions calculated by our network as our priors for bayesian fits
         """
+        self.header_binned = None
         self.Luci_path = Luci_path
-        self.check_luci_path()  # Make sure the path is correctly written
+        check_luci_path(Luci_path)  # Make sure the path is correctly written
         self.cube_path = cube_path
         self.output_dir = output_dir + '/Luci_outputs'
         if not os.path.exists(self.output_dir):
@@ -74,12 +75,13 @@ class Luci():
         self.step_nb = self.hdr_dict['STEPNB']
         self.zpd_index = self.hdr_dict['ZPDINDEX']
         self.filter = self.hdr_dict['FILTER']
-        self.spectrum_axis_func()
+        self.spectrum_axis, self.spectrum_axis_unshifted = spectrum_axis_func(self.hdr_dict, self.redshift)
         if ML_bool is True:
-            if self.mdn != True:
+            if not self.mdn:
                 if self.filter in ['SN1', 'SN2', 'SN3', 'C4']:
                     self.ref_spec = self.Luci_path + 'ML/Reference-Spectrum-R%i-%s.fits' % (resolution, self.filter)
-                    self.read_in_reference_spectrum()
+                    self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,
+                                                                                                 self.hdr_dict)
                     self.model_ML = keras.models.load_model(
                         self.Luci_path + 'ML/R%i-PREDICTOR-I-%s' % (resolution, self.filter))
                 else:
@@ -88,109 +90,43 @@ class Luci():
             else:  # mdn == True
                 if self.filter in ['SN3']:
                     self.ref_spec = self.Luci_path + 'ML/Reference-Spectrum-R%i-%s.fits' % (resolution, self.filter)
-                    self.read_in_reference_spectrum()
+                    self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,
+                                                                                                 self.hdr_dict)
                     self.model_ML = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
                     self.model_ML.load_weights(self.Luci_path + 'ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s' % (
-                    resolution, self.filter, resolution, self.filter))
+                        resolution, self.filter, resolution, self.filter))
                 else:
                     print(
                         'LUCI does not support machine learning parameter estimates using a MDN for the filter you entered. Please set ML_bool=False or mdn=False.')
         else:
             self.model_ML = None
-        self.read_in_transmission()
+        self.transmission_interpolated = read_in_transmission(self.Luci_path, self.hdr_dict,
+                                                              self.spectrum_axis_unshifted)
 
-    def get_quadrant_dims(self, quad_number):
+    def read_in_cube(self):
         """
-        Calculate the x and y limits of a given quadrant in the HDF5 file. The
-        data cube is saved in 9 individual arrays in the original HDF5 cube. This
-        function gets the bouunds for each quadrant.
-
-        Args:
-            quad_number: Quadrant Number
-        Return:
-            x_min, x_max, y_min, y_max: Spatial bounds of quadrant
+        Function to read the hdf5 data into a 3d numpy array (data cube). We also
+        translate the header to standard wcs format by calling the update_header function.
+        Note that the data are saved in several quadrants which is why we have to loop
+        through them and place all the spectra in a single cube.
         """
-        div_nb = int(np.sqrt(self.quad_nb))
-        if (quad_number < 0) or (quad_number > self.quad_nb - 1):
-            raise StandardError("quad_number out of bounds [0," + str(self.quad_nb - 1) + "]")
-            return "SOMETHING FAILED"
-
-        index_x = quad_number % div_nb
-        index_y = (quad_number - index_x) / div_nb
-
-        x_min = index_x * np.floor(self.dimx / div_nb)
-        if (index_x != div_nb - 1):
-            x_max = (index_x + 1) * np.floor(self.dimx / div_nb)
-        else:
-            x_max = self.dimx
-
-        y_min = index_y * np.floor(self.dimy / div_nb)
-        if (index_y != div_nb - 1):
-            y_max = (index_y + 1) * np.floor(self.dimy / div_nb)
-        else:
-            y_max = self.dimy
-        return int(x_min), int(x_max), int(y_min), int(y_max)
-
-    def get_interferometer_angles(self, file):
-        """
-        Calculate the interferometer angle 2d array for the entire cube. We use
-        the following equation:
-        cos(theta) = lambda_ref/lambda
-        where lambda_ref is the reference laser wavelength and lambda is the measured calibration laser wavelength.
-
-        Args:
-            file: hdf5 File object containing HDF5 file
-        """
-        calib_map = file['calib_map'][()]
-        calib_ref = self.hdr_dict['CALIBNM']
-        interferometer_cos_theta = calib_ref / calib_map  # .T[::-1,::-1]
-        # We need to convert to degree so bear with me here
-        self.interferometer_theta = np.rad2deg(np.arccos(interferometer_cos_theta))
-
-    def update_header(self, file):
-        """
-        Create a standard WCS header from the HDF5 header. To do this we clean up the
-        header data (which is initially stored in individual arrays). We then create
-        a new header dictionary with the old cleaned header info. Finally, we use
-        astropy.wcs.WCS to create an updated WCS header for the 2 spatial dimensions.
-        This is then saved to self.header while the header dictionary is saved
-        as self.hdr_dict.
-
-        Args:
-            file: hdf5 File object containing HDF5 file
-        """
-        hdr_dict = {}
-        header_cols = [str(val[0]).replace("'b", '').replace("'", "").replace("b", '') for val in
-                       list(file['header'][()])]
-        header_vals = [str(val[1]).replace("'b", '').replace("'", "").replace("b", '') for val in
-                       list(file['header'][()])]
-        header_types = [val[3] for val in list(file['header'][()])]
-        for header_col, header_val, header_type in zip(header_cols, header_vals, header_types):
-            if 'bool' in str(header_type):
-                hdr_dict[header_col] = bool(header_val)
-            if 'float' in str(header_type):
-                hdr_dict[header_col] = float(header_val)
-            if 'int' in str(header_type):
-                hdr_dict[header_col] = int(header_val)
-            else:
-                try:
-                    hdr_dict[header_col] = float(header_val)
-                except:
-                    hdr_dict[header_col] = str(header_val)
-        hdr_dict['CTYPE3'] = 'WAVE-SIP'
-        hdr_dict['CUNIT3'] = 'm'
-        # hdr_dict['NAXIS1'] = 2064
-        # hdr_dict['NAXIS2'] = 2048
-        # Make WCS
-        wcs_data = WCS(hdr_dict, naxis=2)
-        self.header = wcs_data.to_header()
-        self.header.insert('WCSAXES', ('SIMPLE', 'T'))
-        self.header.insert('SIMPLE', ('NAXIS', 2), after=True)
-        # self.header.insert('NAXIS', ('NAXIS1', 2064), after=True)
-        # self.header.insert('NAXIS1', ('NAXIS2', 2048), after=True)
-        self.hdr_dict = hdr_dict
-
-
+        print('Reading in data...')
+        file = h5py.File(self.cube_path + '.hdf5', 'r')  # Read in file
+        self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
+        self.dimx = file.attrs['dimx']  # Get the dimensions in x
+        self.dimy = file.attrs['dimy']  # Get the dimensions in y
+        self.dimz = file.attrs['dimz']  # Get the dimensions in z (spectral axis)
+        self.cube_final = np.zeros((self.dimx, self.dimy, self.dimz))  # Complete data cube
+        for iquad in tqdm(range(self.quad_nb)):
+            xmin, xmax, ymin, ymax = get_quadrant_dims(iquad, self.quad_nb, self.dimx, self.dimy)
+            iquad_data = file['quad00%i' % iquad]['data'][:]  # Save data to intermediate array
+            iquad_data[(np.isfinite(iquad_data) == False)] = 1e-22  # Set infinite values to 1-e22
+            iquad_data[(iquad_data < -1e-16)] = 1e-22  # Set high negative flux values to 1e-22
+            iquad_data[(iquad_data > 1e-9)] = 1e-22  # Set unrealistically high positive flux values to 1e-22
+            self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
+        self.cube_final = self.cube_final  # .transpose(1, 0, 2)
+        self.header, self.hdr_dict = update_header(file)
+        self.interferometer_theta = get_interferometer_angles(file, self.hdr_dict)
 
     def create_deep_image(self, output_name=None, binning=None):
         """
@@ -253,214 +189,6 @@ class Luci():
         if output_name == None:
             output_name = self.output_dir + '/' + self.object_name + '_deep.fits'
         fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
-
-    def read_in_cube(self):
-        """
-        Function to read the hdf5 data into a 3d numpy array (data cube). We also
-        translate the header to standard wcs format by calling the update_header function.
-        Note that the data are saved in several quadrants which is why we have to loop
-        through them and place all the spectra in a single cube.
-        """
-        print('Reading in data...')
-        file = h5py.File(self.cube_path + '.hdf5', 'r')  # Read in file
-        self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
-        self.dimx = file.attrs['dimx']  # Get the dimensions in x
-        self.dimy = file.attrs['dimy']  # Get the dimensions in y
-        self.dimz = file.attrs['dimz']  # Get the dimensions in z (spectral axis)
-        self.cube_final = np.zeros((self.dimx, self.dimy, self.dimz))  # Complete data cube
-        for iquad in tqdm(range(self.quad_nb)):
-            xmin, xmax, ymin, ymax = self.get_quadrant_dims(iquad)
-            iquad_data = file['quad00%i' % iquad]['data'][:]  # Save data to intermediate array
-            iquad_data[(np.isfinite(iquad_data) == False)] = 1e-22  # Set infinite values to 1-e22
-            iquad_data[(iquad_data < -1e-16)] = 1e-22  # Set high negative flux values to 1e-22
-            iquad_data[(iquad_data > 1e-9)] = 1e-22  # Set unrealistically high positive flux values to 1e-22
-            self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
-        self.cube_final = self.cube_final  # .transpose(1, 0, 2)
-        self.update_header(file)
-        self.get_interferometer_angles(file)
-
-    def spectrum_axis_func(self):
-        """
-        Create the x-axis for the spectra. We must construct this from header information
-        since each pixel only has amplitudes of the spectra at each point.
-        """
-        len_wl = self.hdr_dict['STEPNB']  # Length of Spectral Axis
-        start = self.hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
-        end = start + (len_wl) * self.hdr_dict['CDELT3']  # End
-        step = self.hdr_dict['CDELT3']  # Step size
-        self.spectrum_axis = np.array(np.linspace(start, end, len_wl) * (self.redshift + 1),
-                                      dtype=np.float32)  # Apply redshift correction
-        self.spectrum_axis_unshifted = np.array(np.linspace(start, end, len_wl),
-                                                dtype=np.float32)  # Do not apply redshift correction
-
-        # min_ = 1e7  * (self.hdr_dict['ORDER'] / (2*self.hdr_dict['STEP']))# + 1e7  / (2*self.delta_x*self.n_steps)
-        # max_ = 1e7  * ((self.hdr_dict['ORDER'] + 1) / (2*self.hdr_dict['STEP']))# - 1e7  / (2*self.delta_x*self.n_steps)
-        # step_ = max_ - min_
-        # axis = np.array([min_+j*step_/self.hdr_dict['STEPNB'] for j in range(self.hdr_dict['STEPNB'])])
-        # self.spectrum_axis = axis#*(1+self.redshift)
-        # self.spectrum_axis_unshifted = axis
-
-    def read_in_reference_spectrum(self):
-        """
-        Read in the reference spectrum that will be used in the machine learning
-        algorithm to interpolate the true spectra so that they
-        wil all have the same size (required for our CNN). The reference spectrum
-        will be saved as self.wavenumbers_syn [cm-1].
-        """
-        ref_spec = fits.open(self.ref_spec)[1].data
-        channel = []
-        counts = []
-        for chan in ref_spec:  # Only want SN3 region
-            channel.append(chan[0])
-            counts.append(np.real(chan[1]))
-        if self.hdr_dict['FILTER'] == 'SN3':
-            min_ = np.argmin(np.abs(np.array(channel) - 14700))
-            max_ = np.argmin(np.abs(np.array(channel) - 15600))
-        elif self.hdr_dict['FILTER'] == 'SN2':
-            min_ = np.argmin(np.abs(np.array(channel) - 19000))
-            max_ = np.argmin(np.abs(np.array(channel) - 21000))
-        elif self.hdr_dict['FILTER'] == 'SN1':
-            min_ = np.argmin(np.abs(np.array(channel) - 25500))
-            max_ = np.argmin(np.abs(np.array(channel) - 27500))
-        elif self.hdr_dict['FILTER'] == 'C4':
-            min_ = np.argmin(np.abs(np.array(channel) - 14700))
-            max_ = np.argmin(np.abs(np.array(channel) - 15600))
-        else:
-            print('We do not support this filter.')
-            print('Terminating program!')
-            exit()
-        self.wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
-        self.wavenumbers_syn_full = np.array(channel, dtype=np.float32)
-
-    def read_in_transmission(self):
-        """
-        Read in the transmission spectrum for the filter. Then apply interpolation
-        on it to make it have the same x-axis as the spectra.
-        """
-        transmission = np.loadtxt('%s/Data/%s_filter.dat' % (
-        self.Luci_path, self.hdr_dict['FILTER']))  # first column - axis; second column - value
-        f = interpolate.interp1d(transmission[:, 0], [val / 100 for val in transmission[:, 1]], kind='slinear',
-                                 fill_value="extrapolate")
-        self.transmission_interpolated = f(self.spectrum_axis_unshifted)
-
-    def bin_cube(self, binning, x_min, x_max, y_min, y_max):
-        """
-        Function to bin cube into bin x bin sub cubes
-
-        Args:
-            binning: Size of binning (equal in x and y direction)
-            x_min: Lower bound in x
-            x_max: Upper bound in x
-            y_min: Lower bound in y
-            y_max: Upper bound in y
-        Return:
-            Binned cubed called self.cube_binned and new spatial limits
-        """
-        x_shape_new = int((x_max - x_min) / binning)
-        y_shape_new = int((y_max - y_min) / binning)
-        binned_cube = np.zeros((x_shape_new, y_shape_new, self.cube_final.shape[2]))
-        for i in range(x_shape_new):
-            for j in range(y_shape_new):
-                summed_spec = self.cube_final[x_min + int(i * binning):x_min + int((i + 1) * binning),
-                              y_min + int(j * binning):y_min + int((j + 1) * binning), :]
-                summed_spec = np.nansum(summed_spec, axis=0)
-                summed_spec = np.nansum(summed_spec, axis=0)
-                binned_cube[i, j] = summed_spec[:]
-        self.header_binned = self.header
-        self.header_binned['CRPIX1'] = self.header_binned['CRPIX1'] / binning
-        self.header_binned['CRPIX2'] = self.header_binned['CRPIX2'] / binning
-        self.header_binned['CDELT1'] = self.header_binned['CDELT1'] * binning
-        self.header_binned['CDELT2'] = self.header_binned['CDELT2'] * binning
-        self.cube_binned = binned_cube / (binning ** 2)
-
-    def bin_mask(self, mask, binning, x_min, x_max, y_min, y_max):
-        """
-        Function to bin mask. This is effectively the same as `self.bin_cube` with
-        the exception that it is for the mask only. For now, this function is only
-        triggered when the mask is in the form of a '.npy' file. Region files
-        passed as '.reg' files do not need to be additionally masked since they use
-        the binned header information.
-
-        Args:
-            mask: Mask to be binned
-            binning: Size of binning (equal in x and y direction)
-            x_min: Lower bound in x
-            x_max: Upper bound in x
-            y_min: Lower bound in y
-            y_max: Upper bound in y
-        Return:
-            Binned cubed called self.cube_binned and new spatial limits
-        """
-        x_shape_new = int((x_max - x_min) / binning)
-        y_shape_new = int((y_max - y_min) / binning)
-        binned_mask = np.zeros((x_shape_new, y_shape_new))
-        for i in range(x_shape_new):
-            for j in range(y_shape_new):
-                summed_spec = mask[x_min + int(i * binning):x_min + int((i + 1) * binning),
-                              y_min + int(j * binning):y_min + int((j + 1) * binning)]
-                summed_spec = np.nansum(summed_spec, axis=0)
-                summed_spec = np.nansum(summed_spec, axis=0)
-                binned_mask[i, j] = summed_spec[:]
-        self.binned_mask = binned_mask / (binning ** 2)
-
-    def save_fits(self, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits,
-                  velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, header, binning, suffix=''):
-        """
-        Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
-        amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
-        defined when the cube is initiated.
-
-        Args:
-            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
-            ampls_fits: 3D Numpy array of amplitude values
-            flux_fis: 3D Numpy array of flux values
-            flux_errors_fits 3D numpy array of flux errors
-            velocities_fits: 3D Numpy array of velocity values
-            broadenings_fits: 3D Numpy array of broadening values
-            velocities_errors_fits: 3D Numpy array of velocity errors
-            broadenings_errors_fits: 3D Numpy array of broadening errors
-            chi2_fits: 2D Numpy array of chi-squared values
-            continuum_fits: 2D Numpy array of continuum value
-            header: Header object (either binned or unbinned)
-            output_name: Output directory and naming convention
-            binning: Value by which to bin (default None)
-            suffix: Additional suffix to add (e.x. '_wvt')
-
-        """
-        # Make sure output dirs exist for amps, flux, vel, and broad
-        if not os.path.exists(self.output_dir + '/Amplitudes'):
-            os.mkdir(self.output_dir + '/Amplitudes')
-        if not os.path.exists(self.output_dir + '/Fluxes'):
-            os.mkdir(self.output_dir + '/Fluxes')
-        if not os.path.exists(self.output_dir + '/Velocity'):
-            os.mkdir(self.output_dir + '/Velocity')
-        if not os.path.exists(self.output_dir + '/Broadening'):
-            os.mkdir(self.output_dir + '/Broadening')
-        output_name = self.object_name + suffix
-        if binning is not None:
-            output_name +=  "_" + str(binning)
-        lines_fit = []  # List of lines which already have maps
-        for ct, line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-            if lines_fit.count(line_) >= 1:  # If the line is already present in the list of lines create
-                # This means multiple components were fit of this line so they need to be nammed appropriately
-                line_number = lines_fit.count(line_) + 1
-                line_ += '_' + str(line_number)
-            fits.writeto(self.output_dir + '/Amplitudes/' + output_name + '_' + line_ + '_Amplitude.fits',
-                         ampls_fits[:, :, ct], header, overwrite=True)
-            fits.writeto(self.output_dir + '/Fluxes/' + output_name + '_' + line_ + '_Flux.fits', flux_fits[:, :, ct],
-                         header, overwrite=True)
-            fits.writeto(self.output_dir + '/Fluxes/' + output_name + '_' + line_ + '_Flux_err.fits',
-                         flux_errors_fits[:, :, ct], header, overwrite=True)
-            fits.writeto(self.output_dir + '/Velocity/' + output_name + '_' + line_ + '_velocity.fits',
-                         velocities_fits[:, :, ct], header, overwrite=True)
-            fits.writeto(self.output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening.fits',
-                         broadenings_fits[:, :, ct], header, overwrite=True)
-            fits.writeto(self.output_dir + '/Velocity/' + output_name + '_' + line_ + '_velocity_err.fits',
-                         velocities_errors_fits[:, :, ct], header, overwrite=True)
-            fits.writeto(self.output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening_err.fits',
-                         broadenings_errors_fits[:, :, ct], header, overwrite=True)
-        fits.writeto(output_name + '_Chi2.fits', chi2_fits, header, overwrite=True)
-        fits.writeto(output_name + '_continuum.fits', continuum_fits, header, overwrite=True)
 
     def fit_entire_cube(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, binning=None, bayes_bool=False,
                         output_name=None, uncertainty_bool=False, n_threads=1):
@@ -530,7 +258,8 @@ class Luci():
         """
         # Initialize fit solution arrays
         if binning != None and binning != 1:
-            self.bin_cube(binning, x_min, x_max, y_min, y_max)
+            self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
+                                                            y_max)
             x_max = int((x_max - x_min) / binning);
             y_max = int((y_max - y_min) / binning)
             x_min = 0;
@@ -556,7 +285,7 @@ class Luci():
         # Initialize initiatl conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
-        # TODO: READ IN INITIAL CONDITIONS
+        # TODO: ALLOW BINNING OF INITIAL CONDITIONS
         if initial_values is not False:
             # Obtain initial condition maps from files
             vel_init = fits.open(initial_values[0])[0].data
@@ -590,12 +319,14 @@ class Luci():
                         sky -= bkg * binning ** 2  # Subtract background spectrum
                     else:  # No binning so just subtract the background directly
                         sky -= bkg  # Subtract background spectrum
-                good_sky_inds = [~np.isnan(sky)]  #  Find all NaNs in sky spectrum
+                good_sky_inds = [~np.isnan(sky)]  # Find all NaNs in sky spectrum
                 sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
                 axis = self.spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
                 # TODO: PASS INITIAL CONDITIONS
                 if vel_init is not False and broad_init is not False:  # If initial conditions were passed
                     initial_conditions = [vel_init[x_pix, y_pix], broad_init[x_pix, y_pix]]
+                else:
+                    initial_conditions = False
                 # Call fit!
                 if len(sky) > 0:  # Ensure that there are values in sky
                     fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
@@ -606,7 +337,7 @@ class Luci():
                               filter=self.hdr_dict['FILTER'],
                               bayes_bool=bayes_bool, bayes_method=bayes_method,
                               uncertainty_bool=uncertainty_bool,
-                              mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values
+                              mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_conditions
                               )
                     fit_dict = fit.fit()  # Collect fit dictionary
                     # Save local list of fit values
@@ -663,9 +394,10 @@ class Luci():
         for step_i in tqdm(range(y_max - y_min)):
             fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits,
                      broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
-        self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits,
-                       velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,
-                       cutout.wcs.to_header(), binning)
+        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
+                  broadenings_fits,
+                  velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,
+                  cutout.wcs.to_header(), binning)
 
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
 
@@ -718,7 +450,8 @@ class Luci():
         y_max = self.cube_final.shape[1]
         # Initialize fit solution arrays
         if binning != None and binning != 1:
-            self.bin_cube(binning, x_min, x_max, y_min, y_max)
+            self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
+                                                            y_max)
             # x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max - x_min) / binning);
             y_max = int((y_max - y_min) / binning)
@@ -733,8 +466,8 @@ class Luci():
                 header = self.header
             header.set('NAXIS1', 2064)
             header.set('NAXIS2', 2048)
-            #r = pyregion.open(region).as_imagecoord(header)  # Obtain pyregion region
-            #mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
+            # r = pyregion.open(region).as_imagecoord(header)  # Obtain pyregion region
+            # mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
             mask = reg_to_mask(region, header)
         elif '.npy' in region:
             mask = np.load(region)
@@ -857,9 +590,10 @@ class Luci():
         for step_i in tqdm(range(y_max - y_min)):
             fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits,
                      broadenings_fits, broadenings_errors_fits, chi2_fits, continuum_fits)
-        self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits,
-                       velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,
-                       cutout.wcs.to_header(), binning)
+        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
+                  broadenings_fits,
+                  velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,
+                  cutout.wcs.to_header(), binning)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
     def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
@@ -891,11 +625,11 @@ class Luci():
         """
         sky = None
         if bin is not None and bin != 1:  # If data is binned
-            sky = self.cube_final[pixel_x-bin:pixel_x+bin, pixel_y-bin:pixel_y+bin, :]
+            sky = self.cube_final[pixel_x - bin:pixel_x + bin, pixel_y - bin:pixel_y + bin, :]
             sky = np.nansum(sky, axis=0)
             sky = np.nansum(sky, axis=0)
             if bkg is not None:
-                sky -= bkg * (2 + bin)**2  # Subtract background times number of pixels
+                sky -= bkg * (2 + bin) ** 2  # Subtract background times number of pixels
         else:
             sky = self.cube_final[pixel_x, pixel_y, :]
             if bkg is not None:
@@ -915,6 +649,10 @@ class Luci():
                   mdn=self.mdn, nii_cons=nii_cons)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
+
+    def bin_cube(self, cube_final, header, binning, x_min, x_max, y_min, y_max):
+        self.header_binned, self.cube_binned = bin_cube_function(cube_final, header, binning, x_min, x_max, y_min, y_max)
+
 
     def extract_spectrum(self, x_min, x_max, y_min, y_max, bkg=None, binning=None, mean=False):
         """
@@ -940,7 +678,8 @@ class Luci():
         axis = None  # Initialize
         # Initialize fit solution arrays
         if binning != None and binning != 1:
-            self.bin_cube(binning, x_min, x_max, y_min, y_max)
+            self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
+                                                            y_max)
             # x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max - x_min) / binning);
             y_max = int((y_max - y_min) / binning)
@@ -985,9 +724,9 @@ class Luci():
         # Create mask
         if '.reg' in region:
             mask = reg_to_mask(region, self.header)
-            #shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            # shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             ##r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-            #mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
+            # mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
         elif '.npy' in region:
             mask = np.load(region)
         else:
@@ -1047,9 +786,9 @@ class Luci():
         mask = None  # Initialize
         if '.reg' in region:
             mask = reg_to_mask(region, self.header)
-            #shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
-            #r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-            #mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
+            # shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            # r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
+            # mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
         elif '.npy' in region:
             mask = np.load(region)
         else:
@@ -1263,7 +1002,6 @@ class Luci():
         helio_kms = heliocorr.to(u.km / u.s)
         return helio_kms
 
-
     def skyline_calibration(self, n_grid, bin_size=30):
         """
         Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
@@ -1283,18 +1021,20 @@ class Luci():
         # Read in sky lines
         sky_lines_df = pandas.read_csv('Data/sky_lines.csv', skiprows=2)
         sky_lines = sky_lines_df['Wavelength']  # Get wavelengths
-        sky_lines = [sky_line/10 for sky_line in sky_lines]  # Convert from angstroms to nanometers
+        sky_lines = [sky_line / 10 for sky_line in sky_lines]  # Convert from angstroms to nanometers
         # Create skyline dictionary
-        sky_line_dict = {}  #  {OH_num: wavelength in nm}
+        sky_line_dict = {}  # {OH_num: wavelength in nm}
         for line_ct, line_wvl in enumerate(sky_lines):
             sky_line_dict['OH_%i' % line_ct] = line_wvl
         # Calculate grid
         x_min = 0
         x_max = self.cube_final.shape[0]
-        x_step = int((x_max - x_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
+        x_step = int(
+            (x_max - x_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         y_min = 0
         y_max = self.cube_final.shape[1]
-        y_step = int((y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
+        y_step = int(
+            (y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         vel_grid = np.zeros((n_grid, n_grid))  # Initialize velocity grid
         for x_grid in range(n_grid):  # Step through x steps
             for y_grid in range(n_grid):  # Step through y steps
@@ -1304,7 +1044,7 @@ class Luci():
                 integrated_spectrum = np.zeros_like(self.cube_final[x_center, y_center, :])  # Initialize as zeros
                 for i in range(bin_size):  # Take bin_size x bin_size bins
                     for j in range(bin_size):
-                        integrated_spectrum += self.cube_final[x_center+i, y_center+i, :]
+                        integrated_spectrum += self.cube_final[x_center + i, y_center + i, :]
                 # Collapse to single spectrum
                 good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
                 sky = integrated_spectrum[good_sky_inds]
@@ -1332,152 +1072,17 @@ class Luci():
                     x_grid, y_grid]
         fits.writeto(self.output_dir + '/velocity_correction.fits', vel_grid, self.header, overwrite=True)
 
-    def create_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
-        """
-        Create component map of a given region following our third paper. If no bounds are given,
-        a map of the entire cube is calculated.
-
-        Args:
-            x_min: Minimal X value (default 0)
-            x_max: Maximal X value (default 2048)
-            y_min: Minimal Y value (default 0)
-            y_max: Maximal Y value (default 2064)
-            bkg: Background Spectrum (1D numpy array; default None)
-            n_threads: Number of threads to use
-            region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
-        Return:
-            component_map: component map
-
-        """
-        # Calculate bounds for SNR calculation
-        x_size = x_max-x_min
-        y_size = y_max-y_min
-        mask = None
-        if region:
-            if '.reg' in region:
-                mask = reg_to_mask(region, self.header)
-                #shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
-                #r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-                #mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
-            elif '.npy' in region:
-                mask = np.load(region)
-            else:
-                print("At the moment, we only support '.reg' and '.npy' files for masks.")
-                print("Terminating Program!")
-        # Step through spectra
-        Comps = np.zeros((2048, 2064), dtype=np.float32).T
-        Preds = np.zeros((2048, 2064), dtype=np.float32).T
-        if self.hdr_dict['FILTER'] == 'SN3':
-            # Read in machine learning algorithm
-            comps_model = keras.models.load_model(
-                self.Luci_path + 'ML/R%i-COMPONENTS-%s.h5' % (self.resolution, self.filter))
-        else:
-            print('Component Calculation has only been implemented in SN3!')
-            print('Terminating program!')
-            exit()
-
-        def component_calc(i):
-            y_pix = y_min + i
-            comps_local = np.zeros(x_size)
-            preds_local = np.zeros(x_size)
-            for j in range(x_max - x_min):
-                x_pix = x_min + j
-                if mask and mask[x_pix, y_pix] == False:  # If there is a mask and we are not in the mask break
-                    break
-                # Calculate how many components are present in SN3 using a convolutional neural network
-                sky = self.cube_final[x_pix, y_pix, :]
-                good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
-                if bkg is not None:
-                    sky = sky[good_sky_inds] - bkg[good_sky_inds]
-                else:
-                    sky = sky[good_sky_inds]
-                axis = self.spectrum_axis[good_sky_inds]
-                # Interpolate
-                f = interpolate.interp1d(axis, sky, kind='slinear', fill_value='extrapolate')
-                spectrum_interpolated = f(self.wavenumbers_syn_full[2:-2])
-                spectrum_scaled = spectrum_interpolated / np.max(spectrum_interpolated)
-                Spectrum = spectrum_scaled.reshape(1, spectrum_scaled.shape[0], 1)
-                predictions = comps_model(Spectrum, training=False)
-                max_ind = np.argmax(predictions[0])  # ID of outcome (0 -> single; 1 -> double)
-                comp = max_ind + 1  # 1 -> single; 2 -> double
-                comps_local[x_pix] = comp
-                #print(predictions)
-                preds_local[x_pix] = predictions[0][comp-1]
-            return comps_local, preds_local, i
-
-        res = Parallel(n_jobs=n_threads, backend="threading")(
-            delayed(component_calc)(i) for i in tqdm(range(y_size)))
-        # Save
-        for comp_ind in res:
-            comp_vals, preds_vals, step_i = comp_ind
-            Comps[y_min + step_i] = comp_vals
-            Preds[y_min + step_i] = preds_vals
-
-        fits.writeto(self.output_dir + '/' + self.object_name + '_comps.fits', Comps, self.header, overwrite=True)
-        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_probs.fits', Preds, self.header, overwrite=True)
+    def calculate_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
+        create_component_map_function(self.header, self.hdr_dict, self.Luci_path, self.resolution, filter,
+                                      self.cube_final, self.spectrum_axis,
+                                      self.wavenumbers_syn_full, self.output_dir, self.object_name, x_min, x_max, y_min,
+                                      y_max, bkg,
+                                      n_threads, region)
 
     def calculate_components_in_region(self, region, bkg):
-        """
-        Primary fit call to fit a single pixel in the data cube. This wraps the
-        LuciFits.FIT().fit() call which applies all the fitting steps.
-
-        Args:
-            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
-            region:
-            bkg: Background Spectrum (1D numpy array; default None)
-
-        Return:
-            Returns the x-axis (redshifted), sky, and fit dictionary
-
-
-        """
-        mask = None  # Initialize
-        if '.reg' in region:
-            mask = reg_to_mask(region, self.header)
-        elif '.npy' in region:
-            mask = np.load(region)
-        else:
-            print("At the moment, we only support '.reg' and '.npy' files for masks.")
-            print("Terminating Program!")
-        if self.hdr_dict['FILTER'] == 'SN3':
-            # Read in machine learning algorithm
-            comps_model = keras.models.load_model(
-                self.Luci_path + 'ML/R%i-COMPONENTS-%s.h5' % (self.resolution, self.filter))
-        else:
-            print('Component Calculation has only been implemented in SN3!')
-            print('Terminating program!')
-            exit()
-        # Set spatial bounds for entire cube
-        x_min = 0
-        x_max = self.cube_final.shape[0]
-        y_min = 0
-        y_max = self.cube_final.shape[1]
-        integrated_spectrum = np.zeros(self.cube_final.shape[2])
-        spec_ct = 0
-        for i in tqdm(range(y_max - y_min)):
-            y_pix = y_min + i
-            for j in range(x_max - x_min):
-                x_pix = x_min + j
-                # Check if pixel is in the mask or not
-                if mask[x_pix, y_pix]:
-                    integrated_spectrum += self.cube_final[x_pix, y_pix, :]
-                    spec_ct += 1
-                else:
-                    pass
-        if bkg is not None:
-            integrated_spectrum -= bkg  # Subtract background spectrum
-        good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
-        axis = self.spectrum_axis[good_sky_inds]
-        # Interpolate
-        f = interpolate.interp1d(axis, sky, kind='slinear', fill_value='extrapolate')
-        spectrum_interpolated = f(self.wavenumbers_syn_full[2:-2])
-        spectrum_scaled = spectrum_interpolated / np.max(spectrum_interpolated)
-        Spectrum = spectrum_scaled.reshape(1, spectrum_scaled.shape[0], 1)
-        predictions = comps_model(Spectrum, training=False)
-        max_ind = np.argmax(predictions[0])  # ID of outcome (0 -> single; 1 -> double)
-        comp = max_ind + 1  # 1 -> single; 2 -> double
-        comp_prob= predictions[0][comp - 1]  # Probability of classification
-        return {"components": comp, 'component_probability': comp_prob}
+        calculate_components_in_region_function(self.header, self.hdr_dict, self.Luci_path, self.resolution, filter,
+                                                self.cube_final, self.spectrum_axis,
+                                                self.wavenumbers_syn_full, region, bkg)
 
     def close(self):
         """
@@ -1488,16 +1093,7 @@ class Luci():
         if self.cube_binned:
             del self.cube_binned
 
-    def check_luci_path(self):
-        """
-        Functionality to check that the user has included the trailing "/" to Luci_path.
-        If they have not, we add it.
-        TODO: TEST
-        """
-        if not self.Luci_path.endswith('/'):
-            self.Luci_path += '/'
-            print("We have added a trailing '/' to your Luci_path variable.\n")
-            print("Please add this in the future.\n")
+
 
     def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL):
         """
@@ -1506,26 +1102,26 @@ class Luci():
         Pixels = []
         self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=2, n_threads=1)
         print("#----------------Algorithm Part 1----------------#")
-        SNR_map = fits.open(self.output_dir+'/'+self.object_name+'_SNR.fits')[0].data
-        SNR_map = SNR_map[y_min_init:y_max_init,x_min_init:x_max_init]
-        fits.writeto(self.output_dir+'/'+self.object_name+'_SNR.fits', SNR_map, overwrite=True)
-        Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir+'/'+self.object_name+'_SNR.fits')
+        SNR_map = fits.open(self.output_dir + '/' + self.object_name + '_SNR.fits')[0].data
+        SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
+        fits.writeto(self.output_dir + '/' + self.object_name + '_SNR.fits', SNR_map, overwrite=True)
+        Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir + '/' + self.object_name + '_SNR.fits')
         Nearest_Neighbors(Pixels)
         Init_bins = Bin_Acc(Pixels, pixel_size, StN_target, roundness_crit)
         plot_Bins(Init_bins, x_min, x_max, y_min, y_max, StN_target, self.output_dir, "bin_acc")
         print("#----------------Algorithm Part 2----------------#")
         Final_Bins = WVT(Init_bins, Pixels, StN_target, ToL, pixel_size, self.output_dir)
         print("#----------------Algorithm Complete--------------#")
-        plot_Bins(Final_Bins, x_min, x_max, y_min, y_max, StN_target, self.output_dir,"final")
+        plot_Bins(Final_Bins, x_min, x_max, y_min, y_max, StN_target, self.output_dir, "final")
         Bin_data(Final_Bins, Pixels, x_min, y_min, self.output_dir, "WVT_data")
         print("#----------------Bin Mapping--------------#")
         pixel_x = []
         pixel_y = []
         bins = []
-        bin_map = np.zeros((x_max-x_min, y_max-y_min))
+        bin_map = np.zeros((x_max - x_min, y_max - y_min))
         j = 0
         i = 0
-        with open (self.output_dir+'/WVT_data.txt', 'rt') as myfile:
+        with open(self.output_dir + '/WVT_data.txt', 'rt') as myfile:
             myfile = myfile.readlines()[3:]
             for myline in myfile:
                 myline = myline.strip(' \n')
@@ -1533,26 +1129,27 @@ class Luci():
                 pixel_x.append(data[0])
                 pixel_y.append(data[1])
                 bins.append(data[2])
-        for pix_x, pix_y in zip(pixel_x,pixel_y):
-            bin_map[pix_x,pix_y] = int(bins[i])
+        for pix_x, pix_y in zip(pixel_x, pixel_y):
+            bin_map[pix_x, pix_y] = int(bins[i])
             i += 1
-        #bin_map = np.rot90(bin_map)
+        # bin_map = np.rot90(bin_map)
         print("#----------------Numpy Bin Mapping--------------#")
-        if not os.path.exists(self.output_dir+'/Numpy_Voronoi_Bins'):
-            os.mkdir(self.output_dir+'/Numpy_Voronoi_Bins')
-        if os.path.exists(self.output_dir+'/Numpy_Voronoi_Bins'):
-            files = glob.glob(self.output_dir+'/Numpy_Voronoi_Bins/*.npy')
+        if not os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
+            os.mkdir(self.output_dir + '/Numpy_Voronoi_Bins')
+        if os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
+            files = glob.glob(self.output_dir + '/Numpy_Voronoi_Bins/*.npy')
             for f in files:
                 os.remove(f)
         for bin_num in list(range(len(Final_Bins))):
             print("We're at bin number : ", bin_num)
             bool_bin_map = np.zeros((2048, 2064), dtype=bool)
-            for a,b in zip(np.where(bin_map == bin_num)[0][:],np.where(bin_map == bin_num)[1][:]):
-                bool_bin_map[x_min_init + a,y_min_init + b] = True
-            np.save(self.output_dir+'/Numpy_Voronoi_Bins/bool_bin_map_%i'%j, bool_bin_map)
-            j+=1
+            for a, b in zip(np.where(bin_map == bin_num)[0][:], np.where(bin_map == bin_num)[1][:]):
+                bool_bin_map[x_min_init + a, y_min_init + b] = True
+            np.save(self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i' % j, bool_bin_map)
+            j += 1
 
-    def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1):
+    def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False,
+                mean=False, n_threads=1):
         """
         Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
 
@@ -1563,44 +1160,52 @@ class Luci():
         x_max = self.cube_final.shape[0]
         y_min = 0
         y_max = self.cube_final.shape[1]
-        chi2_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        chi2_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         component_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         component_prob_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         # First two dimensions are the X and Y dimensions.
-        #The third dimension corresponds to the line in the order of the lines input parameter.
-        ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        flux_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        velocities_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        broadenings_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        velocities_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        broadenings_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        # The third dimension corresponds to the line in the order of the lines input parameter.
+        ampls_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        flux_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        flux_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        velocities_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        broadenings_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        velocities_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
+                                                                                                                  2)
+        broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
+                                                                                                                   2)
+        continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         ct = 0
         set_num_threads(n_threads)
-        if not os.path.exists(self.output_dir+'/'+self.object_name+'_deep.fits'):
+        if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
             self.create_deep_image()
         wcs = WCS(self.header, naxis=2)
-        cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-        for bin_num in list(range(len(os.listdir(self.output_dir+'/Numpy_Voronoi_Bins/')))):
+        cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
+                          position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
+                          wcs=wcs)
+        for bin_num in list(range(len(os.listdir(self.output_dir + '/Numpy_Voronoi_Bins/')))):
             print("We're at bin number : ", bin_num)
-            bool_bin_map = self.output_dir+'/Numpy_Voronoi_Bins/bool_bin_map_%i.npy'%bin_num
-            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel, region= bool_bin_map, bkg=bkg, bayes_bool=bayes_bool, uncertainty_bool=uncertainty_bool, mean=mean)
+            bool_bin_map = self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i.npy' % bin_num
+            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel,
+                                                                       region=bool_bin_map, bkg=bkg,
+                                                                       bayes_bool=bayes_bool,
+                                                                       uncertainty_bool=uncertainty_bool, mean=mean)
             component_dict = self.calculate_components_in_region(bool_bin_map, bkg=bkg)
             index = np.where(np.load(bool_bin_map) == True)
             for a, b in zip(index[0], index[1]):
-                ampls_fits[a,b] = bin_fit_dict['amplitudes']
-                flux_fits[a,b] = bin_fit_dict['fluxes']
-                flux_errors_fits[a,b] = bin_fit_dict['flux_errors']
-                broadenings_fits[a,b] = bin_fit_dict['sigmas']
-                broadenings_errors_fits[a,b] = bin_fit_dict['sigmas_errors']
-                chi2_fits[a,b] = bin_fit_dict['chi2']
-                continuum_fits[a,b] = bin_fit_dict['continuum']
-                velocities_fits[a,b] = bin_fit_dict['velocities']
-                velocities_errors_fits[a,b] = bin_fit_dict['vels_errors']
-                component_fits[a,b] = component_dict['components']
-                component_prob_fits[a,b] = component_dict['component_probability']
-        self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits,
-                       broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(),
-                       binning=1, suffix='_wvt')
+                ampls_fits[a, b] = bin_fit_dict['amplitudes']
+                flux_fits[a, b] = bin_fit_dict['fluxes']
+                flux_errors_fits[a, b] = bin_fit_dict['flux_errors']
+                broadenings_fits[a, b] = bin_fit_dict['sigmas']
+                broadenings_errors_fits[a, b] = bin_fit_dict['sigmas_errors']
+                chi2_fits[a, b] = bin_fit_dict['chi2']
+                continuum_fits[a, b] = bin_fit_dict['continuum']
+                velocities_fits[a, b] = bin_fit_dict['velocities']
+                velocities_errors_fits[a, b] = bin_fit_dict['vels_errors']
+                component_fits[a, b] = component_dict['components']
+                component_prob_fits[a, b] = component_dict['component_probability']
+        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
+                  broadenings_fits, velocities_errors_fits,
+                  broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(),
+                  binning=1, suffix='_wvt')
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
