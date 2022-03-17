@@ -1075,14 +1075,16 @@ class Luci():
         fits.writeto(self.output_dir + '/velocity_correction.fits', vel_grid, self.header, overwrite=True)
 
     def calculate_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
-        create_component_map_function(self.header, self.hdr_dict, self.Luci_path, self.resolution, filter,
+        # TODO: ADD Documentation and example
+        return create_component_map_function(self.header, self.hdr_dict, self.Luci_path, self.resolution, self.filter,
                                       self.cube_final, self.spectrum_axis,
                                       self.wavenumbers_syn_full, self.output_dir, self.object_name, x_min, x_max, y_min,
                                       y_max, bkg,
                                       n_threads, region)
 
     def calculate_components_in_region(self, region, bkg):
-        calculate_components_in_region_function(self.header, self.hdr_dict, self.Luci_path, self.resolution, filter,
+        # TODO: ADD Documentation and example
+        return calculate_components_in_region_function(self.header, self.hdr_dict, self.Luci_path, self.resolution, self.filter,
                                                 self.cube_final, self.spectrum_axis,
                                                 self.wavenumbers_syn_full, region, bkg)
 
@@ -1210,4 +1212,6 @@ class Luci():
                   broadenings_fits, velocities_errors_fits,
                   broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(),
                   binning=1, suffix='_wvt')
+        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_wvt.fits', component_fits, cutout.wcs.to_header(), overwrite=True)
+        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_probs_wvt.fits', component_prob_fits, cutout.wcs.to_header(), overwrite=True)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits

@@ -8,7 +8,7 @@ from tqdm import tqdm
 from LUCI.LuciConvenience import reg_to_mask
 
 
-def create_component_map_function(header, hdr_dict, Luci_path, resolution, filter, cube_final, spectrum_axis, wavenumbers_syn_full,
+def create_component_map_function(header, hdr_dict, Luci_path, resolution, filter_, cube_final, spectrum_axis, wavenumbers_syn_full,
                          output_dir, object_name, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
     """
     Create component map of a given region following our third paper. If no bounds are given,
@@ -47,7 +47,7 @@ def create_component_map_function(header, hdr_dict, Luci_path, resolution, filte
     if hdr_dict['FILTER'] == 'SN3':
         # Read in machine learning algorithm
         comps_model = keras.models.load_model(
-            Luci_path + 'ML/R%i-COMPONENTS-%s.h5' % (resolution, filter))
+            Luci_path + 'ML/R%i-COMPONENTS-%s.h5' % (resolution, filter_))
     else:
         print('Component Calculation has only been implemented in SN3!')
         print('Terminating program!')
@@ -94,7 +94,7 @@ def create_component_map_function(header, hdr_dict, Luci_path, resolution, filte
     fits.writeto(output_dir + '/' + object_name + '_comps_probs.fits', Preds, header, overwrite=True)
 
 
-def calculate_components_in_region_function(header, hdr_dict, Luci_path, resolution, filter, cube_final, spectrum_axis, wavenumbers_syn_full, region, bkg):
+def calculate_components_in_region_function(header, hdr_dict, Luci_path, resolution, filter_, cube_final, spectrum_axis, wavenumbers_syn_full, region, bkg):
     """
     Primary fit call to fit a single pixel in the data cube. This wraps the
     LuciFits.FIT().fit() call which applies all the fitting steps.
@@ -121,7 +121,7 @@ def calculate_components_in_region_function(header, hdr_dict, Luci_path, resolut
     if hdr_dict['FILTER'] == 'SN3':
         # Read in machine learning algorithm
         comps_model = keras.models.load_model(
-            Luci_path + 'ML/R%i-COMPONENTS-%s.h5' % (resolution, filter))
+            Luci_path + 'ML/R%i-COMPONENTS-%s.h5' % (resolution, filter_))
     else:
         print('Component Calculation has only been implemented in SN3!')
         print('Terminating program!')
@@ -139,7 +139,7 @@ def calculate_components_in_region_function(header, hdr_dict, Luci_path, resolut
             x_pix = x_min + j
             # Check if pixel is in the mask or not
             if mask[x_pix, y_pix]:
-                integrated_spectrum += self.cube_final[x_pix, y_pix, :]
+                integrated_spectrum += cube_final[x_pix, y_pix, :]
                 spec_ct += 1
             else:
                 pass
