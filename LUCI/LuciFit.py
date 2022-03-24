@@ -133,17 +133,15 @@ class Fit:
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
-
         self.initial_conditions = initial_values  # List for initial conditions (or default False)
-
         self.initial_values = initial_values  # List for initial values (or default False)
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
         self.A_min = 0.
         self.A_max = 1.1
-        self.x_min = 0  # 14700;
-        self.x_max = 1e6  # 15600
+        self.x_min = 10000  # 14700;
+        self.x_max = 20000  # 15600
         self.sigma_min = 0.001
         self.sigma_max = 3
         self.flat_samples = None
@@ -524,9 +522,9 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + nii_constraints )
+            cons = (sigma_cons + vel_cons + nii_constraints + vel_cons_multiple)
         else:
-            cons = (sigma_cons + vel_cons)  # + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons + vel_cons_multiple)
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
