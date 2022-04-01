@@ -34,6 +34,10 @@ class Fit:
     are in 'LuciBayesian.py'.
 
     The returned axis is the redshifted axis.
+
+    If the initial_values argument is passed, then the fit algorithm will use these values
+    [velocity,broadening] as the initial conditions for the fit **instead** of the machine 
+    learning algorithm. See example 'initial_values' for more details on the implementation.
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
@@ -41,7 +45,7 @@ class Fit:
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
-                 nii_cons=True, sky_lines=None
+                 nii_cons=True, sky_lines=None, initial_values=False
                  ):
         """
         Args:
@@ -66,6 +70,7 @@ class Fit:
             mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
             sky_lines: Dictionary of sky lines {OH_num: wavelength in nanometers}
+            initial_values: List of initial conditions for the velocity and broadening; [velocity, broadening]
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -128,16 +133,17 @@ class Fit:
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
-        self.initial_values = None  # Initialize initial values
+        self.initial_conditions = initial_values  # List for initial conditions (or default False)
+        self.initial_values = initial_values  # List for initial values (or default False)
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
         self.A_min = 0.
         self.A_max = 1.1
-        self.x_min = 0  # 14700;
-        self.x_max = 1e6  # 15600
+        self.x_min = 10000  # 14700;
+        self.x_max = 20000  # 15600
         self.sigma_min = 0.001
-        self.sigma_max = 3
+        self.sigma_max = 15.0
         self.flat_samples = None
         # Check that lines inputted by user are in line_dict
         self.check_lines()
@@ -290,10 +296,13 @@ class Fit:
 
         """
         line_theo = self.line_dict[line_name]
-        if self.ML_model is None or self.model_type == '':
-            max_flux = np.argmax(self.spectrum_normalized)
-            self.vel_ml = np.abs(SPEED_OF_LIGHT * ((1e7 / self.axis[max_flux] - line_theo) / line_theo))
-            self.broad_ml = 10.0  # Best for now
+        if self.ML_model is None or self.ML_model == '':
+            if self.initial_values is not False:
+                print(self.initial_values)
+                self.vel_ml = self.initial_values[0][0]  # Velocity component of initial conditions in km/s
+                self.broad_ml = self.initial_values[1][0]  # Broadening component of initial conditions in km/s
+            else:
+                pass
         else:
             pass  # vel_ml and broad_ml already set using ML algorithm
         line_pos_est = 1e7 / ((self.vel_ml / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
@@ -513,9 +522,9 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + nii_constraints )
+            cons = (sigma_cons + vel_cons + nii_constraints + vel_cons_multiple)
         else:
-            cons = (sigma_cons + vel_cons)  # + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons + vel_cons_multiple)
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
@@ -570,7 +579,7 @@ class Fit:
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
         if sky_line != True:
-            if self.ML_model != None:
+            if self.ML_model != None and self.initial_values is False:
                 # Interpolate Spectrum
                 self.interpolate_spectrum()
                 # Estimate the priors using machine learning algorithm
@@ -598,8 +607,14 @@ class Fit:
                 # Calculate flux
                 fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.model_type,
                                              self.sinc_width))
-                vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
-                sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
+                if self.initial_conditions is not False:
+                    vels.append(self.initial_conditions[0][0])
+                else:
+                    vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
+                if self.initial_conditions is not False:
+                    sigmas.append(self.initial_conditions[1][0])
+                else:
+                    sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
                 vels_errors.append(
                     calculate_vel_err(line_ct, self.lines, self.fit_sol, self.line_dict, self.uncertainties))
                 sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
