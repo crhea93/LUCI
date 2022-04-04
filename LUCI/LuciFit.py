@@ -35,9 +35,9 @@ class Fit:
 
     The returned axis is the redshifted axis.
 
-    If the initial_values argument is passed, then the fit algorithm will use these values [velocity, broadening] as
-    the initial conditions for the fit **instead** of the machine learning algorithm. See example 'initial_values' for
-    more details on the implementation.
+    If the initial_values argument is passed, then the fit algorithm will use these values
+    [velocity,broadening] as the initial conditions for the fit **instead** of the machine 
+    learning algorithm. See example 'initial_values' for more details on the implementation.
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
@@ -143,7 +143,7 @@ class Fit:
         self.x_min = 10000  # 14700;
         self.x_max = 20000  # 15600
         self.sigma_min = 0.001
-        self.sigma_max = 3
+        self.sigma_max = 15.0
         self.flat_samples = None
         # Check that lines inputted by user are in line_dict
         self.check_lines()
@@ -299,8 +299,8 @@ class Fit:
         if self.ML_model is None or self.ML_model == '':
             if self.initial_values is not False:
                 print(self.initial_values)
-                self.vel_ml = self.initial_values[0]  # Velocity component of initial conditions in km/s
-                self.broad_ml = self.initial_values[1]  # Broadening component of initial conditions in km/s
+                self.vel_ml = self.initial_values[0][0]  # Velocity component of initial conditions in km/s
+                self.broad_ml = self.initial_values[1][0]  # Broadening component of initial conditions in km/s
             else:
                 pass
         else:
@@ -607,8 +607,14 @@ class Fit:
                 # Calculate flux
                 fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.model_type,
                                              self.sinc_width))
-                vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
-                sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
+                if self.initial_conditions is not False:
+                    vels.append(self.initial_conditions[0][0])
+                else:
+                    vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
+                if self.initial_conditions is not False:
+                    sigmas.append(self.initial_conditions[1][0])
+                else:
+                    sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
                 vels_errors.append(
                     calculate_vel_err(line_ct, self.lines, self.fit_sol, self.line_dict, self.uncertainties))
                 sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
