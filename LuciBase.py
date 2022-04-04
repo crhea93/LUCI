@@ -14,7 +14,7 @@ from astropy.time import Time
 from astropy.coordinates import SkyCoord, EarthLocation
 from numba import jit, set_num_threads
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
-from LUCI.LuciSNR import create_snr_map_function
+from LUCI.LuciSNR import create_snr_map_function, calculate_snr_region_function
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
 from LUCI.LuciWVT import *
@@ -848,6 +848,10 @@ class Luci():
         # Calculate bounds for SNR calculation
         create_snr_map_function(self.cube_final, self.spectrum_axis, self.hdr_dict, self.output_dir, self.object_name, self.header, x_min, x_max, y_min, y_max, method, n_threads)
         return None
+
+    def calculate_snr_region(self, region, bkg, method):
+        snr = calculate_snr_region_function(self.cube_final, self.spectrum_axis, self.hdr_dict, self.header, region=region, bkg=bkg, method=method)
+        return snr
 
     def update_astrometry(self, api_key):
         """
