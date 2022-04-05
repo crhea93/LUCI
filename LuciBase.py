@@ -1,8 +1,11 @@
 import h5py
+import os
+import numpy as np
 import glob
 import pandas
 from astropy.wcs import WCS
 import astropy.units as u
+from astropy.io import fits
 from tqdm import tqdm
 import keras
 from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
@@ -1112,14 +1115,9 @@ class Luci():
             np.save(self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i' % j, bool_bin_map)
             j += 1
 
-    def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False,
-                mean=False, n_threads=1):
-        """
-        Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
-
-        Args:
 
     def fit_wvt(self, x_min, x_max, y_min, y_max, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1, initial_values = False):
+        
         """
         Functionality to fit the weighted Voronoi tesselation bins created with the create_wvt() function.
 
@@ -1143,6 +1141,7 @@ class Luci():
             figure.
 
         """
+
         x_min = 0
         x_max = self.cube_final.shape[0]
         y_min = 0
@@ -1193,7 +1192,7 @@ class Luci():
                 continuum_fits[a,b] = bin_fit_dict['continuum']
                 velocities_fits[a,b] = bin_fit_dict['velocities']
                 velocities_errors_fits[a,b] = bin_fit_dict['vels_errors']
-        self.save_fits(lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning = 1)
+        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning = 1)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, cutout.wcs.to_header()
 
     def wvt_fit_region(self, x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel, pixel_size, StN_target, roundness_crit, ToL, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1, initial_values = False):
@@ -1225,7 +1224,7 @@ class Luci():
         """
         self.create_wvt(x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL, bkg=bkg)
         print("#----------------WVT Fitting--------------#")
-        velocities_fits, broadenings_fits, flux_fits, chi2_fits, header = self.fit_wvt(x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1, initial_values)
+        velocities_fits, broadenings_fits, flux_fits, chi2_fits, header = self.fit_wvt(x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1, initial_values=False)
         output_name = self.object_name
         for line_ in lines:
             amp = fits.open(self.output_dir + '/Amplitudes/' + output_name + '_' + line_ + '_Amplitude.fits')[0].data.T
@@ -1254,4 +1253,3 @@ class Luci():
             fits.writeto(output_name + '_Chi2.fits', chi2, header, overwrite=True)
             fits.writeto(output_name + '_continuum.fits', cont, header, overwrite=True)
         return None
-    

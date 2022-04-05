@@ -35,8 +35,8 @@ def create_snr_map_function(cube_final, spectrum_axis, hdr_dict, output_dir, obj
     if hdr_dict['FILTER'] == 'SN3':
         flux_min = 15150;
         flux_max = 15300;
-        noise_min = 14250;
-        noise_max = 14400
+        noise_min = 14500;
+        noise_max = 14600
     elif hdr_dict['FILTER'] == 'SN2':
         flux_min = 19500;
         flux_max = 20750;
@@ -132,8 +132,8 @@ def calculate_snr_region_function(cube_final, spectrum_axis, hdr_dict, header, r
     if hdr_dict['FILTER'] == 'SN3':
         flux_min = 15150;
         flux_max = 15300;
-        noise_min = 14250;
-        noise_max = 14400
+        noise_min = 14500;
+        noise_max = 14600
     elif hdr_dict['FILTER'] == 'SN2':
         flux_min = 19500;
         flux_max = 20750;
