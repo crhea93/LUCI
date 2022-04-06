@@ -57,7 +57,7 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
         model = Sinc().evaluate(axis_restricted, theta, line_num , sinc_width)
     elif model_type == 'sincgauss':
         model = SincGauss().evaluate(axis_restricted, theta, line_num, sinc_width)
-    #model += theta[-1]
+    model += theta[-1]
     sigma2 = yerr ** 2
     #print(theta)
     #print(axis_restricted)
@@ -203,25 +203,25 @@ def prior_transform(u):
     x_min = 1e4
     x_max = 1e7
     sigma_min = 0.01
-    sigma_max = 100
+    sigma_max = 10
     continuum_min = 0.001
-    continuum_max = 0.9
+    continuum_max = 0.01
     prior_list = []
-    '''for ct, param in enumerate(u[:-1]):  # Don't include continuum
+    for ct, param in enumerate(u[:-1]):  # Don't include continuum
         if ct % 3 == 0:  # Amplitude parameter
             prior_list.append(u[ct])
         if ct % 3 == 1:  # velocity parameter
-            prior_list.append((x_max)*u[ct])
+            prior_list.append(1000*u[ct]+15000)
         if ct % 3 == 2:  # sigma parameter
-            prior_list.append((sigma_max)*u[ct]+0.01)'''
-    uA, usigma, ux0, ucont = u
-    A = 3*uA
-    sigma = 50*usigma
-    x0 = 500*(ux0+15000)
-    cont = ucont
-    return A, x0, sigma, cont
-    #prior_list.append((continuum_max)*u[ct])  # Include continuum
-    #return prior_list
+            prior_list.append(u[ct])
+    #uA, ux0, usigma, ucont = u
+    #A = 1*uA
+    #sigma = usigma
+    #x0 = 1000*ux0+15000
+    #cont = 0.01*ucont
+    #return A, x0, sigma, cont
+    prior_list.append((continuum_max)*u[-1])  # Include continuum
+    return prior_list
 
 
 def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, lines, line_dict, sinc_width, prior_gauss, vel_rel, sigma_rel, mdn):
