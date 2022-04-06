@@ -496,3 +496,4 @@ def WVT(Bin_list_init,Pixel_Full,StN_Target,ToL,pixel_length,image_dir):
     print("Completed WVT in "+str(its_to_conv)+" step(s)!!")
     print("There are a total of "+str(len(bins_with_SN)+1)+" bins!")
     return bins_with_SN
+

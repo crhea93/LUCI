@@ -57,14 +57,18 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
         model = Sinc().evaluate(axis_restricted, theta, line_num , sinc_width)
     elif model_type == 'sincgauss':
         model = SincGauss().evaluate(axis_restricted, theta, line_num, sinc_width)
-    model += theta[-1]
+    #model += theta[-1]
     sigma2 = yerr ** 2
     #print(theta)
     #print(axis_restricted)
     #print(model)
     #print(sigma2)
     #exit()
-    return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+    val = 0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+    if np.isnan(val):
+        return -np.inf
+    else:
+        return val
 
 def log_prior(theta, axis_restricted, line_num, line, line_dict, mu_vel, mu_broad, sigma_vel, sigma_broad):
     """
@@ -213,7 +217,7 @@ def prior_transform(u):
     uA, usigma, ux0, ucont = u
     A = 3*uA
     sigma = 50*usigma
-    x0 = 1e7*(ux0)
+    x0 = 500*(ux0+15000)
     cont = ucont
     return A, x0, sigma, cont
     #prior_list.append((continuum_max)*u[ct])  # Include continuum
@@ -243,7 +247,8 @@ def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_typ
         If not finite or if an nan we return -np.inf. Otherwise, we return the log likelihood + log prior
     """
     mu_vel, mu_broad, sigma_vel, sigma_broad = prior_gauss
-    if mdn == True:
+    lp = 0
+    if mdn:
         lp = log_prior(theta, axis_restricted, line_num, lines, line_dict, mu_vel, mu_broad, sigma_vel, sigma_broad)
     else:
         lp = log_prior_uniform(theta, line_num)
