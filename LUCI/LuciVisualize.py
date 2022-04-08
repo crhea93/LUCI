@@ -39,7 +39,7 @@ def visualize(deep_image, spectrum_axis, cube_final):
                 # Check if pixel is in the mask or not
                 integrated_spectrum += cube_final[x_pix, y_pix, :]
         axes[1].cla()
-        axes[1].set_title('Spectrum of region')
+        axes[1].set_title('Spectrum of region %i<x<%i %i<y%i'%(int(x1), int(x2), int(y1), int(y2)))
         plt.plot(1e7 / spectrum_axis, integrated_spectrum, linewidth=1)
         axes[1].set_xlabel('Wavelength [nm]', fontweight='bold')
         axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
