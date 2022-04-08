@@ -4,8 +4,7 @@ Luci visualization tools
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Rectangle
-from matplotlib.widgets  import RectangleSelector
+from matplotlib.widgets  import RectangleSelector, Slider
 
 def visualize(deep_image, spectrum_axis, cube_final):
     """
@@ -38,7 +37,7 @@ def visualize(deep_image, spectrum_axis, cube_final):
                 integrated_spectrum += cube_final[x_pix, y_pix, :]
         axes[1].cla()
         axes[1].set_title('Spectrum of region %i<x<%i %i<y%i'%(int(x1), int(x2), int(y1), int(y2)))
-        plt.plot(1e7 / spectrum_axis, integrated_spectrum, linewidth=1)
+        plt.plot(1e7 / spectrum_axis, integrated_spectrum, linewidth=2)
         axes[1].set_xlabel('Wavelength [nm]', fontweight='bold')
         axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
 
@@ -69,16 +68,20 @@ def visualize(deep_image, spectrum_axis, cube_final):
             Y_coordinate = int(event.ydata)
             axes[1].cla()
             plt.title('Spectrum of point (%i,%i)'%(X_coordinate, Y_coordinate))
-            plt.plot(1e7/spectrum_axis,cube_final[X_coordinate, Y_coordinate], linewidth=1)
+            plt.plot(1e7/spectrum_axis,cube_final[X_coordinate, Y_coordinate], linewidth=2)
             axes[1].set_xlabel('Wavelength [nm]', fontweight='bold')
             axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
             plt.show()
 
     fig.canvas.mpl_connect('button_press_event', onclick)
     plt.subplot(211)
-    plt.imshow(np.log10(deep_image))
+    axes[0].set_title('Scaled Deep Image')
+    scaled_deep_image = np.nan_to_num(np.log10(deep_image), 0)
+    plt.imshow(scaled_deep_image)
     rs = RectangleSelector(axes[0], line_select_callback,
                            drawtype='box', useblit=False, button=[1],
-                           minspanx=5, minspany=5, spancoords='pixels',
+                           minspanx=2, minspany=2, spancoords='pixels',
                            interactive=False)
+
+
     plt.show()
