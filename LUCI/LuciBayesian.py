@@ -2,9 +2,8 @@ from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 import numpy as np
 
 
-
-
-def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, vel_rel, sigma_rel):
+def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, vel_rel,
+                         sigma_rel):
     """
     Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss
 
@@ -54,17 +53,22 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
     if model_type == 'gaussian':
         model = Gaussian().evaluate(axis_restricted, theta, line_num)
     elif model_type == 'sinc':
-        model = Sinc().evaluate(axis_restricted, theta, line_num , sinc_width)
+        model = Sinc().evaluate(axis_restricted, theta, line_num, sinc_width)
     elif model_type == 'sincgauss':
         model = SincGauss().evaluate(axis_restricted, theta, line_num, sinc_width)
     model += theta[-1]
     sigma2 = yerr ** 2
-    #print(theta)
-    #print(axis_restricted)
-    #print(model)
-    #print(sigma2)
-    #exit()
-    return -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+    # print(theta)
+    # print(axis_restricted)
+    # print(model)
+    # print(sigma2)
+    # exit()
+    val = 0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+    if np.isnan(val):
+        return -np.inf
+    else:
+        return val
+
 
 def log_prior(theta, axis_restricted, line_num, line, line_dict, mu_vel, mu_broad, sigma_vel, sigma_broad):
     """
@@ -101,26 +105,28 @@ def log_prior(theta, axis_restricted, line_num, line, line_dict, mu_vel, mu_broa
         if ct % 3 == 0:  # Amplitude parameter & continuum parameter
             line_num += 1
             if param > A_min and param < A_max:
-                val_prior -= np.log(A_max-A_min)
+                val_prior -= np.log(A_max - A_min)
             else:
-                #print('amp: %.2E'%param)
+                # print('amp: %.2E'%param)
                 within_bounds = False  # Value not in bounds
                 break
         if ct % 3 == 1:  # velocity parameter
-            mu_vel_min = (mu_vel/3e5+10*sigma_vel/3e5)*line_dict[line[line_num]] + line_dict[line[line_num]]  # Convert to position in nm
-            mu_vel_min = 1e7/mu_vel_min  # Convert to cm-1
-            mu_vel_max = (mu_vel/3e5-10*sigma_vel/3e5)*line_dict[line[line_num]] + line_dict[line[line_num]]  # Convert to position in nm
-            mu_vel_max = 1e7/mu_vel_max  # Convert to cm-1
+            mu_vel_min = (mu_vel / 3e5 + 10 * sigma_vel / 3e5) * line_dict[line[line_num]] + line_dict[
+                line[line_num]]  # Convert to position in nm
+            mu_vel_min = 1e7 / mu_vel_min  # Convert to cm-1
+            mu_vel_max = (mu_vel / 3e5 - 10 * sigma_vel / 3e5) * line_dict[line[line_num]] + line_dict[
+                line[line_num]]  # Convert to position in nm
+            mu_vel_max = 1e7 / mu_vel_max  # Convert to cm-1
             if param > mu_vel_min and param < mu_vel_max:
-                val_prior -= np.log(6*sigma_vel)
+                val_prior -= np.log(6 * sigma_vel)
             else:
                 within_bounds = False  # Value not in bounds
                 break
         if ct % 3 == 2:  # sigma parameter
-            if param > mu_broad - 3*sigma_broad and param < mu_broad + 3*sigma_broad:
-                val_prior -= np.log(6*sigma_broad)
+            if param > mu_broad - 3 * sigma_broad and param < mu_broad + 3 * sigma_broad:
+                val_prior -= np.log(6 * sigma_broad)
             else:
-                #print('broad: %i'%param)
+                # print('broad: %i'%param)
                 within_bounds = False  # Value not in bounds
                 break
     if within_bounds:
@@ -128,7 +134,8 @@ def log_prior(theta, axis_restricted, line_num, line, line_dict, mu_vel, mu_broa
     else:
         return -np.inf
 
-def log_prior_uniform(theta, line_num):
+
+def log_prior_uniform(theta, line_num, lines, line_dict):
     """
     Calculate log prior assuming uniform priors on the amplitude, line_position,
     broadening, and continuum values.
@@ -160,38 +167,60 @@ def log_prior_uniform(theta, line_num):
     continuum_min = -1e-8
     continuum_max = 1
     val_prior = 0
-    for model_num in range(line_num):
-        params = theta[model_num * 3:(model_num + 1) * 3]
+    #for model_num in range(line_num):
+    #    params = theta[model_num * 3:(line_num) * 3]
+    params = theta[:3*line_num]
     within_bounds = True  # Boolean to determine if parameters are within bounds
+    ## Note that we tied together all velocities and broadenings!
+    l_0 = line_dict[lines[0]]
+    current_line_num = -1
     for ct, param in enumerate(params):
+
         if ct % 3 == 0:  # Amplitude parameter
-            if param > A_min and param < A_max:
-                val_prior -= np.log(A_max-A_min)
+            if A_min < param < A_max:
+                val_prior -= np.log(A_max - A_min)
             else:
                 within_bounds = False  # Value not in bounds
-                break
+                pass
         if ct % 3 == 1:  # velocity parameter
-            if param > x_min and param < x_max:
-                val_prior -= np.log(x_max-x_min)
+            if ct == 1:  # If it is the first one
+                if x_min < param < x_max:
+                    val_prior -= np.log(x_max - x_min)
+                else:
+                    within_bounds = False  # Value not in bounds
+                    pass
             else:
-                within_bounds = False  # Value not in bounds
-                break
+                current_line_num += 1
+                l_02 = line_dict[lines[current_line_num]]
+                equal_value = int(1e7/(((1e7/params[1] - l_0)/l_0)*l_02+l_02))
+                if int(param) == equal_value:
+                    val_prior -= np.log(x_max - x_min)
+                else:
+                    within_bounds = False
+                    pass
         if ct % 3 == 2:  # sigma parameter
-            if param > sigma_min and param < sigma_max:
-                val_prior -= np.log(sigma_max-sigma_min)
+            if ct == 2:
+                if sigma_min < param < sigma_max:
+                    val_prior -= np.log(sigma_max - sigma_min)
+                else:
+                    within_bounds = False  # Value not in bounds
+                    pass
             else:
-                within_bounds = False  # Value not in bounds
-                break
+                equal_value = (params[2])  # Set equal to first broadening
+                if int(param) == equal_value:
+                    val_prior -= np.log(sigma_max - sigma_min)
+                else:
+                    within_bounds = False
     # Check continuum
-    if theta[-1] > continuum_min and theta[-1] < continuum_max:
-        val_prior -= np.log(continuum_max-continuum_min)
+    if continuum_min < theta[-1] < continuum_max:
+        val_prior -= np.log(continuum_max - continuum_min)
     else:
         within_bounds = False  # Value not in bounds
-    if within_bounds:
-        return -val_prior
-    else:
-        return -np.inf
-
+    #if within_bounds:
+    #    return -val_prior
+    #else:
+    #    return -np.inf
+    return -val_prior
 
 def prior_transform(u):
     A_min = 0.001
@@ -199,28 +228,29 @@ def prior_transform(u):
     x_min = 1e4
     x_max = 1e7
     sigma_min = 0.01
-    sigma_max = 100
+    sigma_max = 10
     continuum_min = 0.001
-    continuum_max = 0.9
+    continuum_max = 0.01
     prior_list = []
-    '''for ct, param in enumerate(u[:-1]):  # Don't include continuum
+    for ct, param in enumerate(u[:-1]):  # Don't include continuum
         if ct % 3 == 0:  # Amplitude parameter
             prior_list.append(u[ct])
         if ct % 3 == 1:  # velocity parameter
-            prior_list.append((x_max)*u[ct])
+            prior_list.append(1000 * u[ct] + 15000)
         if ct % 3 == 2:  # sigma parameter
-            prior_list.append((sigma_max)*u[ct]+0.01)'''
-    uA, usigma, ux0, ucont = u
-    A = 3*uA
-    sigma = 50*usigma
-    x0 = 1e7*(ux0)
-    cont = ucont
-    return A, x0, sigma, cont
-    #prior_list.append((continuum_max)*u[ct])  # Include continuum
-    #return prior_list
+            prior_list.append(u[ct])
+    # uA, ux0, usigma, ucont = u
+    # A = 1*uA
+    # sigma = usigma
+    # x0 = 1000*ux0+15000
+    # cont = 0.01*ucont
+    # return A, x0, sigma, cont
+    prior_list.append((continuum_max) * u[-1])  # Include continuum
+    return prior_list
 
 
-def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, lines, line_dict, sinc_width, prior_gauss, vel_rel, sigma_rel, mdn):
+def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, lines, line_dict,
+                    sinc_width, prior_gauss, vel_rel, sigma_rel, mdn):
     """
     Calculate a Gaussian likelihood function given a certain fitting function: gaussian, sinc, or sincgauss
 
@@ -243,15 +273,18 @@ def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_typ
         If not finite or if an nan we return -np.inf. Otherwise, we return the log likelihood + log prior
     """
     mu_vel, mu_broad, sigma_vel, sigma_broad = prior_gauss
-    if mdn == True:
-        lp = log_prior(theta, axis_restricted, line_num, lines, line_dict, mu_vel, mu_broad, sigma_vel, sigma_broad)
-    else:
-        lp = log_prior_uniform(theta, line_num)
+    lp = 0
+    #if mdn:
+    #    lp = log_prior(theta, axis_restricted, line_num, lines, line_dict, mu_vel, mu_broad, sigma_vel, sigma_broad)
+    #else:
+    lp = log_prior_uniform(theta, line_num, lines, line_dict)
     if not np.isfinite(lp):
         return -np.inf
     if np.isnan(lp):
         return -np.inf
-    if np.isnan(lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, vel_rel, sigma_rel)):
+    if np.isnan(lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num,
+                                          sinc_width, vel_rel, sigma_rel)):
         return -np.inf
     else:
-        return lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num, sinc_width, vel_rel, sigma_rel)
+        return lp + log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, model_type, line_num,
+                                         sinc_width, vel_rel, sigma_rel)

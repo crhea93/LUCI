@@ -55,6 +55,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -97,11 +98,9 @@
 
 <div class="genindex-jumpbox">
  <a href="#A"><strong>A</strong></a>
- | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
- | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
@@ -110,7 +109,6 @@
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
- | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  
 </div>
@@ -118,18 +116,6 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.apply_transmission">apply_transmission() (LUCI.LuciFit.Fit method)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="B">B</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.bin_cube">bin_cube() (LuciBase.Luci method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.bin_mask">bin_mask() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -167,19 +153,17 @@
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.check_lines">check_lines() (LUCI.LuciFit.Fit method)</a>
 </li>
-      <li><a href="luci.html#LuciBase.Luci.check_luci_path">check_luci_path() (LuciBase.Luci method)</a>
-</li>
       <li><a href="plot.html#LUCI.LuciPlotting.check_units">check_units() (in module LUCI.LuciPlotting)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.close">close() (LuciBase.Luci method)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.cont_estimate">cont_estimate() (LUCI.LuciFit.Fit method)</a>
 </li>
-      <li><a href="luci.html#LuciBase.Luci.create_component_map">create_component_map() (LuciBase.Luci method)</a>
-</li>
       <li><a href="luci.html#LuciBase.Luci.create_deep_image">create_deep_image() (LuciBase.Luci method)</a>
 </li>
       <li><a href="luci.html#LuciBase.Luci.create_snr_map">create_snr_map() (LuciBase.Luci method)</a>
+</li>
+      <li><a href="luci.html#LuciBase.Luci.create_wvt">create_wvt() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -219,17 +203,7 @@
 </li>
       <li><a href="luci.html#LuciBase.Luci.fit_spectrum_region">fit_spectrum_region() (LuciBase.Luci method)</a>
 </li>
-  </ul></td>
-</tr></table>
-
-<h2 id="G">G</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.get_interferometer_angles">get_interferometer_angles() (LuciBase.Luci method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.get_quadrant_dims">get_quadrant_dims() (LuciBase.Luci method)</a>
+      <li><a href="luci.html#LuciBase.Luci.fit_wvt">fit_wvt() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -357,12 +331,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="luci.html#LuciBase.Luci.read_in_cube">read_in_cube() (LuciBase.Luci method)</a>
 </li>
-      <li><a href="luci.html#LuciBase.Luci.read_in_reference_spectrum">read_in_reference_spectrum() (LuciBase.Luci method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.read_in_transmission">read_in_transmission() (LuciBase.Luci method)</a>
-</li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.restrict_wavelength">restrict_wavelength() (LUCI.LuciFit.Fit method)</a>
 </li>
   </ul></td>
@@ -371,27 +341,11 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.save_fits">save_fits() (LuciBase.Luci method)</a>
-</li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.sigma_constraints">sigma_constraints() (LUCI.LuciFit.Fit method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="luci.html#LuciBase.Luci.skyline_calibration">skyline_calibration() (LuciBase.Luci method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.spectrum_axis_func">spectrum_axis_func() (LuciBase.Luci method)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="U">U</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.update_astrometry">update_astrometry() (LuciBase.Luci method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.update_header">update_header() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -400,6 +354,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.vel_constraints">vel_constraints() (LUCI.LuciFit.Fit method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="luci.html#LuciBase.Luci.visualize">visualize() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
 </tr></table>

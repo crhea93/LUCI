@@ -35,9 +35,9 @@ class Fit:
 
     The returned axis is the redshifted axis.
 
-    If the initial_values argument is passed, then the fit algorithm will use these values
-    [velocity,broadening] as the initial conditions for the fit **instead** of the machine 
-    learning algorithm. See example 'initial_values' for more details on the implementation.
+    If the initial_values argument is passed, then the fit algorithm will use these values [velocity, broadening] as
+    the initial conditions for the fit **instead** of the machine learning algorithm. See example 'initial_values' for
+    more details on the implementation.
     """
 
     def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
@@ -133,17 +133,19 @@ class Fit:
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
+
         self.initial_conditions = initial_values  # List for initial conditions (or default False)
+
         self.initial_values = initial_values  # List for initial values (or default False)
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         # Set bounds
         self.A_min = 0.
         self.A_max = 1.1
-        self.x_min = 10000  # 14700;
-        self.x_max = 20000  # 15600
+        self.x_min = 0  # 14700;
+        self.x_max = 1e6  # 15600
         self.sigma_min = 0.001
-        self.sigma_max = 15.0
+        self.sigma_max = 3
         self.flat_samples = None
         # Check that lines inputted by user are in line_dict
         self.check_lines()
@@ -299,8 +301,8 @@ class Fit:
         if self.ML_model is None or self.ML_model == '':
             if self.initial_values is not False:
                 print(self.initial_values)
-                self.vel_ml = self.initial_values[0][0]  # Velocity component of initial conditions in km/s
-                self.broad_ml = self.initial_values[1][0]  # Broadening component of initial conditions in km/s
+                self.vel_ml = self.initial_values[0]  # Velocity component of initial conditions in km/s
+                self.broad_ml = self.initial_values[1]  # Broadening component of initial conditions in km/s
             else:
                 pass
         else:
@@ -388,7 +390,9 @@ class Fit:
         # Add constant continuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+        return -np.sum((self.spectrum_restricted - model) ** 2 / sigma2)
+
+        #return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
 
     def sigma_constraints(self):
@@ -522,9 +526,9 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + nii_constraints + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons + nii_constraints )
         else:
-            cons = (sigma_cons + vel_cons + vel_cons_multiple)
+            cons = (sigma_cons + vel_cons)  # + vel_cons_multiple)
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
@@ -607,14 +611,8 @@ class Fit:
                 # Calculate flux
                 fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.model_type,
                                              self.sinc_width))
-                if self.initial_conditions is not False:
-                    vels.append(self.initial_conditions[0][0])
-                else:
-                    vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
-                if self.initial_conditions is not False:
-                    sigmas.append(self.initial_conditions[1][0])
-                else:
-                    sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
+                vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
+                sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
                 vels_errors.append(
                     calculate_vel_err(line_ct, self.lines, self.fit_sol, self.line_dict, self.uncertainties))
                 sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
@@ -699,7 +697,7 @@ class Fit:
                                              logl_args=(self.axis_restricted, self.spectrum_restricted,
                                                         self.noise, self.model_type, self.line_num, self.sinc_width,
                                                         self.vel_rel, self.sigma_rel),
-                                             sample='rwalk',
+                                                        sample='rwalk', maxiter=1000, bound='balls'
                                              )
             dsampler.run_nested()
             dres = dsampler.results
@@ -719,7 +717,7 @@ class Fit:
                                                   )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
-            sampler.run_mcmc(init_, 2, progress=False)
+            sampler.run_mcmc(init_, 1, progress=False)
             # Obtain Ensemble Sampler results and discard first 200 walks (10%)
             flat_samples = sampler.get_chain(discard=0, flat=True)
             parameters_med = []
@@ -773,8 +771,7 @@ class Fit:
         # compute the mean and the chi^2/dof
         min_restricted, max_restricted = self.restrict_wavelength()
         z = (fit_vector[min_restricted: max_restricted] - init_spectrum[
-                                                          min_restricted: max_restricted]) / init_spectrum[
-                                                                                             min_restricted: max_restricted]
+                                                          min_restricted: max_restricted])
         chi2 = np.sum((z ** 2))  # /(self.spectrum_scale))
         chi2dof = chi2 / (n_dof - 1)
         return chi2, chi2dof

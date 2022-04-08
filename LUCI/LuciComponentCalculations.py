@@ -4,7 +4,7 @@ from joblib import Parallel, delayed
 from scipy import interpolate
 from tensorflow import keras
 from tqdm import tqdm
-import matplotlib.pyplot as plt
+
 from LUCI.LuciConvenience import reg_to_mask
 
 
@@ -27,8 +27,8 @@ def create_component_map_function(header, hdr_dict, Luci_path, resolution, filte
 
     """
     # Calculate bounds for SNR calculation
-    x_size = 2048#x_max - x_min
-    y_size = 2064#y_max - y_min
+    x_size = x_max - x_min
+    y_size = y_max - y_min
     mask = None
     if region:
         if '.reg' in region:
@@ -83,12 +83,12 @@ def create_component_map_function(header, hdr_dict, Luci_path, resolution, filte
         return comps_local, preds_local, i
 
     res = Parallel(n_jobs=n_threads, backend="threading")(
-        delayed(component_calc)(i) for i in tqdm(range(y_max-y_min)))
+        delayed(component_calc)(i) for i in tqdm(range(y_size)))
     # Save
     for comp_ind in res:
         comp_vals, preds_vals, step_i = comp_ind
-        Comps[step_i] = comp_vals
-        Preds[step_i] = preds_vals
+        Comps[y_min + step_i] = comp_vals
+        Preds[y_min + step_i] = preds_vals
 
     fits.writeto(output_dir + '/' + object_name + '_comps.fits', Comps, header, overwrite=True)
     fits.writeto(output_dir + '/' + object_name + '_comps_probs.fits', Preds, header, overwrite=True)
@@ -145,17 +145,19 @@ def calculate_components_in_region_function(header, hdr_dict, Luci_path, resolut
                 pass
     if bkg is not None:
         integrated_spectrum -= bkg  # Subtract background spectrum
-    good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
-    integrated_spectrum = integrated_spectrum[good_sky_inds]
+    sky = cube_final[x_pix, y_pix, :]
+    good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
+    if bkg is not None:
+        sky = sky[good_sky_inds] - bkg[good_sky_inds]
+    else:
+        sky = sky[good_sky_inds]
     axis = spectrum_axis[good_sky_inds]
-    plt.plot(axis, integrated_spectrum)
     # Interpolate
-    f = interpolate.interp1d(axis, integrated_spectrum, kind='slinear', fill_value='extrapolate')
+    f = interpolate.interp1d(axis, sky, kind='slinear', fill_value='extrapolate')
     spectrum_interpolated = f(wavenumbers_syn_full[2:-2])
     spectrum_scaled = spectrum_interpolated / np.max(spectrum_interpolated)
     Spectrum = spectrum_scaled.reshape(1, spectrum_scaled.shape[0], 1)
     predictions = comps_model(Spectrum, training=False)
-    print(predictions)
     max_ind = np.argmax(predictions[0])  # ID of outcome (0 -> single; 1 -> double)
     comp = max_ind + 1  # 1 -> single; 2 -> double
     comp_prob = predictions[0][comp - 1]  # Probability of classification

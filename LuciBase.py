@@ -1,27 +1,27 @@
 import h5py
-import os
-import numpy as np
 import glob
 import pandas
 from astropy.wcs import WCS
 import astropy.units as u
-from astropy.io import fits
 from tqdm import tqdm
 import keras
+from joblib import Parallel, delayed
+
 from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
 from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
 from astropy.nddata import Cutout2D
-from astroquery.astrometry_net import AstrometryNet
+import astropy.stats as astrostats
+#from astroquery.astrometry_net import AstrometryNet
 from astropy.time import Time
+import numpy.ma as ma
 from astropy.coordinates import SkyCoord, EarthLocation
 from numba import jit, set_num_threads
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
-import numpy.ma as ma
-from LUCI.LuciWVT import read_in, Nearest_Neighbors, Bin_Acc, plot_Bins, WVT, Bin_data
-from LUCI.LuciSNR import create_snr_map_function, calculate_snr_region_function
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
+from LUCI.LuciWVT import *
+from LUCI.LuciVisualize import visualize as LUCIvisualize
 
 
 class Luci():
@@ -47,7 +47,8 @@ class Luci():
             mdn: Boolean for using the Mixed Density Network models; If true, then we use the posterior distributions calculated by our network as our priors for bayesian fits
         """
         self.header_binned = None
-        self.Luci_path = check_luci_path(Luci_path)  # Make sure the path is correctly written
+        self.Luci_path = Luci_path
+        check_luci_path(Luci_path)  # Make sure the path is correctly written
         self.cube_path = cube_path
         self.output_dir = output_dir + '/Luci_outputs'
         if not os.path.exists(self.output_dir):
@@ -189,6 +190,18 @@ class Luci():
         if output_name == None:
             output_name = self.output_dir + '/' + self.object_name + '_deep.fits'
         fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
+
+    def visualize(self):
+        """
+        Wrapper function for LUCI.LuciVisualize()
+        """
+        if self.deep_image is None:
+            deep_image = fits.open('Luci_outputs/%s_deep.fits'%self.object_name)[0].data
+        else:
+            deep_image = self.deep_image
+        LUCIvisualize(deep_image, self.spectrum_axis, self.cube_final)
+
+
 
     def fit_entire_cube(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, binning=None, bayes_bool=False,
                         output_name=None, uncertainty_bool=False, n_threads=1):
@@ -756,7 +769,7 @@ class Luci():
             integrated_spectrum /= spec_ct
         return self.spectrum_axis, integrated_spectrum
 
-    def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel, initial_conditions,
+    def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel,
                             region, bkg=None,
                             bayes_bool=False, bayes_method='emcee',
                             uncertainty_bool=False, mean=False, nii_cons=True
@@ -772,7 +785,6 @@ class Luci():
             fit_function: Fitting function to use (e.x. 'gaussian')
             vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
-            initial_conditions : Initial conditions of velocity and broadening for fitting specific lines
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             bkg: Background Spectrum (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
@@ -804,7 +816,7 @@ class Luci():
         y_max = self.cube_final.shape[1]
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
         spec_ct = 0
-        for i in range(y_max - y_min):
+        for i in tqdm(range(y_max - y_min)):
             y_pix = y_min + i
             for j in range(x_max - x_min):
                 x_pix = x_min + j
@@ -822,18 +834,7 @@ class Luci():
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
         # Call fit!
-        if initial_conditions != False:
-            fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                  ML_model=None, trans_filter=self.transmission_interpolated,
-                  theta=self.interferometer_theta[x_pix, y_pix],
-                  delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
-                  zpd_index=self.zpd_index,
-                  filter=self.hdr_dict['FILTER'],
-                  bayes_bool=bayes_bool, bayes_method=bayes_method,
-                  uncertainty_bool=uncertainty_bool, nii_cons=nii_cons,
-                  mdn=self.mdn, initial_values=initial_conditions)
-        else:
-            fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+        fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                   self.model_ML, trans_filter=self.transmission_interpolated,
                   theta=self.interferometer_theta[x_pix, y_pix],
                   delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
@@ -841,11 +842,11 @@ class Luci():
                   filter=self.hdr_dict['FILTER'],
                   bayes_bool=bayes_bool, bayes_method=bayes_method,
                   uncertainty_bool=uncertainty_bool, nii_cons=nii_cons,
-                  mdn=self.mdn, initial_values=initial_conditions)
+                  mdn=self.mdn)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
-    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, position=1, n_threads=2, bkg=None):
+    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, n_threads=2):
         """
         Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
         a map of the entire cube is calculated.
@@ -856,22 +857,93 @@ class Luci():
             y_min: Minimal Y value (default 0)
             y_max: Maximal Y value (default 2064)
             method: Method used to calculate SNR (default 1; options 1 or 2)
-            position: Spectral range used to calculate SNR (default 1; options 1 [NII and Halpha group] or 2[SII])
             n_threads: Number of threads to use
-            bkg: Background Spectrum (1D numpy array; default None)
         Return:
             snr_map: Signal-to-Noise ratio map
 
         """
         # Calculate bounds for SNR calculation
-        create_snr_map_function(self.cube_final, self.spectrum_axis, self.hdr_dict, self.output_dir, self.object_name, self.header, x_min, x_max, y_min, y_max, method, n_threads)
+        # Step through spectra
+        # SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
+        SNR = np.zeros((2048, 2064), dtype=np.float32).T
+        # start = time.time()
+        # def SNR_calc(SNR, i):
+        flux_min = 0;
+        flux_max = 0;
+        noise_min = 0;
+        noise_max = 0  # Initializing bounds for flux and noise calculation regions
+        if self.hdr_dict['FILTER'] == 'SN3':
+            flux_min = 15150;
+            flux_max = 15300;
+            noise_min = 14250;
+            noise_max = 14400
+        elif self.hdr_dict['FILTER'] == 'SN2':
+            flux_min = 19500;
+            flux_max = 20750;
+            noise_min = 18600;
+            noise_max = 19000
+        elif self.hdr_dict['FILTER'] == 'SN1':
+            flux_min = 26550;
+            flux_max = 27550;
+            noise_min = 25300;
+            noise_max = 25700
+        else:
+            print('SNR Calculation for this filter has not been implemented')
+
+        def SNR_calc(i):
+            y_pix = y_min + i
+            snr_local = np.zeros(2048)
+            for j in range(x_max - x_min):
+                x_pix = x_min + j
+                # Calculate SNR
+                # Select spectral region around Halpha and NII complex
+                min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_min))
+                max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_max))
+                in_region = self.cube_final[x_pix, y_pix, min_:max_]
+                flux_in_region = np.nansum(self.cube_final[x_pix, y_pix, min_:max_])
+                # Subtract off continuum estimate
+                clipped_spec = astrostats.sigma_clip(self.cube_final[x_pix, y_pix, min_:max_], sigma=2, masked=False,
+                                                     copy=False, maxiters=3)
+                # Now take the mean value to serve as the continuum value
+                cont_val = np.median(clipped_spec)
+                flux_in_region -= cont_val * (max_ - min_)  # Need to scale by the number of steps along wavelength axis
+                # Select distance region
+                min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_min))
+                max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_max))
+                out_region = self.cube_final[x_pix, y_pix, min_:max_]
+                std_out_region = np.nanstd(self.cube_final[x_pix, y_pix, min_:max_])
+                if method == 1:
+                    signal = np.nanmax(in_region) - np.nanmedian(in_region)
+                    noise = np.abs(np.nanstd(out_region))
+                    snr = float(signal / np.sqrt(noise))
+                    if snr < 0:
+                        snr = 0
+                    else:
+                        snr = snr / (np.sqrt(np.nanmean(np.abs(in_region))))
+                else:
+                    snr = float(flux_in_region / std_out_region)
+                    if snr < 0:
+                        snr = 0
+                    else:
+                        pass
+                snr_local[x_pix] = snr
+            return snr_local, i
+
+        res = Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(i) for i in tqdm(range(y_max - y_min)));
+        # Save
+        for snr_ind in res:
+            snr_vals, step_i = snr_ind
+            SNR[y_min + step_i] = snr_vals
+        fits.writeto(self.output_dir + '/' + self.object_name + '_SNR.fits', SNR, self.header, overwrite=True)
+
+        # Save masks for SNr 3, 5, and 10
+        for snr_val in [3, 5, 10]:
+            mask = ma.masked_where(SNR >= snr_val, SNR)
+            np.save("%s/SNR_%i_mask.npy" % (self.output_dir, snr_val), mask.mask)
+
         return None
 
-    def calculate_snr_region(self, region, bkg, method):
-        snr = calculate_snr_region_function(self.cube_final, self.spectrum_axis, self.hdr_dict, self.header, region=region, bkg=bkg, method=method)
-        return snr
-
-    def update_astrometry(self, api_key):
+    '''def update_astrometry(self, api_key):
         """
         Use astronomy.net to update the astrometry in the header using the deep image.
         If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
@@ -931,7 +1003,7 @@ class Luci():
 
         else:
             # Code to execute when solve fails
-            print('Astronomy.net failed to solve. This astrometry has not been updated!')
+            print('Astronomy.net failed to solve. This astrometry has not been updated!')'''
 
     def heliocentric_correction(self):
         """
@@ -1038,38 +1110,14 @@ class Luci():
         if self.cube_binned:
             del self.cube_binned
 
-    def check_luci_path(self):
-        """
-        Functionality to check that the user has included the trailing "/" to Luci_path.
-        If they have not, we add it.
-        TODO: TEST
-        """
-        if not self.Luci_path.endswith('/'):
-            self.Luci_path += '/'
-            print("We have added a trailing '/' to your Luci_path variable.\n")
-            print("Please add this in the future.\n")
 
-    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL, bkg=None):
 
+    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL):
         """
-        Functionality to create a weighted Voronoi tesselation map from a region and according to 
-        arguments passed by the user. It creates a folder containing all the Voronoi bins that can
-        then be used for the fitting procedure. 
-
-        Args:
-            x_min_init: Minimal X value
-            x_max_init: Maximal X value
-            y_min_init: Minimal Y value
-            y_max_init: Maximal Y value
-            pixel_size: Pixel size of the image. For SITELLE use pixel_size = 0.0000436.
-            StN_target: Signal-to-Noise target value for the Voronoi bins.
-            roundness_crit: Roundness criteria for the pixel accretion into bins
-            ToL: Convergence tolerance parameter for the SNR of the bins
-            bkg: Background Spectrum (1D numpy array; default None)
         """
         print("#----------------WVT Algorithm----------------#")
         Pixels = []
-        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=2, position=1, n_threads=4, bkg=bkg)
+        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=2, n_threads=1)
         print("#----------------Algorithm Part 1----------------#")
         SNR_map = fits.open(self.output_dir + '/' + self.object_name + '_SNR.fits')[0].data
         SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
@@ -1101,6 +1149,7 @@ class Luci():
         for pix_x, pix_y in zip(pixel_x, pixel_y):
             bin_map[pix_x, pix_y] = int(bins[i])
             i += 1
+        # bin_map = np.rot90(bin_map)
         print("#----------------Numpy Bin Mapping--------------#")
         if not os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
             os.mkdir(self.output_dir + '/Numpy_Voronoi_Bins')
@@ -1108,40 +1157,22 @@ class Luci():
             files = glob.glob(self.output_dir + '/Numpy_Voronoi_Bins/*.npy')
             for f in files:
                 os.remove(f)
-        for bin_num in tqdm(list(range(len(Final_Bins)))):
+        for bin_num in list(range(len(Final_Bins))):
+            print("We're at bin number : ", bin_num)
             bool_bin_map = np.zeros((2048, 2064), dtype=bool)
             for a, b in zip(np.where(bin_map == bin_num)[0][:], np.where(bin_map == bin_num)[1][:]):
                 bool_bin_map[x_min_init + a, y_min_init + b] = True
             np.save(self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i' % j, bool_bin_map)
             j += 1
 
-
-    def fit_wvt(self, x_min, x_max, y_min, y_max, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1, initial_values = False):
-        
+    def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False,
+                mean=False, n_threads=1):
         """
-        Functionality to fit the weighted Voronoi tesselation bins created with the create_wvt() function.
+        Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
 
         Args:
-            x_min_init: Minimal X value
-            x_max_init: Maximal X value
-            y_min_init: Minimal Y value
-            y_max_init: Maximal Y value
-            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
-            fit_function: Fitting function to use (e.x. 'gaussian')
-            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
-            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
-            bkg: Background Spectrum (1D numpy array; default None)
-            bayes_bool: Boolean to determine whether or not to run Bayesian analysis
-            uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
-            mean: Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.
-            n_treads: Number of threads to use
-            initial_values: Initial values of velocity and broadening for fitting specific lines (must be list)
-        Return:
-            Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D) and header for saving
-            figure.
 
         """
-
         x_min = 0
         x_max = self.cube_final.shape[0]
         y_min = 0
@@ -1150,106 +1181,50 @@ class Luci():
         component_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         component_prob_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         # First two dimensions are the X and Y dimensions.
-        #The third dimension corresponds to the line in the order of the lines input parameter.
-        ampls_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        flux_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        flux_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        velocities_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        broadenings_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        velocities_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        broadenings_errors_fits = np.zeros((x_max-x_min, y_max-y_min, len(lines)), dtype=np.float32).transpose(1,0,2)
-        continuum_fits = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        # TODO: ALLOW BINNING OF INITIAL CONDITIONS
-        if initial_values is not False:
-            # Obtain initial condition maps from files
-            vel_init = fits.open(initial_values[0])[0].data
-            broad_init = fits.open(initial_values[1])[0].data
-
+        # The third dimension corresponds to the line in the order of the lines input parameter.
+        ampls_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        flux_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        flux_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        velocities_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        broadenings_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        velocities_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
+                                                                                                                  2)
+        broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
+                                                                                                                   2)
+        continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         ct = 0
         set_num_threads(n_threads)
         if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
             self.create_deep_image()
         wcs = WCS(self.header, naxis=2)
-        cutout = Cutout2D(fits.open(self.output_dir+'/'+self.object_name+'_deep.fits')[0].data, position=((x_max+x_min)/2, (y_max+y_min)/2), size=(x_max-x_min, y_max-y_min), wcs=wcs)
-        for bin_num in tqdm(list(range(len(os.listdir(self.output_dir+'/Numpy_Voronoi_Bins/'))))):
-            #print("We're at bin number : ", bin_num)
-            bool_bin_map = self.output_dir+'/Numpy_Voronoi_Bins/bool_bin_map_%i.npy'%bin_num            
+        cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
+                          position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
+                          wcs=wcs)
+        for bin_num in list(range(len(os.listdir(self.output_dir + '/Numpy_Voronoi_Bins/')))):
+            print("We're at bin number : ", bin_num)
+            bool_bin_map = self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i.npy' % bin_num
+            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel,
+                                                                       region=bool_bin_map, bkg=bkg,
+                                                                       bayes_bool=bayes_bool,
+                                                                       uncertainty_bool=uncertainty_bool, mean=mean)
+            component_dict = self.calculate_components_in_region(bool_bin_map, bkg=bkg)
             index = np.where(np.load(bool_bin_map) == True)
             for a, b in zip(index[0], index[1]):
-                # TODO: PASS INITIAL CONDITIONS
-                if initial_values is not False:  # If initial conditions were passed
-                    initial_conditions = [vel_init[a, b], broad_init[a, b]]
-                else:
-                    initial_conditions = False
-            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel, initial_conditions, region= bool_bin_map, bkg=bkg, bayes_bool=False, uncertainty_bool=False, mean=True)
-            for a, b in zip(index[0], index[1]):
-                ampls_fits[a,b] = bin_fit_dict['amplitudes']
-                flux_fits[a,b] = bin_fit_dict['fluxes']
-                flux_errors_fits[a,b] = bin_fit_dict['flux_errors']
-                broadenings_fits[a,b] = bin_fit_dict['sigmas']
-                broadenings_errors_fits[a,b] = bin_fit_dict['sigmas_errors']
-                chi2_fits[a,b] = bin_fit_dict['chi2']
-                continuum_fits[a,b] = bin_fit_dict['continuum']
-                velocities_fits[a,b] = bin_fit_dict['velocities']
-                velocities_errors_fits[a,b] = bin_fit_dict['vels_errors']
-        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, broadenings_fits, velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(), binning = 1)
-        return velocities_fits, broadenings_fits, flux_fits, chi2_fits, cutout.wcs.to_header()
-
-    def wvt_fit_region(self, x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel, pixel_size, StN_target, roundness_crit, ToL, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1, initial_values = False):
-        """
-        Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
-
-        Args:
-            x_min_init: Minimal X value
-            x_max_init: Maximal X value
-            y_min_init: Minimal Y value
-            y_max_init: Maximal Y value
-            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
-            fit_function: Fitting function to use (e.x. 'gaussian')
-            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
-            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
-            pixel_size: Pixel size of the image. For SITELLE use pixel_size = 0.0000436.
-            StN_target: Signal-to-Noise target value for the Voronoi bins.
-            roundness_crit: Roundness criteria for the pixel accretion into bins
-            ToL: Convergence tolerance parameter for the SNR of the bins
-            bkg: Background Spectrum (1D numpy array; default None)
-            bayes_bool: Boolean to determine whether or not to run Bayesian analysis
-            uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
-            mean: Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.
-            n_treads: Number of threads to use
-            initial_values: Initial values of velocity and broadening for fitting specific lines (must be list;
-            e.x. [velocity, broadening])
-        Return:
-            Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).
-        """
-        self.create_wvt(x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL, bkg=bkg)
-        print("#----------------WVT Fitting--------------#")
-        velocities_fits, broadenings_fits, flux_fits, chi2_fits, header = self.fit_wvt(x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False, mean=False, n_threads=1, initial_values=False)
-        output_name = self.object_name
-        for line_ in lines:
-            amp = fits.open(self.output_dir + '/Amplitudes/' + output_name + '_' + line_ + '_Amplitude.fits')[0].data.T
-            flux = fits.open(self.output_dir + '/Fluxes/' + output_name + '_' + line_ + '_Flux.fits')[0].data.T
-            flux_err = fits.open(self.output_dir + '/Fluxes/' + output_name + '_' + line_ + '_Flux_err.fits')[0].data.T
-            vel = fits.open(self.output_dir + '/Velocity/' + output_name + '_' + line_ + '_velocity.fits')[0].data.T
-            broad = fits.open(self.output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening.fits')[0].data.T
-            vel_err = fits.open(self.output_dir + '/Velocity/' + output_name + '_' + line_ + '_velocity_err.fits')[0].data.T
-            broad_err = fits.open(self.output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening_err.fits')[0].data.T
-            chi2 = fits.open(output_name + '_Chi2.fits')[0].data.T
-            cont = fits.open(output_name + '_continuum.fits')[0].data.T
-            fits.writeto(self.output_dir + '/Amplitudes/' + output_name + '_' + line_ + '_Amplitude.fits',
-                         amp, header, overwrite=True)
-            fits.writeto(self.output_dir + '/Fluxes/' + output_name + '_' + line_ + '_Flux.fits', flux,
-                         header, overwrite=True)
-            fits.writeto(self.output_dir + '/Fluxes/' + output_name + '_' + line_ + '_Flux_err.fits',
-                         flux_err, header, overwrite=True)
-            fits.writeto(self.output_dir + '/Velocity/' + output_name + '_' + line_ + '_velocity.fits',
-                         vel, header, overwrite=True)
-            fits.writeto(self.output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening.fits',
-                         broad, header, overwrite=True)
-            fits.writeto(self.output_dir + '/Velocity/' + output_name + '_' + line_ + '_velocity_err.fits',
-                         vel_err, header, overwrite=True)
-            fits.writeto(self.output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening_err.fits',
-                         broad_err, header, overwrite=True)
-            fits.writeto(output_name + '_Chi2.fits', chi2, header, overwrite=True)
-            fits.writeto(output_name + '_continuum.fits', cont, header, overwrite=True)
-        return None
+                ampls_fits[a, b] = bin_fit_dict['amplitudes']
+                flux_fits[a, b] = bin_fit_dict['fluxes']
+                flux_errors_fits[a, b] = bin_fit_dict['flux_errors']
+                broadenings_fits[a, b] = bin_fit_dict['sigmas']
+                broadenings_errors_fits[a, b] = bin_fit_dict['sigmas_errors']
+                chi2_fits[a, b] = bin_fit_dict['chi2']
+                continuum_fits[a, b] = bin_fit_dict['continuum']
+                velocities_fits[a, b] = bin_fit_dict['velocities']
+                velocities_errors_fits[a, b] = bin_fit_dict['vels_errors']
+                component_fits[a, b] = component_dict['components']
+                component_prob_fits[a, b] = component_dict['component_probability']
+        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
+                  broadenings_fits, velocities_errors_fits,
+                  broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(),
+                  binning=1, suffix='_wvt')
+        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_wvt.fits', component_fits, cutout.wcs.to_header(), overwrite=True)
+        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_probs_wvt.fits', component_prob_fits, cutout.wcs.to_header(), overwrite=True)
+        return velocities_fits, broadenings_fits, flux_fits, chi2_fits
