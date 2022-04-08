@@ -56,6 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -151,7 +152,7 @@ Else we return -np.inf</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciBayesian.log_prior_uniform">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciBayesian.</span></span><span class="sig-name descname"><span class="pre">log_prior_uniform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_num</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_prior_uniform" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciBayesian.</span></span><span class="sig-name descname"><span class="pre">log_prior_uniform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciBayesian.log_prior_uniform" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate log prior assuming uniform priors on the amplitude, line_position,
 broadening, and continuum values.</p>
 <p>The uniform prior on the amplitude is 1/(A_max-A_min)</p>

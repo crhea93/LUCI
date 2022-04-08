@@ -58,6 +58,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
@@ -114,87 +115,9 @@ functions in <cite>LuciFit.py</cite>.</p>
 all io/administrative functionality. The fitting functionality can be found in the
 Fit class (Lucifit.py).</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.bin_cube">
-<span class="sig-name descname"><span class="pre">bin_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.bin_cube" title="Permalink to this definition"></a></dt>
-<dd><p>Function to bin cube into bin x bin sub cubes</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>binning</strong> – Size of binning (equal in x and y direction)</p></li>
-<li><p><strong>x_min</strong> – Lower bound in x</p></li>
-<li><p><strong>x_max</strong> – Upper bound in x</p></li>
-<li><p><strong>y_min</strong> – Lower bound in y</p></li>
-<li><p><strong>y_max</strong> – Upper bound in y</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Binned cubed called self.cube_binned and new spatial limits</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.bin_mask">
-<span class="sig-name descname"><span class="pre">bin_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.bin_mask" title="Permalink to this definition"></a></dt>
-<dd><p>Function to bin mask. This is effectively the same as <cite>self.bin_cube</cite> with
-the exception that it is for the mask only. For now, this function is only
-triggered when the mask is in the form of a ‘.npy’ file. Region files
-passed as ‘.reg’ files do not need to be additionally masked since they use
-the binned header information.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mask</strong> – Mask to be binned</p></li>
-<li><p><strong>binning</strong> – Size of binning (equal in x and y direction)</p></li>
-<li><p><strong>x_min</strong> – Lower bound in x</p></li>
-<li><p><strong>x_max</strong> – Upper bound in x</p></li>
-<li><p><strong>y_min</strong> – Lower bound in y</p></li>
-<li><p><strong>y_max</strong> – Upper bound in y</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Binned cubed called self.cube_binned and new spatial limits</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.check_luci_path">
-<span class="sig-name descname"><span class="pre">check_luci_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.check_luci_path" title="Permalink to this definition"></a></dt>
-<dd><p>Functionality to check that the user has included the trailing “/” to Luci_path.
-If they have not, we add it.
-TODO: TEST</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.close">
 <span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.close" title="Permalink to this definition"></a></dt>
 <dd><p>Functionality to delete Luci object (and thus the cube) from memory</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.create_component_map">
-<span class="sig-name descname"><span class="pre">create_component_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2064</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_component_map" title="Permalink to this definition"></a></dt>
-<dd><p>Create component map of a given region following our third paper. If no bounds are given,
-a map of the entire cube is calculated.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x_min</strong> – Minimal X value (default 0)</p></li>
-<li><p><strong>x_max</strong> – Maximal X value (default 2048)</p></li>
-<li><p><strong>y_min</strong> – Minimal Y value (default 0)</p></li>
-<li><p><strong>y_max</strong> – Maximal Y value (default 2064)</p></li>
-<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
-<li><p><strong>n_threads</strong> – Number of threads to use</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>component map</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>component_map</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -238,6 +161,11 @@ a map of the entire cube is calculated.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.create_wvt">
+<span class="sig-name descname"><span class="pre">create_wvt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">StN_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roundness_crit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ToL</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_wvt" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.extract_spectrum">
@@ -286,7 +214,7 @@ or the averaged spectrum for background spectra (True).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_cube">
-<span class="sig-name descname"><span class="pre">fit_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_cube" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fit_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_cube" title="Permalink to this definition"></a></dt>
 <dd><p>Primary fit call to fit rectangular regions in the data cube. This wraps the
 LuciFits.FIT().fit() call which applies all the fitting steps. This also
 saves the velocity and broadening fits files. All the files will be saved
@@ -311,6 +239,7 @@ and continuum (and their associated errors) for each line.</p>
 <li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
 <li><p><strong>n_threads</strong> – Number of threads to be passed to joblib for parallelization (default = 1)</p></li>
 <li><p><strong>nii_cons</strong> – Boolean to turn on or off NII doublet ratio constraint (default True)</p></li>
+<li><p><strong>initial_values</strong> – List of files containing initial conditions (default False)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -451,36 +380,10 @@ or the averaged spectrum for background spectra (True).</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.get_interferometer_angles">
-<span class="sig-name descname"><span class="pre">get_interferometer_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.get_interferometer_angles" title="Permalink to this definition"></a></dt>
-<dd><p>Calculate the interferometer angle 2d array for the entire cube. We use
-the following equation:
-cos(theta) = lambda_ref/lambda
-where lambda_ref is the reference laser wavelength and lambda is the measured calibration laser wavelength.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>file</strong> – hdf5 File object containing HDF5 file</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.get_quadrant_dims">
-<span class="sig-name descname"><span class="pre">get_quadrant_dims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quad_number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.get_quadrant_dims" title="Permalink to this definition"></a></dt>
-<dd><p>Calculate the x and y limits of a given quadrant in the HDF5 file. The
-data cube is saved in 9 individual arrays in the original HDF5 cube. This
-function gets the bouunds for each quadrant.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>quad_number</strong> – Quadrant Number</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Spatial bounds of quadrant</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>x_min, x_max, y_min, y_max</p>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="LuciBase.Luci.fit_wvt">
+<span class="sig-name descname"><span class="pre">fit_wvt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_wvt" title="Permalink to this definition"></a></dt>
+<dd><p>Function that takes the wvt mapping created using <cite>self.create_wvt()</cite> and fits the bins.</p>
+<p>Args:</p>
 </dd></dl>
 
 <dl class="py method">
@@ -497,49 +400,6 @@ and the time of the observation</p>
 translate the header to standard wcs format by calling the update_header function.
 Note that the data are saved in several quadrants which is why we have to loop
 through them and place all the spectra in a single cube.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.read_in_reference_spectrum">
-<span class="sig-name descname"><span class="pre">read_in_reference_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_reference_spectrum" title="Permalink to this definition"></a></dt>
-<dd><p>Read in the reference spectrum that will be used in the machine learning
-algorithm to interpolate the true spectra so that they
-wil all have the same size (required for our CNN). The reference spectrum
-will be saved as self.wavenumbers_syn [cm-1].</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.read_in_transmission">
-<span class="sig-name descname"><span class="pre">read_in_transmission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.read_in_transmission" title="Permalink to this definition"></a></dt>
-<dd><p>Read in the transmission spectrum for the filter. Then apply interpolation
-on it to make it have the same x-axis as the spectra.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.save_fits">
-<span class="sig-name descname"><span class="pre">save_fits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ampls_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadenings_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadenings_errors_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuum_fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.save_fits" title="Permalink to this definition"></a></dt>
-<dd><p>Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
-amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
-defined when the cube is initiated.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
-<li><p><strong>ampls_fits</strong> – 3D Numpy array of amplitude values</p></li>
-<li><p><strong>flux_fis</strong> – 3D Numpy array of flux values</p></li>
-<li><p><strong>errors</strong> (<em>flux_errors_fits 3D numpy array of flux</em>) – </p></li>
-<li><p><strong>velocities_fits</strong> – 3D Numpy array of velocity values</p></li>
-<li><p><strong>broadenings_fits</strong> – 3D Numpy array of broadening values</p></li>
-<li><p><strong>velocities_errors_fits</strong> – 3D Numpy array of velocity errors</p></li>
-<li><p><strong>broadenings_errors_fits</strong> – 3D Numpy array of broadening errors</p></li>
-<li><p><strong>chi2_fits</strong> – 2D Numpy array of chi-squared values</p></li>
-<li><p><strong>continuum_fits</strong> – 2D Numpy array of continuum value</p></li>
-<li><p><strong>header</strong> – Header object (either binned or unbinned)</p></li>
-<li><p><strong>output_name</strong> – Output directory and naming convention</p></li>
-<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -565,45 +425,9 @@ we fit with a simple sinc function.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.spectrum_axis_func">
-<span class="sig-name descname"><span class="pre">spectrum_axis_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.spectrum_axis_func" title="Permalink to this definition"></a></dt>
-<dd><p>Create the x-axis for the spectra. We must construct this from header information
-since each pixel only has amplitudes of the spectra at each point.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.update_astrometry">
-<span class="sig-name descname"><span class="pre">update_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.update_astrometry" title="Permalink to this definition"></a></dt>
-<dd><p>Use astronomy.net to update the astrometry in the header using the deep image.
-If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
-the header is not updated and an exception is thrown.</p>
-<p>This automatically updates the deep images header! If you want the header to be binned, then you can bin it
-using the standard creation mechanisms (for this example binning at 2x2) and then run this code:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cube</span><span class="o">.</span><span class="n">create_deep_image</span><span class="p">(</span><span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">cube</span><span class="o">.</span><span class="n">update_astrometry</span><span class="p">(</span><span class="n">api_key</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>api_key</strong> – Astronomy.net user api key</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LuciBase.Luci.update_header">
-<span class="sig-name descname"><span class="pre">update_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.update_header" title="Permalink to this definition"></a></dt>
-<dd><p>Create a standard WCS header from the HDF5 header. To do this we clean up the
-header data (which is initially stored in individual arrays). We then create
-a new header dictionary with the old cleaned header info. Finally, we use
-astropy.wcs.WCS to create an updated WCS header for the 2 spatial dimensions.
-This is then saved to self.header while the header dictionary is saved
-as self.hdr_dict.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>file</strong> – hdf5 File object containing HDF5 file</p>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="LuciBase.Luci.visualize">
+<span class="sig-name descname"><span class="pre">visualize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.visualize" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper function for LUCI.LuciVisualize()</p>
 </dd></dl>
 
 </dd></dl>

@@ -115,6 +115,7 @@ Examples
        example_fit_snr
        example_synthetic_spectrum
        example_double_fit
+       example_visualize
 
 
 

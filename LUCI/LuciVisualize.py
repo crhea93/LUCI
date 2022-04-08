@@ -24,12 +24,10 @@ def visualize(deep_image, spectrum_axis, cube_final):
     def line_select_callback(eclick, erelease):
         x1, y1 = eclick.xdata, eclick.ydata
         x2, y2 = erelease.xdata, erelease.ydata
-
         rect = plt.Rectangle((min(x1, x2), min(y1, y2)), np.abs(x1 - x2), np.abs(y1 - y2))
         if len(rectangles) > 0:
             rectangles[-1].remove()
         rectangles.append(rect)
-
         axes[0].add_patch(rect)
         integrated_spectrum = np.zeros(cube_final.shape[2])
         for i in range(int(y2 - y1)):
@@ -43,8 +41,7 @@ def visualize(deep_image, spectrum_axis, cube_final):
         plt.plot(1e7 / spectrum_axis, integrated_spectrum, linewidth=1)
         axes[1].set_xlabel('Wavelength [nm]', fontweight='bold')
         axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
-        print('spectrum of region')
-        print(rectangles)
+
 
     #deep_image = fits.open('Luci_outputs/NGC628_deep.fits')[0].data
     def onclick(event):
@@ -78,14 +75,10 @@ def visualize(deep_image, spectrum_axis, cube_final):
             plt.show()
 
     fig.canvas.mpl_connect('button_press_event', onclick)
-
     plt.subplot(211)
-
     plt.imshow(np.log10(deep_image))
-
     rs = RectangleSelector(axes[0], line_select_callback,
                            drawtype='box', useblit=False, button=[1],
                            minspanx=5, minspany=5, spancoords='pixels',
                            interactive=False)
-    print(rectangles)
     plt.show()
