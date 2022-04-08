@@ -12,7 +12,7 @@ from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
 from astropy.nddata import Cutout2D
 import astropy.stats as astrostats
-from astroquery.astrometry_net import AstrometryNet
+#from astroquery.astrometry_net import AstrometryNet
 from astropy.time import Time
 import numpy.ma as ma
 from astropy.coordinates import SkyCoord, EarthLocation
@@ -21,6 +21,7 @@ from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
 from LUCI.LuciWVT import *
+from LUCI.LuciVisualize import visualize as LUCIvisualize
 
 
 class Luci():
@@ -189,6 +190,18 @@ class Luci():
         if output_name == None:
             output_name = self.output_dir + '/' + self.object_name + '_deep.fits'
         fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
+
+    def visualize(self):
+        """
+        Wrapper function for LUCI.LuciVisualize()
+        """
+        if self.deep_image is None:
+            deep_image = fits.open('Luci_outputs/%s_deep.fits'%self.object_name)[0].data
+        else:
+            deep_image = self.deep_image
+        LUCIvisualize(deep_image, self.spectrum_axis, self.cube_final)
+
+
 
     def fit_entire_cube(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, binning=None, bayes_bool=False,
                         output_name=None, uncertainty_bool=False, n_threads=1):
@@ -930,7 +943,7 @@ class Luci():
 
         return None
 
-    def update_astrometry(self, api_key):
+    '''def update_astrometry(self, api_key):
         """
         Use astronomy.net to update the astrometry in the header using the deep image.
         If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
@@ -990,7 +1003,7 @@ class Luci():
 
         else:
             # Code to execute when solve fails
-            print('Astronomy.net failed to solve. This astrometry has not been updated!')
+            print('Astronomy.net failed to solve. This astrometry has not been updated!')'''
 
     def heliocentric_correction(self):
         """

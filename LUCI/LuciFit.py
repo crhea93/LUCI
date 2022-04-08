@@ -717,7 +717,7 @@ class Fit:
                                                   )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
-            sampler.run_mcmc(init_, 2, progress=False)
+            sampler.run_mcmc(init_, 1, progress=False)
             # Obtain Ensemble Sampler results and discard first 200 walks (10%)
             flat_samples = sampler.get_chain(discard=0, flat=True)
             parameters_med = []
