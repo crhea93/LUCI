@@ -10,4 +10,4 @@ venv/*
 **/.ipynb_checkpoints/
 /Examples/.ipynb_checkpoints/
 dist/*
-
+__pycache__/
