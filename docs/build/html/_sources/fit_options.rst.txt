@@ -17,5 +17,5 @@ In addition to the required arguments, we have the following set of optional arg
 - output_name: If you want a different output suffix, please add that information here. (i.e. `output_name='SuperCoolName'`)
 - uncertainty_bool: This is if you don't want to wait for the full Bayesian inference to run. Instead, it calculates the inverse Hessian of the fit matrix and takes its diagonals as the errors on the fit parameters.
 - n_threads: This sets the number of threads that will be used in the fits. Choose this based on the number of threads available to you. I like `n_threads=4`. **Note that this frequently doesn't work in a jupyter notebook setting**.
-- mdn: This boolean determines whether or not a mixture density model is used to obtain the initial guesses. Details on this algorithm can be found at (). The default value is False.
+- mdn: This boolean determines whether or not a mixture density model is used to obtain the initial guesses. Details on this algorithm can be found at (https://arxiv.org/abs/2111.12755). The default value is False.
 - nii_cons: This boolean determines whether or not we constrain the NII doublet emission to the 1/3rds rule. By default, this is included.

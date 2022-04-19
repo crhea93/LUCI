@@ -76,6 +76,7 @@ Now we can define our fit region and fit it!
 
 
 And let's see how this looks
+
 .. image:: NGC6888_reg1.png
     :alt: NGC 6888 Region 1
     

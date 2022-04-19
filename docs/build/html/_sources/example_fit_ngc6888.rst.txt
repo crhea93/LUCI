@@ -95,7 +95,7 @@ And let's see how this looks
 
 And let's see how this looks
 
-.. image:: NGC6888_reg2.png
+.. image:: NGC6888-reg2.png
     :alt: NGC 6888 Region 2
     
     
