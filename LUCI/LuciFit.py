@@ -9,6 +9,7 @@ import astropy.stats as astrostats
 import warnings
 import dynesty
 from dynesty import utils as dyfunc
+import scipy.stats as stats
 
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
@@ -381,6 +382,7 @@ class Fit:
             Value of log likelihood
 
         """
+        model = 0
         if self.model_type == 'gaussian':
             model = Gaussian().evaluate(self.axis_restricted, theta, self.line_num)
         elif self.model_type == 'sinc':
@@ -390,8 +392,8 @@ class Fit:
         # Add constant continuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        return -np.sum((self.spectrum_restricted - model) ** 2 / sigma2)
-
+        #return -np.sum((self.spectrum_restricted - model) ** 2 / sigma2)
+        return -np.sum(stats.norm.logpdf(self.spectrum_restricted, loc=model, scale=sigma2))
         #return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
 
@@ -502,8 +504,8 @@ class Fit:
         """
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-        bounds_ = []  # Initialize bounds used for fittin
-        initial[-1] = self.cont_estimate(sigma_level=3)  # Add continuum constant and intialize it
+        bounds_ = []  # Initialize bounds used for fitting
+        initial[-1] = self.cont_estimate(sigma_level=5)  # Add continuum constant and intialize it
         lines_fit = []  # List of lines which already have been set up for fits
         for mod in range(self.line_num):  # Step through each line
             # val = 3 * mod + 1
@@ -516,7 +518,7 @@ class Fit:
             bounds_.append((self.A_min, self.A_max))  # Set bounds for amplitude
             bounds_.append((self.x_min, self.x_max))  # Set bounds for wavenumber
             bounds_.append((self.sigma_min, self.sigma_max))  # Set bounds for sigma
-        bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum bound Lower
+        bounds_l = [val[0] for val in bounds_] + [-0.05]  # Continuum bound Lower
         bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum bound Higher
         bounds = Bounds(bounds_l, bounds_u)  # Define bounds
         self.initial_values = initial

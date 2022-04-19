@@ -122,6 +122,17 @@ Else it will throw an error</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_fit">
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cm-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_fit" title="Permalink to this definition"></a></dt>
+<dd><p>Plot Spectrum and fit with Luci format. If output name is supplied, the plot will be saved
+:param axis: X axis of spectrum (1d numpy array)
+:param spectrum: Y axis of spectrum (1d numpy array)
+:param fit: Fit vector (1d numpy array)
+:param units: Wavelength units (e.x. ‘cm’)
+:param output_name: Path to output file (default None)</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_map">
 <span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_map" title="Permalink to this definition"></a></dt>
 <dd><p>Function to plot fit map. The three options are ‘flux’, ‘velocity’, and ‘broadening’.
