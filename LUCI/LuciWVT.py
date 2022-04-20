@@ -5,10 +5,9 @@ import numpy as np
 import statistics as stats
 from astropy.io import fits
 from sklearn.neighbors import NearestNeighbors
-from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 
+# --------------------------------------- WVT ALGORITHM ITSELF BELOW THIS ---------------------------------------#
 
 def plot_Bins(Bins,x_min,x_max,y_min,y_max,StN_Target,file_dir,filename):
     fig = plt.figure()

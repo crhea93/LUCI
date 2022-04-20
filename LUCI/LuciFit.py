@@ -46,7 +46,7 @@ class Fit:
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
-                 nii_cons=True, sky_lines=None, initial_values=False
+                 nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=False
                  ):
         """
         Args:
@@ -71,6 +71,7 @@ class Fit:
             mdn: Boolean to determine which network to use (if true use MDN if false use standard CNN)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
             sky_lines: Dictionary of sky lines {OH_num: wavelength in nanometers}
+            sky_lines_scale: List of relative strengths of sky lines
             initial_values: List of initial conditions for the velocity and broadening; [velocity, broadening]
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
@@ -79,17 +80,15 @@ class Fit:
                           'Hbeta': 486.133, 'OH': 649.873}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.sky_lines = sky_lines
+        self.sky_lines_scale = sky_lines_scale
         self.nii_cons = nii_cons
         self.spectrum = spectrum
-        self.spectrum_clean = spectrum / np.max(
-            spectrum)  # Clean normalized spectrum that will be used for calculating the noise
+        self.spectrum_clean = spectrum / np.max(spectrum)  # Clean normalized spectrum
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum  Yes it is duplicated
         self.axis = axis  # Redshifted axis
         self.spectrum_restricted = None
         self.spectrum_restricted_norm = None
         self.axis_restricted = None
-
-        # self.axis_unshifted = axis_unshifted  # Non-redshifted axis
         self.wavenumbers_syn = wavenumbers_syn
         self.model_type = model_type
         self.lines = lines
@@ -102,10 +101,6 @@ class Fit:
         self.spectrum_interp_scale = None
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
         self.restrict_wavelength()
-        # try:
-
-        # except ValueError:  # self.spectrum_restricted is empty
-        #    self.spectrum_restricted_norm = self.spectrum_restricted
         self.theta = theta
         self.cos_theta = np.abs(np.cos(np.deg2rad(self.theta)))
         self.correction_factor = 1.0  # Initialize Correction factor
@@ -134,9 +129,7 @@ class Fit:
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
         self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
-
         self.initial_conditions = initial_values  # List for initial conditions (or default False)
-
         self.initial_values = initial_values  # List for initial values (or default False)
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
@@ -149,7 +142,8 @@ class Fit:
         self.sigma_max = 3
         self.flat_samples = None
         # Check that lines inputted by user are in line_dict
-        self.check_lines()
+        if sky_lines is None:
+            self.check_lines()
         self.check_fitting_model()
         self.check_lengths()
 
@@ -350,6 +344,8 @@ class Fit:
 
         """
         # Define continuum regions
+        min_ = 0
+        max_ = 1e6
         if self.filter == 'SN3':
             min_ = 14950
             max_ = 15050
@@ -363,11 +359,11 @@ class Fit:
         # Clip values at given sigma level (defined by sigma_level)
         clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
                                              masked=False, copy=False,
-                                             maxiters=3)
+                                             maxiters=10, stdfunc=astrostats.mad_std)
         if len(clipped_spec) < 1:
             clipped_spec = self.spectrum_restricted
         # Now take the minimum value to serve as the continuum value
-        cont_val = np.mean(clipped_spec)
+        cont_val = np.median(clipped_spec)
         return cont_val
 
     def log_likelihood(self, theta):
@@ -410,8 +406,10 @@ class Fit:
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0_ = inds_unique[0]  # Get first element
                 for ind_unique_ in inds_unique[1:]:  # Step through group elements except for the first one
-                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique_, ind_0=ind_0_: (SPEED_OF_LIGHT * x[
-                        3 * ind_0 + 2]) / x[3 * ind_0 + 1] - (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]})
+                    sigma_dict_list.append({'type': 'ineq', 'fun': lambda x, ind_unique=ind_unique_, ind_0=ind_0_:
+                    (SPEED_OF_LIGHT * x[3 * ind_0 + 2]) / x[3 * ind_0 + 1] -
+                    (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]}
+                                           )
         return sigma_dict_list
 
     def vel_constraints(self):
@@ -429,7 +427,7 @@ class Fit:
                 ind_0_line = self.lines[ind_0]
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     ind_unique_line = self.lines[ind_unique]
-                    expr_dict = {'type': 'eq',
+                    expr_dict = {'type': 'ineq',
                                  'fun': lambda x, ind_unique_=ind_unique, ind_0_=ind_0,
                                                ind_unique_line_=ind_unique_line, ind_0_line_=ind_0_line:
                                  SPEED_OF_LIGHT * ((1e7 / x[3 * ind_unique_ + 1] - self.line_dict[ind_unique_line_]) / (
@@ -507,12 +505,11 @@ class Fit:
         bounds_ = []  # Initialize bounds used for fitting
         initial[-1] = self.cont_estimate(sigma_level=5)  # Add continuum constant and intialize it
         lines_fit = []  # List of lines which already have been set up for fits
+        cons = None
         for mod in range(self.line_num):  # Step through each line
-            # val = 3 * mod + 1
             lines_fit.append(self.lines[mod])  # Add to list of lines fit
             amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])  # Estimate initial values
             initial[3 * mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
-            # If line has already shown up we need to shift the velocity estimate
             initial[3 * mod + 1] = vel_est  # Set wavenumber
             initial[3 * mod + 2] = sigma_est  # Set sigma
             bounds_.append((self.A_min, self.A_max))  # Set bounds for amplitude
@@ -520,7 +517,8 @@ class Fit:
             bounds_.append((self.sigma_min, self.sigma_max))  # Set bounds for sigma
         bounds_l = [val[0] for val in bounds_] + [-0.05]  # Continuum bound Lower
         bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum bound Higher
-        bounds = Bounds(bounds_l, bounds_u)  # Define bounds
+        #bounds = Bounds(bounds_l, bounds_u)  # Define bounds
+        bounds_.append((-0.1, 0.5))
         self.initial_values = initial
         sigma_cons = self.sigma_constraints()  # Call sigma constaints
         vel_cons = self.vel_constraints()  # Call velocity constraints
@@ -528,14 +526,16 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = (sigma_cons + vel_cons + nii_constraints )
+            cons = sigma_cons + vel_cons# + nii_constraints
         else:
-            cons = (sigma_cons + vel_cons)  # + vel_cons_multiple)
+            cons = sigma_cons + vel_cons  # + vel_cons_multiple)
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
                         method='SLSQP',
-                        options={'disp': False, 'maxiter': 10000}, bounds=bounds, tol=1e-2,
+                        options={'disp': False, 'maxiter': 10000},
+                        bounds=bounds_,
+                        tol=1e-2,
                         args=(), constraints=cons
                         )
         parameters = soln.x
@@ -636,29 +636,23 @@ class Fit:
             self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
             nll = lambda *args: -self.log_likelihood(*args)
-            initial = np.ones(4)
+            initial = np.ones(3*self.line_num + 1)
             bounds_ = []
-            '''initial[0] = np.abs(2 * self.cont_estimate())  # Make sure it is well above the continuum
-            initial[1] = 15390  #15383  # Theoretical value corresponding to -80 km/s for our OH line
-            initial[2] = 10  # Doesn't matter since we are fitting a sinc with a fixed width
-            initial[3] = np.abs(self.cont_estimate())  # Add continuum constant and intialize it
-            bounds_.append((0, self.A_max))
-            bounds_.append((15250, 15450))
-            bounds_.append((self.sigma_min, self.sigma_max))'''
+            skylines_vals = list(self.sky_lines.values())
             for mod in range(self.line_num):
-                initial[3 * mod] = 2 * self.cont_estimate()
-                initial[3 * mod] = 1e7 / ((80 * (self.sky_lines[mod]) / SPEED_OF_LIGHT) + self.sky_lines[mod])
-                initial[3 * mod + 2] = 10
+                initial[3 * mod] = self.cont_estimate(sigma_level=5) * self.sky_lines_scale[mod]
+                initial[3 * mod + 1] = 1e7 / ((80 * (skylines_vals[mod]) / SPEED_OF_LIGHT) + skylines_vals[mod])
+                initial[3 * mod + 2] = 1
                 bounds_.append((self.A_min, self.A_max))
                 bounds_.append((self.x_min, self.x_max))
                 bounds_.append((self.sigma_min, self.sigma_max))
-            initial[-1] = self.cont_estimate()
+            initial[-1] = self.cont_estimate(sigma_level=5)
             bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
-            bounds_u = [val[1] for val in bounds_] + [0.95]  # Continuum Constraint
+            bounds_u = [val[1] for val in bounds_] + [0.3]  # Continuum Constraint
             bounds = Bounds(bounds_l, bounds_u)
             self.initial_values = initial
-            soln = minimize(nll, initial, method='SLSQP',
-                            options={'disp': False, 'maxiter': 5000}, bounds=bounds, tol=1e-2,
+            soln = minimize(nll, initial, method='Nelder-Mead',
+                            options={'disp': True, 'maxiter': 1000}, bounds=bounds, tol=1e-2,
                             args=())
             parameters = soln.x
 
@@ -669,8 +663,7 @@ class Fit:
             # Scale continuum
             parameters[-1] *= self.spectrum_scale
             self.fit_sol = parameters
-            self.fit_Bayes()
-            velocity = SPEED_OF_LIGHT * ((1e7 / self.fit_sol[1] - self.line_dict['OH']) / self.line_dict['OH'])
+            velocity = SPEED_OF_LIGHT * ((1e7 / self.fit_sol[1] - skylines_vals[0]) / skylines_vals[0])
             fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + parameters[-1]
             return velocity, fit_vector
 

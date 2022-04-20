@@ -187,10 +187,6 @@ class SincGauss:
         dawson2 = sps.dawsn(1j * a - b) * np.exp(-2. * 1j * a *b)
         dawson3 = 2. * sps.dawsn(1j * a)
         return p0*(dawson1 + dawson2)/dawson3
-        '''erf1 = sps.erf(a-1j*b)
-        erf2 = sps.erf(a+1j*b)
-        erf3 = 2*sps.erf(a)
-        self.func = p0*np.exp(-b**2)*((erf1+erf2)/erf3)'''
 
     def evaluate(self, channel, theta, line_num, sinc_width):
         """
@@ -251,6 +247,6 @@ class SincGauss:
         for model_num in range(line_num):
             min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
-            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]/FWHM_COEFF]
+            params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
             f1 += self.function(channel, params, sinc_width)
         return np.real(f1)
