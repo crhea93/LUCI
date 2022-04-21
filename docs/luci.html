@@ -51,6 +51,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
@@ -165,7 +166,8 @@ a map of the entire cube is calculated.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.create_wvt">
 <span class="sig-name descname"><span class="pre">create_wvt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">StN_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roundness_crit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ToL</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_wvt" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Written by Benjamin Vigneron</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.extract_spectrum">
@@ -382,7 +384,8 @@ or the averaged spectrum for background spectra (True).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_wvt">
 <span class="sig-name descname"><span class="pre">fit_wvt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_wvt" title="Permalink to this definition"></a></dt>
-<dd><p>Function that takes the wvt mapping created using <cite>self.create_wvt()</cite> and fits the bins.</p>
+<dd><p>Function that takes the wvt mapping created using <cite>self.create_wvt()</cite> and fits the bins.
+Written by Benjamin Vigneron</p>
 <p>Args:</p>
 </dd></dl>
 

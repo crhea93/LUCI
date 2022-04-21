@@ -1037,17 +1037,18 @@ class Luci():
         sky_lines_df = pandas.read_csv('Data/sky_lines.csv', skiprows=2)
         sky_lines = sky_lines_df['Wavelength']  # Get wavelengths
         sky_lines = [sky_line / 10 for sky_line in sky_lines]  # Convert from angstroms to nanometers
+        sky_lines_scale = [sky_line for sky_line in sky_lines_df['Strength']]  # Get the relative strengths
         # Create skyline dictionary
         sky_line_dict = {}  # {OH_num: wavelength in nm}
         for line_ct, line_wvl in enumerate(sky_lines):
             sky_line_dict['OH_%i' % line_ct] = line_wvl
         # Calculate grid
-        x_min = 0
-        x_max = self.cube_final.shape[0]
+        x_min = 100
+        x_max = self.cube_final.shape[0] - 100
         x_step = int(
             (x_max - x_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
-        y_min = 0
-        y_max = self.cube_final.shape[1]
+        y_min = 1000
+        y_max = self.cube_final.shape[1] - 100
         y_step = int(
             (y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         vel_grid = np.zeros((n_grid, n_grid))  # Initialize velocity grid
@@ -1065,18 +1066,18 @@ class Luci():
                 sky = integrated_spectrum[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH_%i' % num for num in len(sky_lines)], [1], [1],
+                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH_%i' % num for num in sky_lines], len(sky_lines)*[1], len(sky_lines)*[1],
                           self.model_ML, trans_filter=self.transmission_interpolated,
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
                           zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'], bayes_bool=True, bayes_method='emcee', sky_lines=sky_line_dict
+                          filter=self.hdr_dict['FILTER'], bayes_bool=False, bayes_method='emcee', sky_lines=sky_line_dict, sky_lines_scale=sky_lines_scale
                           )
 
                 velocity, fit_vector = fit.fit(sky_line=True)
                 vel_grid[x_grid, y_grid] = float(velocity)
         # Now that we have the grid, we need to reproject it onto the original pixel grid
-        print(vel_grid)
+
         vel_grid_final = np.zeros((x_max, y_max))
         for x_grid in range(n_grid):  # Step through x steps
             for y_grid in range(n_grid):  # Step through y steps
@@ -1086,6 +1087,7 @@ class Luci():
                 vel_grid_final[x_center - x_step:x_center + x_step, y_center - y_step:y_center + y_step] = vel_grid[
                     x_grid, y_grid]
         fits.writeto(self.output_dir + '/velocity_correction.fits', vel_grid, self.header, overwrite=True)
+        return velocity, fit_vector, sky
 
     def calculate_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
         # TODO: ADD Documentation and example
@@ -1114,6 +1116,7 @@ class Luci():
 
     def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL):
         """
+        Written by Benjamin Vigneron
         """
         print("#----------------WVT Algorithm----------------#")
         Pixels = []
@@ -1169,7 +1172,8 @@ class Luci():
                 mean=False, n_threads=1):
         """
         Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
-
+        Written by Benjamin Vigneron
+        
         Args:
 
         """
