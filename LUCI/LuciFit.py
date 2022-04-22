@@ -46,7 +46,8 @@ class Fit:
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
-                 nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=False
+                 nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=False,
+                 spec_min=None, spec_max=None
                  ):
         """
         Args:
@@ -73,6 +74,8 @@ class Fit:
             sky_lines: Dictionary of sky lines {OH_num: wavelength in nanometers}
             sky_lines_scale: List of relative strengths of sky lines
             initial_values: List of initial conditions for the velocity and broadening; [velocity, broadening]
+            spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
+            spec_max: Maximum value of the spectrum to be considered in the fit
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -82,6 +85,8 @@ class Fit:
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
         self.nii_cons = nii_cons
+        self.spec_min = spec_min
+        self.spec_max = spec_max
         self.spectrum = spectrum
         self.spectrum_clean = spectrum / np.max(spectrum)  # Clean normalized spectrum
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum  Yes it is duplicated
@@ -141,6 +146,7 @@ class Fit:
         self.sigma_min = 0.001
         self.sigma_max = 3
         self.flat_samples = None
+
         # Check that lines inputted by user are in line_dict
         if sky_lines is None:
             self.check_lines()
@@ -178,26 +184,32 @@ class Fit:
         We do this so that the continuum is properly calculated.
         """
         # Determine filter
-        global bound_lower, bound_upper
-        if self.filter == 'SN3':
-            bound_lower = 14750
-            bound_upper = 15400
-        elif self.filter == 'SN2':
-            bound_lower = 19500
-            bound_upper = 20750
-        elif self.filter == 'SN1':
-            bound_lower = 26000
-            bound_upper = 27400
-        elif self.filter == 'C4' and 'Halpha' in self.lines:
-            ## This is true for objects at redshift ~0.25
-            # In this case we pretend we are in SN3
-            bound_lower = 14950  # LYA mod - originally the same as SN3 restrictions
-            bound_upper = 15400
+
+        if self.spec_min is None or self.spec_max is None:  # If the user has not entered explicit bounds
+            global bound_lower, bound_upper
+            if self.filter == 'SN3':
+                bound_lower = 14750
+                bound_upper = 15400
+            elif self.filter == 'SN2':
+                bound_lower = 19500
+                bound_upper = 20750
+            elif self.filter == 'SN1':
+                bound_lower = 26000
+                bound_upper = 27400
+            elif self.filter == 'C4' and 'Halpha' in self.lines:
+                ## This is true for objects at redshift ~0.25
+                # In this case we pretend we are in SN3
+                bound_lower = 14950  # LYA mod - originally the same as SN3 restrictions
+                bound_upper = 15400
+            else:
+                print(
+                    'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
+            self.spec_min = bound_lower
+            self.spec_max = bound_upper
         else:
-            print(
-                'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
-        min_ = np.argmin(np.abs(np.array(self.axis) - bound_lower))
-        max_ = np.argmin(np.abs(np.array(self.axis) - bound_upper))
+            pass
+        min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
+        max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
         self.spectrum_restricted = self.spectrum_normalized[min_:max_]
         self.axis_restricted = self.axis[min_:max_]
         self.spectrum_restricted_norm = self.spectrum_restricted / np.max(self.spectrum_restricted)
@@ -388,9 +400,8 @@ class Fit:
         # Add constant continuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        #return -np.sum((self.spectrum_restricted - model) ** 2 / sigma2)
-        return -np.sum(stats.norm.logpdf(self.spectrum_restricted, loc=model, scale=sigma2))
-        #return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+        #return np.sum(stats.norm.logpdf(self.spectrum_restricted, loc=model, scale=sigma2))
+        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
 
     def sigma_constraints(self):
@@ -406,7 +417,7 @@ class Fit:
             if len(inds_unique) > 1:  # If there is more than one element in the group
                 ind_0_ = inds_unique[0]  # Get first element
                 for ind_unique_ in inds_unique[1:]:  # Step through group elements except for the first one
-                    sigma_dict_list.append({'type': 'ineq', 'fun': lambda x, ind_unique=ind_unique_, ind_0=ind_0_:
+                    sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique_, ind_0=ind_0_:
                     (SPEED_OF_LIGHT * x[3 * ind_0 + 2]) / x[3 * ind_0 + 1] -
                     (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]}
                                            )
@@ -427,7 +438,7 @@ class Fit:
                 ind_0_line = self.lines[ind_0]
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     ind_unique_line = self.lines[ind_unique]
-                    expr_dict = {'type': 'ineq',
+                    expr_dict = {'type': 'eq',
                                  'fun': lambda x, ind_unique_=ind_unique, ind_0_=ind_0,
                                                ind_unique_line_=ind_unique_line, ind_0_line_=ind_0_line:
                                  SPEED_OF_LIGHT * ((1e7 / x[3 * ind_unique_ + 1] - self.line_dict[ind_unique_line_]) / (
@@ -486,7 +497,7 @@ class Fit:
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     expr_dict_vel = {'type': 'ineq',
                                      'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] - x[
-                                         3 * ind_0 + 1]}
+                                         3 * ind_0 + 1]+10}
                     multi_dict_list.append(expr_dict_vel)
         return multi_dict_list
 
@@ -526,19 +537,26 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = sigma_cons + vel_cons# + nii_constraints
+            cons = sigma_cons + vel_cons + vel_cons_multiple# + nii_constraints
         else:
-            cons = sigma_cons + vel_cons  # + vel_cons_multiple)
+            cons = sigma_cons + vel_cons + vel_cons_multiple
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
-                        method='SLSQP',
-                        options={'disp': False, 'maxiter': 10000},
-                        bounds=bounds_,
-                        tol=1e-2,
+                        method='trust-constr',
+                        options={'disp': True, 'maxiter': 500},
+                        #bounds=bounds_,
+                        tol=1e-8,
                         args=(), constraints=cons
                         )
         parameters = soln.x
+        # We now must unscale the amplitude
+        for i in range(self.line_num):
+            parameters[i * 3] *= self.spectrum_scale
+            # self.uncertainties[i * 3] *= self.spectrum_scale
+        # Scale continuum
+        parameters[-1] *= self.spectrum_scale
+        # self.uncertainties[-1] *= self.spectrum_scale
         if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
             try:
@@ -548,13 +566,7 @@ class Fit:
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
             except np.linalg.LinAlgError:
                 self.uncertainties = np.zeros_like(parameters)
-        # We now must unscale the amplitude
-        for i in range(self.line_num):
-            parameters[i * 3] *= self.spectrum_scale
-            self.uncertainties[i * 3] *= self.spectrum_scale
-        # Scale continuum
-        parameters[-1] *= self.spectrum_scale
-        self.uncertainties[-1] *= self.spectrum_scale
+
         self.fit_sol = parameters
         # Create fit vector
         if self.model_type == 'gaussian':
@@ -635,7 +647,7 @@ class Fit:
         else:  # Fit sky line
             self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
-            nll = lambda *args: -self.log_likelihood(*args)
+            nll = lambda *args: self.log_likelihood(*args)  # Negative Log Likelihood function
             initial = np.ones(3*self.line_num + 1)
             bounds_ = []
             skylines_vals = list(self.sky_lines.values())
@@ -647,13 +659,17 @@ class Fit:
                 bounds_.append((self.x_min, self.x_max))
                 bounds_.append((self.sigma_min, self.sigma_max))
             initial[-1] = self.cont_estimate(sigma_level=5)
-            bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
-            bounds_u = [val[1] for val in bounds_] + [0.3]  # Continuum Constraint
-            bounds = Bounds(bounds_l, bounds_u)
+            bounds_.append((-0.1, 0.5))
+            #bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
+            #bounds_u = [val[1] for val in bounds_] + [0.3]  # Continuum Constraint
+            #bounds = Bounds(bounds_l, bounds_u)
             self.initial_values = initial
-            soln = minimize(nll, initial, method='Nelder-Mead',
-                            options={'disp': True, 'maxiter': 1000}, bounds=bounds, tol=1e-2,
-                            args=())
+            sigma_cons = self.sigma_constraints()  # Call sigma constaints
+            vel_cons = self.vel_constraints()  # Call velocity constraints
+            cons = sigma_cons+vel_cons
+            soln = minimize(nll, initial, #method='BFGS',
+                            options={'disp': True, 'maxiter': 2000}, bounds=bounds_, tol=1e-8,
+                            args=(), constraints=cons)
             parameters = soln.x
 
             # We now must unscale the amplitude
@@ -719,7 +735,7 @@ class Fit:
             parameters_std = []
             self.flat_samples = flat_samples
             for i in range(n_dim):  # Calculate and store these results
-                median = np.median(flat_samples[:, i])
+                median = np.mean(flat_samples[:, i])
                 std = np.std(flat_samples[:, i])
                 parameters_med.append(median)
                 parameters_std.append(std)
@@ -765,10 +781,9 @@ class Fit:
         """
         # compute the mean and the chi^2/dof
         min_restricted, max_restricted = self.restrict_wavelength()
-        z = (fit_vector[min_restricted: max_restricted] - init_spectrum[
-                                                          min_restricted: max_restricted])
-        chi2 = np.sum((z ** 2))  # /(self.spectrum_scale))
-        chi2dof = chi2 / (n_dof - 1)
+        z = (init_spectrum[min_restricted: max_restricted]- fit_vector[min_restricted: max_restricted])
+        chi2 = np.sum((z ** 2)/(init_errors*self.spectrum_scale))
+        chi2dof = chi2 / (len(fit_vector[min_restricted: max_restricted]) - n_dof )
         return chi2, chi2dof
 
     def check_lines(self):
