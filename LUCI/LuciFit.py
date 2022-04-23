@@ -544,7 +544,7 @@ class Fit:
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
                         method='trust-constr',
-                        options={'disp': True, 'maxiter': 500},
+                        options={'disp': False, 'maxiter': 500},
                         #bounds=bounds_,
                         tol=1e-8,
                         args=(), constraints=cons
