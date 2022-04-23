@@ -24,9 +24,10 @@ def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name = None, fig
     check_units(units)  # Check that user supplied appropriate wavelength option
     if units == 'nm':
         axis = [1e7/axis_val for axis_val in axis]
-        ax.set_xlim(635, 675)
+        #ax.set_xlim(635, 675)
     else:
-        ax.set_xlim(14750, 15750)
+        pass
+        #ax.set_xlim(14750, 15750)
     ax.plot(axis, spectrum, **kwargs)
     ax.set_xlabel(r"Wavelength [%s]"%units, fontsize=20, fontweight='bold')
     ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=20, fontweight='bold')

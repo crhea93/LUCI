@@ -667,9 +667,9 @@ class Fit:
             sigma_cons = self.sigma_constraints()  # Call sigma constaints
             vel_cons = self.vel_constraints()  # Call velocity constraints
             cons = sigma_cons+vel_cons
-            soln = minimize(nll, initial, #method='BFGS',
-                            options={'disp': True, 'maxiter': 2000}, bounds=bounds_, tol=1e-8,
-                            args=(), constraints=cons)
+            soln = minimize(nll, initial,method='trust-constr',
+                            options={'disp': False, 'maxiter': 2000}, tol=1e-8,
+                            args=())#, constraints=cons)
             parameters = soln.x
 
             # We now must unscale the amplitude
