@@ -138,15 +138,7 @@ class Fit:
         self.initial_values = initial_values  # List for initial values (or default False)
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
-        # Set bounds
-        self.A_min = 0.
-        self.A_max = 1.1
-        self.x_min = 0  # 14700;
-        self.x_max = 1e6  # 15600
-        self.sigma_min = 0.001
-        self.sigma_max = 3
         self.flat_samples = None
-
         # Check that lines inputted by user are in line_dict
         if sky_lines is None:
             self.check_lines()
@@ -523,13 +515,6 @@ class Fit:
             initial[3 * mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
             initial[3 * mod + 1] = vel_est  # Set wavenumber
             initial[3 * mod + 2] = sigma_est  # Set sigma
-            bounds_.append((self.A_min, self.A_max))  # Set bounds for amplitude
-            bounds_.append((self.x_min, self.x_max))  # Set bounds for wavenumber
-            bounds_.append((self.sigma_min, self.sigma_max))  # Set bounds for sigma
-        bounds_l = [val[0] for val in bounds_] + [-0.05]  # Continuum bound Lower
-        bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum bound Higher
-        #bounds = Bounds(bounds_l, bounds_u)  # Define bounds
-        bounds_.append((-0.1, 0.5))
         self.initial_values = initial
         sigma_cons = self.sigma_constraints()  # Call sigma constaints
         vel_cons = self.vel_constraints()  # Call velocity constraints
@@ -537,16 +522,15 @@ class Fit:
         # CONSTRAINTS
         if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = sigma_cons + vel_cons + vel_cons_multiple# + nii_constraints
+            cons = sigma_cons + vel_cons + vel_cons_multiple + nii_constraints
         else:
             cons = sigma_cons + vel_cons + vel_cons_multiple
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
                         method='trust-constr',
-                        options={'disp': True, 'maxiter': 500},
-                        #bounds=bounds_,
-                        tol=1e-8,
+                        options={'disp': False, 'maxiter': 100},
+                        tol=1e-2,
                         args=(), constraints=cons
                         )
         parameters = soln.x
@@ -649,27 +633,19 @@ class Fit:
             # Apply Fit
             nll = lambda *args: self.log_likelihood(*args)  # Negative Log Likelihood function
             initial = np.ones(3*self.line_num + 1)
-            bounds_ = []
             skylines_vals = list(self.sky_lines.values())
             for mod in range(self.line_num):
                 initial[3 * mod] = self.cont_estimate(sigma_level=5) * self.sky_lines_scale[mod]
                 initial[3 * mod + 1] = 1e7 / ((80 * (skylines_vals[mod]) / SPEED_OF_LIGHT) + skylines_vals[mod])
                 initial[3 * mod + 2] = 1
-                bounds_.append((self.A_min, self.A_max))
-                bounds_.append((self.x_min, self.x_max))
-                bounds_.append((self.sigma_min, self.sigma_max))
             initial[-1] = self.cont_estimate(sigma_level=5)
-            bounds_.append((-0.1, 0.5))
-            #bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
-            #bounds_u = [val[1] for val in bounds_] + [0.3]  # Continuum Constraint
-            #bounds = Bounds(bounds_l, bounds_u)
             self.initial_values = initial
             sigma_cons = self.sigma_constraints()  # Call sigma constaints
             vel_cons = self.vel_constraints()  # Call velocity constraints
             cons = sigma_cons+vel_cons
-            soln = minimize(nll, initial, #method='BFGS',
-                            options={'disp': True, 'maxiter': 2000}, bounds=bounds_, tol=1e-8,
-                            args=(), constraints=cons)
+            soln = minimize(nll, initial,method='trust-constr',
+                            options={'disp': False, 'maxiter': 2000}, tol=1e-8,
+                            args=())#, constraints=cons)
             parameters = soln.x
 
             # We now must unscale the amplitude

@@ -299,7 +299,7 @@ class Luci():
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         set_num_threads(n_threads)
-        # Initialize initiatl conditions for velocity and broadening as False --> Assuming we don't have them
+        # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
         # TODO: ALLOW BINNING OF INITIAL CONDITIONS
