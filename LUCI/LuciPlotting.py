@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from astropy.wcs import WCS
 import numpy as np
 
-plt.style.use('light.mplstyle')
 
 
 def set_style(dark):
@@ -14,9 +13,9 @@ def set_style(dark):
     Set style as light or dark
     """
     if dark:
-        return 'dark.mplstyle'
+        return './dark.mplstyle'
     else:
-        return 'light.mplstyle'
+        return './light.mplstyle'
 
 
 def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name=None, fig_size=(10, 8), dark=False, **kwargs):
