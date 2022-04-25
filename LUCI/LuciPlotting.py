@@ -36,12 +36,14 @@ def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name=None, fig_s
         check_units(units)  # Check that user supplied appropriate wavelength option
         if units == 'nm':
             axis = [1e7 / axis_val for axis_val in axis]
+            xaxis_label = 'Wavelength'
         else:
-            pass
+            xaxis_label = 'Wavenumber'
         ax.plot(axis, spectrum, **kwargs)
-        ax.set_xlabel(r"Wavelength [%s]" % units, fontsize=20, fontweight='bold')
+        ax.set_xlabel(r"%s [%s]" % (xaxis_label, units), fontsize=20, fontweight='bold')
         ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=20, fontweight='bold')
         ax.tick_params(labelsize=14)
+        plt.tight_layout()
         if output_name is not None:
             plt.savefig(output_name)
         return ax
@@ -67,13 +69,15 @@ def plot_fit(axis, spectrum, fit, ax=None, units='cm-1', output_name=None, fig_s
         check_units(units)  # Check that user supplied appropriate wavelength option
         if units == 'nm':
             axis = [1e7 / axis_val for axis_val in axis]
+            xaxis_label = 'Wavelength'
         else:
-            pass
+            xaxis_label = 'Wavenumber'
         ax.plot(axis, spectrum, label='Spectrum', **kwargs)
         ax.plot(axis, fit, linestyle='--', linewidth=2, label='Fit Vector', **kwargs)
-        ax.set_xlabel(r"Wavelength [%s]" % units, fontsize=20, fontweight='bold')
+        ax.set_xlabel(r"%s [%s]" % (xaxis_label, units), fontsize=20, fontweight='bold')
         ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=20, fontweight='bold')
         ax.tick_params(labelsize=14)
+        plt.tight_layout()
         plt.legend()
         if output_name is not None:
             plt.savefig(output_name)
