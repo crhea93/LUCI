@@ -51,6 +51,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
@@ -123,18 +124,21 @@ Else it will throw an error</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_fit">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cm-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_fit" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cm-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_fit" title="Permalink to this definition"></a></dt>
 <dd><p>Plot Spectrum and fit with Luci format. If output name is supplied, the plot will be saved
 :param axis: X axis of spectrum (1d numpy array)
 :param spectrum: Y axis of spectrum (1d numpy array)
 :param fit: Fit vector (1d numpy array)
+:param ax: Current axis (defaults to None)
 :param units: Wavelength units (e.x. ‘cm’)
-:param output_name: Path to output file (default None)</p>
+:param output_name: Path to output file (default None)
+:param fig_size: Size of figure (default (10,8))
+:param dark: Boolean to turn on dark mode (default False)</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_map">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_map" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_map" title="Permalink to this definition"></a></dt>
 <dd><p>Function to plot fit map. The three options are ‘flux’, ‘velocity’, and ‘broadening’.
 The flux map is automatically scaled by log10. The velocity and broadening are not.
 The plot is saved here: <cite>output_dir+’/’+quantity_name+’_map.png’</cite></p>
@@ -143,8 +147,11 @@ The plot is saved here: <cite>output_dir+’/’+quantity_name+’_map.png’</c
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>quantity_map</strong> – 2d numpy array from fit</p></li>
 <li><p><strong>quantity_name</strong> – Name of quantity (e.x. ‘flux’)</p></li>
-<li><p><strong>output_dit</strong> – Path (absolute or partial) to output directory</p></li>
+<li><p><strong>output_dir</strong> – Path (absolute or partial) to output directory</p></li>
+<li><p><strong>header</strong> – Header information for plot</p></li>
 <li><p><strong>clims</strong> – List containing lower and upper limits of colorbar (e.x. [-500, 500])</p></li>
+<li><p><strong>fig_size</strong> – Size of figure (default (10,8))</p></li>
+<li><p><strong>dark</strong> – Boolean to turn on dark mode (default False)</p></li>
 </ul>
 </dd>
 </dl>
@@ -164,12 +171,20 @@ The plot is saved here: <cite>output_dir+’/’+quantity_name+’_map.png’</c
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_spectrum">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cm-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_spectrum" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cm-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_spectrum" title="Permalink to this definition"></a></dt>
 <dd><p>Plot Spectrum with Luci format. If output name is supplied, the plot will be saved
 :param axis: X axis of spectrum (1d numpy array)
 :param spectrum: Y axis of spectrum (1d numpy array)
 :param units: Wavelength units (e.x. ‘cm’)
-:param output_name: Path to output file (default None)</p>
+:param output_name: Path to output file (default None)
+:param fig_size: Size of figure (default (10,8))
+:param dark: Boolean to turn on dark mode (default False)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="LUCI.LuciPlotting.set_style">
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">set_style</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dark</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.set_style" title="Permalink to this definition"></a></dt>
+<dd><p>Set style as light or dark</p>
 </dd></dl>
 
 </section>
