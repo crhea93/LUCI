@@ -40,9 +40,8 @@ def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name=None, fig_s
         else:
             xaxis_label = 'Wavenumber'
         ax.plot(axis, spectrum, **kwargs)
-        ax.set_xlabel(r"%s [%s]" % (xaxis_label, units), fontsize=20, fontweight='bold')
-        ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=20, fontweight='bold')
-        ax.tick_params(labelsize=14)
+        ax.set_xlabel(r"%s [%s]" % (xaxis_label, units))
+        ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]')
         plt.tight_layout()
         if output_name is not None:
             plt.savefig(output_name)
@@ -74,9 +73,8 @@ def plot_fit(axis, spectrum, fit, ax=None, units='cm-1', output_name=None, fig_s
             xaxis_label = 'Wavenumber'
         ax.plot(axis, spectrum, label='Spectrum', **kwargs)
         ax.plot(axis, fit, linestyle='--', linewidth=2, label='Fit Vector', **kwargs)
-        ax.set_xlabel(r"%s [%s]" % (xaxis_label, units), fontsize=20, fontweight='bold')
-        ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=20, fontweight='bold')
-        ax.tick_params(labelsize=14)
+        ax.set_xlabel(r"%s [%s]" % (xaxis_label, units))
+        ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]')
         plt.tight_layout()
         plt.legend()
         if output_name is not None:
@@ -129,21 +127,21 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_si
     # hdu = fits.open(Name+'_SN3.1.0.ORCS/MAPS/'+Name+'_SN3.1.0.LineMaps.map.all.'+Bin+'.rchi2.fits')[0]
     wcs = WCS(header)
     plot_style = set_style(dark)
-    with plt.style.use(plot_style):
-        fig = plt.figure(figsize=fig_size)
-        ax = plt.subplot(projection=wcs)
-        ax.coords[0].set_major_formatter('hh:mm:ss')
-        ax.coords[1].set_major_formatter('dd:mm:ss')
-        plt.imshow(quantity_map, cmap='magma', **kwargs)
-        plt.title((quantity_name + ' map').upper(), fontsize=26, fontweight='bold')
-        plt.xlabel("RA", fontsize=20, fontweight='bold')
-        plt.ylabel("DEC", fontsize=20, fontweight='bold')
-        plt.xlim(0, quantity_map.shape[0])
-        plt.ylim(0, quantity_map.shape[1])
-        cbar = plt.colorbar(fraction=0.046, pad=0.04)
-        plt.clim(c_min, c_max)
-        cbar.ax.set_ylabel(units[quantity_name], rotation=270, labelpad=25, fontsize=20, fontweight='bold')
-        plt.savefig(output_dir + '/' + quantity_name + '_map.png')
+    #with plt.style.use(plot_style):
+    fig = plt.figure(figsize=fig_size)
+    ax = plt.subplot(projection=wcs)
+    ax.coords[0].set_major_formatter('hh:mm:ss')
+    ax.coords[1].set_major_formatter('dd:mm:ss')
+    plt.imshow(quantity_map, cmap='magma', **kwargs)
+    plt.title((quantity_name + ' map').upper(), fontsize=26, fontweight='bold')
+    plt.xlabel("RA", fontsize=20, fontweight='bold')
+    plt.ylabel("DEC", fontsize=20, fontweight='bold')
+    plt.xlim(0, quantity_map.shape[0])
+    plt.ylim(0, quantity_map.shape[1])
+    cbar = plt.colorbar(fraction=0.046, pad=0.04)
+    plt.clim(c_min, c_max)
+    cbar.ax.set_ylabel(units[quantity_name], rotation=270, labelpad=25, fontsize=20, fontweight='bold')
+    plt.savefig(output_dir + '/' + quantity_name + '_map.png')
     return None
 
 
