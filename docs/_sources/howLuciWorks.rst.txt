@@ -93,12 +93,9 @@ an alternative method to calculate the initial guesses.
 
 Fitting Function
 ^^^^^^^^^^^^^^^^
-The fitting function utilizes *scipy.optimize.minimize*. Currently, we are using the `SLSQP <https://docs.scipy.org/doc/scipy/reference/optimize.minimize-slsqp.html>`
+The fitting function utilizes *scipy.optimize.minimize*. Currently, we are using the `trust-constr <https://docs.scipy.org/doc/scipy/reference/optimize.minimize-trustconstr.html>`
 optimization algorithm. Before fitting the spectrum, we normalize the spectrum by the maximum
-amplitude -- this makes the fitting process simpler. We also constrain the amplitudes
-to be between 0.001 and 1.1, the position of the line to be between 14700 and 15600 [cm-1],
-and the sigma of the Gaussian to be between 0.001 and 10. By applying these bounds,
-we constrain the optimization problem. The fit returns the amplitude of the line
+amplitude -- this makes the fitting process simpler. The fit returns the amplitude of the line
 (which we then scale to be correct for the un-normalized spectrum), the velocity in km/s,
 and the velocity dispersion in km/s. If the user chooses, the line velocities and velocity dispersions
 can be coupled. Additionally, we automatically include the constraint on the NII-doublet flux ratio
