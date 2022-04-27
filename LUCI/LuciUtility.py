@@ -218,8 +218,8 @@ def read_in_reference_spectrum(ref_spec, hdr_dict):
         min_ = np.argmin(np.abs(np.array(channel) - 25500))
         max_ = np.argmin(np.abs(np.array(channel) - 27500))
     elif hdr_dict['FILTER'] == 'C4':
-        min_ = np.argmin(np.abs(np.array(channel) - 14700))
-        max_ = np.argmin(np.abs(np.array(channel) - 15600))
+        min_ = np.argmin(np.abs(np.array(channel) - 12100)) #LYA mod originally 14700
+        max_ = np.argmin(np.abs(np.array(channel) - 12600)) #LYA mod originally 15600
     else:
         print('We do not support this filter.')
         print('Terminating program!')

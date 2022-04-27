@@ -77,6 +77,8 @@ class Luci():
         self.zpd_index = self.hdr_dict['ZPDINDEX']
         self.filter = self.hdr_dict['FILTER']
         self.spectrum_axis, self.spectrum_axis_unshifted = spectrum_axis_func(self.hdr_dict, self.redshift)
+        if self.filter=='C4':
+            self.spectrum_axis=self.spectrum_axis_unshifted #LYA mod
         if ML_bool is True:
             if not self.mdn:
                 if self.filter in ['SN1', 'SN2', 'SN3', 'C4']:
@@ -1187,7 +1189,7 @@ class Luci():
         """
         Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
         Written by Benjamin Vigneron
-        
+
         Args:
 
         """

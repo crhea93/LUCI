@@ -80,7 +80,7 @@ class Fit:
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
-                          'Hbeta': 486.133, 'OH': 649.873}
+                          'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4':807.88068, 'NII6583C4': 810.417771, 'NII6548C4': 806.062493,}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
@@ -196,11 +196,11 @@ class Fit:
             elif self.filter == 'SN1':
                 bound_lower = 26000
                 bound_upper = 27400
-            elif self.filter == 'C4' and 'Halpha' in self.lines:
+            elif self.filter == 'C4':
                 ## This is true for objects at redshift ~0.25
                 # In this case we pretend we are in SN3
-                bound_lower = 14950  # LYA mod - originally the same as SN3 restrictions
-                bound_upper = 15400
+                bound_lower = 12150#14950  # LYA mod - originally the same as SN3 restrictions
+                bound_upper = 12550#15400
             else:
                 print(
                     'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
@@ -233,11 +233,11 @@ class Fit:
         elif self.filter == 'SN1':
             bound_lower = 25300
             bound_upper = 25700
-        elif self.filter == 'C4' and 'Halpha' in self.lines:
+        elif self.filter == 'C4':
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
-            bound_lower = 14600  # LYA mods, originally the same as SN3
-            bound_upper = 14950
+            bound_lower = 11800#14600  # LYA mods, originally the same as SN3
+            bound_upper = 12150#14950
         else:
             print(
                 'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
@@ -367,6 +367,9 @@ class Fit:
         elif self.filter == 'SN1':
             min_ = 26000
             max_ = 26250
+        elif self.filter == 'C4':
+            min_ = 12180
+            max_ = 12550
 
         # Clip values at given sigma level (defined by sigma_level)
         clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
