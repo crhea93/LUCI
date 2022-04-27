@@ -16,7 +16,7 @@ import astropy.stats as astrostats
 from astropy.time import Time
 import numpy.ma as ma
 from astropy.coordinates import SkyCoord, EarthLocation
-from numba import jit, set_num_threads
+from numba import jit, set_num_threads, prange
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
@@ -298,7 +298,7 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        set_num_threads(n_threads)
+        set_num_threads(4)
         # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
@@ -326,7 +326,7 @@ class Luci():
             step_local = []
             continuum_local = []
             # Step through x coordinates
-            for j in range(x_max - x_min):
+            for j in prange(x_max - x_min):
                 x_pix = x_min + j  # Set current x pixel
                 if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
                     sky = self.cube_binned[x_pix, y_pix, :]

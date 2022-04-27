@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from astropy.wcs import WCS
 import numpy as np
 
-plt.style.use('light.mplstyle')
 
 
 def set_style(dark):
@@ -14,9 +13,9 @@ def set_style(dark):
     Set style as light or dark
     """
     if dark:
-        return 'dark.mplstyle'
+        return './dark.mplstyle'
     else:
-        return 'light.mplstyle'
+        return './light.mplstyle'
 
 
 def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name=None, fig_size=(10, 8), dark=False, **kwargs):
@@ -30,22 +29,21 @@ def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name=None, fig_s
         fig_size: Size of figure (default (10,8))
         dark: Boolean to turn on dark mode (default False)
     """
-    plot_style = set_style(dark)
-    with plt.style.use(plot_style):
-        if ax is None:
-            f, ax = plt.subplots(figsize=fig_size)
-        check_units(units)  # Check that user supplied appropriate wavelength option
-        if units == 'nm':
-            axis = [1e7 / axis_val for axis_val in axis]
-        else:
-            pass
-        ax.plot(axis, spectrum, **kwargs)
-        ax.set_xlabel(r"Wavelength [%s]" % units, fontsize=20, fontweight='bold')
-        ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=20, fontweight='bold')
-        ax.tick_params(labelsize=14)
-        if output_name is not None:
-            plt.savefig(output_name)
-        return ax
+
+    if ax is None:
+        f, ax = plt.subplots(figsize=fig_size)
+    check_units(units)  # Check that user supplied appropriate wavelength option
+    if units == 'nm':
+        axis = [1e7 / axis_val for axis_val in axis]
+    else:
+        pass
+    ax.plot(axis, spectrum, **kwargs)
+    ax.set_xlabel(r"Wavelength [%s]" % units, fontsize=20, fontweight='bold')
+    ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=20, fontweight='bold')
+    ax.tick_params(labelsize=14)
+    if output_name is not None:
+        plt.savefig(output_name)
+    return ax
 
 
 def plot_fit(axis, spectrum, fit, ax=None, units='cm-1', output_name=None, fig_size=(10, 8), dark=False, **kwargs):
@@ -61,24 +59,23 @@ def plot_fit(axis, spectrum, fit, ax=None, units='cm-1', output_name=None, fig_s
         fig_size: Size of figure (default (10,8))
         dark: Boolean to turn on dark mode (default False)
     """
-    plot_style = set_style(dark)
-    with plt.style.use(plot_style):
-        if ax is None:
-            f, ax = plt.subplots(figsize=fig_size)
-        check_units(units)  # Check that user supplied appropriate wavelength option
-        if units == 'nm':
-            axis = [1e7 / axis_val for axis_val in axis]
-        else:
-            pass
-        ax.plot(axis, spectrum, label='Spectrum', **kwargs)
-        ax.plot(axis, fit, linestyle='--', linewidth=2, label='Fit Vector', **kwargs)
-        ax.set_xlabel(r"Wavelength [%s]" % units, fontsize=20, fontweight='bold')
-        ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=20, fontweight='bold')
-        ax.tick_params(labelsize=14)
-        plt.legend()
-        if output_name is not None:
-            plt.savefig(output_name)
-        return ax
+
+    if ax is None:
+        f, ax = plt.subplots(figsize=fig_size)
+    check_units(units)  # Check that user supplied appropriate wavelength option
+    if units == 'nm':
+        axis = [1e7 / axis_val for axis_val in axis]
+    else:
+        pass
+    ax.plot(axis, spectrum, label='Spectrum', **kwargs)
+    ax.plot(axis, fit, linestyle='--', linewidth=2, label='Fit Vector', **kwargs)
+    ax.set_xlabel(r"Wavelength [%s]" % units, fontsize=20, fontweight='bold')
+    ax.set_ylabel(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=20, fontweight='bold')
+    ax.tick_params(labelsize=14)
+    plt.legend()
+    if output_name is not None:
+        plt.savefig(output_name)
+    return ax
 
 
 def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_size=(10, 8), dark=False, **kwargs):
