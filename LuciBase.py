@@ -6,7 +6,6 @@ import astropy.units as u
 from tqdm import tqdm
 import keras
 from joblib import Parallel, delayed
-
 from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
 from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
@@ -22,7 +21,7 @@ from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_an
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
 from LUCI.LuciWVT import *
 from LUCI.LuciVisualize import visualize as LUCIvisualize
-
+import multiprocessing as mp
 
 class Luci():
     """
@@ -308,9 +307,10 @@ class Luci():
             vel_init = fits.open(initial_values[0])[0].data
             broad_init = fits.open(initial_values[0])[0].data
 
-        @jit(nopython=False)
-        def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
-                     chi2_fit, corr_fit, step_fit, continuum_fit, initial_conditions=initial_conditions):
+        #@jit(nopython=False)
+        global fit_calc;
+        def fit_calc(i):#, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
+                     #chi2_fit, corr_fit, step_fit, continuum_fit, initial_conditions=initial_conditions):
 
             y_pix = y_min + i  # Step y coordinate
             # Set up all the local lists for the current y_pixel step
@@ -383,7 +383,7 @@ class Luci():
                     corr_local.append(0)
                     step_local.append(0)
                     continuum_local.append(0)
-            ampls_fits[i] = ampls_local
+            '''ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
             flux_errors_fits[i] = flux_errs_local
             velocities_fits[i] = vels_local
@@ -393,8 +393,9 @@ class Luci():
             chi2_fits[i] = chi2_local
             corr_fits[i] = corr_local
             step_fits[i] = step_local
-            continuum_fits[i] = continuum_local
-            return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
+            continuum_fits[i] = continuum_local'''''
+            return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
+            #return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
 
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None and binning != 1:
@@ -410,9 +411,29 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        for step_i in tqdm(range(y_max - y_min)):
-            fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits,
-                     broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
+        #for step_i in tqdm(prange(y_max - y_min)):
+        #    fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits,
+        #             broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
+        pool = mp.Pool(n_threads)
+        print("mapping ...")
+        results = tqdm(pool.imap(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
+        results = tuple(results)
+        # Step 3: Don't forget to close
+        pool.close()
+
+        for result in results:
+            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
+            ampls_fits[i] = ampls_local
+            flux_fits[i] = flux_local
+            flux_errors_fits[i] = flux_errs_local
+            velocities_fits[i] = vels_local
+            broadenings_fits[i] = broads_local
+            velocities_errors_fits[i] = vels_errs_local
+            broadenings_errors_fits[i] = broads_errs_local
+            chi2_fits[i] = chi2_local
+            corr_fits[i] = corr_local
+            step_fits[i] = step_local
+            continuum_fits[i] = continuum_local
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits,
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,
@@ -1246,3 +1267,76 @@ class Luci():
         fits.writeto(self.output_dir + '/' + self.object_name + '_comps_wvt.fits', component_fits, cutout.wcs.to_header(), overwrite=True)
         fits.writeto(self.output_dir + '/' + self.object_name + '_comps_probs_wvt.fits', component_prob_fits, cutout.wcs.to_header(), overwrite=True)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
+
+    def detection_map(self, x_min=None, x_max=None, y_min=None, y_max=None, n_threads=1):
+        """
+        Method to call the detection algorithm. The detection algorithm works as follows:
+        For each pixel,
+            1. Calculate the median spectrum for a 3x3 pixel region centered on the current pixel
+            2. Calculate the median spectrum for a 9x9 pixel region centered on the current pixel
+            3. Subtract the 9x9 spectrum from the 3x3 spectrum
+            4. Take the maximum value of this subtracted spectrum as the detection map value
+
+        In the end, we have a detection map of the maximum values.
+
+        If no bounds are added, we calculate over the entire map
+
+        Args:
+            x_min: Lower bound in x
+            x_max: Upper bound in x
+            y_min: Lower bound in y
+            y_max: Upper bound in y
+            n_threads: Number of threads (default 1)
+        """
+        if x_min is None or x_max is None or y_min is None or y_max is None:
+            # Set spatial bounds for entire cube
+            x_min = 0+10
+            x_max = self.cube_final.shape[0]-10
+            y_min = 0+10
+            y_max = self.cube_final.shape[1]-10
+        # Initalize solution
+        detection_map = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
+        # Correct header information
+        if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
+            self.create_deep_image()
+
+        wcs = WCS(self.header, naxis=2)
+        cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
+                          position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
+                          wcs=wcs)
+
+        set_num_threads(n_threads)
+        @jit(nopython=False)
+        def value_calc(i, detection_map):
+            y_pix = y_min + i
+            detection_local = []
+            for j in range(x_max - x_min):
+                x_pix = x_min + j
+                # Get the 3x3 bin group
+                sky_1 = self.cube_final[x_pix-1:x_pix+1, y_pix-1:y_pix+1, :]
+                sky_1 = np.nanmedian(sky_1, axis=0)  # Bin once
+                sky_1 = np.nanmedian(sky_1, axis=0)  # Bin twice!
+                good_sky_inds_1 = [~np.isnan(sky_1)]  # Clean up spectrum
+                sky_1 = sky_1[good_sky_inds_1]
+                # Get the 9x9 bin group
+                sky_2 = self.cube_final[x_pix - 3:x_pix + 3, y_pix - 3:y_pix + 3, :]
+                sky_2 = np.nanmedian(sky_2, axis=0)  # Bin once
+                sky_2 = np.nanmedian(sky_2, axis=0)  # Bin twice!
+                good_sky_inds_2 = [~np.isnan(sky_2)]  # Clean up spectrum
+                sky_2 = sky_2[good_sky_inds_2]
+                # Obtain the difference
+                sky_diff = sky_1 - sky_2
+                if len(sky_diff) > 0:
+                    detection_val = np.nanmax(
+                        sky_diff)  # The nan shouldn't be necessary -- I just put it so that it didn't feel left out
+                    detection_local.append(detection_val)
+                else:
+                    detection_local.append(0)
+
+            detection_map[i] = detection_local
+
+            return i, detection_map
+        for step_i in tqdm(range(y_max - y_min)):
+            value_calc(step_i, detection_map)
+        fits.writeto(self.output_dir+'/'+self.object_name + '_detection.fits', detection_map, cutout.wcs.to_header(), overwrite=True)
+        return detection_map

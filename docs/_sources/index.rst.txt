@@ -117,6 +117,7 @@ Examples
        example_synthetic_spectrum
        example_double_fit
        example_visualize
+       example_wvt
 
 
 
