@@ -383,19 +383,7 @@ class Luci():
                     corr_local.append(0)
                     step_local.append(0)
                     continuum_local.append(0)
-            '''ampls_fits[i] = ampls_local
-            flux_fits[i] = flux_local
-            flux_errors_fits[i] = flux_errs_local
-            velocities_fits[i] = vels_local
-            broadenings_fits[i] = broads_local
-            velocities_errors_fits[i] = vels_errs_local
-            broadenings_errors_fits[i] = broads_errs_local
-            chi2_fits[i] = chi2_local
-            corr_fits[i] = corr_local
-            step_fits[i] = step_local
-            continuum_fits[i] = continuum_local'''''
             return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
-            #return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
 
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None and binning != 1:
@@ -411,16 +399,10 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        #for step_i in tqdm(prange(y_max - y_min)):
-        #    fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits,
-        #             broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
         pool = mp.Pool(n_threads)
-        print("mapping ...")
         results = tqdm(pool.imap(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
         results = tuple(results)
-        # Step 3: Don't forget to close
         pool.close()
-
         for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
             ampls_fits[i] = ampls_local
@@ -1306,8 +1288,8 @@ class Luci():
                           wcs=wcs)
 
         set_num_threads(n_threads)
-        @jit(nopython=False)
-        def value_calc(i, detection_map):
+        global value_calc
+        def value_calc(i):
             y_pix = y_min + i
             detection_local = []
             for j in range(x_max - x_min):
@@ -1319,7 +1301,7 @@ class Luci():
                 good_sky_inds_1 = [~np.isnan(sky_1)]  # Clean up spectrum
                 sky_1 = sky_1[good_sky_inds_1]
                 # Get the 9x9 bin group
-                sky_2 = self.cube_final[x_pix - 3:x_pix + 3, y_pix - 3:y_pix + 3, :]
+                sky_2 = self.cube_final[x_pix - 4:x_pix + 4, y_pix - 4:y_pix + 4, :]
                 sky_2 = np.nanmedian(sky_2, axis=0)  # Bin once
                 sky_2 = np.nanmedian(sky_2, axis=0)  # Bin twice!
                 good_sky_inds_2 = [~np.isnan(sky_2)]  # Clean up spectrum
@@ -1332,11 +1314,14 @@ class Luci():
                     detection_local.append(detection_val)
                 else:
                     detection_local.append(0)
+            return i, detection_local
 
+        pool = mp.Pool(n_threads)
+        results = tqdm(pool.imap(value_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
+        results = tuple(results)
+        pool.close()
+        for result in results:
+            i, detection_local = result
             detection_map[i] = detection_local
-
-            return i, detection_map
-        for step_i in tqdm(range(y_max - y_min)):
-            value_calc(step_i, detection_map)
         fits.writeto(self.output_dir+'/'+self.object_name + '_detection.fits', detection_map, cutout.wcs.to_header(), overwrite=True)
         return detection_map
