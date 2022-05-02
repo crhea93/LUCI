@@ -497,8 +497,9 @@ class Luci():
         elif '.npy' in region:
             mask = np.load(region)
         else:
-            print("At the moment, we only support '.reg' and '.npy' files for masks.")
-            print("Terminating Program!")
+            pass
+            #print("At the moment, we only support '.reg' and '.npy' files for masks.")
+            #print("Terminating Program!")
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
