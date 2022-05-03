@@ -920,16 +920,16 @@ class Luci():
                 in_region = self.cube_final[x_pix, y_pix, min_:max_]
                 flux_in_region = np.nansum(self.cube_final[x_pix, y_pix, min_:max_])
                 # Subtract off continuum estimate
-                clipped_spec = astrostats.sigma_clip(self.cube_final[x_pix, y_pix, min_:max_], sigma=2, masked=False,
-                                                     copy=False, maxiters=3)
+                clipped_spec = astrostats.sigma_clip(in_region, sigma=3, masked=False,
+                                                     copy=False, maxiters=10)
                 # Now take the mean value to serve as the continuum value
-                cont_val = np.median(clipped_spec)
+                cont_val = np.min(clipped_spec)
                 flux_in_region -= cont_val * (max_ - min_)  # Need to scale by the number of steps along wavelength axis
                 # Select distance region
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_max))
                 out_region = self.cube_final[x_pix, y_pix, min_:max_]
-                std_out_region = np.nanstd(self.cube_final[x_pix, y_pix, min_:max_])
+                std_out_region = np.nanstd(out_region)
                 if method == 1:
                     signal = np.nanmax(in_region) - np.nanmedian(in_region)
                     noise = np.abs(np.nanstd(out_region))
