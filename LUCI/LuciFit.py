@@ -528,7 +528,7 @@ class Fit:
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
-                        method='trust-constr',
+                        method='SLSQP',
                         options={'disp': False, 'maxiter': 100},
                         tol=1e-2,
                         args=(), constraints=cons

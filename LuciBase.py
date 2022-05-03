@@ -6,7 +6,6 @@ import astropy.units as u
 from tqdm import tqdm
 import keras
 from joblib import Parallel, delayed
-
 from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
 from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
@@ -16,13 +15,13 @@ import astropy.stats as astrostats
 from astropy.time import Time
 import numpy.ma as ma
 from astropy.coordinates import SkyCoord, EarthLocation
-from numba import jit, set_num_threads
+from numba import jit, set_num_threads, prange
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
 from LUCI.LuciWVT import *
 from LUCI.LuciVisualize import visualize as LUCIvisualize
-
+import multiprocessing as mp
 
 class Luci():
     """
@@ -298,7 +297,7 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        set_num_threads(n_threads)
+        set_num_threads(4)
         # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
@@ -308,9 +307,10 @@ class Luci():
             vel_init = fits.open(initial_values[0])[0].data
             broad_init = fits.open(initial_values[0])[0].data
 
-        @jit(nopython=False)
-        def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
-                     chi2_fit, corr_fit, step_fit, continuum_fit, initial_conditions=initial_conditions):
+        #@jit(nopython=False)
+        global fit_calc;
+        def fit_calc(i):#, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
+                     #chi2_fit, corr_fit, step_fit, continuum_fit, initial_conditions=initial_conditions):
 
             y_pix = y_min + i  # Step y coordinate
             # Set up all the local lists for the current y_pixel step
@@ -326,7 +326,7 @@ class Luci():
             step_local = []
             continuum_local = []
             # Step through x coordinates
-            for j in range(x_max - x_min):
+            for j in prange(x_max - x_min):
                 x_pix = x_min + j  # Set current x pixel
                 if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
                     sky = self.cube_binned[x_pix, y_pix, :]
@@ -383,18 +383,7 @@ class Luci():
                     corr_local.append(0)
                     step_local.append(0)
                     continuum_local.append(0)
-            ampls_fits[i] = ampls_local
-            flux_fits[i] = flux_local
-            flux_errors_fits[i] = flux_errs_local
-            velocities_fits[i] = vels_local
-            broadenings_fits[i] = broads_local
-            velocities_errors_fits[i] = vels_errs_local
-            broadenings_errors_fits[i] = broads_errs_local
-            chi2_fits[i] = chi2_local
-            corr_fits[i] = corr_local
-            step_fits[i] = step_local
-            continuum_fits[i] = continuum_local
-            return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, corr_fit, step_fit, continuum_fit
+            return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
 
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None and binning != 1:
@@ -410,9 +399,23 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        for step_i in tqdm(range(y_max - y_min)):
-            fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits,
-                     broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
+        pool = mp.Pool(n_threads)
+        results = tqdm(pool.imap(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
+        results = tuple(results)
+        pool.close()
+        for result in results:
+            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
+            ampls_fits[i] = ampls_local
+            flux_fits[i] = flux_local
+            flux_errors_fits[i] = flux_errs_local
+            velocities_fits[i] = vels_local
+            broadenings_fits[i] = broads_local
+            velocities_errors_fits[i] = vels_errs_local
+            broadenings_errors_fits[i] = broads_errs_local
+            chi2_fits[i] = chi2_local
+            corr_fits[i] = corr_local
+            step_fits[i] = step_local
+            continuum_fits[i] = continuum_local
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits,
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,
@@ -494,8 +497,9 @@ class Luci():
         elif '.npy' in region:
             mask = np.load(region)
         else:
-            print("At the moment, we only support '.reg' and '.npy' files for masks.")
-            print("Terminating Program!")
+            pass
+            #print("At the moment, we only support '.reg' and '.npy' files for masks.")
+            #print("Terminating Program!")
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
@@ -916,16 +920,16 @@ class Luci():
                 in_region = self.cube_final[x_pix, y_pix, min_:max_]
                 flux_in_region = np.nansum(self.cube_final[x_pix, y_pix, min_:max_])
                 # Subtract off continuum estimate
-                clipped_spec = astrostats.sigma_clip(self.cube_final[x_pix, y_pix, min_:max_], sigma=2, masked=False,
-                                                     copy=False, maxiters=3)
+                clipped_spec = astrostats.sigma_clip(in_region, sigma=3, masked=False,
+                                                     copy=False, maxiters=10)
                 # Now take the mean value to serve as the continuum value
-                cont_val = np.median(clipped_spec)
+                cont_val = np.min(clipped_spec)
                 flux_in_region -= cont_val * (max_ - min_)  # Need to scale by the number of steps along wavelength axis
                 # Select distance region
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_max))
                 out_region = self.cube_final[x_pix, y_pix, min_:max_]
-                std_out_region = np.nanstd(self.cube_final[x_pix, y_pix, min_:max_])
+                std_out_region = np.nanstd(out_region)
                 if method == 1:
                     signal = np.nanmax(in_region) - np.nanmedian(in_region)
                     noise = np.abs(np.nanstd(out_region))
@@ -1285,8 +1289,8 @@ class Luci():
                           wcs=wcs)
 
         set_num_threads(n_threads)
-        @jit(nopython=False)
-        def value_calc(i, detection_map):
+        global value_calc
+        def value_calc(i):
             y_pix = y_min + i
             detection_local = []
             for j in range(x_max - x_min):
@@ -1298,7 +1302,7 @@ class Luci():
                 good_sky_inds_1 = [~np.isnan(sky_1)]  # Clean up spectrum
                 sky_1 = sky_1[good_sky_inds_1]
                 # Get the 9x9 bin group
-                sky_2 = self.cube_final[x_pix - 3:x_pix + 3, y_pix - 3:y_pix + 3, :]
+                sky_2 = self.cube_final[x_pix - 4:x_pix + 4, y_pix - 4:y_pix + 4, :]
                 sky_2 = np.nanmedian(sky_2, axis=0)  # Bin once
                 sky_2 = np.nanmedian(sky_2, axis=0)  # Bin twice!
                 good_sky_inds_2 = [~np.isnan(sky_2)]  # Clean up spectrum
@@ -1311,11 +1315,14 @@ class Luci():
                     detection_local.append(detection_val)
                 else:
                     detection_local.append(0)
+            return i, detection_local
 
+        pool = mp.Pool(n_threads)
+        results = tqdm(pool.imap(value_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
+        results = tuple(results)
+        pool.close()
+        for result in results:
+            i, detection_local = result
             detection_map[i] = detection_local
-
-            return i, detection_map
-        for step_i in tqdm(range(y_max - y_min)):
-            value_calc(step_i, detection_map)
         fits.writeto(self.output_dir+'/'+self.object_name + '_detection.fits', detection_map, cutout.wcs.to_header(), overwrite=True)
         return detection_map
