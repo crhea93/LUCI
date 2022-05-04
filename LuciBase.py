@@ -846,7 +846,7 @@ class Luci():
         if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
-            integrated_spectrum -= bkg  # Subtract background spectrum
+            integrated_spectrum -= bkg*spec_ct  # Subtract background spectrum
         good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
