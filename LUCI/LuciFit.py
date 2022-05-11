@@ -1,16 +1,13 @@
 import numpy as np
 from scipy.optimize import minimize
 from scipy import interpolate
-from scipy.optimize import Bounds
-from numdifftools import Hessian
+from numdifftools import Hessian, Hessdiag
 import emcee
 import scipy.special as sps
 import astropy.stats as astrostats
 import warnings
 import dynesty
 from dynesty import utils as dyfunc
-import scipy.stats as stats
-
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
     calculate_flux, calculate_flux_err
@@ -529,7 +526,7 @@ class Fit:
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
                         method='SLSQP',
-                        options={'disp': False, 'maxiter': 100},
+                        options={'disp': True, 'maxiter': 30},
                         tol=1e-2,
                         args=(), constraints=cons
                         )
@@ -537,15 +534,15 @@ class Fit:
         # We now must unscale the amplitude
         for i in range(self.line_num):
             parameters[i * 3] *= self.spectrum_scale
-            # self.uncertainties[i * 3] *= self.spectrum_scale
+            self.uncertainties[i * 3] *= self.spectrum_scale
         # Scale continuum
         parameters[-1] *= self.spectrum_scale
-        # self.uncertainties[-1] *= self.spectrum_scale
+        self.uncertainties[-1] *= self.spectrum_scale
         if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
             try:
-                hessian = Hessian(nll)
-                hessian_calc = hessian(parameters)
+                hessian_calc = Hessian(nll, method='backward')   # Set method to backward to speed things up
+                hessian_calc = hessian_calc(parameters)
                 covariance_mat = -np.linalg.inv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
             except np.linalg.LinAlgError:
@@ -704,7 +701,7 @@ class Fit:
                                                   )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
-            sampler.run_mcmc(init_, 1, progress=False)
+            sampler.run_mcmc(init_, 1000, progress=False)
             # Obtain Ensemble Sampler results and discard first 200 walks (10%)
             flat_samples = sampler.get_chain(discard=0, flat=True)
             parameters_med = []
