@@ -73,8 +73,8 @@ def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors
                      velocities_errors_fits[:, :, ct], header, overwrite=True)
         fits.writeto(output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening_err.fits',
                      broadenings_errors_fits[:, :, ct], header, overwrite=True)
-    fits.writeto(output_name + '_Chi2.fits', chi2_fits, header, overwrite=True)
-    fits.writeto(output_name + '_continuum.fits', continuum_fits, header, overwrite=True)
+    fits.writeto(output_dir + '/' + output_name + '_Chi2.fits', chi2_fits, header, overwrite=True)
+    fits.writeto(output_dir + '/' + output_name + '_continuum.fits', continuum_fits, header, overwrite=True)
 
 
 def get_quadrant_dims(quad_number, quad_nb, dimx, dimy):

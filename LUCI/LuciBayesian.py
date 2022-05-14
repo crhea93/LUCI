@@ -123,8 +123,8 @@ def log_prior(theta, axis_restricted, line_num, line, line_dict, mu_vel, mu_broa
                 within_bounds = False  # Value not in bounds
                 break
         if ct % 3 == 2:  # sigma parameter
-            if param > mu_broad - 3 * sigma_broad and param < mu_broad + 3 * sigma_broad:
-                val_prior -= np.log(6 * sigma_broad)
+            if param > mu_broad - 10 * sigma_broad and param < mu_broad + 10 * sigma_broad:
+                val_prior -= np.log(10 * sigma_broad)
             else:
                 # print('broad: %i'%param)
                 within_bounds = False  # Value not in bounds
@@ -160,7 +160,7 @@ def log_prior_uniform(theta, line_num, lines, line_dict):
     """
     A_min = -0.5
     A_max = 1.1
-    x_min = 0
+    x_min = 1e5
     x_max = 1e7
     sigma_min = 0
     sigma_max = 30
@@ -191,13 +191,14 @@ def log_prior_uniform(theta, line_num, lines, line_dict):
                     pass
             else:
                 current_line_num += 1
-                l_02 = line_dict[lines[current_line_num]]
-                equal_value = int(1e7/(((1e7/params[1] - l_0)/l_0)*l_02+l_02))
-                if int(param) == equal_value:
-                    val_prior -= np.log(x_max - x_min)
-                else:
-                    within_bounds = False
-                    pass
+                #l_02 = line_dict[lines[current_line_num]]
+                #try:
+                #    equal_value = int(1e7/(((1e7/params[1] - l_0)/l_0)*l_02+l_02))
+                #if int(param) == equal_value:
+                val_prior -= np.log(x_max - x_min)
+                #else:
+                #    within_bounds = False
+                #    pass
         if ct % 3 == 2:  # sigma parameter
             if ct == 2:
                 if sigma_min < param < sigma_max:
@@ -206,11 +207,11 @@ def log_prior_uniform(theta, line_num, lines, line_dict):
                     within_bounds = False  # Value not in bounds
                     pass
             else:
-                equal_value = (params[2])  # Set equal to first broadening
-                if int(param) == equal_value:
-                    val_prior -= np.log(sigma_max - sigma_min)
-                else:
-                    within_bounds = False
+                #equal_value = (params[2])  # Set equal to first broadening
+                #if int(param) == equal_value:
+                val_prior -= np.log(sigma_max - sigma_min)
+                #else:
+                #    within_bounds = False
     # Check continuum
     if continuum_min < theta[-1] < continuum_max:
         val_prior -= np.log(continuum_max - continuum_min)
@@ -275,9 +276,9 @@ def log_probability(theta, axis_restricted, spectrum_restricted, yerr, model_typ
     mu_vel, mu_broad, sigma_vel, sigma_broad = prior_gauss
     lp = 0
     #if mdn:
-    #    lp = log_prior(theta, axis_restricted, line_num, lines, line_dict, mu_vel, mu_broad, sigma_vel, sigma_broad)
+    lp = log_prior(theta, axis_restricted, line_num, lines, line_dict, mu_vel, mu_broad, sigma_vel, sigma_broad)
     #else:
-    lp = log_prior_uniform(theta, line_num, lines, line_dict)
+    #lp = log_prior_uniform(theta, line_num, lines, line_dict)
     if not np.isfinite(lp):
         return -np.inf
     if np.isnan(lp):

@@ -360,7 +360,7 @@ class Fit:
         # Clip values at given sigma level (defined by sigma_level)
         clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
                                              masked=False, copy=False,
-                                             maxiters=10, stdfunc=astrostats.mad_std)
+                                             maxiters=3, stdfunc=astrostats.mad_std)
         if len(clipped_spec) < 1:
             clipped_spec = self.spectrum_restricted
         # Now take the minimum value to serve as the continuum value
@@ -503,7 +503,7 @@ class Fit:
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
         bounds_ = []  # Initialize bounds used for fitting
-        initial[-1] = self.cont_estimate(sigma_level=5)  # Add continuum constant and intialize it
+        initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and intialize it
         lines_fit = []  # List of lines which already have been set up for fits
         cons = None
         for mod in range(self.line_num):  # Step through each line
@@ -526,7 +526,7 @@ class Fit:
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
                         method='SLSQP',
-                        options={'disp': True, 'maxiter': 30},
+                        options={'disp': False, 'maxiter': 30},
                         tol=1e-2,
                         args=(), constraints=cons
                         )
@@ -667,11 +667,12 @@ class Fit:
         # Set the number of dimensions -- this is somewhat arbitrary
         n_dim = 3 * self.line_num + 1
         # Set number of MCMC walkers. Again, this is somewhat arbitrary
-        n_walkers = 200  # n_dim * 3 + 4
+        n_walkers = n_dim * 5
         # Initialize walkers
-        random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
+        random_ = 1e-1 * np.random.randn(n_walkers, n_dim)
         for i in range(self.line_num):
-            random_[:, 3 * i + 1] *= 1e3
+            random_[:, 3 * i + 1] *= 1e2
+            random_[:, 3 * i + 2] *= 1e1
         init_ = self.fit_sol + random_  # + self.fit_sol[-1] + random_
         # Ensure continuum values for walkers are positive
         init_[:, -1] = np.abs(init_[:, -1])
@@ -701,9 +702,9 @@ class Fit:
                                                   )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
-            sampler.run_mcmc(init_, 1000, progress=False)
+            sampler.run_mcmc(init_, 10000, progress=False)
             # Obtain Ensemble Sampler results and discard first 200 walks (10%)
-            flat_samples = sampler.get_chain(discard=0, flat=True)
+            flat_samples = sampler.get_chain(discard=1000, flat=True)
             parameters_med = []
             parameters_std = []
             self.flat_samples = flat_samples

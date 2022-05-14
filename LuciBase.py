@@ -955,7 +955,7 @@ class Luci():
         fits.writeto(self.output_dir + '/' + self.object_name + '_SNR.fits', SNR, self.header, overwrite=True)
 
         # Save masks for SNr 3, 5, and 10
-        for snr_val in [3, 5, 10]:
+        for snr_val in [1, 3, 5, 10]:
             mask = ma.masked_where(SNR >= snr_val, SNR)
             np.save("%s/SNR_%i_mask.npy" % (self.output_dir, snr_val), mask.mask)
 
@@ -1191,7 +1191,7 @@ class Luci():
         """
         Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
         Written by Benjamin Vigneron
-        
+
         Args:
 
         """
