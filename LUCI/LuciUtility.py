@@ -182,15 +182,11 @@ def update_header(file):
                 hdr_dict[header_col] = str(header_val)
     hdr_dict['CTYPE3'] = 'WAVE-SIP'
     hdr_dict['CUNIT3'] = 'm'
-    # hdr_dict['NAXIS1'] = 2064
-    # hdr_dict['NAXIS2'] = 2048
     # Make WCS
     wcs_data = WCS(hdr_dict, naxis=2)
     header = wcs_data.to_header()
     header.insert('WCSAXES', ('SIMPLE', 'T'))
     header.insert('SIMPLE', ('NAXIS', 2), after=True)
-    # self.header.insert('NAXIS', ('NAXIS1', 2064), after=True)
-    # self.header.insert('NAXIS1', ('NAXIS2', 2048), after=True)
     hdr_dict = hdr_dict
     return header, hdr_dict
 

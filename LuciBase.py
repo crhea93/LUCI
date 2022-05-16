@@ -195,7 +195,11 @@ class Luci():
         Wrapper function for LUCI.LuciVisualize()
         """
         if self.deep_image is None:
-            deep_image = fits.open('Luci_outputs/%s_deep.fits'%self.object_name)[0].data
+            try:
+                deep_image = fits.open('Luci_outputs/%s_deep.fits'%self.object_name)[0].data
+            except:
+                self.create_deep_image()
+                deep_image = fits.open('Luci_outputs/%s_deep.fits'%self.object_name)[0].data
         else:
             deep_image = self.deep_image
         LUCIvisualize(deep_image, self.spectrum_axis, self.cube_final)

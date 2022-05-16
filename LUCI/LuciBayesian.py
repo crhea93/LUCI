@@ -58,11 +58,6 @@ def log_likelihood_bayes(theta, axis_restricted, spectrum_restricted, yerr, mode
         model = SincGauss().evaluate(axis_restricted, theta, line_num, sinc_width)
     model += theta[-1]
     sigma2 = yerr ** 2
-    # print(theta)
-    # print(axis_restricted)
-    # print(model)
-    # print(sigma2)
-    # exit()
     val = 0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
     if np.isnan(val):
         return -np.inf
