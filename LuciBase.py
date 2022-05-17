@@ -430,7 +430,7 @@ class Luci():
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
                    bkg=None, binning=None, bayes_bool=False, bayes_method='emcee',
                    output_name=None, uncertainty_bool=False, n_threads=1, nii_cons=True,
-                   spec_min=None, spec_max=None, obj_redshift=None):
+                   spec_min=None, spec_max=None, obj_redshift=0.0):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -456,7 +456,7 @@ class Luci():
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
-            obj_redshift: TODO
+            obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -816,7 +816,7 @@ class Luci():
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
-            obj_redshift: TODO
+            obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
         Return:
             X-axis and spectral axis of region.
 

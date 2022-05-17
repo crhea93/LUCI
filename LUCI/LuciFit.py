@@ -73,7 +73,7 @@ class Fit:
             initial_values: List of initial conditions for the velocity and broadening; [velocity, broadening]
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
-            obj_redshift: TODO
+            obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
