@@ -78,7 +78,7 @@ class Luci():
         self.spectrum_axis, self.spectrum_axis_unshifted = spectrum_axis_func(self.hdr_dict, self.redshift)
         if ML_bool is True:
             if not self.mdn:
-                if self.filter in ['SN1', 'SN2', 'SN3', 'C4']:
+                if self.filter in ['SN1', 'SN2', 'SN3', 'C3', 'C4']:
                     self.ref_spec = self.Luci_path + 'ML/Reference-Spectrum-R%i-%s.fits' % (resolution, self.filter)
                     self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,
                                                                                                  self.hdr_dict)
@@ -430,7 +430,7 @@ class Luci():
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
                    bkg=None, binning=None, bayes_bool=False, bayes_method='emcee',
                    output_name=None, uncertainty_bool=False, n_threads=1, nii_cons=True,
-                   spec_min=None, spec_max=None):
+                   spec_min=None, spec_max=None, obj_redshift=None):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -456,6 +456,7 @@ class Luci():
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
+            obj_redshift: TODO
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -571,7 +572,8 @@ class Luci():
                               bayes_bool=bayes_bool, bayes_method=bayes_method,
                               uncertainty_bool=uncertainty_bool,
                               mdn=self.mdn, nii_cons=nii_cons,
-                              spec_min=spec_min, spec_max=spec_max)
+                              spec_min=spec_min, spec_max=spec_max,
+                              obj_redshift=obj_redshift)
                     fit_dict = fit.fit()
                     # Save local list of fit values
                     ampls_local.append(fit_dict['amplitudes'])
@@ -792,7 +794,7 @@ class Luci():
                             region, bkg=None,
                             bayes_bool=False, bayes_method='emcee',
                             uncertainty_bool=False, mean=False, nii_cons=True,
-                            spec_min=None, spec_max=None
+                            spec_min=None, spec_max=None, obj_redshift=0.0
                             ):
         """
         Fit spectrum in region.
@@ -814,6 +816,7 @@ class Luci():
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
+            obj_redshift: TODO
         Return:
             X-axis and spectral axis of region.
 
@@ -864,7 +867,8 @@ class Luci():
                   bayes_bool=bayes_bool, bayes_method=bayes_method,
                   uncertainty_bool=uncertainty_bool, nii_cons=nii_cons,
                   mdn=self.mdn,
-                  spec_min=spec_min, spec_max=spec_max)
+                  spec_min=spec_min, spec_max=spec_max,
+                  obj_redshift=obj_redshift)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 

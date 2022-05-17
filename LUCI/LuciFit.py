@@ -44,7 +44,7 @@ class Fit:
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
                  nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=False,
-                 spec_min=None, spec_max=None
+                 spec_min=None, spec_max=None, obj_redshift=None
                  ):
         """
         Args:
@@ -73,6 +73,7 @@ class Fit:
             initial_values: List of initial conditions for the velocity and broadening; [velocity, broadening]
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
+            obj_redshift: TODO
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -81,6 +82,9 @@ class Fit:
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
+        self.obj_redshift_corr = 1 + obj_redshift
+        for line_key in self.line_dict:
+            self.line_dict[line_key] = self.line_dict[line_key] * self.obj_redshift_corr
         self.nii_cons = nii_cons
         self.spec_min = spec_min
         self.spec_max = spec_max
@@ -185,6 +189,11 @@ class Fit:
             elif self.filter == 'SN1':
                 bound_lower = 26000
                 bound_upper = 27400
+            elif self.filter == 'C3' and 'OII3726' in self.lines:
+                ## This is true for objects with a redshift around 0.465
+                # We pretend we are looking at SN1
+                bound_lower = 18000
+                bound_upper = 19400
             elif self.filter == 'C4' and 'Halpha' in self.lines:
                 ## This is true for objects at redshift ~0.25
                 # In this case we pretend we are in SN3
@@ -192,7 +201,7 @@ class Fit:
                 bound_upper = 15400
             else:
                 print(
-                    'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
+                    'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
             self.spec_min = bound_lower
             self.spec_max = bound_upper
         else:
@@ -222,6 +231,11 @@ class Fit:
         elif self.filter == 'SN1':
             bound_lower = 25300
             bound_upper = 25700
+        elif self.filter == 'C3' and 'OII3726' in self.lines:
+            ## This is true for objects at redshift ~0.465
+            # In this case we pretend we are in SN1
+            bound_lower = 18000
+            bound_upper = 19400
         elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
@@ -229,7 +243,7 @@ class Fit:
             bound_upper = 14950
         else:
             print(
-                'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
+                'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
         # Calculate standard deviation
         min_ = np.argmin(np.abs(np.array(self.axis) - bound_lower))
         max_ = np.argmin(np.abs(np.array(self.axis) - bound_upper))
@@ -356,6 +370,9 @@ class Fit:
         elif self.filter == 'SN1':
             min_ = 26000
             max_ = 26250
+        elif self.filter == 'C3':
+            min_ = 18000
+            max_ = 19000
 
         # Clip values at given sigma level (defined by sigma_level)
         clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
