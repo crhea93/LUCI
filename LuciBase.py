@@ -1134,11 +1134,24 @@ class Luci():
         if self.cube_binned:
             del self.cube_binned
 
-
-
-    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL):
+    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, StN_target,
+                   pixel_size=0.0000436, roundness_crit=0.3, ToL=0.01):
         """
-        Written by Benjamin Vigneron
+        Implemented by Benjamin Vigneron -- WVT python implentation written by Carter Rhea
+        This function takes a region and creates a WVT bin map given a signal to noise target
+
+        Args:
+            x_min_init: Minimum x pixel
+            x_max_init: Maximum x pixel
+            y_min_init: Minimum y pixel
+            y_max_init: Minimum y pixel
+            StN_target: Signal to noise target
+            pixel_size: Size of pixel (default 0.0000436 for SITELLE)
+            roundness_crit: Roundness criterion for WVT algo
+            ToL: Tolerance of WVT algorithm
+
+        Return:
+            Create .npy bin files which are stored in Numpy_Voronoi_Bins folder
         """
         print("#----------------WVT Algorithm----------------#")
         Pixels = []
@@ -1191,12 +1204,20 @@ class Luci():
             j += 1
 
     def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False,
-                mean=False, n_threads=1):
+                n_threads=1):
         """
         Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
         Written by Benjamin Vigneron
 
         Args:
+            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
+            fit_function: Fitting function to use (e.x. 'gaussian')
+            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2])
+            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2])
+            bkg: Background Spectrum (1D numpy array; default None)
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
+            uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+            n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
 
         """
         x_min = 0
@@ -1232,7 +1253,7 @@ class Luci():
             bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel,
                                                                        region=bool_bin_map, bkg=bkg,
                                                                        bayes_bool=bayes_bool,
-                                                                       uncertainty_bool=uncertainty_bool, mean=mean)
+                                                                       uncertainty_bool=uncertainty_bool)
             component_dict = self.calculate_components_in_region(bool_bin_map, bkg=bkg)
             index = np.where(np.load(bool_bin_map) == True)
             for a, b in zip(index[0], index[1]):
