@@ -70,6 +70,8 @@ def plot_Bins(Bins,x_min,x_max,y_min,y_max,StN_Target,file_dir,filename):
     plt.ylabel("Number of Bins")
     plt.xlabel("Signal-to-Noise")
     plt.title("Signal-to-Noise per Bin")
+    if not os.path.exists(file_dir + '/histograms'):
+        os.mkdir(file_dir + '/histograms')
     plt.savefig(file_dir+'/histograms/'+filename+".png")
     plt.clf()
     SNR_std = stats.stdev(SNR_list)

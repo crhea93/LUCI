@@ -1154,21 +1154,25 @@ class Luci():
             Create .npy bin files which are stored in Numpy_Voronoi_Bins folder
         """
         print("#----------------WVT Algorithm----------------#")
+        print("#----------------Create SNR Map---------------#")
         Pixels = []
-        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=2, n_threads=1)
+        wvt_output = self.output_dir + '/WVT'
+        if not os.path.exists(wvt_output):
+            os.mkdir(wvt_output)
+        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=1)
         print("#----------------Algorithm Part 1----------------#")
         SNR_map = fits.open(self.output_dir + '/' + self.object_name + '_SNR.fits')[0].data
         SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
-        fits.writeto(self.output_dir + '/' + self.object_name + '_SNR.fits', SNR_map, overwrite=True)
-        Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir + '/' + self.object_name + '_SNR.fits')
+        fits.writeto(self.output_dir  + '/' + self.object_name + '_SNR.fits', SNR_map, overwrite=True)
+        Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir  + '/' + self.object_name + '_SNR.fits')
         Nearest_Neighbors(Pixels)
         Init_bins = Bin_Acc(Pixels, pixel_size, StN_target, roundness_crit)
-        plot_Bins(Init_bins, x_min, x_max, y_min, y_max, StN_target, self.output_dir, "bin_acc")
+        plot_Bins(Init_bins, x_min, x_max, y_min, y_max, StN_target, wvt_output, "bin_acc")
         print("#----------------Algorithm Part 2----------------#")
-        Final_Bins = WVT(Init_bins, Pixels, StN_target, ToL, pixel_size, self.output_dir)
+        Final_Bins = WVT(Init_bins, Pixels, StN_target, ToL, pixel_size, wvt_output)
         print("#----------------Algorithm Complete--------------#")
-        plot_Bins(Final_Bins, x_min, x_max, y_min, y_max, StN_target, self.output_dir, "final")
-        Bin_data(Final_Bins, Pixels, x_min, y_min, self.output_dir, "WVT_data")
+        plot_Bins(Final_Bins, x_min, x_max, y_min, y_max, StN_target, wvt_output, "final")
+        Bin_data(Final_Bins, Pixels, x_min, y_min, wvt_output, "WVT_data")
         print("#----------------Bin Mapping--------------#")
         pixel_x = []
         pixel_y = []
@@ -1176,7 +1180,7 @@ class Luci():
         bin_map = np.zeros((x_max - x_min, y_max - y_min))
         j = 0
         i = 0
-        with open(self.output_dir + '/WVT_data.txt', 'rt') as myfile:
+        with open(wvt_output + '/WVT_data.txt', 'rt') as myfile:
             myfile = myfile.readlines()[3:]
             for myline in myfile:
                 myline = myline.strip(' \n')
@@ -1189,18 +1193,18 @@ class Luci():
             i += 1
         # bin_map = np.rot90(bin_map)
         print("#----------------Numpy Bin Mapping--------------#")
-        if not os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
-            os.mkdir(self.output_dir + '/Numpy_Voronoi_Bins')
-        if os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
-            files = glob.glob(self.output_dir + '/Numpy_Voronoi_Bins/*.npy')
+        if not os.path.exists(wvt_output + '/Numpy_Voronoi_Bins'):
+            os.mkdir(wvt_output + '/Numpy_Voronoi_Bins')
+        if os.path.exists(wvt_output + '/Numpy_Voronoi_Bins'):
+            files = glob.glob(wvt_output + '/Numpy_Voronoi_Bins/*.npy')
             for f in files:
                 os.remove(f)
         for bin_num in list(range(len(Final_Bins))):
-            print("We're at bin number : ", bin_num)
+            #print("We're at bin number : ", bin_num)
             bool_bin_map = np.zeros((2048, 2064), dtype=bool)
             for a, b in zip(np.where(bin_map == bin_num)[0][:], np.where(bin_map == bin_num)[1][:]):
                 bool_bin_map[x_min_init + a, y_min_init + b] = True
-            np.save(self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i' % j, bool_bin_map)
+            np.save(wvt_output + '/Numpy_Voronoi_Bins/bool_bin_map_%i' % j, bool_bin_map)
             j += 1
 
     def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False,
@@ -1220,6 +1224,7 @@ class Luci():
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
 
         """
+        wvt_output = self.output_dir + '/WVT'
         x_min = 0
         x_max = self.cube_final.shape[0]
         y_min = 0
@@ -1247,9 +1252,9 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        for bin_num in list(range(len(os.listdir(self.output_dir + '/Numpy_Voronoi_Bins/')))):
-            print("We're at bin number : ", bin_num)
-            bool_bin_map = self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i.npy' % bin_num
+        for bin_num in list(range(len(os.listdir(wvt_output + '/Numpy_Voronoi_Bins/')))):
+            #print("We're at bin number : ", bin_num)
+            bool_bin_map = wvt_output + '/Numpy_Voronoi_Bins/bool_bin_map_%i.npy' % bin_num
             bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel,
                                                                        region=bool_bin_map, bkg=bkg,
                                                                        bayes_bool=bayes_bool,
@@ -1268,13 +1273,15 @@ class Luci():
                 velocities_errors_fits[a, b] = bin_fit_dict['vels_errors']
                 component_fits[a, b] = component_dict['components']
                 component_prob_fits[a, b] = component_dict['component_probability']
-        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
+        save_fits(wvt_output, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits, velocities_errors_fits,
                   broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(),
                   binning=1, suffix='_wvt')
-        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_wvt.fits', component_fits, cutout.wcs.to_header(), overwrite=True)
-        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_probs_wvt.fits', component_prob_fits, cutout.wcs.to_header(), overwrite=True)
+        fits.writeto(wvt_output + '/' + self.object_name + '_comps_wvt.fits', component_fits, cutout.wcs.to_header(), overwrite=True)
+        fits.writeto(wvt_output + '/' + self.object_name + '_comps_probs_wvt.fits', component_prob_fits, cutout.wcs.to_header(), overwrite=True)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
+
+
 
     def detection_map(self, x_min=None, x_max=None, y_min=None, y_max=None, n_threads=1):
         """
