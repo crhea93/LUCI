@@ -44,7 +44,7 @@ class Fit:
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
                  nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=False,
-                 spec_min=None, spec_max=None, obj_redshift=None
+                 spec_min=None, spec_max=None, obj_redshift=0.0
                  ):
         """
         Args:
@@ -519,8 +519,7 @@ class Fit:
         """
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-        bounds_ = []  # Initialize bounds used for fitting
-        initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and intialize it
+        initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
         lines_fit = []  # List of lines which already have been set up for fits
         cons = None
         for mod in range(self.line_num):  # Step through each line
@@ -530,7 +529,7 @@ class Fit:
             initial[3 * mod + 1] = vel_est  # Set wavenumber
             initial[3 * mod + 2] = sigma_est  # Set sigma
         self.initial_values = initial
-        sigma_cons = self.sigma_constraints()  # Call sigma constaints
+        sigma_cons = self.sigma_constraints()  # Call sigma constraints
         vel_cons = self.vel_constraints()  # Call velocity constraints
         vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
@@ -543,8 +542,8 @@ class Fit:
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
                         method='SLSQP',
-                        options={'disp': False, 'maxiter': 30},
-                        tol=1e-2,
+                        options={'disp': False, 'maxiter': 100},
+                        tol=1e-8,
                         args=(), constraints=cons
                         )
         parameters = soln.x
@@ -604,6 +603,12 @@ class Fit:
                 self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
             self.calculate_params()
+            if np.isnan(self.fit_sol[0]):  # Check that there are no Nans in solution
+                # If a Nan is found, then we redo the fit without the ML priors
+                temp_ML = self.ML_model
+                self.ML_model = ''
+                self.calculate_params()
+                self.ML_model = temp_ML
             # Check if Bayesian approach is required
             if self.bayes_bool:
                 self.fit_Bayes()
@@ -726,7 +731,7 @@ class Fit:
             parameters_std = []
             self.flat_samples = flat_samples
             for i in range(n_dim):  # Calculate and store these results
-                median = np.mean(flat_samples[:, i])
+                median = np.median(flat_samples[:, i])
                 std = np.std(flat_samples[:, i])
                 parameters_med.append(median)
                 parameters_std.append(std)
