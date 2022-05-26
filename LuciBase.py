@@ -77,11 +77,11 @@ class Luci():
         self.zpd_index = self.hdr_dict['ZPDINDEX']
         self.filter = self.hdr_dict['FILTER']
         self.spectrum_axis, self.spectrum_axis_unshifted = spectrum_axis_func(self.hdr_dict, self.redshift)
-        if self.filter=='C4':
+        if self.filter=='C4' or self.filter=='C2' or self.filter=='C1':
             self.spectrum_axis=self.spectrum_axis_unshifted #LYA mod
         if ML_bool is True:
             if not self.mdn:
-                if self.filter in ['SN1', 'SN2', 'SN3', 'C4']:
+                if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C1']:
                     self.ref_spec = self.Luci_path + 'ML/Reference-Spectrum-R%i-%s.fits' % (resolution, self.filter)
                     self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,
                                                                                                  self.hdr_dict)
