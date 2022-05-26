@@ -11,17 +11,18 @@ from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
 from astropy.nddata import Cutout2D
 import astropy.stats as astrostats
-#from astroquery.astrometry_net import AstrometryNet
+# from astroquery.astrometry_net import AstrometryNet
 from astropy.time import Time
 import numpy.ma as ma
 from astropy.coordinates import SkyCoord, EarthLocation
-from numba import jit, set_num_threads, prange
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
 from LUCI.LuciWVT import *
 from LUCI.LuciVisualize import visualize as LUCIvisualize
 import multiprocessing as mp
+import heat as ht
+
 
 class Luci():
     """
@@ -111,7 +112,8 @@ class Luci():
         through them and place all the spectra in a single cube.
         """
         print('Reading in data...')
-        file = h5py.File(self.cube_path + '.hdf5', 'r')  # Read in file
+        file = ht.load(self.cube_path + '.hdf5')
+        # file = h5py.File(self.cube_path + '.hdf5', 'r')  # Read in file
         self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
         self.dimx = file.attrs['dimx']  # Get the dimensions in x
         self.dimy = file.attrs['dimy']  # Get the dimensions in y
@@ -196,15 +198,13 @@ class Luci():
         """
         if self.deep_image is None:
             try:
-                deep_image = fits.open('Luci_outputs/%s_deep.fits'%self.object_name)[0].data
+                deep_image = fits.open('Luci_outputs/%s_deep.fits' % self.object_name)[0].data
             except:
                 self.create_deep_image()
-                deep_image = fits.open('Luci_outputs/%s_deep.fits'%self.object_name)[0].data
+                deep_image = fits.open('Luci_outputs/%s_deep.fits' % self.object_name)[0].data
         else:
             deep_image = self.deep_image
         LUCIvisualize(deep_image, self.spectrum_axis, self.cube_final)
-
-
 
     def fit_entire_cube(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, binning=None, bayes_bool=False,
                         output_name=None, uncertainty_bool=False, n_threads=1):
@@ -279,7 +279,7 @@ class Luci():
         initial_conditions = False
         if binning != None and binning != 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
-                                                            y_max)
+                          y_max)
             x_max = int((x_max - x_min) / binning);
             y_max = int((y_max - y_min) / binning)
             x_min = 0;
@@ -311,10 +311,11 @@ class Luci():
             vel_init = fits.open(initial_values[0])[0].data
             broad_init = fits.open(initial_values[0])[0].data
 
-        #@jit(nopython=False)
+        # @jit(nopython=False)
         global fit_calc;
-        def fit_calc(i):#, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
-                     #chi2_fit, corr_fit, step_fit, continuum_fit, initial_conditions=initial_conditions):
+
+        def fit_calc(i):  # , ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
+            # chi2_fit, corr_fit, step_fit, continuum_fit, initial_conditions=initial_conditions):
 
             y_pix = y_min + i  # Step y coordinate
             # Set up all the local lists for the current y_pixel step
@@ -481,7 +482,7 @@ class Luci():
         # Initialize fit solution arrays
         if binning != None and binning != 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
-                                                            y_max)
+                          y_max)
             # x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max - x_min) / binning);
             y_max = int((y_max - y_min) / binning)
@@ -503,8 +504,8 @@ class Luci():
             mask = np.load(region)
         else:
             pass
-            #print("At the moment, we only support '.reg' and '.npy' files for masks.")
-            #print("Terminating Program!")
+            # print("At the moment, we only support '.reg' and '.npy' files for masks.")
+            # print("Terminating Program!")
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
@@ -687,8 +688,8 @@ class Luci():
         return axis, sky, fit_dict
 
     def bin_cube(self, cube_final, header, binning, x_min, x_max, y_min, y_max):
-        self.header_binned, self.cube_binned = bin_cube_function(cube_final, header, binning, x_min, x_max, y_min, y_max)
-
+        self.header_binned, self.cube_binned = bin_cube_function(cube_final, header, binning, x_min, x_max, y_min,
+                                                                 y_max)
 
     def extract_spectrum(self, x_min, x_max, y_min, y_max, bkg=None, binning=None, mean=False):
         """
@@ -715,7 +716,7 @@ class Luci():
         # Initialize fit solution arrays
         if binning != None and binning != 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
-                                                            y_max)
+                          y_max)
             # x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max - x_min) / binning);
             y_max = int((y_max - y_min) / binning)
@@ -853,7 +854,7 @@ class Luci():
         if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
-            integrated_spectrum -= bkg*spec_ct  # Subtract background spectrum
+            integrated_spectrum -= bkg * spec_ct  # Subtract background spectrum
         good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
@@ -1092,12 +1093,14 @@ class Luci():
                 sky = integrated_spectrum[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
-                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH_%i' % num for num in sky_lines], len(sky_lines)*[1], len(sky_lines)*[1],
+                fit = Fit(sky, axis, self.wavenumbers_syn, 'sinc', ['OH_%i' % num for num in sky_lines],
+                          len(sky_lines) * [1], len(sky_lines) * [1],
                           self.model_ML, trans_filter=self.transmission_interpolated,
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
                           zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'], bayes_bool=False, bayes_method='emcee', sky_lines=sky_line_dict, sky_lines_scale=sky_lines_scale
+                          filter=self.hdr_dict['FILTER'], bayes_bool=False, bayes_method='emcee',
+                          sky_lines=sky_line_dict, sky_lines_scale=sky_lines_scale
                           )
 
                 velocity, fit_vector = fit.fit(sky_line=True)
@@ -1118,16 +1121,18 @@ class Luci():
     def calculate_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
         # TODO: ADD Documentation and example
         return create_component_map_function(self.header, self.hdr_dict, self.Luci_path, self.resolution, self.filter,
-                                      self.cube_final, self.spectrum_axis,
-                                      self.wavenumbers_syn_full, self.output_dir, self.object_name, x_min, x_max, y_min,
-                                      y_max, bkg,
-                                      n_threads, region)
+                                             self.cube_final, self.spectrum_axis,
+                                             self.wavenumbers_syn_full, self.output_dir, self.object_name, x_min, x_max,
+                                             y_min,
+                                             y_max, bkg,
+                                             n_threads, region)
 
     def calculate_components_in_region(self, region, bkg):
         # TODO: ADD Documentation and example
-        return calculate_components_in_region_function(self.header, self.hdr_dict, self.Luci_path, self.resolution, self.filter,
-                                                self.cube_final, self.spectrum_axis,
-                                                self.wavenumbers_syn_full, region, bkg)
+        return calculate_components_in_region_function(self.header, self.hdr_dict, self.Luci_path, self.resolution,
+                                                       self.filter,
+                                                       self.cube_final, self.spectrum_axis,
+                                                       self.wavenumbers_syn_full, region, bkg)
 
     def close(self):
         """
@@ -1137,8 +1142,6 @@ class Luci():
         del self.header
         if self.cube_binned:
             del self.cube_binned
-
-
 
     def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, StN_target, roundness_crit, ToL):
         """
@@ -1255,8 +1258,10 @@ class Luci():
                   broadenings_fits, velocities_errors_fits,
                   broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(),
                   binning=1, suffix='_wvt')
-        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_wvt.fits', component_fits, cutout.wcs.to_header(), overwrite=True)
-        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_probs_wvt.fits', component_prob_fits, cutout.wcs.to_header(), overwrite=True)
+        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_wvt.fits', component_fits,
+                     cutout.wcs.to_header(), overwrite=True)
+        fits.writeto(self.output_dir + '/' + self.object_name + '_comps_probs_wvt.fits', component_prob_fits,
+                     cutout.wcs.to_header(), overwrite=True)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits
 
     def detection_map(self, x_min=None, x_max=None, y_min=None, y_max=None, n_threads=1):
@@ -1281,10 +1286,10 @@ class Luci():
         """
         if x_min is None or x_max is None or y_min is None or y_max is None:
             # Set spatial bounds for entire cube
-            x_min = 0+10
-            x_max = self.cube_final.shape[0]-10
-            y_min = 0+10
-            y_max = self.cube_final.shape[1]-10
+            x_min = 0 + 10
+            x_max = self.cube_final.shape[0] - 10
+            y_min = 0 + 10
+            y_max = self.cube_final.shape[1] - 10
         # Initalize solution
         detection_map = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         # Correct header information
@@ -1298,13 +1303,14 @@ class Luci():
 
         set_num_threads(n_threads)
         global value_calc
+
         def value_calc(i):
             y_pix = y_min + i
             detection_local = []
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 # Get the 3x3 bin group
-                sky_1 = self.cube_final[x_pix-1:x_pix+1, y_pix-1:y_pix+1, :]
+                sky_1 = self.cube_final[x_pix - 1:x_pix + 1, y_pix - 1:y_pix + 1, :]
                 sky_1 = np.nanmedian(sky_1, axis=0)  # Bin once
                 sky_1 = np.nanmedian(sky_1, axis=0)  # Bin twice!
                 good_sky_inds_1 = [~np.isnan(sky_1)]  # Clean up spectrum
@@ -1332,5 +1338,6 @@ class Luci():
         for result in results:
             i, detection_local = result
             detection_map[i] = detection_local
-        fits.writeto(self.output_dir+'/'+self.object_name + '_detection.fits', detection_map, cutout.wcs.to_header(), overwrite=True)
+        fits.writeto(self.output_dir + '/' + self.object_name + '_detection.fits', detection_map,
+                     cutout.wcs.to_header(), overwrite=True)
         return detection_map
