@@ -258,6 +258,8 @@ dependencies:
     - patsy==0.5.2
     - pyvo==1.2.1
     - scikit-image==0.17.2
+    - seaborn
+    - sklearn
     - statsmodels==0.13.2
     - tifffile==2021.11.2
     - webencodings==0.5.1

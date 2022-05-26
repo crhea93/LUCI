@@ -3,10 +3,13 @@ In this document, you will find a brief description of what `LUCI` is, how to in
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg)](https://doi.org/10.5281/zenodo.5385351)
 
-You can find the RNAAS article here:
+You can find the original RNAAS article here:
 [Arxiv Paper: 2108.12428](https://arxiv.org/abs/2108.12428)
 
-![LuciLogo.png](LuciLogo.png)
+You can find the article updating the updates to the machine learning algorithms here:
+[Arxiv Paper: 2111.12755](https://arxiv.org/abs/2111.12755)
+
+![LuciLogo.png](docs/source/LuciLogo.png)
 
 
 ## What is LUCI
@@ -72,7 +75,7 @@ The easiest way to get involved is to make an issue or fork the repo, make your 
 If you have any questions about how to install, use, or modify `LUCI`, please send an email to [Carter Rhea](mailto:carter.rhea@umontreal.ca).
 
 ## Copyright & License
-2021 Carter Rhea ([carter.rhea@umontreal.ca](mailto:carter.rhea@umontreal.ca))
+2021-2022 Carter Rhea ([carter.rhea@umontreal.ca](mailto:carter.rhea@umontreal.ca))
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

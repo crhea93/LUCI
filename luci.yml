@@ -33,3 +33,5 @@ dependencies:
     - pytest
     - corner
     - dynesty
+    - seaborn
+    - sklearn
