@@ -403,10 +403,11 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        pool = mp.Pool(n_threads)
-        results = tqdm(pool.imap(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
-        results = tuple(results)
-        pool.close()
+        #pool = mp.Pool(n_threads)
+        #results = tqdm(pool.map(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
+        #results = tuple(results)
+        #pool.close()
+        results = Parallel(n_jobs=n_threads, backend='multiprocessing')(delayed(fit_calc)(sl) for sl in tqdm(range(y_max - y_min)))
         for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
             ampls_fits[i] = ampls_local
