@@ -188,7 +188,7 @@ class Fit:
                 bound_upper = 20750
             elif self.filter == 'SN1':
                 bound_lower = 26000
-                bound_upper = 27400
+                bound_upper = 28000
             elif self.filter == 'C3' and 'OII3726' in self.lines:
                 ## This is true for objects with a redshift around 0.465
                 # We pretend we are looking at SN1
@@ -288,7 +288,7 @@ class Fit:
 
         """
         self.spectrum_scale = np.max(self.spectrum)
-        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear')
+        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_interp_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_interp_scale
@@ -310,7 +310,6 @@ class Fit:
         line_theo = self.line_dict[line_name]
         if self.ML_model is None or self.ML_model == '':
             if self.initial_values is not False:
-                print(self.initial_values)
                 self.vel_ml = self.initial_values[0]  # Velocity component of initial conditions in km/s
                 self.broad_ml = self.initial_values[1]  # Broadening component of initial conditions in km/s
             else:
@@ -663,7 +662,7 @@ class Fit:
             vel_cons = self.vel_constraints()  # Call velocity constraints
             cons = sigma_cons+vel_cons
             soln = minimize(nll, initial,method='trust-constr',
-                            options={'disp': False, 'maxiter': 2000}, tol=1e-8,
+                            options={'disp': False, 'maxiter': 30}, tol=1e-3,
                             args=())#, constraints=cons)
             parameters = soln.x
 

@@ -301,7 +301,7 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        set_num_threads(4)
+        set_num_threads(n_threads)
         # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
@@ -500,7 +500,7 @@ class Luci():
             # mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
             mask = reg_to_mask(region, header)
         elif '.npy' in region:
-            mask = np.load(region)
+            mask = np.load(region).T
         else:
             pass
             #print("At the moment, we only support '.reg' and '.npy' files for masks.")
@@ -963,11 +963,13 @@ class Luci():
         fits.writeto(self.output_dir + '/' + self.object_name + '_SNR.fits', SNR, self.header, overwrite=True)
 
         # Save masks for SNr 3, 5, and 10
+        masks = []
         for snr_val in [1, 3, 5, 10]:
             mask = ma.masked_where(SNR >= snr_val, SNR)
+            masks.append(mask)
             np.save("%s/SNR_%i_mask.npy" % (self.output_dir, snr_val), mask.mask)
 
-        return None
+        return masks
 
     '''def update_astrometry(self, api_key):
         """
