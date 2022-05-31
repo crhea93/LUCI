@@ -25,11 +25,13 @@ dependencies:
     - jupyterlab==3.0.16
     - pytest==6.2.4
     - pyregion==2.1.1
-    - tensorboard~=2.5.0
-    - tensorboard-data-server==0.6.1
-    - tensorboard-plugin-wit==1.8.0
-    - tensorflow-estimator==2.1.0
+    - tensorboard
+    - tensorboard-data-server
+    - tensorboard-plugin-wit
+    - tensorflow-estimator
     - numba
     - pytest
     - corner
     - dynesty
+    - sklearn
+    - seaborn

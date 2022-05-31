@@ -73,8 +73,8 @@ def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors
                      velocities_errors_fits[:, :, ct], header, overwrite=True)
         fits.writeto(output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening_err.fits',
                      broadenings_errors_fits[:, :, ct], header, overwrite=True)
-    fits.writeto(output_name + '_Chi2.fits', chi2_fits, header, overwrite=True)
-    fits.writeto(output_name + '_continuum.fits', continuum_fits, header, overwrite=True)
+    fits.writeto(output_dir + '/' + output_name + '_Chi2.fits', chi2_fits, header, overwrite=True)
+    fits.writeto(output_dir + '/' + output_name + '_continuum.fits', continuum_fits, header, overwrite=True)
 
 
 def get_quadrant_dims(quad_number, quad_nb, dimx, dimy):
@@ -182,15 +182,11 @@ def update_header(file):
                 hdr_dict[header_col] = str(header_val)
     hdr_dict['CTYPE3'] = 'WAVE-SIP'
     hdr_dict['CUNIT3'] = 'm'
-    # hdr_dict['NAXIS1'] = 2064
-    # hdr_dict['NAXIS2'] = 2048
     # Make WCS
     wcs_data = WCS(hdr_dict, naxis=2)
     header = wcs_data.to_header()
     header.insert('WCSAXES', ('SIMPLE', 'T'))
     header.insert('SIMPLE', ('NAXIS', 2), after=True)
-    # self.header.insert('NAXIS', ('NAXIS1', 2064), after=True)
-    # self.header.insert('NAXIS1', ('NAXIS2', 2048), after=True)
     hdr_dict = hdr_dict
     return header, hdr_dict
 
@@ -217,6 +213,9 @@ def read_in_reference_spectrum(ref_spec, hdr_dict):
     elif hdr_dict['FILTER'] == 'SN1':
         min_ = np.argmin(np.abs(np.array(channel) - 25500))
         max_ = np.argmin(np.abs(np.array(channel) - 27500))
+    elif hdr_dict['FILTER'] == 'C3':
+        min_ = np.argmin(np.abs(np.array(channel) - 17500))
+        max_ = np.argmin(np.abs(np.array(channel) - 19500))
     elif hdr_dict['FILTER'] == 'C4':
         min_ = np.argmin(np.abs(np.array(channel) - 12100)) #LYA mod originally 14700
         max_ = np.argmin(np.abs(np.array(channel) - 12600)) #LYA mod originally 15600
@@ -230,6 +229,7 @@ def read_in_reference_spectrum(ref_spec, hdr_dict):
         print('We do not support this filter.')
         print('Terminating program!')
         exit()
+    print(min_, max_)
     wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
     wavenumbers_syn_full = np.array(channel, dtype=np.float32)
     return wavenumbers_syn, wavenumbers_syn_full

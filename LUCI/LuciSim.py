@@ -8,7 +8,7 @@ from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 
 class Spectrum:
 
-    def __init__(self, lines, fit_function, ampls, velocity, broadening, filter_, resolution, snr):
+    def __init__(self, lines, fit_function, ampls, velocity, broadening, filter_, resolution, snr, redshift=0.0):
         """
         Initialize mock spectrum by creating the spectrum and adding noise
 
@@ -21,6 +21,7 @@ class Spectrum:
             filter: SITELLE Filter (e.x. 'SN3')
             resolution: Spectral resolution
             snr: Signal to noise ratio
+            redshift of object (default 0.0)
 
         """
 
@@ -52,11 +53,24 @@ class Spectrum:
         elif self.filter == 'SN1':
             self.delta_x = 1647
             self.order = 6
+        elif self.filter == 'C1':
+            self.delta_x = 570
+            self.order = 2
+        elif self.filter == 'C2':
+            self.delta_x = 1680
+            self.order = 5
+        elif self.filter == 'C3':
+            self.delta_x = 1778
+            self.order = 6
+        elif self.filter == 'C4':
+            self.delta_x = 5272
+            self.order = 12
         else:
-            print('We only support SN1 and SN3 at this time.')
+            print('We only support C1, C2, C3, C4, SN1, and SN3 at this time.')
             print('Terminating the program')
             exit()
         self.resolution = resolution
+        self.redshift = redshift
         # Calculate number of steps from resolution
         self.n_steps = 0
         self.steps_from_resolution()
@@ -159,7 +173,7 @@ class Spectrum:
         spectrum = np.zeros_like(axis)  # Set continuum of about 2
         # Create emission lines
         for line_ct, line in enumerate(self.lines):
-            line_lambda_cm = 1e7 / self.line_dict[line]  # Convert from nm to cm-1
+            line_lambda_cm = (1e7 / self.line_dict[line])/(1+self.redshift)  # Convert from nm to cm-1
             vel_ = self.velocity[line_ct]  # Get velocity
             broad_ = self.broadening[line_ct]  # Get broadening
             amp_ = self.ampls[line_ct]  # Get amplitude

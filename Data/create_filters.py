@@ -22,6 +22,5 @@ def create_new(filter):
     # Save as .dat file
     np.savetxt('%s_filter.dat'%filter, combined, fmt='%.2f')
 
-#for filter_ in ['SN1', 'SN2', 'SN3', 'C4']:
-for filter_ in ['C1', 'C2']:
+for filter_ in ['SN1', 'SN2', 'SN3', 'C4', 'C3']:
     create_new(filter_)

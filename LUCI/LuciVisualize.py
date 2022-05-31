@@ -5,6 +5,7 @@ Luci visualization tools
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets  import RectangleSelector, Slider
+import seaborn as sns
 
 def visualize(deep_image, spectrum_axis, cube_final):
     """
@@ -73,15 +74,21 @@ def visualize(deep_image, spectrum_axis, cube_final):
             axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
             plt.show()
 
+    def update_min(min):
+        axes[0].clf()
+        axes[0].set_title('Scaled Deep Image')
+        scaled_deep_image = np.nan_to_num(np.log10(deep_image), 0)
+        axes[0].imshow(scaled_deep_image, vmin=float(min))
+        plt.show()
+
+
     fig.canvas.mpl_connect('button_press_event', onclick)
     plt.subplot(211)
     axes[0].set_title('Scaled Deep Image')
     scaled_deep_image = np.nan_to_num(np.log10(deep_image), 0)
-    plt.imshow(scaled_deep_image)
+    plt.imshow(scaled_deep_image, origin='lower', vmin=np.percentile(scaled_deep_image, 5), vmax=np.percentile(scaled_deep_image, 99))
     rs = RectangleSelector(axes[0], line_select_callback,
                            drawtype='box', useblit=False, button=[1],
                            minspanx=2, minspany=2, spancoords='pixels',
                            interactive=False)
-
-
     plt.show()

@@ -1,16 +1,13 @@
 import numpy as np
 from scipy.optimize import minimize
 from scipy import interpolate
-from scipy.optimize import Bounds
-from numdifftools import Hessian
+from numdifftools import Hessian, Hessdiag
 import emcee
 import scipy.special as sps
 import astropy.stats as astrostats
 import warnings
 import dynesty
 from dynesty import utils as dyfunc
-import scipy.stats as stats
-
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
     calculate_flux, calculate_flux_err
@@ -47,7 +44,7 @@ class Fit:
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
                  nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=False,
-                 spec_min=None, spec_max=None
+                 spec_min=None, spec_max=None, obj_redshift=0.0
                  ):
         """
         Args:
@@ -76,6 +73,7 @@ class Fit:
             initial_values: List of initial conditions for the velocity and broadening; [velocity, broadening]
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
+            obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -86,6 +84,9 @@ class Fit:
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
+        self.obj_redshift_corr = 1 + obj_redshift
+        for line_key in self.line_dict:
+            self.line_dict[line_key] = self.line_dict[line_key] * self.obj_redshift_corr
         self.nii_cons = nii_cons
         self.spec_min = spec_min
         self.spec_max = spec_max
@@ -140,15 +141,7 @@ class Fit:
         self.initial_values = initial_values  # List for initial values (or default False)
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
-        # Set bounds
-        self.A_min = 0.
-        self.A_max = 1.1
-        self.x_min = 0  # 14700;
-        self.x_max = 1e6  # 15600
-        self.sigma_min = 0.001
-        self.sigma_max = 3
         self.flat_samples = None
-
         # Check that lines inputted by user are in line_dict
         if sky_lines is None:
             self.check_lines()
@@ -198,7 +191,12 @@ class Fit:
             elif self.filter == 'SN1':
                 bound_lower = 26000
                 bound_upper = 27400
-            elif self.filter == 'C4':
+            elif self.filter == 'C3' and 'OII3726' in self.lines:
+                ## This is true for objects with a redshift around 0.465
+                # We pretend we are looking at SN1
+                bound_lower = 18000
+                bound_upper = 19400
+            elif self.filter == 'C4' and 'Halpha' in self.lines:
                 ## This is true for objects at redshift ~0.25
                 bound_lower = 12150
                 bound_upper = 12550
@@ -212,7 +210,7 @@ class Fit:
                 bound_upper = 25974#25700
             else:
                 print(
-                    'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
+                    'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
             self.spec_min = bound_lower
             self.spec_max = bound_upper
         else:
@@ -242,7 +240,12 @@ class Fit:
         elif self.filter == 'SN1':
             bound_lower = 25300
             bound_upper = 25700
-        elif self.filter == 'C4':
+        elif self.filter == 'C3' and 'OII3726' in self.lines:
+            ## This is true for objects at redshift ~0.465
+            # In this case we pretend we are in SN1
+            bound_lower = 18000
+            bound_upper = 19400
+        elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
             bound_lower = 11800#14600  # LYA mods, originally the same as SN3
@@ -257,7 +260,7 @@ class Fit:
             bound_upper = 20665
         else:
             print(
-                'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
+                'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
         # Calculate standard deviation
         min_ = np.argmin(np.abs(np.array(self.axis) - bound_lower))
         max_ = np.argmin(np.abs(np.array(self.axis) - bound_upper))
@@ -393,11 +396,14 @@ class Fit:
         elif self.filter == 'C1':
             min_ = 21500
             max_ = 25900
+        elif self.filter == 'C3':
+            min_ = 18000
+            max_ = 19000
 
         # Clip values at given sigma level (defined by sigma_level)
         clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
                                              masked=False, copy=False,
-                                             maxiters=10, stdfunc=astrostats.mad_std)
+                                             maxiters=3, stdfunc=astrostats.mad_std)
         if len(clipped_spec) < 1:
             clipped_spec = self.spectrum_restricted
         # Now take the minimum value to serve as the continuum value
@@ -539,8 +545,7 @@ class Fit:
         """
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-        bounds_ = []  # Initialize bounds used for fitting
-        initial[-1] = self.cont_estimate(sigma_level=5)  # Add continuum constant and intialize it
+        initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
         lines_fit = []  # List of lines which already have been set up for fits
         cons = None
         for mod in range(self.line_num):  # Step through each line
@@ -549,21 +554,14 @@ class Fit:
             initial[3 * mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
             initial[3 * mod + 1] = vel_est  # Set wavenumber
             initial[3 * mod + 2] = sigma_est  # Set sigma
-            bounds_.append((self.A_min, self.A_max))  # Set bounds for amplitude
-            bounds_.append((self.x_min, self.x_max))  # Set bounds for wavenumber
-            bounds_.append((self.sigma_min, self.sigma_max))  # Set bounds for sigma
-        bounds_l = [val[0] for val in bounds_] + [-0.05]  # Continuum bound Lower
-        bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum bound Higher
-        #bounds = Bounds(bounds_l, bounds_u)  # Define bounds
-        bounds_.append((-0.1, 0.5))
         self.initial_values = initial
-        sigma_cons = self.sigma_constraints()  # Call sigma constaints
+        sigma_cons = self.sigma_constraints()  # Call sigma constraints
         vel_cons = self.vel_constraints()  # Call velocity constraints
         vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
         if 'NII6548C4' in self.lines and 'NII6583C4' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
-            cons = sigma_cons + vel_cons + vel_cons_multiple# + nii_constraints
+            cons = sigma_cons + vel_cons + vel_cons_multiple + nii_constraints
         else:
             cons = sigma_cons + vel_cons + vel_cons_multiple
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
@@ -579,15 +577,15 @@ class Fit:
         # We now must unscale the amplitude
         for i in range(self.line_num):
             parameters[i * 3] *= self.spectrum_scale
-            # self.uncertainties[i * 3] *= self.spectrum_scale
+            self.uncertainties[i * 3] *= self.spectrum_scale
         # Scale continuum
         parameters[-1] *= self.spectrum_scale
-        # self.uncertainties[-1] *= self.spectrum_scale
+        self.uncertainties[-1] *= self.spectrum_scale
         if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
             try:
-                hessian = Hessian(nll)
-                hessian_calc = hessian(parameters)
+                hessian_calc = Hessian(nll, method='backward')   # Set method to backward to speed things up
+                hessian_calc = hessian_calc(parameters)
                 covariance_mat = -np.linalg.inv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
             except np.linalg.LinAlgError:
@@ -632,13 +630,12 @@ class Fit:
                 self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
             self.calculate_params()
-            if np.isnan(self.fit_sol[0])==True:
-                print('Nan found')
-                temp_ML=self.ML_model
-                self.ML_model=''
+            if np.isnan(self.fit_sol[0]):  # Check that there are no Nans in solution
+                # If a Nan is found, then we redo the fit without the ML priors
+                temp_ML = self.ML_model
+                self.ML_model = ''
                 self.calculate_params()
-                self.ML_model=temp_ML
-
+                self.ML_model = temp_ML
             # Check if Bayesian approach is required
             if self.bayes_bool:
                 self.fit_Bayes()
@@ -682,20 +679,12 @@ class Fit:
             # Apply Fit
             nll = lambda *args: self.log_likelihood(*args)  # Negative Log Likelihood function
             initial = np.ones(3*self.line_num + 1)
-            bounds_ = []
             skylines_vals = list(self.sky_lines.values())
             for mod in range(self.line_num):
                 initial[3 * mod] = self.cont_estimate(sigma_level=5) * self.sky_lines_scale[mod]
                 initial[3 * mod + 1] = 1e7 / ((80 * (skylines_vals[mod]) / SPEED_OF_LIGHT) + skylines_vals[mod])
                 initial[3 * mod + 2] = 1
-                bounds_.append((self.A_min, self.A_max))
-                bounds_.append((self.x_min, self.x_max))
-                bounds_.append((self.sigma_min, self.sigma_max))
             initial[-1] = self.cont_estimate(sigma_level=5)
-            bounds_.append((-0.1, 0.5))
-            #bounds_l = [val[0] for val in bounds_] + [0.0]  # Continuum Constraint
-            #bounds_u = [val[1] for val in bounds_] + [0.3]  # Continuum Constraint
-            #bounds = Bounds(bounds_l, bounds_u)
             self.initial_values = initial
             sigma_cons = self.sigma_constraints()  # Call sigma constaints
             vel_cons = self.vel_constraints()  # Call velocity constraints
@@ -727,15 +716,12 @@ class Fit:
         # Set the number of dimensions -- this is somewhat arbitrary
         n_dim = 3 * self.line_num + 1
         # Set number of MCMC walkers. Again, this is somewhat arbitrary
-        n_walkers = 200  # n_dim * 3 + 4
+        n_walkers = n_dim * 5
         # Initialize walkers
-        random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
-        #for i in range(self.line_num):
-            #random_[:, 3 * i + 1] *= 1e3
+        random_ = 1e-1 * np.random.randn(n_walkers, n_dim)
         for i in range(self.line_num):
-            random_[:, 3 * i + 1] *= 1e3
-            random_[:, 3 * i] *= 0.1
-            random_[:, 3 * i + 2] *= 1
+            random_[:, 3 * i + 1] *= 1e2
+            random_[:, 3 * i + 2] *= 1e1
         init_ = self.fit_sol + random_  # + self.fit_sol[-1] + random_
         # Ensure continuum values for walkers are positive
         init_[:, -1] = np.abs(init_[:, -1])
@@ -765,14 +751,14 @@ class Fit:
                                                   )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
-            sampler.run_mcmc(init_, 1, progress=False)
+            sampler.run_mcmc(init_, 10000, progress=False)
             # Obtain Ensemble Sampler results and discard first 200 walks (10%)
-            flat_samples = sampler.get_chain(discard=0, flat=True)
+            flat_samples = sampler.get_chain(discard=1000, flat=True)
             parameters_med = []
             parameters_std = []
             self.flat_samples = flat_samples
             for i in range(n_dim):  # Calculate and store these results
-                median = np.mean(flat_samples[:, i])
+                median = np.median(flat_samples[:, i])
                 std = np.std(flat_samples[:, i])
                 parameters_med.append(median)
                 parameters_std.append(std)

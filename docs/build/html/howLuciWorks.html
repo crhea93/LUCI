@@ -70,6 +70,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
@@ -186,12 +187,9 @@ an alternative method to calculate the initial guesses.</p>
 </section>
 <section id="fitting-function">
 <h3>Fitting Function<a class="headerlink" href="#fitting-function" title="Permalink to this headline"></a></h3>
-<p>The fitting function utilizes <em>scipy.optimize.minimize</em>. Currently, we are using the <cite>SLSQP &lt;https://docs.scipy.org/doc/scipy/reference/optimize.minimize-slsqp.html&gt;</cite>
+<p>The fitting function utilizes <em>scipy.optimize.minimize</em>. Currently, we are using the <cite>trust-constr &lt;https://docs.scipy.org/doc/scipy/reference/optimize.minimize-trustconstr.html&gt;</cite>
 optimization algorithm. Before fitting the spectrum, we normalize the spectrum by the maximum
-amplitude – this makes the fitting process simpler. We also constrain the amplitudes
-to be between 0.001 and 1.1, the position of the line to be between 14700 and 15600 [cm-1],
-and the sigma of the Gaussian to be between 0.001 and 10. By applying these bounds,
-we constrain the optimization problem. The fit returns the amplitude of the line
+amplitude – this makes the fitting process simpler. The fit returns the amplitude of the line
 (which we then scale to be correct for the un-normalized spectrum), the velocity in km/s,
 and the velocity dispersion in km/s. If the user chooses, the line velocities and velocity dispersions
 can be coupled. Additionally, we automatically include the constraint on the NII-doublet flux ratio
