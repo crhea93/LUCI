@@ -213,6 +213,9 @@ def read_in_reference_spectrum(ref_spec, hdr_dict):
     elif hdr_dict['FILTER'] == 'SN1':
         min_ = np.argmin(np.abs(np.array(channel) - 25500))
         max_ = np.argmin(np.abs(np.array(channel) - 27500))
+    elif hdr_dict['FILTER'] == 'C3':
+        min_ = np.argmin(np.abs(np.array(channel) - 17500))
+        max_ = np.argmin(np.abs(np.array(channel) - 19500))
     elif hdr_dict['FILTER'] == 'C4':
         min_ = np.argmin(np.abs(np.array(channel) - 14700))
         max_ = np.argmin(np.abs(np.array(channel) - 15600))
@@ -220,6 +223,7 @@ def read_in_reference_spectrum(ref_spec, hdr_dict):
         print('We do not support this filter.')
         print('Terminating program!')
         exit()
+    print(min_, max_)
     wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
     wavenumbers_syn_full = np.array(channel, dtype=np.float32)
     return wavenumbers_syn, wavenumbers_syn_full
