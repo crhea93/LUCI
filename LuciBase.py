@@ -303,7 +303,7 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        set_num_threads(4)
+        set_num_threads(n_threads)
         # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
@@ -405,10 +405,11 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        pool = mp.Pool(n_threads)
-        results = tqdm(pool.imap(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
-        results = tuple(results)
-        pool.close()
+        #pool = mp.Pool(n_threads)
+        #results = tqdm(pool.map(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
+        #results = tuple(results)
+        #pool.close()
+        results = Parallel(n_jobs=n_threads, backend='multiprocessing')(delayed(fit_calc)(sl) for sl in tqdm(range(y_max - y_min)))
         for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
             ampls_fits[i] = ampls_local
@@ -502,7 +503,7 @@ class Luci():
             # mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
             mask = reg_to_mask(region, header)
         elif '.npy' in region:
-            mask = np.load(region)
+            mask = np.load(region).T
         else:
             pass
             #print("At the moment, we only support '.reg' and '.npy' files for masks.")
@@ -965,11 +966,13 @@ class Luci():
         fits.writeto(self.output_dir + '/' + self.object_name + '_SNR.fits', SNR, self.header, overwrite=True)
 
         # Save masks for SNr 3, 5, and 10
+        masks = []
         for snr_val in [1, 3, 5, 10]:
             mask = ma.masked_where(SNR >= snr_val, SNR)
+            masks.append(mask)
             np.save("%s/SNR_%i_mask.npy" % (self.output_dir, snr_val), mask.mask)
 
-        return None
+        return masks
 
     '''def update_astrometry(self, api_key):
         """
