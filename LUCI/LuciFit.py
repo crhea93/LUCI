@@ -196,7 +196,7 @@ class Fit:
                 # We pretend we are looking at SN1
                 bound_lower = 18000
                 bound_upper = 19400
-            elif self.filter == 'C4' and 'Halpha' in self.lines:
+            elif self.filter == 'C4' and 'HalphaC4' in self.lines:
                 ## This is true for objects at redshift ~0.25
                 bound_lower = 12150
                 bound_upper = 12550
@@ -245,7 +245,7 @@ class Fit:
             # In this case we pretend we are in SN1
             bound_lower = 18000
             bound_upper = 19400
-        elif self.filter == 'C4' and 'Halpha' in self.lines:
+        elif self.filter == 'C4' and 'HalphaC4' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
             bound_lower = 11800#14600  # LYA mods, originally the same as SN3
@@ -567,7 +567,7 @@ class Fit:
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
-                        method='trust-constr', #'SLSQP',#
+                        method='SLSQP',#'trust-constr', #
                         options={'disp': False, 'maxiter': 2000},
                         #bounds=bounds_,
                         tol=1e-8,
@@ -716,11 +716,12 @@ class Fit:
         # Set the number of dimensions -- this is somewhat arbitrary
         n_dim = 3 * self.line_num + 1
         # Set number of MCMC walkers. Again, this is somewhat arbitrary
-        n_walkers = n_dim * 5
+        n_walkers = 200#n_dim * 5
         # Initialize walkers
-        random_ = 1e-1 * np.random.randn(n_walkers, n_dim)
+        random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
         for i in range(self.line_num):
-            random_[:, 3 * i + 1] *= 1e2
+            random_[:, 3 * i + 1] *= 1e3
+            random_[:, 3 * i] *= 0.1
             random_[:, 3 * i + 2] *= 1e1
         init_ = self.fit_sol + random_  # + self.fit_sol[-1] + random_
         # Ensure continuum values for walkers are positive
