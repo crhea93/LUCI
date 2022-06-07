@@ -223,14 +223,14 @@ class Fit:
         # Determine filter
         global bound_lower, bound_upper
         if self.filter == 'SN3':
-            bound_lower = 14300  # 16000
-            bound_upper = 14500  # 16400
+            bound_lower = 14500  # 16000
+            bound_upper = 14600  # 16400
         elif self.filter == 'SN2':
-            bound_lower = 18600
-            bound_upper = 19000
+            bound_lower = 19000
+            bound_upper = 19500
         elif self.filter == 'SN1':
-            bound_lower = 25300
-            bound_upper = 25700
+            bound_lower = 25700
+            bound_upper = 26300
         elif self.filter == 'C3' and 'OII3726' in self.lines:
             ## This is true for objects at redshift ~0.465
             # In this case we pretend we are in SN1
