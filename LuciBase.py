@@ -791,8 +791,8 @@ class Luci():
             integrated_spectrum /= spec_ct
         return self.spectrum_axis, integrated_spectrum
 
-    def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel, initial_conditions,
-                            region, bkg=None,
+    def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel,
+                            region, initial_conditions=False, bkg=None,
                             bayes_bool=False, bayes_method='emcee',
                             uncertainty_bool=False, mean=False, nii_cons=True,
                             spec_min=None, spec_max=None, obj_redshift=0.0

@@ -229,8 +229,8 @@ class Fit:
             bound_lower = 18600
             bound_upper = 19000
         elif self.filter == 'SN1':
-            bound_lower = 25300
-            bound_upper = 25700
+            bound_lower = 26000
+            bound_upper = 26200
         elif self.filter == 'C3' and 'OII3726' in self.lines:
             ## This is true for objects at redshift ~0.465
             # In this case we pretend we are in SN1
@@ -380,7 +380,8 @@ class Fit:
         if len(clipped_spec) < 1:
             clipped_spec = self.spectrum_restricted
         # Now take the minimum value to serve as the continuum value
-        cont_val = np.median(clipped_spec)
+        cont_val = np.nanmedian(clipped_spec)
+
         return cont_val
 
     def log_likelihood(self, theta):
@@ -396,24 +397,15 @@ class Fit:
 
         """
         model = 0
-        if self.initial_conditions is False:
-            if self.model_type == 'gaussian':
-                model = Gaussian().evaluate(self.axis_restricted, theta, self.line_num)
-            elif self.model_type == 'sinc':
-                model = Sinc().evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
-            elif self.model_type == 'sincgauss':
-                model = SincGauss().evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
-        else:
-            if self.model_type == 'gaussian':
-                model = Gaussian_frozen(self.initial_conditions[0][0],self.initial_conditions[1][0], self.lines).evaluate(self.axis_restricted, theta, self.line_num)
-            elif self.model_type == 'sinc':
-                model = Sinc_frozen(self.initial_conditions[0][0],self.initial_conditions[1][0], self.lines).evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
-            elif self.model_type == 'sincgauss':
-                model = SincGauss_frozen(self.initial_conditions[0][0],self.initial_conditions[1][0], self.lines).evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
+        if self.model_type == 'gaussian':
+            model = Gaussian().evaluate(self.axis_restricted, theta, self.line_num)
+        elif self.model_type == 'sinc':
+            model = Sinc().evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
+        elif self.model_type == 'sincgauss':
+            model = SincGauss().evaluate(self.axis_restricted, theta, self.line_num, self.sinc_width)
         # Add constant continuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        #return np.sum(stats.norm.logpdf(self.spectrum_restricted, loc=model, scale=sigma2))
         return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
 
