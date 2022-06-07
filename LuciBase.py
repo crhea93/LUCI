@@ -902,18 +902,18 @@ class Luci():
         if self.hdr_dict['FILTER'] == 'SN3':
             flux_min = 15150;
             flux_max = 15300;
-            noise_min = 14250;
-            noise_max = 14400
+            noise_min = 14500;
+            noise_max = 14600
         elif self.hdr_dict['FILTER'] == 'SN2':
-            flux_min = 19500;
+            flux_min = 19800;
             flux_max = 20750;
-            noise_min = 18600;
-            noise_max = 19000
+            noise_min = 19000;
+            noise_max = 19500
         elif self.hdr_dict['FILTER'] == 'SN1':
             flux_min = 26550;
             flux_max = 27550;
-            noise_min = 25300;
-            noise_max = 25700
+            noise_min = 25700;
+            noise_max = 26300
         else:
             print('SNR Calculation for this filter has not been implemented')
 
