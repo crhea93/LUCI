@@ -14,6 +14,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
@@ -101,10 +102,8 @@
 <div class="genindex-jumpbox">
  <a href="#A"><strong>A</strong></a>
  | <a href="#C"><strong>C</strong></a>
- | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
- | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
@@ -134,21 +133,29 @@
 </li>
       <li><a href="params.html#LUCI.LuciFitParameters.calculate_broad_err">calculate_broad_err() (in module LUCI.LuciFitParameters)</a>
 </li>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_broad_err_frozen">calculate_broad_err_frozen() (in module LUCI.LuciFitParameters)</a>
+</li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_correction">calculate_correction() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="params.html#LUCI.LuciFitParameters.calculate_flux">calculate_flux() (in module LUCI.LuciFitParameters)</a>
 </li>
       <li><a href="params.html#LUCI.LuciFitParameters.calculate_flux_err">calculate_flux_err() (in module LUCI.LuciFitParameters)</a>
 </li>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_flux_err_frozen">calculate_flux_err_frozen() (in module LUCI.LuciFitParameters)</a>
+</li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_noise">calculate_noise() (LUCI.LuciFit.Fit method)</a>
-</li>
-      <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_params">calculate_params() (LUCI.LuciFit.Fit method)</a>
-</li>
-      <li><a href="params.html#LUCI.LuciFitParameters.calculate_vel">calculate_vel() (in module LUCI.LuciFitParameters)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_params">calculate_params() (LUCI.LuciFit.Fit method)</a>
+</li>
+      <li><a href="fits.html#LUCI.LuciFit.Fit.calculate_params_frozen">calculate_params_frozen() (LUCI.LuciFit.Fit method)</a>
+</li>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_vel">calculate_vel() (in module LUCI.LuciFitParameters)</a>
+</li>
       <li><a href="params.html#LUCI.LuciFitParameters.calculate_vel_err">calculate_vel_err() (in module LUCI.LuciFitParameters)</a>
+</li>
+      <li><a href="params.html#LUCI.LuciFitParameters.calculate_vel_err_frozen">calculate_vel_err_frozen() (in module LUCI.LuciFitParameters)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.check_fitting_model">check_fitting_model() (LUCI.LuciFit.Fit method)</a>
 </li>
@@ -158,23 +165,7 @@
 </li>
       <li><a href="plot.html#LUCI.LuciPlotting.check_units">check_units() (in module LUCI.LuciPlotting)</a>
 </li>
-      <li><a href="luci.html#LuciBase.Luci.close">close() (LuciBase.Luci method)</a>
-</li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.cont_estimate">cont_estimate() (LUCI.LuciFit.Fit method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.create_deep_image">create_deep_image() (LuciBase.Luci method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.create_snr_map">create_snr_map() (LuciBase.Luci method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.create_wvt">create_wvt() (LuciBase.Luci method)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="D">D</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.detection_map">detection_map() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -185,12 +176,6 @@
       <li><a href="fits.html#LUCI.LuciFit.Fit.estimate_priors_ML">estimate_priors_ML() (LUCI.LuciFit.Fit method)</a>
 </li>
   </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.extract_spectrum">extract_spectrum() (LuciBase.Luci method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.extract_spectrum_region">extract_spectrum_region() (LuciBase.Luci method)</a>
-</li>
-  </ul></td>
 </tr></table>
 
 <h2 id="F">F</h2>
@@ -198,31 +183,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit">Fit (class in LUCI.LuciFit)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.fit">fit() (LUCI.LuciFit.Fit method)</a>
 </li>
       <li><a href="fits.html#LUCI.LuciFit.Fit.fit_Bayes">fit_Bayes() (LUCI.LuciFit.Fit method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.fit_cube">fit_cube() (LuciBase.Luci method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.fit_entire_cube">fit_entire_cube() (LuciBase.Luci method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.fit_pixel">fit_pixel() (LuciBase.Luci method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.fit_region">fit_region() (LuciBase.Luci method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.fit_spectrum_region">fit_spectrum_region() (LuciBase.Luci method)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci.fit_wvt">fit_wvt() (LuciBase.Luci method)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="H">H</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.heliocentric_correction">heliocentric_correction() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -249,8 +214,6 @@
       <li><a href="bayes.html#LUCI.LuciBayesian.log_prior_uniform">log_prior_uniform() (in module LUCI.LuciBayesian)</a>
 </li>
       <li><a href="bayes.html#LUCI.LuciBayesian.log_probability">log_probability() (in module LUCI.LuciBayesian)</a>
-</li>
-      <li><a href="luci.html#LuciBase.Luci">Luci (class in LuciBase)</a>
 </li>
       <li>
     LUCI.LuciBayesian
@@ -282,13 +245,6 @@
         <li><a href="plot.html#module-LUCI.LuciPlotting">module</a>
 </li>
       </ul></li>
-      <li>
-    LuciBase
-
-      <ul>
-        <li><a href="luci.html#module-LuciBase">module</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -306,8 +262,6 @@
         <li><a href="params.html#module-LUCI.LuciFitParameters">LUCI.LuciFitParameters</a>
 </li>
         <li><a href="plot.html#module-LUCI.LuciPlotting">LUCI.LuciPlotting</a>
-</li>
-        <li><a href="luci.html#module-LuciBase">LuciBase</a>
 </li>
       </ul></li>
   </ul></td>
@@ -342,10 +296,6 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.read_in_cube">read_in_cube() (LuciBase.Luci method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.restrict_wavelength">restrict_wavelength() (LUCI.LuciFit.Fit method)</a>
 </li>
   </ul></td>
@@ -360,8 +310,6 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.sigma_constraints">sigma_constraints() (LUCI.LuciFit.Fit method)</a>
 </li>
-      <li><a href="luci.html#LuciBase.Luci.skyline_calibration">skyline_calibration() (LuciBase.Luci method)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -369,10 +317,6 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fits.html#LUCI.LuciFit.Fit.vel_constraints">vel_constraints() (LUCI.LuciFit.Fit method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="luci.html#LuciBase.Luci.visualize">visualize() (LuciBase.Luci method)</a>
 </li>
   </ul></td>
 </tr></table>
