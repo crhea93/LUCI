@@ -556,8 +556,8 @@ class Fit:
         if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
             try:
-                hessian_calc = Hessian(nll, method='backward')   # Set method to backward to speed things up
-                hessian_calc = hessian_calc(parameters)
+                hessian = Hessian(nll)
+                hessian_calc = hessian(parameters)
                 covariance_mat = -np.linalg.inv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
             except np.linalg.LinAlgError:

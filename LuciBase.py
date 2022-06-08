@@ -809,6 +809,7 @@ class Luci():
             vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
+            initial_conditions:
             bkg: Background Spectrum (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
@@ -1271,8 +1272,9 @@ class Luci():
                     initial_conditions = [vel_init[a, b], broad_init[a, b]]
                 else:
                     initial_conditions = False
-            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel, initial_conditions,
-                                                                       region=bool_bin_map, bkg=bkg,
+            bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel,
+                                                                       region=bool_bin_map, initial_conditions=initial_conditions,
+                                                                       bkg=bkg,
                                                                        bayes_bool=bayes_bool,
                                                                        uncertainty_bool=uncertainty_bool)
             for a, b in zip(index[0], index[1]):
@@ -1294,7 +1296,7 @@ class Luci():
     def wvt_fit_region(self, x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel,
                        stn_target,
                        pixel_size=0.436, roundness_crit=0.3, ToL=1e-2, bkg=None,
-                       bayes_bool=False, uncertainty_bool=False, n_threads=1, initial_values=False):
+                       bayes_bool=False, uncertainty_bool=False, n_threads=1):
         """
         Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
         Args:
@@ -1338,8 +1340,8 @@ class Luci():
             broad = fits.open(self.output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening.fits')[0].data.T
             vel_err = fits.open(self.output_dir + '/Velocity/' + output_name + '_' + line_ + '_velocity_err.fits')[0].data.T
             broad_err = fits.open(self.output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening_err.fits')[0].data.T
-            chi2 = fits.open(output_name + '_Chi2.fits')[0].data.T
-            cont = fits.open(output_name + '_continuum.fits')[0].data.T
+            chi2 = fits.open(self.output_dir + '/' + output_name + '_Chi2.fits')[0].data.T
+            cont = fits.open(self.output_dir + '/' + output_name + '_continuum.fits')[0].data.T
             fits.writeto(self.output_dir + '/Amplitudes/' + output_name + '_' + line_ + '_Amplitude.fits',
                          amp, header, overwrite=True)
             fits.writeto(self.output_dir + '/Fluxes/' + output_name + '_' + line_ + '_Flux.fits', flux,
@@ -1354,8 +1356,8 @@ class Luci():
                          vel_err, header, overwrite=True)
             fits.writeto(self.output_dir + '/Broadening/' + output_name + '_' + line_ + '_broadening_err.fits',
                          broad_err, header, overwrite=True)
-            fits.writeto(output_name + '_Chi2.fits', chi2, header, overwrite=True)
-            fits.writeto(output_name + '_continuum.fits', cont, header, overwrite=True)
+            fits.writeto(self.output_dir + '/' + output_name + '_Chi2.fits', chi2, header, overwrite=True)
+            fits.writeto(self.output_dir + '/' + output_name + '_continuum.fits', cont, header, overwrite=True)
         return None
 
     def detection_map(self, x_min=None, x_max=None, y_min=None, y_max=None, n_threads=1):
