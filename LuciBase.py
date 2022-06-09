@@ -22,6 +22,7 @@ from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_an
 from LUCI.LuciWVT import *
 from LUCI.LuciVisualize import visualize as LUCIvisualize
 import multiprocessing as mp
+import time
 
 class Luci():
     """
@@ -1166,6 +1167,7 @@ class Luci():
         Pixels = []
         self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=1)
         print("#----------------Algorithm Part 1----------------#")
+        start = time.time()
         SNR_map = fits.open(self.output_dir + '/' + self.object_name + '_SNR.fits')[0].data
         SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
         fits.writeto(self.output_dir + '/' + self.object_name + '_SNR.fits', SNR_map, overwrite=True)
@@ -1173,6 +1175,8 @@ class Luci():
         Nearest_Neighbors(Pixels)
         Init_bins = Bin_Acc(Pixels, pixel_size, stn_target, roundness_crit)
         plot_Bins(Init_bins, x_min, x_max, y_min, y_max, stn_target, self.output_dir, "bin_acc")
+        total_time = time.gmtime(float(time.time() - start))
+        print('The first part of the algorithm took %s.'%(time.strftime("%H:%M:%S", total_time)))
         print("#----------------Algorithm Part 2----------------#")
         Final_Bins = WVT(Init_bins, Pixels, stn_target, ToL, pixel_size, self.output_dir)
         print("#----------------Algorithm Complete--------------#")
