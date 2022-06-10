@@ -84,6 +84,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 ## Citing LUCI
 If you cite LUCI, please use both the following citations.
 
-Software Citation: Carter Lee Rhea, Laurie Rouseau-Nepton, Julie Hlavacek-Larrondo, Jessica Covington, Benjamin Vigneron, & Louis-Simon Guité. (2021). crhea93/LUCI: RNAAS Submission (v1.0). Zenodo. https://doi.org/10.5281/zenodo.5385351
+Software Citation: Carter Lee Rhea, Laurie Rousseau-Nepton, Jessie Covington, Leo Alcorn, Benjamin Vigneron, Julie Hlavacek-Larrondo, & Louis-Simon Guité. (2021). crhea93/LUCI: Luci Updates (v1.1). Zenodo. https://doi.org/10.5281/zenodo.5730149
+
 
 Paper Citation:  Carter Rhea et al 2021 Res. Notes AAS 5 208

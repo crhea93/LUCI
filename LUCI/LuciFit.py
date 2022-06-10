@@ -10,7 +10,7 @@ import dynesty
 from dynesty import utils as dyfunc
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
-    calculate_flux, calculate_flux_err
+    calculate_flux, calculate_flux_err, calculate_vel_err_frozen, calculate_broad_err_frozen, calculate_flux_err_frozen
 from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
 
 warnings.filterwarnings("ignore")
@@ -44,7 +44,7 @@ class Fit:
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
                  nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=False,
-                 spec_min=None, spec_max=None
+                 spec_min=None, spec_max=None, obj_redshift=0.0
                  ):
         """
         Args:
@@ -73,6 +73,7 @@ class Fit:
             initial_values: List of initial conditions for the velocity and broadening; [velocity, broadening]
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
+            obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -81,6 +82,9 @@ class Fit:
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
+        self.obj_redshift_corr = 1 + obj_redshift
+        for line_key in self.line_dict:
+            self.line_dict[line_key] = self.line_dict[line_key] * self.obj_redshift_corr
         self.nii_cons = nii_cons
         self.spec_min = spec_min
         self.spec_max = spec_max
@@ -184,7 +188,12 @@ class Fit:
                 bound_upper = 20750
             elif self.filter == 'SN1':
                 bound_lower = 26000
-                bound_upper = 27400
+                bound_upper = 28000
+            elif self.filter == 'C3' and 'OII3726' in self.lines:
+                ## This is true for objects with a redshift around 0.465
+                # We pretend we are looking at SN1
+                bound_lower = 18000
+                bound_upper = 19400
             elif self.filter == 'C4' and 'Halpha' in self.lines:
                 ## This is true for objects at redshift ~0.25
                 # In this case we pretend we are in SN3
@@ -192,7 +201,7 @@ class Fit:
                 bound_upper = 15400
             else:
                 print(
-                    'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
+                    'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
             self.spec_min = bound_lower
             self.spec_max = bound_upper
         else:
@@ -220,8 +229,13 @@ class Fit:
             bound_lower = 18600
             bound_upper = 19000
         elif self.filter == 'SN1':
-            bound_lower = 25300
-            bound_upper = 25700
+            bound_lower = 26000
+            bound_upper = 26200
+        elif self.filter == 'C3' and 'OII3726' in self.lines:
+            ## This is true for objects at redshift ~0.465
+            # In this case we pretend we are in SN1
+            bound_lower = 18000
+            bound_upper = 19400
         elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
@@ -229,7 +243,7 @@ class Fit:
             bound_upper = 14950
         else:
             print(
-                'The filter of your datacube is not supported by LUCI. We only support SN1, SN2, and SN3 at the moment.')
+                'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
         # Calculate standard deviation
         min_ = np.argmin(np.abs(np.array(self.axis) - bound_lower))
         max_ = np.argmin(np.abs(np.array(self.axis) - bound_upper))
@@ -274,7 +288,7 @@ class Fit:
 
         """
         self.spectrum_scale = np.max(self.spectrum)
-        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear')
+        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_interp_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_interp_scale
@@ -296,7 +310,6 @@ class Fit:
         line_theo = self.line_dict[line_name]
         if self.ML_model is None or self.ML_model == '':
             if self.initial_values is not False:
-                print(self.initial_values)
                 self.vel_ml = self.initial_values[0]  # Velocity component of initial conditions in km/s
                 self.broad_ml = self.initial_values[1]  # Broadening component of initial conditions in km/s
             else:
@@ -356,6 +369,9 @@ class Fit:
         elif self.filter == 'SN1':
             min_ = 26000
             max_ = 26250
+        elif self.filter == 'C3':
+            min_ = 18000
+            max_ = 19000
 
         # Clip values at given sigma level (defined by sigma_level)
         clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
@@ -364,7 +380,8 @@ class Fit:
         if len(clipped_spec) < 1:
             clipped_spec = self.spectrum_restricted
         # Now take the minimum value to serve as the continuum value
-        cont_val = np.median(clipped_spec)
+        cont_val = np.nanmedian(clipped_spec)
+
         return cont_val
 
     def log_likelihood(self, theta):
@@ -389,7 +406,6 @@ class Fit:
         # Add constant continuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        #return np.sum(stats.norm.logpdf(self.spectrum_restricted, loc=model, scale=sigma2))
         return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
 
@@ -502,8 +518,7 @@ class Fit:
         """
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-        bounds_ = []  # Initialize bounds used for fitting
-        initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and intialize it
+        initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
         lines_fit = []  # List of lines which already have been set up for fits
         cons = None
         for mod in range(self.line_num):  # Step through each line
@@ -513,7 +528,7 @@ class Fit:
             initial[3 * mod + 1] = vel_est  # Set wavenumber
             initial[3 * mod + 2] = sigma_est  # Set sigma
         self.initial_values = initial
-        sigma_cons = self.sigma_constraints()  # Call sigma constaints
+        sigma_cons = self.sigma_constraints()  # Call sigma constraints
         vel_cons = self.vel_constraints()  # Call velocity constraints
         vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
@@ -541,8 +556,8 @@ class Fit:
         if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
             try:
-                hessian_calc = Hessian(nll, method='backward')   # Set method to backward to speed things up
-                hessian_calc = hessian_calc(parameters)
+                hessian = Hessian(nll)
+                hessian_calc = hessian(parameters)
                 covariance_mat = -np.linalg.inv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
             except np.linalg.LinAlgError:
@@ -562,6 +577,80 @@ class Fit:
             print("Somehow all the checks missed the fact that you didn't enter a valid fit function...")
 
         return None
+
+
+    def calculate_params_frozen(self):
+        """
+        Calculate the amplitude, position, and sigma of the line. These values are
+        calculated using the scipy.optimize.minimize function. This is called
+        on the log likelood previously described. The minimization algorithm uses
+        the SLSQP optimization implementation. We have applied standard bounds in order
+        to speed up the fitting. We also apply the fit on the normalized spectrum.
+        We then correct the flux by un-normalizing the spectrum.
+
+        """
+        nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
+        initial = np.ones((self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
+        bounds_ = []  # Initialize bounds used for fitting
+        initial[-1] = self.cont_estimate(sigma_level=5)  # Add continuum constant and initialize it
+        lines_fit = []  # List of lines which already have been set up for fits
+        cons = None
+        for mod in range(self.line_num):  # Step through each line
+            lines_fit.append(self.lines[mod])  # Add to list of lines fit
+            amp_est = self.line_vals_estimate(self.lines[mod])[0]  # Estimate initial values
+            initial[mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
+            bounds_.append((self.A_min, self.A_max))  # Set bounds for amplitude
+            bounds_.append((self.x_min, self.x_max))  # Set bounds for wavenumber
+            bounds_.append((self.sigma_min, self.sigma_max))  # Set bounds for sigma
+        bounds_l = [val[0] for val in bounds_] + [-0.05]  # Continuum bound Lower
+        bounds_u = [val[1] for val in bounds_] + [0.5]  # Continuum bound Higher
+        #bounds = Bounds(bounds_l, bounds_u)  # Define bounds
+        bounds_.append((-0.1, 0.5))
+        self.initial_values = initial
+        # CONSTRAINTS
+        if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
+            nii_constraints = self.NII_constraints()
+        # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
+        # We do **not** use the interpolated spectrum here!
+        soln = minimize(nll, initial,
+                        method='SLSQP',
+                        options={'disp': False, 'maxiter': 500},
+                        #bounds=bounds_,
+                        tol=1e-8,
+                        args=())
+        parameters = soln.x
+        # We now must unscale the amplitude
+        for i in range(self.line_num):
+            parameters[i] *= self.spectrum_scale
+            # self.uncertainties[i * 3] *= self.spectrum_scale
+        # Scale continuum
+        parameters[-1] *= self.spectrum_scale
+        # self.uncertainties[-1] *= self.spectrum_scale
+        if self.uncertainty_bool is True:
+            # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
+            try:
+                hessian = Hessian(nll)
+                hessian_calc = hessian(parameters)
+                covariance_mat = -np.linalg.inv(hessian_calc)
+                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
+            except np.linalg.LinAlgError:
+                self.uncertainties = np.zeros_like(parameters)
+
+        self.fit_sol = parameters
+        # Create fit vector
+        if self.model_type == 'gaussian':
+            self.fit_vector = Gaussian_frozen(self.initial_conditions[0][0],self.initial_conditions[1][0], self.lines).plot(self.axis, self.fit_sol[:-1], self.line_num) + self.fit_sol[-1]
+        elif self.model_type == 'sinc':
+            self.fit_vector = Sinc_frozen(self.initial_conditions[0][0],self.initial_conditions[1][0], self.lines).plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[-1]
+        elif self.model_type == 'sincgauss':
+            self.fit_vector = SincGauss_frozen(self.initial_conditions[0][0],self.initial_conditions[1][0], self.lines).plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + \
+                              self.fit_sol[-1]
+        else:
+            print("Somehow all the checks missed the fact that you didn't enter a valid fit function...")
+
+        return None
+
+
 
     def fit(self, sky_line=False):
         """
@@ -586,7 +675,16 @@ class Fit:
             else:
                 self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
-            self.calculate_params()
+            if self.initial_conditions is False:
+                self.calculate_params()
+            else:
+                self.calculate_params_frozen()
+            if np.isnan(self.fit_sol[0]):  # Check that there are no Nans in solution
+                # If a Nan is found, then we redo the fit without the ML priors
+                temp_ML = self.ML_model
+                self.ML_model = ''
+                self.calculate_params()
+                self.ML_model = temp_ML
             # Check if Bayesian approach is required
             if self.bayes_bool:
                 self.fit_Bayes()
@@ -601,20 +699,21 @@ class Fit:
             vels_errors = []
             sigmas_errors = []
             flux_errors = []
-            for line_ct, line_ in enumerate(self.lines):  # Step through each line
-                ampls.append(self.fit_sol[line_ct * 3])
-                # Calculate flux
-                fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.model_type,
+            if self.initial_conditions is False:
+                for line_ct, line_ in enumerate(self.lines):  # Step through each line
+                    ampls.append(self.fit_sol[line_ct * 3])
+                    # Calculate flux
+                    fluxes.append(calculate_flux(self.fit_sol[line_ct * 3], self.fit_sol[line_ct * 3 + 2], self.model_type,
                                              self.sinc_width))
-                vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
-                sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
-                vels_errors.append(
-                    calculate_vel_err(line_ct, self.lines, self.fit_sol, self.line_dict, self.uncertainties))
-                sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
-                flux_errors.append(
-                    calculate_flux_err(line_ct, self.fit_sol, self.uncertainties, self.model_type, self.sinc_width))
-            # Collect parameters to return in a dictionary
-            fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
+                    vels.append(calculate_vel(line_ct, self.lines, self.fit_sol, self.line_dict))
+                    sigmas.append(calculate_broad(line_ct, self.fit_sol, self.axis_step))
+                    vels_errors.append(
+                        calculate_vel_err(line_ct, self.lines, self.fit_sol, self.line_dict, self.uncertainties))
+                    sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
+                    flux_errors.append(
+                        calculate_flux_err(line_ct, self.fit_sol, self.uncertainties, self.model_type, self.sinc_width))
+                # Collect parameters to return in a dictionary
+                fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
                         'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
                         'velocities': vels, 'sigmas': sigmas,
                         'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
@@ -624,7 +723,32 @@ class Fit:
                         'broad_ml': self.broad_ml, 'broad_ml_sigma': self.broad_ml_sigma,
                         'fit_vector': self.fit_vector, 'fit_axis': self.axis,
                         }
-            return fit_dict
+                return fit_dict
+            else:
+                for line_ct, line_ in enumerate(self.lines):  # Step through each line
+                    ampls.append(self.fit_sol[line_ct])
+                    # Calculate flux
+                    fluxes.append(calculate_flux(self.fit_sol[line_ct], self.initial_conditions[1][0], self.model_type,
+                                             self.sinc_width))
+                    vels.append(self.initial_conditions[0][0])
+                    sigmas.append(self.initial_conditions[1][0])
+                    vels_errors.append(
+                        calculate_vel_err_frozen(line_ct, self.lines, self.initial_conditions[0][0], self.line_dict, self.uncertainties))
+                    sigmas_errors.append(calculate_broad_err_frozen(line_ct, self.initial_conditions[1][0], self.axis_step, self.uncertainties))
+                    flux_errors.append(
+                        calculate_flux_err_frozen(line_ct, self.fit_sol, self.uncertainties, self.model_type, self.sinc_width))
+                # Collect parameters to return in a dictionary
+                fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
+                        'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
+                        'velocities': vels, 'sigmas': sigmas,
+                        'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
+                        'axis_step': self.axis_step, 'corr': self.correction_factor,
+                        'continuum': self.fit_sol[-1], 'scale': self.spectrum_scale,
+                        'vel_ml': self.vel_ml, 'vel_ml_sigma': self.vel_ml_sigma,
+                        'broad_ml': self.broad_ml, 'broad_ml_sigma': self.broad_ml_sigma,
+                        'fit_vector': self.fit_vector, 'fit_axis': self.axis,
+                        }
+                return fit_dict
         else:  # Fit sky line
             self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
@@ -641,7 +765,7 @@ class Fit:
             vel_cons = self.vel_constraints()  # Call velocity constraints
             cons = sigma_cons+vel_cons
             soln = minimize(nll, initial,method='trust-constr',
-                            options={'disp': False, 'maxiter': 2000}, tol=1e-8,
+                            options={'disp': False, 'maxiter': 30}, tol=1e-3,
                             args=())#, constraints=cons)
             parameters = soln.x
 
@@ -709,7 +833,7 @@ class Fit:
             parameters_std = []
             self.flat_samples = flat_samples
             for i in range(n_dim):  # Calculate and store these results
-                median = np.mean(flat_samples[:, i])
+                median = np.median(flat_samples[:, i])
                 std = np.std(flat_samples[:, i])
                 parameters_med.append(median)
                 parameters_std.append(std)

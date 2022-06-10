@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 # --------------------------------------- WVT ALGORITHM ITSELF BELOW THIS ---------------------------------------#
 
 def plot_Bins(Bins,x_min,x_max,y_min,y_max,StN_Target,file_dir,filename):
+    if not os.path.exists(file_dir+'/histograms/'):
+        os.mkdir(file_dir+'/histograms/')
     fig = plt.figure()
     #fig.set_size_inches(7, 6.5)
     ax = plt.axes(xlim=(x_min,x_max), ylim=(y_min,y_max))
@@ -278,9 +280,8 @@ def adjacency(current_bin,closest_node):
 
 def Roundness(current_bin,closest_pixel,pixel_length):
     pixel_list = current_bin.pixels
-    n = len(pixel_list)+1 #Including new
+    n = len(pixel_list)+1   # Including new
     rad_equiv = np.sqrt(n/np.pi)*(pixel_length)
-    cen_x_new = 0 ; cen_y_new = 0
     xvals = [pixel.pix_x for pixel in current_bin.pixels]
     yvals = [pixel.pix_y for pixel in current_bin.pixels]
     cen_x_new = (sum(xvals)+closest_pixel.pix_x)/n
@@ -289,7 +290,7 @@ def Roundness(current_bin,closest_pixel,pixel_length):
     for i in range(n-1):
         dists.append(np.sqrt((xvals[i] - cen_x_new)**2+(yvals[i] - cen_y_new)**2))
     dists.append(np.sqrt((closest_pixel.pix_x-cen_x_new)**2+(closest_pixel.pix_y-cen_y_new)**2))
-    rad_max = max(dists) # maximum distance between the centroid of the bin and any of the bin pixels
+    rad_max = max(dists)  # maximum distance between the centroid of the bin and any of the bin pixels
     roundness = rad_max/rad_equiv - 1.
     return roundness
 
@@ -478,7 +479,9 @@ def WVT(Bin_list_init,Pixel_Full,StN_Target,ToL,pixel_length,image_dir):
     Bin_list_prev = Bin_list_init[:]
     converged = False
     its_to_conv = 0
-    while converged == False and its_to_conv<5:
+    if not os.path.exists(image_dir+'/histograms/'):
+        os.mkdir(image_dir+'/histograms/')
+    while converged == False and its_to_conv<  5:
         print("We are on step "+str(its_to_conv+1))
         bins_with_SN = Rebin_Pixels(Bin_list_prev,Pixel_Full,pixel_length,StN_Target)[:]
         converged = converged_met(bins_with_SN,ToL)
@@ -490,9 +493,14 @@ def WVT(Bin_list_init,Pixel_Full,StN_Target,ToL,pixel_length,image_dir):
         plt.ylabel("Number of Bins")
         plt.xlabel("Signal-to-Noise")
         its_to_conv += 1
+        plt.xlim(0, StN_Target*2)
+        #plt.patch.set_facecolor('white')
         plt.savefig(image_dir+'/histograms/iteration_'+str(its_to_conv)+".png")
         plt.clf()
-    print("Completed WVT in "+str(its_to_conv)+" step(s)!!")
+    if its_to_conv < 5:
+        print("Completed WVT in "+str(its_to_conv)+" step(s)!")
+    else:
+        print('Stopped WVT algorithm after 5 steps.')
     print("There are a total of "+str(len(bins_with_SN)+1)+" bins!")
     return bins_with_SN
 

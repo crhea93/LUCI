@@ -15,6 +15,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -63,6 +64,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
@@ -71,6 +73,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -110,7 +113,7 @@
            <div itemprop="articleBody">
              
   <section id="uncertainties">
-<span id="id1"></span><h1>Uncertainties<a class="headerlink" href="#uncertainties" title="Permalink to this headline"></a></h1>
+<span id="id1"></span><h1>Uncertainties<a class="headerlink" href="#uncertainties" title="Permalink to this heading"></a></h1>
 <p>In order to calculate uncertainties, set <cite>uncertainty_bool=True</cite> as an argument
 of a fitting function (i.e. <cite>cube.fit_cube()</cite> or <cite>cube.fit_region()</cite>).</p>
 <p>Since uncertainty estimates are often crucial in astrophysical calculations, we apply
@@ -118,7 +121,7 @@ a full Bayesian MCMC approach (using the python module <em>emcee</em>). The like
 is defined as a standard Gaussian function. Additionally, we employ the same priors described
 above for the fitting function bounds.</p>
 <section id="likelihood-function">
-<h2>Likelihood Function<a class="headerlink" href="#likelihood-function" title="Permalink to this headline"></a></h2>
+<h2>Likelihood Function<a class="headerlink" href="#likelihood-function" title="Permalink to this heading"></a></h2>
 <p>We assume a standard Gaussian likelihood function. Note that <img class="math" src="_images/math/b52df27bfb0b1e3af0c2c68a7b9da459178c2a7d.png" alt="\sigma"/> is the
 error on the measurement (also noted as noise – see next section).</p>
 <div class="math">
@@ -127,7 +130,7 @@ error on the measurement (also noted as noise – see next section).</p>
 </div>
 </section>
 <section id="noise-calculation">
-<h2>Noise Calculation<a class="headerlink" href="#noise-calculation" title="Permalink to this headline"></a></h2>
+<h2>Noise Calculation<a class="headerlink" href="#noise-calculation" title="Permalink to this heading"></a></h2>
 <p>In order to estimate the uncertainties (and complete the fits), we assume a homogenous
 noise level associated with the the instrument. This is then accepted as the noise
 over the entire spectrum in the filter. This is calculated for each individual spectrum
@@ -135,23 +138,23 @@ by considering a region outside of the filter (i.e. where the transmission is ze
 We then take the noise as the standard deviation of the region. This is typically
 on the order of 1% of the flux in high SNR regions. We take the following wavelength regions:</p>
 <section id="sn1-25300-25700">
-<h3>SN1: 25300 - 25700<a class="headerlink" href="#sn1-25300-25700" title="Permalink to this headline"></a></h3>
+<h3>SN1: 25300 - 25700<a class="headerlink" href="#sn1-25300-25700" title="Permalink to this heading"></a></h3>
 <img alt="Luci Initialization Output" src="_images/SN1_noise.png" />
 <p>SN1 filter of example background (M33 Field 7). The noise region is bounded
 by the magenta box.</p>
 </section>
 <section id="sn2-18600-19000">
-<h3>SN2: 18600 - 19000<a class="headerlink" href="#sn2-18600-19000" title="Permalink to this headline"></a></h3>
+<h3>SN2: 18600 - 19000<a class="headerlink" href="#sn2-18600-19000" title="Permalink to this heading"></a></h3>
 <img alt="Luci Initialization Output" src="_images/SN2_noise.png" />
 <p>SN2 filter of example background (M33 Field 7). The noise region is bounded
 by the magenta box.</p>
 </section>
 <section id="sn3-16000-16400">
-<h3>SN3: 16000 - 16400<a class="headerlink" href="#sn3-16000-16400" title="Permalink to this headline"></a></h3>
+<h3>SN3: 16000 - 16400<a class="headerlink" href="#sn3-16000-16400" title="Permalink to this heading"></a></h3>
 </section>
 </section>
 <section id="hessian-approach">
-<h2>Hessian Approach<a class="headerlink" href="#hessian-approach" title="Permalink to this headline"></a></h2>
+<h2>Hessian Approach<a class="headerlink" href="#hessian-approach" title="Permalink to this heading"></a></h2>
 <p>The calculation of fit uncertainties is a very important consideration. As previously
 discussed, we already have a methodology to calculate the uncertainties using an MCMC Bayesian
 approach. However, this method can be extremely time-consuming. Thus, we offer a default
