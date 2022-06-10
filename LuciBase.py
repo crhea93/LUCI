@@ -113,6 +113,7 @@ class Luci():
         """
         print('Reading in data...')
         file = h5py.File(self.cube_path + '.hdf5', 'r')  # Read in file
+        #file = ht.load(self.cube_path + '.hdf5')
         self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
         self.dimx = file.attrs['dimx']  # Get the dimensions in x
         self.dimy = file.attrs['dimy']  # Get the dimensions in y
@@ -190,6 +191,7 @@ class Luci():
         if output_name == None:
             output_name = self.output_dir + '/' + self.object_name + '_deep.fits'
         fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
+        hdf5_file.close()
 
     def visualize(self):
         """
@@ -235,7 +237,7 @@ class Luci():
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
-                 uncertainty_bool=False, n_threads=1, nii_cons=True, initial_values=False,
+                 uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=False,
                  spec_min=None, spec_max=None):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
@@ -302,7 +304,7 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        set_num_threads(n_threads)
+        #set_num_threads(n_threads)
         # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
@@ -314,9 +316,10 @@ class Luci():
 
         #@jit(nopython=False)
         global fit_calc;
+        #def fit_calc(i):
+        #@jit(nopython=False, parallel=True, nogil=True, fastmath=True)
         def fit_calc(i):#, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
                      #chi2_fit, corr_fit, step_fit, continuum_fit, initial_conditions=initial_conditions):
-
             y_pix = y_min + i  # Step y coordinate
             # Set up all the local lists for the current y_pixel step
             ampls_local = []
@@ -331,7 +334,7 @@ class Luci():
             step_local = []
             continuum_local = []
             # Step through x coordinates
-            for j in prange(x_max - x_min):
+            for j in range(x_max - x_min):
                 x_pix = x_min + j  # Set current x pixel
                 if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
                     sky = self.cube_binned[x_pix, y_pix, :]
@@ -388,6 +391,18 @@ class Luci():
                     corr_local.append(0)
                     step_local.append(0)
                     continuum_local.append(0)
+            '''ampls_fits[i] = ampls_local
+            flux_fits[i] = flux_local
+            flux_errors_fits[i] = flux_errs_local
+            velocities_fits[i] = vels_local
+            broadenings_fits[i] = broads_local
+            velocities_errors_fits[i] = vels_errs_local
+            broadenings_errors_fits[i] = broads_errs_local
+            chi2_fits[i] = chi2_local
+            corr_fits[i] = corr_local
+            step_fits[i] = step_local
+            continuum_fits[i] = continuum_local'''
+            #return None
             return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
 
         # Write outputs (Velocity, Broadening, and Amplitudes)
@@ -404,11 +419,16 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
+
         #pool = mp.Pool(n_threads)
-        #results = tqdm(pool.map(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
+        #results = tqdm(pool.imap(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
         #results = tuple(results)
         #pool.close()
-        results = Parallel(n_jobs=n_threads, backend='multiprocessing')(delayed(fit_calc)(sl) for sl in tqdm(range(y_max - y_min)))
+        #for step_i in tqdm(range(y_max - y_min)):
+        #    fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits,
+        #             broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
+
+        results = Parallel(n_jobs=n_threads, backend='threading', require='sharedmem')(delayed(fit_calc)(sl) for sl in tqdm(range(y_max - y_min)))
         for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
             ampls_fits[i] = ampls_local
