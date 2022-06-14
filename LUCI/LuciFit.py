@@ -540,8 +540,8 @@ class Fit:
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
-                        method='SLSQP',
-                        options={'disp': False, 'maxiter': 30},
+                        method='trust-constr',
+                        options={'disp': True, 'maxiter': 30},
                         tol=1e-2,
                         args=(), constraints=cons
                         )
@@ -555,13 +555,14 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         if self.uncertainty_bool is True:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
+            hessian = Hessian(nll)
+            hessian_calc = hessian(parameters)
             try:
-                hessian = Hessian(nll)
-                hessian_calc = hessian(parameters)
                 covariance_mat = -np.linalg.inv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
             except np.linalg.LinAlgError:
-                self.uncertainties = np.zeros_like(parameters)
+                covariance_mat = -np.linalg.pinv(hessian_calc)
+                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
 
         self.fit_sol = parameters
         # Create fit vector
@@ -675,10 +676,10 @@ class Fit:
             else:
                 self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
-            if self.initial_conditions is False:
-                self.calculate_params()
-            else:
-                self.calculate_params_frozen()
+            #if self.initial_conditions is False:
+            self.calculate_params()
+            #else:
+            #    self.calculate_params_frozen()
             if np.isnan(self.fit_sol[0]):  # Check that there are no Nans in solution
                 # If a Nan is found, then we redo the fit without the ML priors
                 temp_ML = self.ML_model
