@@ -78,7 +78,9 @@ class Fit:
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
-                          'Hbeta': 486.133, 'OH': 649.873}
+                          'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4':807.88068, 'NII6583C4': 810.417771, 'NII6548C4': 806.062493,
+                          'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
+                          'OII3729C1': 459.017742, 'OII3726C1': 458.674293,}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
@@ -194,11 +196,18 @@ class Fit:
                 # We pretend we are looking at SN1
                 bound_lower = 18000
                 bound_upper = 19400
-            elif self.filter == 'C4' and 'Halpha' in self.lines:
+            elif self.filter == 'C4' and 'HalphaC4' in self.lines:
                 ## This is true for objects at redshift ~0.25
-                # In this case we pretend we are in SN3
-                bound_lower = 14950  # LYA mod - originally the same as SN3 restrictions
-                bound_upper = 15400
+                bound_lower = 12150
+                bound_upper = 12550
+            elif self.filter == 'C2':
+                ## This is true for objects at redshift ~0.25
+                bound_lower = 15990
+                bound_upper = 17880
+            elif self.filter == 'C1':
+                ## This is true for objects at redshift ~0.25
+                bound_lower = 20408#20665 #
+                bound_upper = 25974#25700
             else:
                 print(
                     'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
@@ -236,11 +245,19 @@ class Fit:
             # In this case we pretend we are in SN1
             bound_lower = 18000
             bound_upper = 19400
-        elif self.filter == 'C4' and 'Halpha' in self.lines:
+        elif self.filter == 'C4' and 'HalphaC4' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
-            bound_lower = 14600  # LYA mods, originally the same as SN3
-            bound_upper = 14950
+            bound_lower = 11800#14600  # LYA mods, originally the same as SN3
+            bound_upper = 12150#14950
+        elif self.filter == 'C2':
+            ## This is true for objects at redshift ~0.25
+            bound_lower = 15500
+            bound_upper = 15990
+        elif self.filter == 'C1':
+            ## This is true for objects at redshift ~0.25
+            bound_lower = 18000
+            bound_upper = 20665
         else:
             print(
                 'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
@@ -276,6 +293,7 @@ class Fit:
             self.vel_ml_sigma = 0
             self.broad_ml = float(predictions[0][1])
             self.broad_ml_sigma = 0
+        print('LYA check, ML priors:', self.vel_ml, self.vel_ml_sigma, self.broad_ml, self.broad_ml_sigma)
         return None
 
     def interpolate_spectrum(self):
@@ -369,6 +387,15 @@ class Fit:
         elif self.filter == 'SN1':
             min_ = 26000
             max_ = 26250
+        elif self.filter == 'C4':
+            min_ = 12180
+            max_ = 12550
+        elif self.filter == 'C2':
+            min_ = 16000
+            max_ = 17800
+        elif self.filter == 'C1':
+            min_ = 21500
+            max_ = 25900
         elif self.filter == 'C3':
             min_ = 18000
             max_ = 19000
@@ -463,8 +490,8 @@ class Fit:
         global func_
         nii_doublet_constraints = []
         # First we have to figure out which lines correspond to the doublet
-        nii_6548_index = np.argwhere(np.array(self.lines) == 'NII6548')[0][0]
-        nii_6583_index = np.argwhere(np.array(self.lines) == 'NII6583')[0][0]
+        nii_6548_index = np.argwhere(np.array(self.lines) == 'NII6548C4')[0][0]
+        nii_6583_index = np.argwhere(np.array(self.lines) == 'NII6583C4')[0][0]
         # Now tie the amplitudes together s/t that amplitude of the NII6548 line is
         # always 1/3 that of the NII6583 line
         # expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
@@ -532,7 +559,7 @@ class Fit:
         vel_cons = self.vel_constraints()  # Call velocity constraints
         vel_cons_multiple = self.multiple_component_vel_constraint()
         # CONSTRAINTS
-        if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
+        if 'NII6548C4' in self.lines and 'NII6583C4' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
             nii_constraints = self.NII_constraints()
             cons = sigma_cons + vel_cons + vel_cons_multiple + nii_constraints
         else:
@@ -540,9 +567,10 @@ class Fit:
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         soln = minimize(nll, initial,
-                        method='SLSQP',
-                        options={'disp': False, 'maxiter': 30},
-                        tol=1e-2,
+                        method='SLSQP',#'trust-constr', #
+                        options={'disp': False, 'maxiter': 2000},
+                        #bounds=bounds_,
+                        tol=1e-8,
                         args=(), constraints=cons
                         )
         parameters = soln.x
@@ -791,11 +819,12 @@ class Fit:
         # Set the number of dimensions -- this is somewhat arbitrary
         n_dim = 3 * self.line_num + 1
         # Set number of MCMC walkers. Again, this is somewhat arbitrary
-        n_walkers = n_dim * 5
+        n_walkers = 200#n_dim * 5
         # Initialize walkers
-        random_ = 1e-1 * np.random.randn(n_walkers, n_dim)
+        random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
         for i in range(self.line_num):
-            random_[:, 3 * i + 1] *= 1e2
+            random_[:, 3 * i + 1] *= 1e3
+            random_[:, 3 * i] *= 0.1
             random_[:, 3 * i + 2] *= 1e1
         init_ = self.fit_sol + random_  # + self.fit_sol[-1] + random_
         # Ensure continuum values for walkers are positive
