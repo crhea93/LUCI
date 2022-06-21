@@ -172,6 +172,7 @@ def calculate_flux(line_amp, line_sigma, model_type, sinc_width):
         Flux of the provided line in units of erg/s/cm-2
     """
     flux = 0.0  # Initialize
+    
     if model_type == 'gaussian':
         flux =  (1.20671/FWHM_COEFF) * np.sqrt(2 * np.pi) * line_amp * line_sigma
     elif model_type == 'sinc':
@@ -208,8 +209,10 @@ def calculate_flux_err(ind, fit_sol, uncertainties, model_type, sinc_width):
 
 
     if model_type == 'gaussian':
-        flux_err = np.sqrt(2*np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
-                   np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
+        flux = calculate_flux(p0, p2, model_type, sinc_width)
+        flux_err = flux*np.sqrt((p0_err/p0)**2+(p2_err/p2)**2)
+        #flux_err = np.sqrt(2*np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
+         #          np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
 
     elif model_type == 'sinc':
         flux_err = np.sqrt(np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
