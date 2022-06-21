@@ -77,9 +77,11 @@ class Luci():
         self.zpd_index = self.hdr_dict['ZPDINDEX']
         self.filter = self.hdr_dict['FILTER']
         self.spectrum_axis, self.spectrum_axis_unshifted = spectrum_axis_func(self.hdr_dict, self.redshift)
+        if self.filter=='C4' or self.filter=='C2' or self.filter=='C1':
+            self.spectrum_axis=self.spectrum_axis_unshifted #LYA mod
         if ML_bool is True:
             if not self.mdn:
-                if self.filter in ['SN1', 'SN2', 'SN3', 'C3', 'C4']:
+                if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C1']:
                     self.ref_spec = self.Luci_path + 'ML/Reference-Spectrum-R%i-%s.fits' % (resolution, self.filter)
                     self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,
                                                                                                  self.hdr_dict)
@@ -314,12 +316,8 @@ class Luci():
             vel_init = fits.open(initial_values[0])[0].data
             broad_init = fits.open(initial_values[0])[0].data
 
-        #@jit(nopython=False)
-        global fit_calc;
-        #def fit_calc(i):
-        #@jit(nopython=False, parallel=True, nogil=True, fastmath=True)
-        def fit_calc(i):#, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
-                     #chi2_fit, corr_fit, step_fit, continuum_fit, initial_conditions=initial_conditions):
+        global fit_calc
+        def fit_calc(i):
             y_pix = y_min + i  # Step y coordinate
             # Set up all the local lists for the current y_pixel step
             ampls_local = []
@@ -391,18 +389,6 @@ class Luci():
                     corr_local.append(0)
                     step_local.append(0)
                     continuum_local.append(0)
-            '''ampls_fits[i] = ampls_local
-            flux_fits[i] = flux_local
-            flux_errors_fits[i] = flux_errs_local
-            velocities_fits[i] = vels_local
-            broadenings_fits[i] = broads_local
-            velocities_errors_fits[i] = vels_errs_local
-            broadenings_errors_fits[i] = broads_errs_local
-            chi2_fits[i] = chi2_local
-            corr_fits[i] = corr_local
-            step_fits[i] = step_local
-            continuum_fits[i] = continuum_local'''
-            #return None
             return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
 
         # Write outputs (Velocity, Broadening, and Amplitudes)
@@ -419,15 +405,6 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-
-        #pool = mp.Pool(n_threads)
-        #results = tqdm(pool.imap(fit_calc, [row for row in (range(y_max - y_min))]), total=y_max - y_min)
-        #results = tuple(results)
-        #pool.close()
-        #for step_i in tqdm(range(y_max - y_min)):
-        #    fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits,
-        #             broadenings_fits, broadenings_errors_fits, chi2_fits, corr_fits, step_fits, continuum_fits)
-
         results = Parallel(n_jobs=n_threads, backend='threading', require='sharedmem')(delayed(fit_calc)(sl) for sl in tqdm(range(y_max - y_min)))
         for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
@@ -550,13 +527,9 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        ct = 0
-        set_num_threads(n_threads)
 
-        @jit(nopython=False)
-        def fit_calc(i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit,
-                     chi2_fit, continuum_fit):
-            # for i in tqdm(range(y_max-y_min)):
+
+        def fit_calc(i):
             y_pix = y_min + i
             ampls_local = []
             flux_local = []
@@ -626,7 +599,7 @@ class Luci():
             broadenings_errors_fits[i] = broads_errs_local
             chi2_fits[i] = chi2_local
             continuum_fits[i] = continuum_local
-            return i, ampls_fit, flux_fit, flux_errs_fit, vels_fit, vels_errs_fit, broads_fit, broads_errs_fit, chi2_fit, continuum_fit
+            return None#i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, continuum_local
 
         # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None and binning > 1:
@@ -642,9 +615,20 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        for step_i in tqdm(range(y_max - y_min)):
-            fit_calc(step_i, ampls_fits, flux_fits, flux_errors_fits, velocities_fits, velocities_errors_fits,
-                     broadenings_fits, broadenings_errors_fits, chi2_fits, continuum_fits)
+        # results =
+        Parallel(n_jobs=n_threads, require='sharedmem')(
+            delayed(fit_calc)(sl) for sl in tqdm(range(y_max - y_min)))
+        '''for result in results:
+            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, continuum_local = result
+            ampls_fits[i] = ampls_local
+            flux_fits[i] = flux_local
+            flux_errors_fits[i] = flux_errs_local
+            velocities_fits[i] = vels_local
+            broadenings_fits[i] = broads_local
+            velocities_errors_fits[i] = vels_errs_local
+            broadenings_errors_fits[i] = broads_errs_local
+            chi2_fits[i] = chi2_local
+            continuum_fits[i] = continuum_local'''
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits,
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,
@@ -782,9 +766,6 @@ class Luci():
         # Create mask
         if '.reg' in region:
             mask = reg_to_mask(region, self.header)
-            # shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
-            ##r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-            # mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
         elif '.npy' in region:
             mask = np.load(region)
         else:
@@ -848,9 +829,6 @@ class Luci():
         mask = None  # Initialize
         if '.reg' in region:
             mask = reg_to_mask(region, self.header)
-            # shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
-            # r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-            # mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
         elif '.npy' in region:
             mask = np.load(region)
         else:
@@ -911,30 +889,25 @@ class Luci():
             snr_map: Signal-to-Noise ratio map
 
         """
-        # Calculate bounds for SNR calculation
-        # Step through spectra
-        # SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         SNR = np.zeros((2048, 2064), dtype=np.float32).T
-        # start = time.time()
-        # def SNR_calc(SNR, i):
         flux_min = 0;
         flux_max = 0;
         noise_min = 0;
         noise_max = 0  # Initializing bounds for flux and noise calculation regions
         if self.hdr_dict['FILTER'] == 'SN3':
-            flux_min = 15150;
-            flux_max = 15300;
-            noise_min = 14500;
+            flux_min = 15150
+            flux_max = 15300
+            noise_min = 14500
             noise_max = 14600
         elif self.hdr_dict['FILTER'] == 'SN2':
-            flux_min = 19800;
-            flux_max = 20750;
-            noise_min = 19000;
+            flux_min = 19800
+            flux_max = 20750
+            noise_min = 19000
             noise_max = 19500
         elif self.hdr_dict['FILTER'] == 'SN1':
-            flux_min = 26550;
-            flux_max = 27550;
-            noise_min = 25700;
+            flux_min = 26550
+            flux_max = 27550
+            noise_min = 25700
             noise_max = 26300
         else:
             print('SNR Calculation for this filter has not been implemented')
@@ -945,7 +918,6 @@ class Luci():
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 # Calculate SNR
-                # Select spectral region around Halpha and NII complex
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_max))
                 in_region = self.cube_final[x_pix, y_pix, min_:max_]
@@ -956,7 +928,6 @@ class Luci():
                 # Now take the mean value to serve as the continuum value
                 cont_val = np.min(clipped_spec)
                 flux_in_region -= cont_val * (max_ - min_)  # Need to scale by the number of steps along wavelength axis
-                # Select distance region
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_max))
                 out_region = self.cube_final[x_pix, y_pix, min_:max_]
@@ -994,68 +965,6 @@ class Luci():
             masks.append(mask)
             np.save("%s/SNR_%i_mask.npy" % (self.output_dir, snr_val), mask.mask)
         return masks
-
-    '''def update_astrometry(self, api_key):
-        """
-        Use astronomy.net to update the astrometry in the header using the deep image.
-        If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
-        the header is not updated and an exception is thrown.
-
-        This automatically updates the deep images header! If you want the header to be binned, then you can bin it
-        using the standard creation mechanisms (for this example binning at 2x2) and then run this code:
-
-        >>> cube.create_deep_image(binning=2)
-        >>> cube.update_astrometry(api_key)
-
-        Args:
-            api_key: Astronomy.net user api key
-        """
-        # Initiate Astronomy Net
-        ast = AstrometryNet()
-        ast.key = api_key
-        ast.api_key = api_key
-        try_again = True
-        submission_id = None
-        # Check that deep image exists. Otherwise make one
-        if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
-            self.create_deep_image()
-        # Now submit to astronomy.net until the value is found
-        while try_again:
-            if not submission_id:
-                try:
-                    wcs_header = ast.solve_from_image(self.output_dir + '/' + self.object_name + '_deep.fits',
-                                                      submission_id=submission_id,
-                                                      solve_timeout=300)  # , use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
-                except Exception as e:
-                    print("Timedout")
-                    submission_id = e.args[1]
-                else:
-                    # got a result, so terminate
-                    print("Result")
-                    try_again = False
-            else:
-                try:
-                    wcs_header = ast.monitor_submission(submission_id, solve_timeout=300)
-                except Exception as e:
-                    print("Timedout")
-                    submission_id = e.args[1]
-                else:
-                    # got a result, so terminate
-                    print("Result")
-                    try_again = False
-
-        if wcs_header:
-            # Code to execute when solve succeeds
-            # update deep image header
-            deep = fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')
-            deep[0].header.update(wcs_header)
-            deep.close()
-            # Update normal header
-            self.header = wcs_header
-
-        else:
-            # Code to execute when solve fails
-            print('Astronomy.net failed to solve. This astrometry has not been updated!')'''
 
     def heliocentric_correction(self):
         """
@@ -1260,8 +1169,6 @@ class Luci():
         y_min = 0
         y_max = self.cube_final.shape[1]
         chi2_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        component_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        component_prob_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         # First two dimensions are the X and Y dimensions.
         # The third dimension corresponds to the line in the order of the lines input parameter.
         ampls_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
@@ -1421,7 +1328,6 @@ class Luci():
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
 
-        set_num_threads(n_threads)
         global value_calc
         def value_calc(i):
             y_pix = y_min + i
@@ -1459,3 +1365,65 @@ class Luci():
             detection_map[i] = detection_local
         fits.writeto(self.output_dir+'/'+self.object_name + '_detection.fits', detection_map, cutout.wcs.to_header(), overwrite=True)
         return detection_map
+
+    '''def update_astrometry(self, api_key):
+            """
+            Use astronomy.net to update the astrometry in the header using the deep image.
+            If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
+            the header is not updated and an exception is thrown.
+
+            This automatically updates the deep images header! If you want the header to be binned, then you can bin it
+            using the standard creation mechanisms (for this example binning at 2x2) and then run this code:
+
+            >>> cube.create_deep_image(binning=2)
+            >>> cube.update_astrometry(api_key)
+
+            Args:
+                api_key: Astronomy.net user api key
+            """
+            # Initiate Astronomy Net
+            ast = AstrometryNet()
+            ast.key = api_key
+            ast.api_key = api_key
+            try_again = True
+            submission_id = None
+            # Check that deep image exists. Otherwise make one
+            if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
+                self.create_deep_image()
+            # Now submit to astronomy.net until the value is found
+            while try_again:
+                if not submission_id:
+                    try:
+                        wcs_header = ast.solve_from_image(self.output_dir + '/' + self.object_name + '_deep.fits',
+                                                          submission_id=submission_id,
+                                                          solve_timeout=300)  # , use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
+                    except Exception as e:
+                        print("Timedout")
+                        submission_id = e.args[1]
+                    else:
+                        # got a result, so terminate
+                        print("Result")
+                        try_again = False
+                else:
+                    try:
+                        wcs_header = ast.monitor_submission(submission_id, solve_timeout=300)
+                    except Exception as e:
+                        print("Timedout")
+                        submission_id = e.args[1]
+                    else:
+                        # got a result, so terminate
+                        print("Result")
+                        try_again = False
+
+            if wcs_header:
+                # Code to execute when solve succeeds
+                # update deep image header
+                deep = fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')
+                deep[0].header.update(wcs_header)
+                deep.close()
+                # Update normal header
+                self.header = wcs_header
+
+            else:
+                # Code to execute when solve fails
+                print('Astronomy.net failed to solve. This astrometry has not been updated!')'''

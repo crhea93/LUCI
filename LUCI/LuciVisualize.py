@@ -19,7 +19,7 @@ def visualize(deep_image, spectrum_axis, cube_final):
     point1 = []
 
     rectangles = []
-
+    deep_image = deep_image
 
     def line_select_callback(eclick, erelease):
         x1, y1 = eclick.xdata, eclick.ydata
@@ -38,7 +38,7 @@ def visualize(deep_image, spectrum_axis, cube_final):
                 integrated_spectrum += cube_final[x_pix, y_pix, :]
         axes[1].cla()
         axes[1].set_title('Spectrum of region %i<x<%i %i<y%i'%(int(x1), int(x2), int(y1), int(y2)))
-        plt.plot(1e7 / spectrum_axis, integrated_spectrum, linewidth=2)
+        plt.plot(spectrum_axis, integrated_spectrum, linewidth=2)
         axes[1].set_xlabel('Wavelength [nm]', fontweight='bold')
         axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
 
@@ -69,7 +69,7 @@ def visualize(deep_image, spectrum_axis, cube_final):
             Y_coordinate = int(event.ydata)
             axes[1].cla()
             plt.title('Spectrum of point (%i,%i)'%(X_coordinate, Y_coordinate))
-            plt.plot(1e7/spectrum_axis,cube_final[X_coordinate, Y_coordinate], linewidth=2)
+            plt.plot(spectrum_axis,cube_final[X_coordinate, Y_coordinate], linewidth=2)
             axes[1].set_xlabel('Wavelength [nm]', fontweight='bold')
             axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
             plt.show()
