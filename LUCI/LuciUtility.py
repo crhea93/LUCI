@@ -123,6 +123,7 @@ def get_interferometer_angles(file, hdr_dict):
     calib_ref = hdr_dict['CALIBNM']
     interferometer_cos_theta = calib_ref / calib_map  # .T[::-1,::-1]
     # We need to convert to degree so bear with me here
+    #del calib_map
     return np.rad2deg(np.arccos(interferometer_cos_theta))
     # self.interferometer_theta = np.rad2deg(np.arccos(interferometer_cos_theta))
 
