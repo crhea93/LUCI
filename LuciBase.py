@@ -81,7 +81,7 @@ class Luci():
             self.spectrum_axis=self.spectrum_axis_unshifted #LYA mod
         if ML_bool is True:
             if not self.mdn:
-                if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C1']:
+                if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C3', 'C1']:
                     self.ref_spec = self.Luci_path + 'ML/Reference-Spectrum-R%i-%s.fits' % (resolution, self.filter)
                     self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,
                                                                                                  self.hdr_dict)
@@ -240,7 +240,7 @@ class Luci():
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=False,
-                 spec_min=None, spec_max=None):
+                 spec_min=None, spec_max=None, obj_redshift=0.0):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
@@ -267,6 +267,7 @@ class Luci():
             initial_values: List of files containing initial conditions (default False)
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
+            obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -362,7 +363,7 @@ class Luci():
                               bayes_bool=bayes_bool, bayes_method=bayes_method,
                               uncertainty_bool=uncertainty_bool,
                               mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_conditions,
-                              spec_min=spec_min, spec_max=spec_max
+                              spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift
                               )
                     fit_dict = fit.fit()  # Collect fit dictionary
                     # Save local list of fit values
@@ -639,7 +640,7 @@ class Luci():
                   pixel_x, pixel_y, bin=None, bkg=None,
                   bayes_bool=False, bayes_method='emcee',
                   uncertainty_bool=False,
-                  nii_cons=True, spec_min=None, spec_max=None):
+                  nii_cons=True, spec_min=None, spec_max=None, obj_redshift=0.0):
         """
         Primary fit call to fit a single pixel in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps.
@@ -659,6 +660,7 @@ class Luci():
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
+            obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
         Return:
             Returns the x-axis (redshifted), sky, and fit dictionary
 
@@ -688,7 +690,7 @@ class Luci():
                   bayes_bool=bayes_bool, bayes_method=bayes_method,
                   uncertainty_bool=uncertainty_bool,
                   mdn=self.mdn, nii_cons=nii_cons,
-                  spec_min=spec_min, spec_max=spec_max)
+                  spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
@@ -867,7 +869,7 @@ class Luci():
                   filter=self.hdr_dict['FILTER'],
                   bayes_bool=bayes_bool, bayes_method=bayes_method,
                   uncertainty_bool=uncertainty_bool, nii_cons=nii_cons,
-                  mdn=self.mdn, initial_values=initial_conditions, 
+                  mdn=self.mdn, initial_values=initial_conditions,
                   spec_min=spec_min, spec_max=spec_max,
                   obj_redshift=obj_redshift)
         fit_dict = fit.fit()
@@ -909,6 +911,11 @@ class Luci():
             flux_max = 27550
             noise_min = 25700
             noise_max = 26300
+        elif self.hdr_dict['FILTER'] == 'C3':  # Only for MACSJ1621
+            flux_min = 18100
+            flux_max = 19500
+            noise_min = 17450
+            noise_max = 17550
         else:
             print('SNR Calculation for this filter has not been implemented')
 
@@ -1033,7 +1040,8 @@ class Luci():
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
                           zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'], bayes_bool=False, bayes_method='emcee', sky_lines=sky_line_dict, sky_lines_scale=sky_lines_scale
+                          filter=self.hdr_dict['FILTER'], bayes_bool=False, bayes_method='emcee', sky_lines=sky_line_dict, sky_lines_scale=sky_lines_scale,
+
                           )
 
                 velocity, fit_vector = fit.fit(sky_line=True)
@@ -1077,9 +1085,9 @@ class Luci():
         """
         Written by Benjamin Vigneron.
 
-        Functionality to create a weighted Voronoi tesselation map from a region and according to 
+        Functionality to create a weighted Voronoi tesselation map from a region and according to
         arguments passed by the user. It creates a folder containing all the Voronoi bins that can
-        then be used for the fitting procedure. 
+        then be used for the fitting procedure.
         Args:
             x_min_init: Minimal X value
             x_max_init: Maximal X value

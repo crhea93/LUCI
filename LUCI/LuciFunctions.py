@@ -206,13 +206,13 @@ class SincGauss:
 
         """
         f1 = 0.0
-        thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
+        #thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
         #print(thetas)
-        f1 = np.add.reduce([self.function(channel, thetas[model_num], sinc_width) for model_num in range(line_num)])
+        #f1 = np.add.reduce([self.function(channel, thetas[model_num], sinc_width) for model_num in range(line_num)])
         #f1 = np.sum([self.function(channel, theta[model_num * 3:(model_num + 1) * 3], sinc_width) for model_num in range(line_num)])
-        #for model_num in range(line_num):
-        #    params = theta[model_num * 3:(model_num + 1) * 3]
-        #    f1 += self.function(channel, params, sinc_width)
+        for model_num in range(line_num):
+            params = theta[model_num * 3:(model_num + 1) * 3]
+            f1 += self.function(channel, params, sinc_width)
         return np.real(f1)
 
     def evaluate_bayes(self, channel, theta, sinc_width):
