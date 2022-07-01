@@ -312,7 +312,7 @@ class Luci():
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
-                 uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=False,
+                 uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=[False],
                  spec_min=None, spec_max=None):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
@@ -383,10 +383,15 @@ class Luci():
         vel_init = False
         broad_init = False
         # TODO: ALLOW BINNING OF INITIAL CONDITIONS
-        if initial_values is not False:
-            # Obtain initial condition maps from files
-            vel_init = fits.open(initial_values[0])[0].data
-            broad_init = fits.open(initial_values[1])[0].data
+        if len(initial_values) == 2:
+            try:#if isinstance(initial_values[0], str):
+                # Obtain initial condition maps from files
+                vel_init = fits.open(initial_values[0])[0].data
+                broad_init = fits.open(initial_values[1])[0].data
+            except:#else:
+                # Initial conditions passed are arrays from a previous fit and not  fits files
+                vel_init = initial_values[0]
+                broad_init = initial_values[1]
             print('Initial values')
 
         # Write outputs (Velocity, Broadening, and Amplitudes)

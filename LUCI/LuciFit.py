@@ -44,7 +44,7 @@ class Fit:
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
-                 nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=False,
+                 nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=[False],
                  spec_min=None, spec_max=None, obj_redshift=0.0
                  ):
         """
@@ -141,7 +141,8 @@ class Fit:
         self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
         self.initial_values = initial_values  # List for initial values (or default False)
         self.freeze = False
-        if self.initial_values is not False and False not in self.initial_values:
+        if self.initial_values[0] is not False:# and False not in self.initial_values:
+            print('Frozen')
             self.freeze = True  # Initial values were passed so we are freezing the velocity and broadening
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
@@ -580,7 +581,7 @@ class Fit:
                 cons = sigma_cons + vel_cons + vel_cons_multiple
             soln = minimize(nll, initial,
                             method='SLSQP',
-                            options={'disp': False, 'maxiter': 10},
+                            options={'disp': False, 'maxiter': 30},
                             tol=1e-2,
                             args=(), constraints=cons
                             )
@@ -596,27 +597,22 @@ class Fit:
                 initial[mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial_positions[mod] = vel_est
                 initial_sigmas[mod] = sigma_est
-            soln = minimize(nll, initial,
-                            method='SLSQP',
-                            options={'disp': True, 'maxiter': 1},
-                            tol=1e-2,
-                            args=()  # , constraints=cons
-                            )
-        # self.initial_values = initial
+                soln = minimize(nll, initial,
+                                method='SLSQP',
+                                options={'disp': False, 'maxiter': 30},
+                                tol=1e-2,
+                                args=())
+
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
-        # print(initial)
 
         parameters = soln.x
-        # print(initial)
-        # print(parameters)
         # We now must unscale the amplitude
         if self.freeze is True:  # Freezing velocity and broadening
             for i in range(self.line_num):
                 parameters[i] *= self.spectrum_scale
                 self.uncertainties[i] *= self.spectrum_scale
         else:  # Not freezing velocity and broadening
-            #print(parameters)
             for i in range(self.line_num):
                 parameters[i * 3] *= self.spectrum_scale
                 self.uncertainties[i * 3] *= self.spectrum_scale

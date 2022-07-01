@@ -234,18 +234,17 @@ class SincGauss:
 
         """
         # Check if velocity and broadening should be frozen -- if they are freeze them!
-        #thetas = np.zeros(3*line_num)
-        #f1 = 0
-        '''if self.freeze:  # If true read off amplitudes and add in velocity and broadening
+        thetas = np.zeros(3*line_num)
+        if self.freeze:  # If true read off amplitudes and add in velocity and broadening
             for model_num in range(line_num):  # Step through each line
                 thetas[3*model_num] = theta[model_num]  # Get amplitude -- the only parameter being fit
                 frozen_velocity, frozen_broadening = frozen_values(line_names[model_num], self.initial_values)
                 thetas[3*model_num + 1] = frozen_velocity
                 thetas[3*model_num + 2] = frozen_broadening
+            #thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
+            print(thetas)
+        else:  # Just read off parameters directly
             thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
-
-        else:  # Just read off parameters directly'''
-        thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
         f1 = np.add.reduce([self.function(channel, thetas[model_num], sinc_width) for model_num in range(line_num)])
         '''for model_num in range(line_num):
                         params = theta[model_num * 3:(model_num + 1) * 3]
