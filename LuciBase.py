@@ -269,6 +269,10 @@ class Luci():
             good_sky_inds = [~np.isnan(sky)]  # Find all NaNs in sky spectrum
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
             axis = self.spectrum_axis#[good_sky_inds]  # Clean up axis  accordingly
+            if initial_values[0] is not False:   #Frozen parameter
+                initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
+            else:
+                initial_values_to_pass = initial_values
             # Call fit!
             if len(sky) > 0:  # Ensure that there are values in sky
                 fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
@@ -279,7 +283,7 @@ class Luci():
                           filter=self.hdr_dict['FILTER'],
                           bayes_bool=bayes_bool, bayes_method=bayes_method,
                           uncertainty_bool=uncertainty_bool,
-                          mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values,
+                          mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
                           spec_min=spec_min, spec_max=spec_max
                           )
                 fit_dict = fit.fit()  # Collect fit dictionary

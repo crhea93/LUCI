@@ -10,7 +10,7 @@ import dynesty
 from dynesty import utils as dyfunc
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
-    calculate_flux, calculate_flux_err, calculate_vel_err_frozen, calculate_broad_err_frozen, calculate_flux_err_frozen
+    calculate_flux, calculate_flux_err
 from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
 
 warnings.filterwarnings("ignore")
@@ -142,7 +142,6 @@ class Fit:
         self.initial_values = initial_values  # List for initial values (or default False)
         self.freeze = False
         if self.initial_values[0] is not False:# and False not in self.initial_values:
-            print('Frozen')
             self.freeze = True  # Initial values were passed so we are freezing the velocity and broadening
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
@@ -337,28 +336,30 @@ class Fit:
             else:
                 pass
         else:
-            pass  # vel_ml and broad_ml already set using ML algorithm
+            if self.freeze is True:
+                self.vel_ml = self.initial_values[0]  # Velocity component of initial conditions in km/s
+                self.broad_ml = self.initial_values[
+                    1]  # Broadening component of initial conditions in km/s
+                # vel_ml and broad_ml already set using ML algorithm
         line_pos_est = 1e7 / (
                     (self.vel_ml / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
-        # try:
-        line_amp_est = np.max([
-            # self.spectrum_normalized[line_ind - 4],
-            self.spectrum_normalized[line_ind - 3],
-            self.spectrum_normalized[line_ind - 2],
-            self.spectrum_normalized[line_ind - 1],
-            self.spectrum_normalized[line_ind],
-            self.spectrum_normalized[line_ind + 1],
-            self.spectrum_normalized[line_ind + 2],
-            self.spectrum_normalized[line_ind + 3],
-            # self.spectrum_normalized[line_ind + 4]
-        ])
-        # except:
-        #    line_amp_est = self.spectrum_normalized[line_ind]
-        # print(self.broad_ml)
+        try:
+            line_amp_est = np.max([
+                # self.spectrum_normalized[line_ind - 4],
+                self.spectrum_normalized[line_ind - 3],
+                self.spectrum_normalized[line_ind - 2],
+                self.spectrum_normalized[line_ind - 1],
+                self.spectrum_normalized[line_ind],
+                self.spectrum_normalized[line_ind + 1],
+                self.spectrum_normalized[line_ind + 2],
+                self.spectrum_normalized[line_ind + 3],
+                # self.spectrum_normalized[line_ind + 4]
+            ])
+        except IndexError:
+            line_amp_est = self.spectrum_normalized[line_ind]
         self.broad_ml = np.abs(self.broad_ml)
         line_broad_est = (line_pos_est * self.broad_ml) / (SPEED_OF_LIGHT)
-        # print(line_broad_est)
         if self.mdn:
             # Update position and sigma_gauss bounds -- looks gross but it's the usual transformation
             self.x_min = 1e7 / (((
@@ -448,7 +449,6 @@ class Fit:
         # Add constant continuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        # print(model)
         return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
 
     def sigma_constraints(self):
@@ -558,6 +558,8 @@ class Fit:
         We then correct the flux by un-normalizing the spectrum.
 
         """
+        initial_positions = np.ones(self.line_num)
+        initial_sigmas = np.ones(self.line_num)
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         if self.freeze is False:  # Not freezing velocity and broadening
             initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
@@ -587,8 +589,6 @@ class Fit:
                             )
         else:  # Freezing velocity and broadening
             initial = np.ones((self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-            initial_positions = np.ones(self.line_num)
-            initial_sigmas = np.ones(self.line_num)
             initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
             lines_fit = []  # List of lines which already have been set up for fits
             for mod in range(self.line_num):  # Step through each line
@@ -597,11 +597,11 @@ class Fit:
                 initial[mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial_positions[mod] = vel_est
                 initial_sigmas[mod] = sigma_est
-                soln = minimize(nll, initial,
-                                method='SLSQP',
-                                options={'disp': False, 'maxiter': 30},
-                                tol=1e-2,
-                                args=())
+            soln = minimize(nll, initial,
+                            method='SLSQP',
+                            options={'disp': False, 'maxiter': 30},
+                            tol=1e-2,
+                            args=())
 
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
@@ -634,10 +634,10 @@ class Fit:
         else:  # We want to add back the velocity and broadening as if they were fit so we don't have to rewrite as much
             parameters_new = np.zeros(3 * self.line_num + 1)
             for i in range(self.line_num):
-                parameters_new[3 * i] = parameters_new[i]
+                parameters_new[3 * i] = parameters[i]
                 parameters_new[3 * i + 1] = initial_positions[i]
                 parameters_new[3 * i + 2] = initial_sigmas[i]
-            parameters_new[-1] = parameters_new[-1]
+            parameters_new[-1] = parameters[-1]
             parameters = parameters_new
             self.fit_sol = parameters
         # Create fit vector

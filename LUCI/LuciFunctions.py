@@ -239,10 +239,10 @@ class SincGauss:
             for model_num in range(line_num):  # Step through each line
                 thetas[3*model_num] = theta[model_num]  # Get amplitude -- the only parameter being fit
                 frozen_velocity, frozen_broadening = frozen_values(line_names[model_num], self.initial_values)
-                thetas[3*model_num + 1] = frozen_velocity
-                thetas[3*model_num + 2] = frozen_broadening
+                thetas[3*model_num + 1] = frozen_velocity#[model_num]
+                thetas[3*model_num + 2] = frozen_broadening#[model_num]
             #thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
-            print(thetas)
+            thetas = [thetas[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
         else:  # Just read off parameters directly
             thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
         f1 = np.add.reduce([self.function(channel, thetas[model_num], sinc_width) for model_num in range(line_num)])
