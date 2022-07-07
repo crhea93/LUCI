@@ -760,7 +760,7 @@ class Luci():
         return self.spectrum_axis, integrated_spectrum
 
     def fit_spectrum_region(self, lines, fit_function, vel_rel, sigma_rel,
-                            region, initial_conditions=False, bkg=None,
+                            region, initial_values=[False], bkg=None,
                             bayes_bool=False, bayes_method='emcee',
                             uncertainty_bool=False, mean=False, nii_cons=True,
                             spec_min=None, spec_max=None, obj_redshift=0.0
@@ -777,7 +777,7 @@ class Luci():
             vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
-            initial_conditions:
+            initial_values:
             bkg: Background Spectrum (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
@@ -807,6 +807,17 @@ class Luci():
         y_max = self.cube_final.shape[1]
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
         spec_ct = 0
+        # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
+        vel_init = False
+        broad_init = False
+        # TODO: ALLOW BINNING OF INITIAL CONDITIONS
+        if len(initial_values) == 2:
+            try:  # Obtain initial condition maps from files
+                vel_init = fits.open(initial_values[0])[0].data
+                broad_init = fits.open(initial_values[1])[0].data
+            except:  # Initial conditions passed are arrays from a previous fit and not  fits files
+                vel_init = initial_values[0]
+                broad_init = initial_values[1]
         for i in range(y_max - y_min):
             y_pix = y_min + i
             for j in range(x_max - x_min):
@@ -833,7 +844,7 @@ class Luci():
                   filter=self.hdr_dict['FILTER'],
                   bayes_bool=bayes_bool, bayes_method=bayes_method,
                   uncertainty_bool=uncertainty_bool, nii_cons=nii_cons,
-                  mdn=self.mdn, initial_values=initial_conditions,
+                  mdn=self.mdn, initial_values=initial_values,
                   spec_min=spec_min, spec_max=spec_max,
                   obj_redshift=obj_redshift)
         fit_dict = fit.fit()
