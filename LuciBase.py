@@ -237,10 +237,33 @@ class Luci():
         y_max = self.cube_final.shape[1]
         self.fit_cube(lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
 
-    def fit_calc(self, i, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=False,
+    def fit_calc(self, i, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, mask=None, bayes_bool=False,
                  bayes_method='emcee',
                  uncertainty_bool=False, nii_cons=False,
-                 bkg=None, binning=None, spec_min=None, spec_max=None, initial_values=False):
+                 bkg=None, binning=None, spec_min=None, spec_max=None, initial_values=False,
+                 obj_redshift=0.0):
+        """
+        Function for calling fit for a given y coordinate.
+        Args:
+            i: Y coordinate step
+            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
+            fit_function: Fitting function to use (e.x. 'gaussian')
+            vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+            sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
+            x_min: Lower bound in x
+            x_max: Upper bound in x
+            y_min: Lower bound in y
+            bkg: Background Spectrum (1D numpy array; default None)
+            binning:  Value by which to bin (default None)
+            bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
+            bayes_method = Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
+            uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+            nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
+            initial_values: List of files containing initial conditions (default False)
+            spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
+            spec_max: Maximum value of the spectrum to be considered in the fit
+            obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
+        """
         y_pix = y_min + i  # Step y coordinate
         # Set up all the local lists for the current y_pixel step
         ampls_local = []
@@ -257,60 +280,62 @@ class Luci():
         # Step through x coordinates
         for j in range(x_max - x_min):
             x_pix = x_min + j  # Set current x pixel
-            # if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
-            #    sky = self.cube_binned[x_pix, y_pix, :]
-            # else:  # If not, then take from the unbinned cube
-            sky = self.cube_final[x_pix, y_pix, :]
-            if bkg is not None:  # If there is a background variable subtract the bkg spectrum
-                if binning:  # If binning, then we have to take into account how many pixels are in each bin
-                    sky -= bkg * binning ** 2  # Subtract background spectrum
-                else:  # No binning so just subtract the background directly
-                    sky -= bkg  # Subtract background spectrum
-            good_sky_inds = [~np.isnan(sky)]  # Find all NaNs in sky spectrum
-            sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
-            axis = self.spectrum_axis#[good_sky_inds]  # Clean up axis  accordingly
-            if initial_values[0] is not False:   #Frozen parameter
-                initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
-            else:
-                initial_values_to_pass = initial_values
-            # Call fit!
-            if len(sky) > 0:  # Ensure that there are values in sky
-                fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                          self.model_ML, trans_filter=self.transmission_interpolated,
-                          theta=self.interferometer_theta[x_pix, y_pix],
-                          delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
-                          zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'],
-                          bayes_bool=bayes_bool, bayes_method=bayes_method,
-                          uncertainty_bool=uncertainty_bool,
-                          mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
-                          spec_min=spec_min, spec_max=spec_max
-                          )
-                fit_dict = fit.fit()  # Collect fit dictionary
-                # Save local list of fit values
-                ampls_local.append(fit_dict['amplitudes'])
-                flux_local.append(fit_dict['fluxes'])
-                flux_errs_local.append(fit_dict['flux_errors'])
-                vels_local.append(fit_dict['velocities'])
-                broads_local.append(fit_dict['sigmas'])
-                vels_errs_local.append(fit_dict['vels_errors'])
-                broads_errs_local.append(fit_dict['sigmas_errors'])
-                chi2_local.append(fit_dict['chi2'])
-                corr_local.append(fit_dict['corr'])
-                step_local.append(fit_dict['axis_step'])
-                continuum_local.append(fit_dict['continuum'])
-            else:  # If the sky is empty (this rarely rarely rarely happens), then return zeros for everything
-                ampls_local.append([0] * len(lines))
-                flux_local.append([0] * len(lines))
-                flux_errs_local.append([0] * len(lines))
-                vels_local.append([0] * len(lines))
-                broads_local.append([0] * len(lines))
-                vels_errs_local.append([0] * len(lines))
-                broads_errs_local.append([0] * len(lines))
-                chi2_local.append(0)
-                corr_local.append(0)
-                step_local.append(0)
-                continuum_local.append(0)
+            if mask is not None:  # Check if there is a mask
+                if mask[x_pix, y_pix]:  # Check that the mask is true
+                    if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
+                        sky = self.cube_binned[x_pix, y_pix, :]
+                    else:  # If not, then take from the unbinned cube
+                        sky = self.cube_final[x_pix, y_pix, :]
+                    if bkg is not None:  # If there is a background variable subtract the bkg spectrum
+                        if binning:  # If binning, then we have to take into account how many pixels are in each bin
+                            sky -= bkg * binning ** 2  # Subtract background spectrum
+                        else:  # No binning so just subtract the background directly
+                            sky -= bkg  # Subtract background spectrum
+                    good_sky_inds = [~np.isnan(sky)]  # Find all NaNs in sky spectrum
+                    sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
+                    axis = self.spectrum_axis#[good_sky_inds]  # Clean up axis  accordingly
+                    if initial_values[0] is not False:   #Frozen parameter
+                        initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
+                    else:
+                        initial_values_to_pass = initial_values
+                    # Call fit!
+                    if len(sky) > 0:  # Ensure that there are values in sky
+                        fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+                                  self.model_ML, trans_filter=self.transmission_interpolated,
+                                  theta=self.interferometer_theta[x_pix, y_pix],
+                                  delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
+                                  zpd_index=self.zpd_index,
+                                  filter=self.hdr_dict['FILTER'],
+                                  bayes_bool=bayes_bool, bayes_method=bayes_method,
+                                  uncertainty_bool=uncertainty_bool,
+                                  mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
+                                  spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift
+                                  )
+                        fit_dict = fit.fit()  # Collect fit dictionary
+                        # Save local list of fit values
+                        ampls_local.append(fit_dict['amplitudes'])
+                        flux_local.append(fit_dict['fluxes'])
+                        flux_errs_local.append(fit_dict['flux_errors'])
+                        vels_local.append(fit_dict['velocities'])
+                        broads_local.append(fit_dict['sigmas'])
+                        vels_errs_local.append(fit_dict['vels_errors'])
+                        broads_errs_local.append(fit_dict['sigmas_errors'])
+                        chi2_local.append(fit_dict['chi2'])
+                        corr_local.append(fit_dict['corr'])
+                        step_local.append(fit_dict['axis_step'])
+                        continuum_local.append(fit_dict['continuum'])
+                    else:  # If the sky is empty (this rarely rarely rarely happens), then return zeros for everything
+                        ampls_local.append([0] * len(lines))
+                        flux_local.append([0] * len(lines))
+                        flux_errs_local.append([0] * len(lines))
+                        vels_local.append([0] * len(lines))
+                        broads_local.append([0] * len(lines))
+                        vels_errs_local.append([0] * len(lines))
+                        broads_errs_local.append([0] * len(lines))
+                        chi2_local.append(0)
+                        corr_local.append(0)
+                        step_local.append(0)
+                        continuum_local.append(0)
         return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
 
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
@@ -342,7 +367,7 @@ class Luci():
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
-            initial_values: List of files containing initial conditions (default False)
+            initial_values: List of files containing initial conditions (default [False])
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
@@ -384,24 +409,17 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        # set_num_threads(n_threads)
         # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
         # TODO: ALLOW BINNING OF INITIAL CONDITIONS
-        
         if len(initial_values) == 2:
-            try:#if isinstance(initial_values[0], str):
-                # Obtain initial condition maps from files
+            try:  # Obtain initial condition maps from files
                 vel_init = fits.open(initial_values[0])[0].data
                 broad_init = fits.open(initial_values[1])[0].data
-            except:#else:
-                # Initial conditions passed are arrays from a previous fit and not  fits files
+            except:  # Initial conditions passed are arrays from a previous fit and not  fits files
                 vel_init = initial_values[0]
                 broad_init = initial_values[1]
-            print('Initial values')
-
-        # Write outputs (Velocity, Broadening, and Amplitudes)
         if binning is not None and binning != 1:
             # Check if deep image exists: if not, create it
             if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
@@ -442,7 +460,7 @@ class Luci():
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
                    bkg=None, binning=None, bayes_bool=False, bayes_method='emcee',
                    output_name=None, uncertainty_bool=False, n_threads=1, nii_cons=True,
-                   spec_min=None, spec_max=None, obj_redshift=0.0):
+                   spec_min=None, spec_max=None, obj_redshift=0.0, initial_values=[False]):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -469,6 +487,7 @@ class Luci():
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
+            initial_values: List of files containing initial conditions (default [False])
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -494,7 +513,6 @@ class Luci():
         if binning != None and binning != 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
                           y_max)
-            # x_min = int(x_min/binning) ; y_min = int(y_min/binning) ; x_max = int(x_max/binning) ;  y_max = int(y_max/binning)
             x_max = int((x_max - x_min) / binning);
             y_max = int((y_max - y_min) / binning)
             x_min = 0;
@@ -508,15 +526,11 @@ class Luci():
                 header = self.header
             header.set('NAXIS1', 2064)
             header.set('NAXIS2', 2048)
-            # r = pyregion.open(region).as_imagecoord(header)  # Obtain pyregion region
-            # mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
             mask = reg_to_mask(region, header)
         elif '.npy' in region:
             mask = np.load(region).T
         else:
             pass
-            # print("At the moment, we only support '.reg' and '.npy' files for masks.")
-            # print("Terminating Program!")
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
@@ -535,85 +549,21 @@ class Luci():
         flux_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
         velocities_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
         broadenings_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        velocities_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
-                                                                                                                  2)
-        broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
-                                                                                                                   2)
+        velocities_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
 
-        def fit_calc(i):
-            y_pix = y_min + i
-            ampls_local = []
-            flux_local = []
-            flux_errs_local = []
-            vels_local = []
-            broads_local = []
-            vels_errs_local = []
-            broads_errs_local = []
-            chi2_local = []
-            continuum_local = []
-            for j in range(x_max - x_min):
-                x_pix = x_min + j
-                # Check if pixel is in the mask or not
-                # If so, fit as normal. Else, set values to zero
-                if mask[x_pix, y_pix] == True:
-                    if binning is not None and binning != 1:
-                        sky = self.cube_binned[x_pix, y_pix, :]
-                    else:
-                        sky = self.cube_final[x_pix, y_pix, :]
-                    if bkg is not None:
-                        if binning:
-                            sky -= bkg * binning ** 2  # Subtract background spectrum
-                        else:
-                            sky -= bkg  # Subtract background spectrum
-                    good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
-                    sky = sky[good_sky_inds]
-                    axis = self.spectrum_axis[good_sky_inds]
-                    # Call fit!
-                    fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                              self.model_ML, trans_filter=self.transmission_interpolated,
-                              theta=self.interferometer_theta[x_pix, y_pix],
-                              delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
-                              zpd_index=self.zpd_index,
-                              filter=self.hdr_dict['FILTER'],
-                              bayes_bool=bayes_bool, bayes_method=bayes_method,
-                              uncertainty_bool=uncertainty_bool,
-                              mdn=self.mdn, nii_cons=nii_cons,
-                              spec_min=spec_min, spec_max=spec_max,
-                              obj_redshift=obj_redshift)
-                    fit_dict = fit.fit()
-                    # Save local list of fit values
-                    ampls_local.append(fit_dict['amplitudes'])
-                    flux_local.append(fit_dict['fluxes'])
-                    flux_errs_local.append(fit_dict['flux_errors'])
-                    vels_local.append(fit_dict['velocities'])
-                    broads_local.append(fit_dict['sigmas'])
-                    vels_errs_local.append(fit_dict['vels_errors'])
-                    broads_errs_local.append(fit_dict['sigmas_errors'])
-                    chi2_local.append(fit_dict['chi2'])
-                    continuum_local.append(fit_dict['continuum'])
-                else:  # If outside of mask set to zero
-                    ampls_local.append([0] * len(lines))
-                    flux_local.append([0] * len(lines))
-                    flux_errs_local.append([0] * len(lines))
-                    vels_local.append([0] * len(lines))
-                    broads_local.append([0] * len(lines))
-                    vels_errs_local.append([0] * len(lines))
-                    broads_errs_local.append([0] * len(lines))
-                    chi2_local.append(0)
-                    continuum_local.append(0)
-            ampls_fits[i] = ampls_local
-            flux_fits[i] = flux_local
-            flux_errors_fits[i] = flux_errs_local
-            velocities_fits[i] = vels_local
-            broadenings_fits[i] = broads_local
-            velocities_errors_fits[i] = vels_errs_local
-            broadenings_errors_fits[i] = broads_errs_local
-            chi2_fits[i] = chi2_local
-            continuum_fits[i] = continuum_local
-            return None  # i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, continuum_local
-
-        # Write outputs (Velocity, Broadening, and Amplitudes)
+        # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
+        vel_init = False
+        broad_init = False
+        # TODO: ALLOW BINNING OF INITIAL CONDITIONS
+        if len(initial_values) == 2:
+            try:  # Obtain initial condition maps from files
+                vel_init = fits.open(initial_values[0])[0].data
+                broad_init = fits.open(initial_values[1])[0].data
+            except:  # Initial conditions passed are arrays from a previous fit and not  fits files
+                vel_init = initial_values[0]
+                broad_init = initial_values[1]
         if binning is not None and binning > 1:
             # Check if deep image exists: if not, create it
             if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
@@ -627,11 +577,14 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        # results =
-        Parallel(n_jobs=n_threads, require='sharedmem')(
-            delayed(fit_calc)(sl) for sl in tqdm(range(y_max - y_min)))
-        '''for result in results:
-            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, continuum_local = result
+        results = Parallel(n_jobs=n_threads, require='sharedmem') \
+            (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, mask,
+                                    bayes_bool=bayes_bool,
+                                    bayes_method=bayes_method,
+                                    uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons,
+                                    initial_values=[vel_init, broad_init]) for sl in tqdm(range(y_max - y_min)))
+        for result in results:
+            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
             flux_errors_fits[i] = flux_errs_local
@@ -640,7 +593,7 @@ class Luci():
             velocities_errors_fits[i] = vels_errs_local
             broadenings_errors_fits[i] = broads_errs_local
             chi2_fits[i] = chi2_local
-            continuum_fits[i] = continuum_local'''
+            continuum_fits[i] = continuum_local
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits,
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,

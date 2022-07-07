@@ -330,19 +330,16 @@ class Fit:
         """
         line_theo = self.line_dict[line_name]
         if self.ML_model is None or self.ML_model == '':
-            if self.freeze is True:
+            if self.freeze:
                 self.vel_ml = self.initial_values[0]  # Velocity component of initial conditions in km/s
                 self.broad_ml = self.initial_values[1]  # Broadening component of initial conditions in km/s
             else:
-                pass
+                pass  #combo is unnecessary
         else:
-            if self.freeze is True:
+            if self.freeze:
                 self.vel_ml = self.initial_values[0]  # Velocity component of initial conditions in km/s
-                self.broad_ml = self.initial_values[
-                    1]  # Broadening component of initial conditions in km/s
-                # vel_ml and broad_ml already set using ML algorithm
-        line_pos_est = 1e7 / (
-                    (self.vel_ml / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
+                self.broad_ml = self.initial_values[1]  # Broadening component of initial conditions in km/s
+        line_pos_est = 1e7 / ((self.vel_ml / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
             line_amp_est = np.max([
@@ -362,14 +359,10 @@ class Fit:
         line_broad_est = (line_pos_est * self.broad_ml) / (SPEED_OF_LIGHT)
         if self.mdn:
             # Update position and sigma_gauss bounds -- looks gross but it's the usual transformation
-            self.x_min = 1e7 / (((
-                                             self.vel_ml + 3 * self.vel_ml_sigma) / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
-            self.x_max = 1e7 / (((
-                                             self.vel_ml - 3 * self.vel_ml_sigma) / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
-            self.sigma_min = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT - 3 * (
-                        line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
-            self.sigma_max = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT + 3 * (
-                        line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
+            self.x_min = 1e7 / (((self.vel_ml + 3 * self.vel_ml_sigma) / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
+            self.x_max = 1e7 / (((self.vel_ml - 3 * self.vel_ml_sigma) / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
+            self.sigma_min = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT - 3 * (line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
+            self.sigma_max = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT + 3 * (line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
         return line_amp_est, line_pos_est, line_broad_est
 
     def cont_estimate(self, sigma_level=3):
@@ -607,18 +600,18 @@ class Fit:
         # We do **not** use the interpolated spectrum here!
         parameters = soln.x
         # We now must unscale the amplitude
-        if self.freeze is True:  # Freezing velocity and broadening
+        if self.freeze:  # Freezing velocity and broadening
             for i in range(self.line_num):
-                parameters[i] *= self.spectrum_scale
-                self.uncertainties[i] *= self.spectrum_scale
-        else:  # Not freezing velocity and broadening
-            for i in range(self.line_num):
-                parameters[i * 3] *= self.spectrum_scale
-                self.uncertainties[i * 3] *= self.spectrum_scale
+                if self.freeze:  # Freezing velocity and broadening
+                    parameters[i] *= self.spectrum_scale
+                    self.uncertainties[i] *= self.spectrum_scale
+                else:
+                    parameters[i * 3] *= self.spectrum_scale
+                    self.uncertainties[i * 3] *= self.spectrum_scale
         # Scale continuum
         parameters[-1] *= self.spectrum_scale
         self.uncertainties[-1] *= self.spectrum_scale
-        if self.uncertainty_bool is True:
+        if self.uncertainty_bool:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
             hessian = Hessian(nll)
             hessian_calc = hessian(parameters)
@@ -628,7 +621,7 @@ class Fit:
             except np.linalg.LinAlgError:
                 covariance_mat = -np.linalg.pinv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
-        if self.freeze is False:  # Not freezing velocity and broadening so nothing needs to be done
+        if not self.freeze:  # Not freezing velocity and broadening so nothing needs to be done
             self.fit_sol = parameters
         else:  # We want to add back the velocity and broadening as if they were fit so we don't have to rewrite as much
             parameters_new = np.zeros(3 * self.line_num + 1)

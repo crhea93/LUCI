@@ -16,6 +16,8 @@ def frozen_values(line_name, initial_values):
         initial_values: Value of frozen [velocity, broadening] in km/s
 
     Returns:
+        line_pos: Position of line
+        line_broad: Gaussian sigma of line
 
     """
     line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
