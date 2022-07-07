@@ -192,27 +192,25 @@ def calculate_flux_err(ind, fit_sol, uncertainties, model_type, sinc_width):
     Return:
         Error of the provided line in units of ergs/s/cm-2
     """
-
-    p0 = fit_sol[3*ind]
+    flux_err = 0  # Initialize
+    p0 = fit_sol[3*ind]  # Define some conveniences
     p2 = fit_sol[3*ind + 2]
     p0_err = uncertainties[3*ind]
     p2_err = uncertainties[3*ind + 2]
-
-
+    c_0 = np.sqrt(2) * sinc_width
     if model_type == 'gaussian':
         flux = calculate_flux(p0, p2, model_type, sinc_width)
         flux_err = flux*np.sqrt((p0_err/p0)**2+(p2_err/p2)**2)
 
     elif model_type == 'sinc':
-        flux_err = np.sqrt(np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
-                   np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
+        flux_err = calculate_flux(p0 , p2, model_type, sinc_width) * np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
 
     elif model_type == 'sincgauss':
-        flux_err = np.sqrt(np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
-                   np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
+        flux_err =  calculate_flux(p0 , p2, model_type, sinc_width) * \
+                   np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2 *(sps.erf(p2/c_0) - (2*np.pi)/(np.sqrt(np.pi)*c_0)*np.exp(-p2**2/c_0**2))**2)
 
     else:
-        print('The fit function you have entered, %s, does not exist!'%model_type)
+        ('The fit function you have entered, %s, does not exist!'%model_type)
         print('The program is terminating!')
         exit()
 
