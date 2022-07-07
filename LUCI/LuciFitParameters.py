@@ -53,17 +53,9 @@ def calculate_vel_err(ind, lines, fit_sol, line_dict, uncertainties):
     """
     line_name = lines[ind]
     l_calc1 = 1e7 / (fit_sol[3*ind+1])
-    l_calc2 = 1e7 / (fit_sol[3*ind+1] + uncertainties[3*ind+1])
-    #print()
-    #print(l_calc1, l_calc2)
-    #print(l_calc1, l_calc2)
     l_shift1 = (l_calc1 - line_dict[line_name]) / line_dict[line_name]
-    l_shift2 = (l_calc2 - line_dict[line_name]) / line_dict[line_name]
-    #print(l_shift1, l_shift2)
     v1 = SPEED_OF_LIGHT * l_shift1
-    v2 = SPEED_OF_LIGHT * l_shift2
-    #print(v1, v2)
-    return np.abs(v1 - v2)
+    return v1*uncertainties[3*ind+1]/fit_sol[3*ind+1]
 
 def calculate_vel_err_frozen(ind, lines, vel_sol, line_dict, uncertainties):
     """
@@ -150,11 +142,10 @@ def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
     Return:
         Velocity Dispersion of the Halpha line in units of km/s
     """
-    broad1 = (SPEED_OF_LIGHT * fit_sol[3*ind+2]* axis_step) / fit_sol[3*ind+1]
-    broad1 /= FWHM_COEFF  # Add FWHM correction
-    broad2 = (SPEED_OF_LIGHT * (fit_sol[3*ind+2]+uncertainties[3*ind+2])* axis_step) / (fit_sol[3*ind+1]+uncertainties[3*ind+1])
-    broad2 /= FWHM_COEFF  # Add FWHM correction
-    return np.abs(broad1-broad2)
+    broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
+    broad /= FWHM_COEFF  # Add FWHM correction
+    uncertainty_prop = np.sqrt((uncertainties[3*ind+2]/fit_sol[3*ind+2])**2 + (uncertainties[3*ind+1]/fit_sol[3*ind+1])**2)
+    return broad * uncertainty_prop
 
 
 def calculate_flux(line_amp, line_sigma, model_type, sinc_width):
@@ -211,17 +202,14 @@ def calculate_flux_err(ind, fit_sol, uncertainties, model_type, sinc_width):
     if model_type == 'gaussian':
         flux = calculate_flux(p0, p2, model_type, sinc_width)
         flux_err = flux*np.sqrt((p0_err/p0)**2+(p2_err/p2)**2)
-        #flux_err = np.sqrt(2*np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
-         #          np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
 
     elif model_type == 'sinc':
         flux_err = np.sqrt(np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
                    np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
 
     elif model_type == 'sincgauss':
-        erf_func = sps.erf(p2 / (np.sqrt(2)*sinc_width)) #Shortcut for the error function
-        flux_err = np.sqrt(2*np.pi) * np.sqrt(   (p2*p0_err / erf_func)**2 + \
-                   (  p0*p2_err *  (erf_func - (np.sqrt(2)*p2*np.exp(-(p2/(np.sqrt(2)*sinc_width))**2)/np.sqrt(np.pi))) / erf_func**2  )**2  )
+        flux_err = np.sqrt(np.pi) * calculate_flux(p0 , p2, model_type, sinc_width) * \
+                   np.sqrt( (p0_err / p0 )**2 + (p2_err / p2)**2  )
 
     else:
         print('The fit function you have entered, %s, does not exist!'%model_type)
