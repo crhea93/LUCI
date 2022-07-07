@@ -605,7 +605,6 @@ class Fit:
 
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
-
         parameters = soln.x
         # We now must unscale the amplitude
         if self.freeze is True:  # Freezing velocity and broadening

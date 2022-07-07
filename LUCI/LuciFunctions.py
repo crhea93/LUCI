@@ -233,6 +233,7 @@ class SincGauss:
             Value of function given input parameters (theta)
 
         """
+        
         # Check if velocity and broadening should be frozen -- if they are freeze them!
         thetas = np.zeros(3*line_num)
         if self.freeze:  # If true read off amplitudes and add in velocity and broadening
