@@ -8,13 +8,14 @@ astroquery==0.4.3
 corner
 emcee==3.1.0
 h5py~=2.10.0
-keras==2.4.3
+keras
 numdifftools==0.9.40
 numpy
 joblib==1.0.1
 jupyterlab==3.0.16
 pytest==6.2.4
 pyregion
+tensorflow==2.8
 tensorboard==2.5.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.0
@@ -22,6 +23,5 @@ tensorflow-estimator
 tensorflow-probability
 numba
 pytest
-tensorflow
 corner
 dynesty
