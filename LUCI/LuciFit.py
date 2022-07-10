@@ -554,7 +554,7 @@ class Fit:
         initial_positions = np.ones(self.line_num)
         initial_sigmas = np.ones(self.line_num)
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
-        if self.freeze is False:  # Not freezing velocity and broadening
+        if not self.freeze:  # Not freezing velocity and broadening
             initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
             initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
             lines_fit = []  # List of lines which already have been set up for fits
