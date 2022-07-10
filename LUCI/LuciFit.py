@@ -8,6 +8,7 @@ import astropy.stats as astrostats
 import warnings
 import dynesty
 from dynesty import utils as dyfunc
+import tensorflow as tf
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
     calculate_flux, calculate_flux_err
@@ -292,7 +293,7 @@ class Fit:
             self.broad_ml = [pred[1] for pred in prediction_mean][0]
             self.broad_ml_sigma = [pred[1] for pred in prediction_stdv][0]
         elif self.mdn == False:
-            predictions = self.ML_model.predict(Spectrum, verbose=0)  # , training=False)
+            predictions = self.ML_model(Spectrum , training=False)
             self.vel_ml = float(predictions[0][0])
             self.vel_ml_sigma = 0
             self.broad_ml = float(predictions[0][1])
@@ -554,7 +555,7 @@ class Fit:
         initial_positions = np.ones(self.line_num)
         initial_sigmas = np.ones(self.line_num)
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
-        if self.freeze is False:  # Not freezing velocity and broadening
+        if not self.freeze:  # Not freezing velocity and broadening
             initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
             initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
             lines_fit = []  # List of lines which already have been set up for fits
@@ -797,9 +798,9 @@ class Fit:
                                                   )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
-            sampler.run_mcmc(init_, 10000, progress=False)
+            sampler.run_mcmc(init_, 2000, progress=False)
             # Obtain Ensemble Sampler results and discard first 200 walks (10%)
-            flat_samples = sampler.get_chain(discard=1000, flat=True)
+            flat_samples = sampler.get_chain(discard=200, flat=True)
             parameters_med = []
             parameters_std = []
             self.flat_samples = flat_samples
