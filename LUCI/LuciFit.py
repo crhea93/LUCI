@@ -8,6 +8,7 @@ import astropy.stats as astrostats
 import warnings
 import dynesty
 from dynesty import utils as dyfunc
+import tensorflow as tf
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
     calculate_flux, calculate_flux_err
@@ -292,7 +293,7 @@ class Fit:
             self.broad_ml = [pred[1] for pred in prediction_mean][0]
             self.broad_ml_sigma = [pred[1] for pred in prediction_stdv][0]
         elif self.mdn == False:
-            predictions = self.ML_model.predict(Spectrum, verbose=0)  # , training=False)
+            predictions = self.ML_model(Spectrum , training=False)
             self.vel_ml = float(predictions[0][0])
             self.vel_ml_sigma = 0
             self.broad_ml = float(predictions[0][1])
