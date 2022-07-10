@@ -549,6 +549,7 @@ class Luci():
             broads_errs_local = []
             chi2_local = []
             continuum_local = []
+
             for j in range(x_max - x_min):
                 x_pix = x_min + j
                 # Check if pixel is in the mask or not
@@ -577,7 +578,7 @@ class Luci():
                               uncertainty_bool=uncertainty_bool,
                               mdn=self.mdn, nii_cons=nii_cons,
                               spec_min=spec_min, spec_max=spec_max,
-                              obj_redshift=obj_redshift)
+                              obj_redshift=obj_redshift, initial_values=[False, False])
                     fit_dict = fit.fit()
                     # Save local list of fit values
                     ampls_local.append(fit_dict['amplitudes'])
@@ -876,7 +877,7 @@ class Luci():
                   filter=self.hdr_dict['FILTER'],
                   bayes_bool=bayes_bool, bayes_method=bayes_method,
                   uncertainty_bool=uncertainty_bool, nii_cons=nii_cons,
-                  mdn=self.mdn, initial_values=initial_conditions,
+                  mdn=self.mdn, initial_values=[False, False],
                   spec_min=spec_min, spec_max=spec_max,
                   obj_redshift=obj_redshift)
         fit_dict = fit.fit()
