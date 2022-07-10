@@ -5,7 +5,7 @@ from astropy.wcs import WCS
 import astropy.units as u
 from tqdm import tqdm
 import keras
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, dump, load
 from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
 from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
@@ -131,6 +131,15 @@ class Luci():
             self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
             iquad_data = None
         self.cube_final = self.cube_final  # .transpose(1, 0, 2)
+        folder = './joblib_memmap'
+        try:
+            os.mkdir(folder)
+        except FileExistsError:
+            pass
+
+        data_filename_memmap = os.path.join(folder, 'data_memmap')
+        dump(self.cube_final, data_filename_memmap)
+        self.cube_final = load(data_filename_memmap, mmap_mode='readwrite')
         self.header, self.hdr_dict = update_header(file)
         self.interferometer_theta = get_interferometer_angles(file, self.hdr_dict)
         #file.close()
