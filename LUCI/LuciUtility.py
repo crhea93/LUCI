@@ -123,6 +123,7 @@ def get_interferometer_angles(file, hdr_dict):
     calib_ref = hdr_dict['CALIBNM']
     interferometer_cos_theta = calib_ref / calib_map  # .T[::-1,::-1]
     # We need to convert to degree so bear with me here
+    #del calib_map
     return np.rad2deg(np.arccos(interferometer_cos_theta))
     # self.interferometer_theta = np.rad2deg(np.arccos(interferometer_cos_theta))
 
@@ -182,6 +183,10 @@ def update_header(file):
                 hdr_dict[header_col] = str(header_val)
     hdr_dict['CTYPE3'] = 'WAVE-SIP'
     hdr_dict['CUNIT3'] = 'm'
+    # If NAXIS 1 does not exist we will add it
+    if 'NAXIS1' not in hdr_dict.keys():
+        hdr_dict['NAXIS1'] = 2048
+        hdr_dict['NAXIS2'] = 2064
     # Make WCS
     wcs_data = WCS(hdr_dict, naxis=2)
     header = wcs_data.to_header()
