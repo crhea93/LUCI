@@ -65,11 +65,7 @@ Now we can define our fit region and fit it!
                                     'gaussian',
                                     [1,1,1,1,1], [1,1,1,1,1],
                                     region=cube_dir+'/reg1.reg', bkg=bkg_sky)
-    plt.plot(axis, sky, color='blue', label='spectrum')
-    plt.plot(fit_dict['fit_axis'], fit_dict['fit_vector'], color='coral', label='fit')
-    plt.legend()
-
-
+    plt.plot_spectrum(axis, sky, fit_dict['fit_vector'], color='blue', label='spectrum')
 
 And let's see how this looks
 

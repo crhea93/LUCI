@@ -72,13 +72,7 @@ The algorithm is as follows:
  - Calculate the square root of the diagonals of the covariance matrix
 
 In this manner, we calculate the 1-sigma uncertainties on our  fit parameters. We
-further propagate these to the velocity and broadening by taking the absolute difference between
-the value (velocity or broadening) assuming the best-fit parameters and the value assuming
-the best-fit parameters plus the 1-sigma error.
-
-For example:
-
-:math:`\delta v  = |v[\text{best-fit}] - v[\text{best-fit + 1-sigma}]|`
+further propagate these to the velocity and broadening by calculating the relative error.
 
 
 We calculate the Hessian matrix by using `numdifftools.Hessian <https://numdifftools.readthedocs.io/en/latest/reference/generated/numdifftools.core.Hessian.html>`_.

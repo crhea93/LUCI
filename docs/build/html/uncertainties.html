@@ -169,11 +169,7 @@ uncertainty estimate measurement based solely off the best-fit parameters.</p>
 </dd>
 </dl>
 <p>In this manner, we calculate the 1-sigma uncertainties on our  fit parameters. We
-further propagate these to the velocity and broadening by taking the absolute difference between
-the value (velocity or broadening) assuming the best-fit parameters and the value assuming
-the best-fit parameters plus the 1-sigma error.</p>
-<p>For example:</p>
-<p><img class="math" src="_images/math/3921142a61cdf6e482fa1c1b038b899da4418919.png" alt="\delta v  = |v[\text{best-fit}] - v[\text{best-fit + 1-sigma}]|"/></p>
+further propagate these to the velocity and broadening by calculating the relative error.</p>
 <p>We calculate the Hessian matrix by using <a class="reference external" href="https://numdifftools.readthedocs.io/en/latest/reference/generated/numdifftools.core.Hessian.html">numdifftools.Hessian</a>.
 Additionally, we use <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html">numpy.linalg.inv</a>
 and <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.diagonal.html">numpy.diagonal</a>.</p>
