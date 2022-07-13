@@ -601,14 +601,13 @@ class Fit:
         # We do **not** use the interpolated spectrum here!
         parameters = soln.x
         # We now must unscale the amplitude
-        if self.freeze:  # Freezing velocity and broadening
-            for i in range(self.line_num):
-                if self.freeze:  # Freezing velocity and broadening
-                    parameters[i] *= self.spectrum_scale
-                    self.uncertainties[i] *= self.spectrum_scale
-                else:
-                    parameters[i * 3] *= self.spectrum_scale
-                    self.uncertainties[i * 3] *= self.spectrum_scale
+        for i in range(self.line_num):
+            if self.freeze:  # Freezing velocity and broadening
+                parameters[i] *= self.spectrum_scale
+                self.uncertainties[i] *= self.spectrum_scale
+            else:
+                parameters[i * 3] *= self.spectrum_scale
+                self.uncertainties[i * 3] *= self.spectrum_scale
         # Scale continuum
         parameters[-1] *= self.spectrum_scale
         self.uncertainties[-1] *= self.spectrum_scale
@@ -624,6 +623,7 @@ class Fit:
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
         if not self.freeze:  # Not freezing velocity and broadening so nothing needs to be done
             self.fit_sol = parameters
+            print(parameters)
         else:  # We want to add back the velocity and broadening as if they were fit so we don't have to rewrite as much
             parameters_new = np.zeros(3 * self.line_num + 1)
             for i in range(self.line_num):
