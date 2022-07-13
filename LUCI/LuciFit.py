@@ -623,7 +623,6 @@ class Fit:
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
         if not self.freeze:  # Not freezing velocity and broadening so nothing needs to be done
             self.fit_sol = parameters
-            print(parameters)
         else:  # We want to add back the velocity and broadening as if they were fit so we don't have to rewrite as much
             parameters_new = np.zeros(3 * self.line_num + 1)
             for i in range(self.line_num):
