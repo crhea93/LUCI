@@ -1143,7 +1143,7 @@ class Luci():
             j += 1
 
     def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False,
-                n_threads=1, initial_values=False):
+                n_threads=1, initial_values=[False]):
         """
         Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
         Written by Benjamin Vigneron
@@ -1179,7 +1179,7 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        if initial_values is not False:
+        if len(initial_values) == 2:
             # Obtain initial condition maps from files
             vel_init = fits.open(initial_values[0])[0].data
             broad_init = fits.open(initial_values[1])[0].data
