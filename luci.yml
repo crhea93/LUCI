@@ -8,7 +8,7 @@ dependencies:
   - python=3.9.5
   - scikit-image=0.17.2
   - scipy=1.6.2
-  - tensorflow==2.8
+  - tensorflow
   - tensorflow-base
   - tensorflow-probability
   - tqdm
