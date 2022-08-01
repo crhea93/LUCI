@@ -163,6 +163,7 @@ def update_header(file):
     Args:
         file: hdf5 File object containing HDF5 file
     """
+    
     hdr_dict = {}
     header_cols = [str(val[0]).replace("'b", '').replace("'", "").replace("b", '') for val in
                    list(file['header'][()])]
@@ -234,7 +235,6 @@ def read_in_reference_spectrum(ref_spec, hdr_dict):
         print('We do not support this filter.')
         print('Terminating program!')
         exit()
-    print(min_, max_)
     wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
     wavenumbers_syn_full = np.array(channel, dtype=np.float32)
     return wavenumbers_syn, wavenumbers_syn_full
