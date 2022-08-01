@@ -21,6 +21,7 @@ from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_an
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
 from LUCI.LuciWVT import *
 from LUCI.LuciVisualize import visualize as LUCIvisualize
+from LUCI.LuciLog import LUCILog
 import multiprocessing as mp
 import time
 
@@ -47,6 +48,7 @@ class Luci():
             ML_bool: Boolean for applying machine learning; default=True
             mdn: Boolean for using the Mixed Density Network models; If true, then we use the posterior distributions calculated by our network as our priors for bayesian fits
         """
+        self.luciLog = LUCILog()  # Start up logger
         self.header_binned = None
         self.Luci_path = Luci_path
         check_luci_path(Luci_path)  # Make sure the path is correctly written
@@ -115,8 +117,8 @@ class Luci():
         through them and place all the spectra in a single cube.
         """
         print('Reading in data...')
+        self.luciLog.info('Reading in data')
         file = h5py.File(self.cube_path + '.hdf5', 'r')  # Read in file
-        # file = ht.load(self.cube_path + '.hdf5')
         self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
         self.dimx = file.attrs['dimx']  # Get the dimensions in x
         self.dimy = file.attrs['dimy']  # Get the dimensions in y
@@ -130,13 +132,14 @@ class Luci():
             iquad_data[(iquad_data > 1e-9)] = 1e-22  # Set unrealistically high positive flux values to 1e-22
             self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
             iquad_data = None
-        self.cube_final = self.cube_final  # .transpose(1, 0, 2)
+        self.luciLog.info('Finished reading in cube')
+        self.cube_final = self.cube_final
         folder = './joblib_memmap'
         try:
             os.mkdir(folder)
         except FileExistsError:
             pass
-
+        self.luciLog.info('Transfering cube to memmap')
         data_filename_memmap = os.path.join(folder, 'data_memmap')
         dump(self.cube_final, data_filename_memmap)
         self.cube_final = load(data_filename_memmap, mmap_mode='readwrite')
@@ -163,10 +166,12 @@ class Luci():
 
         if 'deep_frame' in hdf5_file:  # A deep image already exists
             print('Existing deep frame extracted from hdf5 file.')
+            self.luciLog.info('Existing deep frame extracted from hdf5 file')
             self.deep_image = hdf5_file['deep_frame'][:]
             self.deep_image *= self.dimz
         else:  # Create new deep image
             print('New deep frame created from data.')
+            self.luciLog.info('New deep frame created from data')
             self.deep_image = np.zeros(
                 (self.cube_final.shape[0], self.cube_final.shape[1]))  # np.sum(self.cube_final, axis=2).T
             iterations_ = 10
@@ -394,13 +399,17 @@ class Luci():
             >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'sincgauss', [1,1,1,1,1], [1,1,1,1,1], 800, 1500, 250, 750, binning=2)
 
         """
+        self.luciLog.info('Fitting Cube with the following parameters')
+        fit_parameters = 'lines: %s, fit_function: %s, vel_rel: %s, sigma_rel: %s, x_min: %i, x_max: %i, y_min: %i, y_max: %i, binning: %i'% \
+                          (lines, fit_function, str(vel_rel), str(sigma_rel), x_min, x_max, y_min, y_max, binning)
+        self.luciLog.info(fit_parameters)
         # Initialize fit solution arrays
         if binning != None and binning != 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
                           y_max)
-            x_max = int((x_max - x_min) / binning);
+            x_max = int((x_max - x_min) / binning)
             y_max = int((y_max - y_min) / binning)
-            x_min = 0;
+            x_min = 0
             y_min = 0
         elif binning == 1:
             pass  # Don't do anything if binning is set to 1
