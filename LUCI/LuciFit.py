@@ -46,7 +46,7 @@ class Fit:
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
                  nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=[False],
-                 spec_min=None, spec_max=None, obj_redshift=0.0
+                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1
                  ):
         """
         Args:
@@ -76,6 +76,7 @@ class Fit:
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
+            n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -104,6 +105,7 @@ class Fit:
         self.model_type = model_type
         self.lines = lines
         self.line_num = len(lines)  # Number of  lines to fit
+        self.n_stoch = n_stoch
         self.trans_filter = trans_filter
         if trans_filter is not None:
             self.apply_transmission()  # Apply transmission filter if one is provided
@@ -538,7 +540,7 @@ class Fit:
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     expr_dict_vel = {'type': 'ineq',
                                      'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] - x[
-                                         3 * ind_0 + 1] + 10}
+                                         3 * ind_0 + 1] + 1}
                     multi_dict_list.append(expr_dict_vel)
         return multi_dict_list
 
@@ -554,33 +556,44 @@ class Fit:
         """
         initial_positions = np.ones(self.line_num)
         initial_sigmas = np.ones(self.line_num)
+        best_fit = None  # Initialize best fit
+        best_loss = 1e8  # Initialize as a large number
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         if not self.freeze:  # Not freezing velocity and broadening
-            initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-            initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
-            lines_fit = []  # List of lines which already have been set up for fits
-            for mod in range(self.line_num):  # Step through each line
-                lines_fit.append(self.lines[mod])  # Add to list of lines fit
-                amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])  # Estimate initial values
-                initial[3 * mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
-                initial[3 * mod + 1] = vel_est  # Set wavenumber
-                initial[3 * mod + 2] = sigma_est  # Set sigma
-            # Set constraints
-            sigma_cons = self.sigma_constraints()  # Call sigma constraints
-            vel_cons = self.vel_constraints()  # Call velocity constraints
-            vel_cons_multiple = self.multiple_component_vel_constraint()
-            # CONSTRAINTS
-            if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
-                nii_constraints = self.NII_constraints()
-                cons = sigma_cons + vel_cons + vel_cons_multiple + nii_constraints
-            else:
-                cons = sigma_cons + vel_cons + vel_cons_multiple
-            soln = minimize(nll, initial,
+            for st in range(self.n_stoch):  # Do N fits and record the one with the best loss 
+                initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
+                initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
+                lines_fit = []  # List of lines which already have been set up for fits
+                for mod in range(self.line_num):  # Step through each line
+                    lines_fit.append(self.lines[mod])  # Add to list of lines fit
+                    amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])  # Estimate initial values
+                    initial[3 * mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
+                    if st == 0:
+                        initial[3 * mod + 1] = vel_est  # Set wavenumber
+                        initial[3 * mod + 2] = sigma_est  # Set sigma
+                    else:
+                        initial[3 * mod + 1] = np.random.normal(vel_est, vel_est/100)  # Sample wavenumber from a normal distribution around the ML value
+                        initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est/100)  # Sample wavenumber from a normal distribution around the ML value
+                # Set constraints
+                sigma_cons = self.sigma_constraints()  # Call sigma constraints
+                vel_cons = self.vel_constraints()  # Call velocity constraints
+                vel_cons_multiple = self.multiple_component_vel_constraint()
+                # CONSTRAINTS
+                if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
+                    nii_constraints = self.NII_constraints()
+                    cons = sigma_cons + vel_cons + vel_cons_multiple + nii_constraints
+                else:
+                    cons = sigma_cons + vel_cons + vel_cons_multiple
+                
+                soln = minimize(nll, initial,
                             method='SLSQP',
-                            options={'disp': False, 'maxiter': 30},
+                            options={'disp': False, 'maxiter': 100, 'finite_diff_rel_step':'cs'},
                             tol=1e-2,
                             args=(), constraints=cons
                             )
+                if soln.fun < best_loss:
+                    best_loss = soln.fun
+                    best_fit = soln.x
         else:  # Freezing velocity and broadening
             initial = np.ones((self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
             initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
@@ -591,15 +604,18 @@ class Fit:
                 initial[mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial_positions[mod] = vel_est
                 initial_sigmas[mod] = sigma_est
-            soln = minimize(nll, initial,
+            for st in range(5):  # Do 100 fits and record the one with the best loss 
+                soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 30},
                             tol=1e-2,
                             args=())
-
+                if soln.fun < best_loss:
+                    best_loss = soln.fun
+                    best_fit = soln.x
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
-        parameters = soln.x
+        parameters = best_fit
         # We now must unscale the amplitude
         for i in range(self.line_num):
             if self.freeze:  # Freezing velocity and broadening
