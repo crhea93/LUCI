@@ -53,7 +53,7 @@ templates_path = ['_templates']
 exclude_patterns = []
 autodoc_mock_imports = ['keras', 'LuciFit', 'pyregion', 'numdifftools',
                         'astroquery', 'numba', 'LuciFitParameters',
-                        'LuciBayesian', 'LuciFunctions', 'tensorflow_probability']
+                        'LuciBayesian', 'LuciFunctions', 'tensorflow_probability', 'tensorflow.keras']
 
 
 # -- Options for HTML output -------------------------------------------------

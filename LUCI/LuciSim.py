@@ -31,9 +31,9 @@ class Spectrum:
                       'Hbeta': 486.133}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         # Initialize (default SN3 values)
-        self.delta_x = 2943  # step size in nanometers
-        self.n_steps = 289  # Number of steps (default R~5000)
-        self.order = 8  # Folding order
+        #self.delta_x = 2943  # step size in nanometers
+        #self.n_steps = 289  # Number of steps (default R~5000)
+        #self.order = 8  # Folding order
         self.theta = 11.96  # Interferometer angle in degrees
         self.zpd_index  = 0  # Zero Path Difference
         self.lines = lines
@@ -50,9 +50,12 @@ class Spectrum:
         if self.filter == 'SN3':
             self.delta_x = 2943
             self.order = 8
+        elif self.filter == 'SN2':
+            self.delta_x = 1680
+            self.order = 6
         elif self.filter == 'SN1':
             self.delta_x = 1647
-            self.order = 6
+            self.order = 8
         elif self.filter == 'C1':
             self.delta_x = 570
             self.order = 2
@@ -66,7 +69,7 @@ class Spectrum:
             self.delta_x = 5272
             self.order = 12
         else:
-            print('We only support C1, C2, C3, C4, SN1, and SN3 at this time.')
+            print('We only support C1, C2, C3, C4, SN1, SN2, and SN3 at this time.')
             print('Terminating the program')
             exit()
         self.resolution = resolution
@@ -76,8 +79,6 @@ class Spectrum:
         self.steps_from_resolution()
         self.snr = snr  # Set signal-to-noise ratio
         self.calc_sinc_width()
-
-
         # Checks
         self.check_lines()
         self.check_fitting_model()

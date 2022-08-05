@@ -15,6 +15,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -51,6 +52,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
@@ -63,6 +65,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -102,7 +105,7 @@
            <div itemprop="articleBody">
              
   <section id="example-synthetic-spectrum">
-<span id="id1"></span><h1>Example Synthetic Spectrum<a class="headerlink" href="#example-synthetic-spectrum" title="Permalink to this headline"></a></h1>
+<span id="id1"></span><h1>Example Synthetic Spectrum<a class="headerlink" href="#example-synthetic-spectrum" title="Permalink to this heading"></a></h1>
 <p>In this example we will create a synthetic spectrum for SN3. This example can be
 found as a jupyter notebook in “LUCI/Examples/Create-Mock-Spectrum.ipynb”.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="c1"># Imports</span>
@@ -113,7 +116,7 @@ found as a jupyter notebook in “LUCI/Examples/Create-Mock-Spectrum.ipynb”.</
 </pre></div>
 </div>
 <section id="inputs">
-<h2>Inputs<a class="headerlink" href="#inputs" title="Permalink to this headline"></a></h2>
+<h2>Inputs<a class="headerlink" href="#inputs" title="Permalink to this heading"></a></h2>
 <p>There are a number of inputs we need in order to create a mock spectrum.</p>
 <p>They are the following:</p>
 <blockquote>
@@ -140,7 +143,7 @@ found as a jupyter notebook in “LUCI/Examples/Create-Mock-Spectrum.ipynb”.</
 </div>
 </section>
 <section id="create-spectrum">
-<h2>Create Spectrum<a class="headerlink" href="#create-spectrum" title="Permalink to this headline"></a></h2>
+<h2>Create Spectrum<a class="headerlink" href="#create-spectrum" title="Permalink to this heading"></a></h2>
 <p>This is done with one simple command!</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span> <span class="o">=</span> <span class="n">Spectrum</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">ampls</span><span class="p">,</span> <span class="n">velocity</span><span class="p">,</span> <span class="n">broadening</span><span class="p">,</span> <span class="n">filter_</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">snr</span><span class="p">)</span><span class="o">.</span><span class="n">create_spectrum</span><span class="p">()</span>
 </pre></div>

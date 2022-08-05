@@ -15,6 +15,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -55,6 +56,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
@@ -63,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -102,21 +105,21 @@
            <div itemprop="articleBody">
              
   <section id="wavelength-correction">
-<span id="wavelength-corrections"></span><h1>Wavelength Correction<a class="headerlink" href="#wavelength-correction" title="Permalink to this headline"></a></h1>
+<span id="wavelength-corrections"></span><h1>Wavelength Correction<a class="headerlink" href="#wavelength-correction" title="Permalink to this heading"></a></h1>
 <p>In order to ensure that our velocity measurements (and thus broadening measurements)
 are as accurate as possible, we need to add two velocity corrections:
 1 - Heliocentric correction
 2 - Skyline correction</p>
 <p>As of now, only the heliocentric corrections has been applied!</p>
 <section id="heliocentric-correction">
-<h2>Heliocentric Correction<a class="headerlink" href="#heliocentric-correction" title="Permalink to this headline"></a></h2>
+<h2>Heliocentric Correction<a class="headerlink" href="#heliocentric-correction" title="Permalink to this heading"></a></h2>
 <p>This is the correction due to our movement within our own galaxy. We use the <cite>astropy</cite>
 function <cite>radial_velocity_correction</cite> by passing it the location of the CFHT,
 the RA/DEC of the target, and the time of the observation. This function simply outputs
 the velocity in units of km/s.</p>
 </section>
 <section id="skyline-correction">
-<h2>Skyline Correction<a class="headerlink" href="#skyline-correction" title="Permalink to this headline"></a></h2>
+<h2>Skyline Correction<a class="headerlink" href="#skyline-correction" title="Permalink to this heading"></a></h2>
 <p>Unfortunately, the wavelength must be calibrated due to slight issues with the SITELLE
 instrument itself. Thankfully, this is relatively easy to do. In order to calculate
 the wavelength calibration in each pixel (or spaxel if you prefer), we fit the skylines

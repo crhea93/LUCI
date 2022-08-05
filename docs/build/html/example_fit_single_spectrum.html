@@ -15,6 +15,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -51,6 +52,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fit Single Spectrum</a></li>
@@ -59,6 +61,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -98,7 +101,7 @@
            <div itemprop="articleBody">
              
   <section id="fit-single-spectrum">
-<span id="example-fit-single-spectrum"></span><h1>Fit Single Spectrum<a class="headerlink" href="#fit-single-spectrum" title="Permalink to this headline"></a></h1>
+<span id="example-fit-single-spectrum"></span><h1>Fit Single Spectrum<a class="headerlink" href="#fit-single-spectrum" title="Permalink to this heading"></a></h1>
 <p>In this example, we will extract a region of NGC6946 and fit is using  <cite>LUCI</cite>.
 This is a very basic example.</p>
 <p>You can download the example data using the following command:</p>
@@ -141,9 +144,7 @@ This is a very basic example.</p>
                                 <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
                                 <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
                                 <span class="n">region</span><span class="o">=</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/reg1.reg&#39;</span><span class="p">,</span> <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">sky</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;spectrum&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fit_dict</span><span class="p">[</span><span class="s1">&#39;fit_axis&#39;</span><span class="p">],</span> <span class="n">fit_dict</span><span class="p">[</span><span class="s1">&#39;fit_vector&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;coral&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fit&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot_spectrum</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">sky</span><span class="p">,</span> <span class="n">fit_dict</span><span class="p">[</span><span class="s1">&#39;fit_vector&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;spectrum&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>And let’s see how this looks</p>
