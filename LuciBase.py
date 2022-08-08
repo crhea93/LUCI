@@ -329,7 +329,7 @@ class Luci():
                 vels_local.append(fit_dict['velocities'])
                 broads_local.append(fit_dict['sigmas'])
                 vels_errs_local.append(fit_dict['vels_errors'])
-                broads_errs_local.append(fit_dict['sigmas_errors'])
+                broads_errs_local.append(fit_diobj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objectsct['sigmas_errors'])
                 chi2_local.append(fit_dict['chi2'])
                 corr_local.append(fit_dict['corr'])
                 step_local.append(fit_dict['axis_step'])
@@ -352,7 +352,7 @@ class Luci():
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=[False],
-                 spec_min=None, spec_max=None):
+                 spec_min=None, spec_max=None, obj_redshift=0.0):
 
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
@@ -446,7 +446,7 @@ class Luci():
         results = Parallel(n_jobs=n_threads, require='sharedmem') \
             (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
-                                    uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init]) for sl in tqdm(range(y_max - y_min)))
+                                    uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init], obj_redshift=obj_redshift) for sl in tqdm(range(y_max - y_min)))
         for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
             ampls_fits[i] = ampls_local
@@ -592,7 +592,7 @@ class Luci():
                                     bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons,
-                                    initial_values=[vel_init, broad_init]) for sl in tqdm(range(y_max - y_min)))
+                                    initial_values=[vel_init, broad_init], obj_redshift=obj_redshift) for sl in tqdm(range(y_max - y_min)))
         for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result.get()
             ampls_fits[i] = ampls_local
