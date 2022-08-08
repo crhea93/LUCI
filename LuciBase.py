@@ -329,7 +329,7 @@ class Luci():
                 vels_local.append(fit_dict['velocities'])
                 broads_local.append(fit_dict['sigmas'])
                 vels_errs_local.append(fit_dict['vels_errors'])
-                broads_errs_local.append(fit_diobj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objectsct['sigmas_errors'])
+                broads_errs_local.append(fit_dict['sigmas_errors'])
                 chi2_local.append(fit_dict['chi2'])
                 corr_local.append(fit_dict['corr'])
                 step_local.append(fit_dict['axis_step'])
