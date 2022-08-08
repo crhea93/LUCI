@@ -445,7 +445,12 @@ class Fit:
         # Add constant continuum to model
         model += theta[-1]
         sigma2 = self.noise ** 2
-        return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+        residual = -0.5 * np.nansum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+        if np.isnan(residual):
+            return -1e44
+        else:
+            return residual
+
 
     def sigma_constraints(self):
         """
@@ -557,7 +562,7 @@ class Fit:
         initial_positions = np.ones(self.line_num)
         initial_sigmas = np.ones(self.line_num)
         best_fit = None  # Initialize best fit
-        best_loss = 1e8  # Initialize as a large number
+        best_loss = 1e46  # Initialize as a large number
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         if not self.freeze:  # Not freezing velocity and broadening
             for st in range(self.n_stoch):  # Do N fits and record the one with the best loss 
@@ -587,10 +592,11 @@ class Fit:
                 
                 soln = minimize(nll, initial,
                             method='SLSQP',
-                            options={'disp': False, 'maxiter': 100, 'finite_diff_rel_step':'cs'},
+                            options={'disp': True, 'maxiter': 100},
                             tol=1e-2,
                             args=(), constraints=cons
                             )
+                        
                 if st == 0:
                     best_loss = soln.fun
                     best_fit = soln.x
@@ -613,6 +619,7 @@ class Fit:
                             options={'disp': False, 'maxiter': 30},
                             tol=1e-2,
                             args=())
+
                 if st == 0:
                     best_loss = soln.fun
                     best_fit = soln.x
