@@ -591,6 +591,9 @@ class Fit:
                             tol=1e-2,
                             args=(), constraints=cons
                             )
+                if st == 0:
+                    best_loss = soln.fun
+                    best_fit = soln.x
                 if soln.fun < best_loss:
                     best_loss = soln.fun
                     best_fit = soln.x
@@ -610,6 +613,9 @@ class Fit:
                             options={'disp': False, 'maxiter': 30},
                             tol=1e-2,
                             args=())
+                if st == 0:
+                    best_loss = soln.fun
+                    best_fit = soln.x
                 if soln.fun < best_loss:
                     best_loss = soln.fun
                     best_fit = soln.x
