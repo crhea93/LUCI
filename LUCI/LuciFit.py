@@ -559,7 +559,6 @@ class Fit:
             for mod in range(self.line_num):  # Step through each line
                 lines_fit.append(self.lines[mod])  # Add to list of lines fit
                 amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])  # Estimate initial values
-                print('LYA check line vals est:', amp_est, vel_est, sigma_est, initial[-1])
                 initial[3 * mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial[3 * mod + 1] = vel_est  # Set wavenumber
                 initial[3 * mod + 2] = sigma_est  # Set sigma
@@ -669,7 +668,6 @@ class Fit:
             # Apply Fit
             # if self.initial_conditions is False:
             self.calculate_params()
-            print('LYA check initial params:', self.fit_sol)
             # else:
             #    self.calculate_params_frozen()
             if np.isnan(self.fit_sol[0]):  # Check that there are no Nans in solution
@@ -677,7 +675,6 @@ class Fit:
                 temp_ML = self.ML_model
                 self.ML_model = ''
                 self.calculate_params()
-                print('LYA check initial params after nan:', self.fit_sol)
                 self.ML_model = temp_ML
             # Check if Bayesian approach is required
             if self.bayes_bool:
