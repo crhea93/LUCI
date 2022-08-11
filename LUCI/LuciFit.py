@@ -80,10 +80,7 @@ class Fit:
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
-                          'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4': 807.88068, 'NII6583C4': 810.417771,
-                          'NII6548C4': 806.062493,
-                          'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
-                          'OII3729C1': 459.017742, 'OII3726C1': 458.674293, }
+                          'Hbeta': 486.133, 'OH': 649.873, }
         self.available_functions = ['gaussian', 'sinc', 'sincgauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
@@ -201,18 +198,18 @@ class Fit:
                 # We pretend we are looking at SN1
                 bound_lower = 18000
                 bound_upper = 19400
-            elif self.filter == 'C4' and 'HalphaC4' in self.lines:
+            elif self.filter == 'C4' and 'Halpha' in self.lines:
                 ## This is true for objects at redshift ~0.25
-                bound_lower = 12150
-                bound_upper = 12550
+                bound_lower = 14750
+                bound_upper = 15400
             elif self.filter == 'C2':
                 ## This is true for objects at redshift ~0.25
-                bound_lower = 15990
-                bound_upper = 17880
+                bound_lower = 18900
+                bound_upper = 22500
             elif self.filter == 'C1':
                 ## This is true for objects at redshift ~0.25
-                bound_lower = 20408  # 20665 #
-                bound_upper = 25974  # 25700
+                bound_lower = 22000  # 20665 #
+                bound_upper = 32000  # 25700
             else:
                 print(
                     'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
@@ -250,19 +247,19 @@ class Fit:
             # In this case we pretend we are in SN1
             bound_lower = 18000
             bound_upper = 19400
-        elif self.filter == 'C4' and 'HalphaC4' in self.lines:
+        elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
-            bound_lower = 11800  # 14600  # LYA mods, originally the same as SN3
-            bound_upper = 12150  # 14950
+            bound_lower = 14300
+            bound_upper = 14500
         elif self.filter == 'C2':
             ## This is true for objects at redshift ~0.25
-            bound_lower = 15500
-            bound_upper = 15990
+            bound_lower = 18900
+            bound_upper = 19685
         elif self.filter == 'C1':
             ## This is true for objects at redshift ~0.25
-            bound_lower = 18000
-            bound_upper = 20665
+            bound_lower = 22000
+            bound_upper = 25509
         else:
             print(
                 'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
@@ -395,14 +392,14 @@ class Fit:
             min_ = 26000
             max_ = 26250
         elif self.filter == 'C4':
-            min_ = 12180
-            max_ = 12550
+            min_ = 14950
+            max_ = 15050
         elif self.filter == 'C2':
-            min_ = 16000
-            max_ = 17800
+            min_ = 19685
+            max_ = 21930
         elif self.filter == 'C1':
-            min_ = 21500
-            max_ = 25900
+            min_ = 25510
+            max_ = 30769
         elif self.filter == 'C3':
             min_ = 18000
             max_ = 19000
@@ -562,6 +559,7 @@ class Fit:
             for mod in range(self.line_num):  # Step through each line
                 lines_fit.append(self.lines[mod])  # Add to list of lines fit
                 amp_est, vel_est, sigma_est = self.line_vals_estimate(self.lines[mod])  # Estimate initial values
+                print('LYA check line vals est:', amp_est, vel_est, sigma_est, initial[-1])
                 initial[3 * mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial[3 * mod + 1] = vel_est  # Set wavenumber
                 initial[3 * mod + 2] = sigma_est  # Set sigma
@@ -671,6 +669,7 @@ class Fit:
             # Apply Fit
             # if self.initial_conditions is False:
             self.calculate_params()
+            print('LYA check initial params:', self.fit_sol)
             # else:
             #    self.calculate_params_frozen()
             if np.isnan(self.fit_sol[0]):  # Check that there are no Nans in solution
@@ -678,6 +677,7 @@ class Fit:
                 temp_ML = self.ML_model
                 self.ML_model = ''
                 self.calculate_params()
+                print('LYA check initial params after nan:', self.fit_sol)
                 self.ML_model = temp_ML
             # Check if Bayesian approach is required
             if self.bayes_bool:

@@ -78,8 +78,7 @@ class Luci():
         self.zpd_index = self.hdr_dict['ZPDINDEX']
         self.filter = self.hdr_dict['FILTER']
         self.spectrum_axis, self.spectrum_axis_unshifted = spectrum_axis_func(self.hdr_dict, self.redshift)
-        if self.filter == 'C4' or self.filter == 'C2' or self.filter == 'C1':
-            self.spectrum_axis = self.spectrum_axis_unshifted  # LYA mod
+        print('LYA check: Using dev branch')
         if ML_bool is True:
             if not self.mdn:
                 if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C3', 'C1']:
