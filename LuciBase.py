@@ -249,8 +249,8 @@ class Luci():
     def fit_calc(self, i, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, mask=None, bayes_bool=False,
                  bayes_method='emcee',
                  uncertainty_bool=False, nii_cons=False,
-                 bkg=None, binning=None, spec_min=None, spec_max=None, initial_values=False,
-                 obj_redshift=0.0):
+                 bkg=None, binning=None, spec_min=None, spec_max=None, initial_values=[False],
+                 obj_redshift=0.0, n_stoch=1):
         """
         Function for calling fit for a given y coordinate.
         Args:
@@ -272,6 +272,7 @@ class Luci():
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
+            n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
         """
         y_pix = y_min + i  # Step y coordinate
         # Set up all the local lists for the current y_pixel step
@@ -319,7 +320,7 @@ class Luci():
                           bayes_bool=bayes_bool, bayes_method=bayes_method,
                           uncertainty_bool=uncertainty_bool,
                           mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
-                          spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift
+                          spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift, n_stoch=n_stoch
                           )
                 fit_dict = fit.fit()  # Collect fit dictionary
                 # Save local list of fit values
@@ -352,7 +353,7 @@ class Luci():
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=[False],
-                 spec_min=None, spec_max=None, obj_redshift=0.0):
+                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1):
 
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
@@ -381,6 +382,8 @@ class Luci():
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
+            n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -446,7 +449,9 @@ class Luci():
         results = Parallel(n_jobs=n_threads, require='sharedmem') \
             (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
-                                    uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init], obj_redshift=obj_redshift) for sl in tqdm(range(y_max - y_min)))
+                                    uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
+                                    obj_redshift=obj_redshift, n_stoch=n_stoch)
+                                     for sl in tqdm(range(y_max - y_min)))
         for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
             ampls_fits[i] = ampls_local
@@ -470,7 +475,7 @@ class Luci():
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
                    bkg=None, binning=None, bayes_bool=False, bayes_method='emcee',
                    output_name=None, uncertainty_bool=False, n_threads=1, nii_cons=True,
-                   spec_min=None, spec_max=None, obj_redshift=0.0, initial_values=[False]):
+                   spec_min=None, spec_max=None, obj_redshift=0.0, initial_values=[False], n_stoch=1):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -498,6 +503,7 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             initial_values: List of files containing initial conditions (default [False])
+            n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -523,9 +529,9 @@ class Luci():
         if binning != None and binning != 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
                           y_max)
-            x_max = int((x_max - x_min) / binning);
+            x_max = int((x_max - x_min) / binning)
             y_max = int((y_max - y_min) / binning)
-            x_min = 0;
+            x_min = 0
             y_min = 0
         # Create mask
         if '.reg' in region:
@@ -592,7 +598,9 @@ class Luci():
                                     bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons,
-                                    initial_values=[vel_init, broad_init], obj_redshift=obj_redshift) for sl in tqdm(range(y_max - y_min)))
+                                    initial_values=[vel_init, broad_init], obj_redshift=obj_redshift,
+                                    n_stoch=n_stoch
+                                    ) for sl in tqdm(range(y_max - y_min)))
         for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result.get()
             ampls_fits[i] = ampls_local
@@ -614,7 +622,8 @@ class Luci():
                   pixel_x, pixel_y, bin=None, bkg=None,
                   bayes_bool=False, bayes_method='emcee',
                   uncertainty_bool=False,
-                  nii_cons=True, spec_min=None, spec_max=None, obj_redshift=0.0):
+                  nii_cons=True, spec_min=None, spec_max=None, 
+                  obj_redshift=0.0, n_stoch=1):
         """
         Primary fit call to fit a single pixel in the data cube. This wraps the
         LuciFits.FIT().fit() call which applies all the fitting steps.
@@ -635,6 +644,8 @@ class Luci():
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
+            n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+
         Return:
             Returns the x-axis (redshifted), sky, and fit dictionary
 
@@ -664,7 +675,7 @@ class Luci():
                   bayes_bool=bayes_bool, bayes_method=bayes_method,
                   uncertainty_bool=uncertainty_bool,
                   mdn=self.mdn, nii_cons=nii_cons,
-                  spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift)
+                  spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift, n_stoch=n_stoch)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
@@ -773,7 +784,7 @@ class Luci():
                             region, initial_values=[False], bkg=None,
                             bayes_bool=False, bayes_method='emcee',
                             uncertainty_bool=False, mean=False, nii_cons=True,
-                            spec_min=None, spec_max=None, obj_redshift=0.0
+                            spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1
                             ):
         """
         Fit spectrum in region.
@@ -797,6 +808,8 @@ class Luci():
             spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
+            n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+
         Return:
             X-axis and spectral axis of region.
 
@@ -856,7 +869,7 @@ class Luci():
                   uncertainty_bool=uncertainty_bool, nii_cons=nii_cons,
                   mdn=self.mdn, initial_values=initial_values,
                   spec_min=spec_min, spec_max=spec_max,
-                  obj_redshift=obj_redshift)
+                  obj_redshift=obj_redshift, n_stoch=n_stoch)
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
@@ -1143,7 +1156,7 @@ class Luci():
             j += 1
 
     def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False,
-                n_threads=1, initial_values=[False]):
+                n_threads=1, initial_values=[False], n_stoch=1):
         """
         Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
         Written by Benjamin Vigneron
@@ -1158,6 +1171,8 @@ class Luci():
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to use
             initial_values: Initial values of velocity and broadening for fitting specific lines (must be list)
+            n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+
         Return:
             Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D) and header for saving
             figure.
@@ -1206,7 +1221,7 @@ class Luci():
                                                                        initial_conditions=initial_conditions,
                                                                        bkg=bkg,
                                                                        bayes_bool=bayes_bool,
-                                                                       uncertainty_bool=uncertainty_bool)
+                                                                       uncertainty_bool=uncertainty_bool, n_stoch=n_stoch)
             for a, b in zip(index[0], index[1]):
                 ampls_fits[a, b] = bin_fit_dict['amplitudes']
                 flux_fits[a, b] = bin_fit_dict['fluxes']
@@ -1226,7 +1241,7 @@ class Luci():
     def wvt_fit_region(self, x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel,
                        stn_target,
                        pixel_size=0.436, roundness_crit=0.3, ToL=1e-2, bkg=None,
-                       bayes_bool=False, uncertainty_bool=False, n_threads=1):
+                       bayes_bool=False, uncertainty_bool=False, n_threads=1, n_stoch=1, initial_values=[False]):
         """
         Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
         Args:
@@ -1247,7 +1262,9 @@ class Luci():
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to use
             initial_values: Initial values of velocity and broadening for fitting specific lines (must be list;
-            e.x. [velocity, broadening])
+            e.x. [velocity, broadening]; default [False])
+            n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+            
         Return:
             Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).
         """
@@ -1260,7 +1277,7 @@ class Luci():
                                                                                        bkg=bkg, bayes_bool=bayes_bool,
                                                                                        uncertainty_bool=uncertainty_bool,
                                                                                        n_threads=n_threads,
-                                                                                       initial_values=False)
+                                                                                       initial_values=initial_values, n_stoch=n_stoch)
         output_name = self.object_name + '_wvt_1'  # Add the '_1' because the binning is set to 1
         for line_ in lines:
             amp = fits.open(self.output_dir + '/Amplitudes/' + output_name + '_' + line_ + '_Amplitude.fits')[0].data.T
