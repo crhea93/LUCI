@@ -6,6 +6,7 @@ import statistics as stats
 from astropy.io import fits
 from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
+import pickle
 
 # --------------------------------------- WVT ALGORITHM ITSELF BELOW THIS ---------------------------------------#
 
@@ -300,22 +301,22 @@ def Potential_SN(Current_bin,closest_pix):
     Current_bin.remove_pixel(closest_pix)
     return new_StN
 
-def Bin_data(Bins,missing_pixels,min_x,min_y, output_directory, filename):
+def Bin_data(Bins,min_x,min_y, output_directory, filename):
     Bins.sort(key=lambda bin: bin.bin_number)
     file = open(output_directory+'/'+filename+'.txt',"w+")
     file.write("This text file contains information necessary for chandra to bin the pixels appropriately for image.fits \n")
     file.write("pixel_x pixel_y bin \n")
-    file2 = open(output_directory+'/'+filename+'_bins.txt','w+')
-    file2.write("Bin data for paraview script to plot Weighted Voronoi Diagram \n")
-    file2.write("centroidx centroidy weight \n")
     binCount = 0
+    if not os.path.exists(output_directory+'/Bins'):
+        os.mkdir(output_directory+'/Bins')
     for bin in Bins:
+        file2 = open(output_directory+'/Bins/Bin_%i.txt'%binCount,"w+")
         for pixel in bin.pixels:
             file.write(str(pixel.pix_x-min_x)+" "+str(pixel.pix_y-min_y)+" "+str(binCount)+' \n')
-        file2.write(str(bin.centroidx[0])+" "+str(bin.centroidy[0])+" "+str(bin.scale_length[0])+" \n")
+            file2.write(str(pixel.pix_x-min_x)+" "+str(pixel.pix_y-min_y)+' \n')
         binCount += 1
+        file2.close()
     file.close()
-    file2.close()
     return None
 
 def bin_num_pixel(binList,currentPixel):

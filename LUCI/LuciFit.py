@@ -592,7 +592,7 @@ class Fit:
                 
                 soln = minimize(nll, initial,
                             method='SLSQP',
-                            options={'disp': True, 'maxiter': 100},
+                            options={'disp': False, 'maxiter': 100},
                             tol=1e-2,
                             args=(), constraints=cons
                             )

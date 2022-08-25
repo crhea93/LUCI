@@ -14,6 +14,8 @@ import astropy.stats as astrostats
 # from astroquery.astrometry_net import AstrometryNet
 from astropy.time import Time
 import numpy.ma as ma
+#import heat as ht
+
 from astropy.coordinates import SkyCoord, EarthLocation
 from numba import jit, set_num_threads, prange
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
@@ -116,7 +118,7 @@ class Luci():
         """
         print('Reading in data...')
         file = h5py.File(self.cube_path + '.hdf5', 'r')  # Read in file
-        # file = ht.load(self.cube_path + '.hdf5')
+        # 4d_data = ht.load(self.cube_path + '.hdf5', split=0) 
         self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
         self.dimx = file.attrs['dimx']  # Get the dimensions in x
         self.dimy = file.attrs['dimy']  # Get the dimensions in y
@@ -131,11 +133,12 @@ class Luci():
             self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
             #iquad_data = None
         self.cube_final = self.cube_final  # .transpose(1, 0, 2)
+        #ht_cube_final = ht.array(self.cube_final, split=0)
+        #local_cube_final = ht_cube_final.larray.numpy()
         '''folder = './joblib_memmap'
         try:
             os.mkdir(folder)
-        except FileExistsError:
-            pass'''
+        except FileExistsError:'''
 
         #data_filename_memmap = os.path.join(folder, 'data_memmap')
         #dump(self.cube_final, data_filename_memmap)
@@ -446,6 +449,9 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
+        # local_results = self.fit_calc()
+        # results = ht.array(local_results, is_split=0)
+        # results = results.numpy()                  
         results = Parallel(n_jobs=n_threads, require='sharedmem') \
             (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
@@ -820,6 +826,8 @@ class Luci():
             mask = reg_to_mask(region, self.header)
         elif '.npy' in region:
             mask = np.load(region)
+        elif True in region:
+            mask = region
         else:
             print("At the moment, we only support '.reg' and '.npy' files for masks.")
             print("Terminating Program!")
@@ -1103,9 +1111,12 @@ class Luci():
             bkg: Background Spectrum (1D numpy array; default None)
         """
         print("#----------------WVT Algorithm----------------#")
-        print("#----------------Creating SNR Map--------------#")
         Pixels = []
+        #if not os.path.exists(self.output_dir + '/' + self.object_name + '_SNR.fits'):  # Check if SNR map exists
+        print("#----------------Creating SNR Map--------------#")
         self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=1)
+        #else:
+        #    print("#----------------Reading SNR Map--------------#")
         print("#----------------Algorithm Part 1----------------#")
         start = time.time()
         SNR_map = fits.open(self.output_dir + '/' + self.object_name + '_SNR.fits')[0].data
@@ -1121,45 +1132,17 @@ class Luci():
         Final_Bins = WVT(Init_bins, Pixels, stn_target, ToL, pixel_size, self.output_dir)
         print("#----------------Algorithm Complete--------------#")
         plot_Bins(Final_Bins, x_min, x_max, y_min, y_max, stn_target, self.output_dir, "final")
-        Bin_data(Final_Bins, Pixels, x_min, y_min, self.output_dir, "WVT_data")
-        print("#----------------Bin Mapping--------------#")
-        pixel_x = []
-        pixel_y = []
-        bins = []
-        bin_map = np.zeros((x_max - x_min, y_max - y_min))
-        j = 0
-        i = 0
-        with open(self.output_dir + '/WVT_data.txt', 'rt') as myfile:
-            myfile = myfile.readlines()[3:]
-            for myline in myfile:
-                myline = myline.strip(' \n')
-                data = [int(s) for s in myline.split() if s.isdigit()]
-                pixel_x.append(data[0])
-                pixel_y.append(data[1])
-                bins.append(data[2])
-        for pix_x, pix_y in zip(pixel_x, pixel_y):
-            bin_map[pix_x, pix_y] = int(bins[i])
-            i += 1
-        # bin_map = np.rot90(bin_map)
-        print("#----------------Numpy Bin Mapping--------------#")
-        if not os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
-            os.mkdir(self.output_dir + '/Numpy_Voronoi_Bins')
-        if os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
-            files = glob.glob(self.output_dir + '/Numpy_Voronoi_Bins/*.npy')
-            for f in files:
-                os.remove(f)
-        for bin_num in tqdm(list(range(len(Final_Bins)))):
-            bool_bin_map = np.zeros((2048, 2064), dtype=bool)
-            for a, b in zip(np.where(bin_map == bin_num)[0][:], np.where(bin_map == bin_num)[1][:]):
-                bool_bin_map[x_min_init + a, y_min_init + b] = True
-            np.save(self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i' % j, bool_bin_map)
-            j += 1
+        Bin_data(Final_Bins, x_min, y_min, self.output_dir, "WVT_data")
+        
+        
 
     def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False,
-                n_threads=1, initial_values=[False], n_stoch=1):
+                n_threads=1, initial_values=[False], n_stoch=1, x_min_init=0, y_min_init=0):
         """
         Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
-        Written by Benjamin Vigneron
+        
+        If you wish to pass initial values, they should be of the following form:
+        initial_values = {bin_num: [velocity, broadening]}
 
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
@@ -1170,12 +1153,14 @@ class Luci():
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to use
-            initial_values: Initial values of velocity and broadening for fitting specific lines (must be list)
+            initial_values: Initial values of velocity and broadening for fitting specific lines (must be list ordered by bin number)
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+            x_min_init: TODO
+            y_min_init: TODO
 
         Return:
             Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D) and header for saving
-            figure.
+            figure. Finally, we return a pickle file `Bins.pkl` which contains a dictionary for each bin with the pixels in the bin & the fit_dictionary for the bin.
         """
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -1206,23 +1191,49 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        for bin_num in tqdm(list(range(len(os.listdir(self.output_dir + '/Numpy_Voronoi_Bins/'))))):
-            bool_bin_map = self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i.npy' % bin_num
-            index = np.where(np.load(bool_bin_map) == True)
-            initial_conditions = None
-            for a, b in zip(index[0], index[1]):
-                # TODO: PASS INITIAL CONDITIONS
-                if initial_values is not False:  # If initial conditions were passed
-                    initial_conditions = [vel_init[a, b], broad_init[a, b]]
-                else:
-                    initial_conditions = False
+        print("#----------------Bin Mapping--------------#")
+        pixel_x = []
+        pixel_y = []
+        bins = []
+        bin_map = np.zeros((x_max - x_min, y_max - y_min))
+        j = 0
+        i = 0
+        with open(self.output_dir + '/WVT_data.txt', 'rt') as myfile:
+            myfile = myfile.readlines()[3:]
+            for myline in myfile:
+                myline = myline.strip(' \n')
+                data = [int(s) for s in myline.split() if s.isdigit()]
+                pixel_x.append(data[0])
+                pixel_y.append(data[1])
+                bins.append(data[2])
+        for pix_x, pix_y in zip(pixel_x, pixel_y):
+            bin_map[pix_x, pix_y] = int(bins[i])
+            i += 1
+        for bin_num in tqdm(list(range(len(os.listdir(self.output_dir + '/Bins/'))))):
+            bool_bin_map = self.output_dir + '/Bins/Bin_%i.txt' % bin_num
+            bin_pixels = []  # [[]]
+            bin_dict = {}  # {bin_id: bin_fit_dict}
+            with open(bool_bin_map, 'r') as bin_file:
+                for line in bin_file:
+                    line = line.split(' ')
+                    bin_pixels.append([int(line[0]), int(line[1])])
+            if False not in initial_values:  # Initial values were passed
+                initial_values_ = initial_values[bin_num]  # Get velocity and broadening for bin number
+            else:
+                initial_values_ = initial_values
+            mask = np.zeros((x_max - x_min, y_max - y_min), dtype=bool)  # Create mask of all false
+            for pixel_coordinate in bin_pixels:  # step through each pixel in bin
+                mask[x_min_init+pixel_coordinate[0], y_min_init+pixel_coordinate[1]] = True
             bin_axis, bin_sky, bin_fit_dict = self.fit_spectrum_region(lines, fit_function, vel_rel, sigma_rel,
-                                                                       region=bool_bin_map,
-                                                                       initial_conditions=initial_conditions,
+                                                                       region=mask,
+                                                                       initial_values=initial_values_,
                                                                        bkg=bkg,
                                                                        bayes_bool=bayes_bool,
                                                                        uncertainty_bool=uncertainty_bool, n_stoch=n_stoch)
-            for a, b in zip(index[0], index[1]):
+            #for a, b in zip(index[0], index[1]):
+            bin_pixels_global = [[x_min_init+val[0], y_min_init+val[1]] for val in bin_pixels]
+            for pixel_coordinate in bin_pixels_global:
+                a = x_min_init+pixel_coordinate[0]; b = y_min_init+pixel_coordinate[1]
                 ampls_fits[a, b] = bin_fit_dict['amplitudes']
                 flux_fits[a, b] = bin_fit_dict['fluxes']
                 flux_errors_fits[a, b] = bin_fit_dict['flux_errors']
@@ -1232,10 +1243,12 @@ class Luci():
                 continuum_fits[a, b] = bin_fit_dict['continuum']
                 velocities_fits[a, b] = bin_fit_dict['velocities']
                 velocities_errors_fits[a, b] = bin_fit_dict['vels_errors']
+            bin_dict[bin_num] = [bin_pixels_global, bin_fit_dict]
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits, velocities_errors_fits,
                   broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(),
                   binning=1, suffix='_wvt')
+        pickle.dump(bin_dict, open(self.output_dir+'/wvt_bin_dict.pkl', 'wb'))
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, cutout.wcs.to_header()
 
     def wvt_fit_region(self, x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel,
@@ -1277,7 +1290,8 @@ class Luci():
                                                                                        bkg=bkg, bayes_bool=bayes_bool,
                                                                                        uncertainty_bool=uncertainty_bool,
                                                                                        n_threads=n_threads,
-                                                                                       initial_values=initial_values, n_stoch=n_stoch)
+                                                                                       initial_values=initial_values, n_stoch=n_stoch,
+                                                                                        x_min_init=x_min_init, y_min_init=y_min_init)
         output_name = self.object_name + '_wvt_1'  # Add the '_1' because the binning is set to 1
         for line_ in lines:
             amp = fits.open(self.output_dir + '/Amplitudes/' + output_name + '_' + line_ + '_Amplitude.fits')[0].data.T
