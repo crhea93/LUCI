@@ -24,7 +24,6 @@ from LUCI.LuciVisualize import visualize as LUCIvisualize
 import multiprocessing as mp
 import time
 
-
 class Luci():
     """
     This is the primary class for the general purpose line fitting code LUCI. This contains
@@ -622,7 +621,7 @@ class Luci():
                   pixel_x, pixel_y, bin=None, bkg=None,
                   bayes_bool=False, bayes_method='emcee',
                   uncertainty_bool=False,
-                  nii_cons=True, spec_min=None, spec_max=None, 
+                  nii_cons=True, spec_min=None, spec_max=None,
                   obj_redshift=0.0, n_stoch=1):
         """
         Primary fit call to fit a single pixel in the data cube. This wraps the
@@ -1264,7 +1263,7 @@ class Luci():
             initial_values: Initial values of velocity and broadening for fitting specific lines (must be list;
             e.x. [velocity, broadening]; default [False])
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
-            
+
         Return:
             Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).
         """

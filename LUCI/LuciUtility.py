@@ -14,6 +14,7 @@ def check_luci_path(Luci_path):
         Luci_path += '/'
         print("We have added a trailing '/' to your Luci_path variable.\n")
         print("Please add this in the future.\n")
+    return Luci_path
 
 
 def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
@@ -163,7 +164,7 @@ def update_header(file):
     Args:
         file: hdf5 File object containing HDF5 file
     """
-    
+
     hdr_dict = {}
     header_cols = [str(val[0]).replace("'b", '').replace("'", "").replace("b", '') for val in
                    list(file['header'][()])]
