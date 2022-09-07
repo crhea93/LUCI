@@ -577,8 +577,8 @@ class Fit:
                         initial[3 * mod + 1] = vel_est  # Set wavenumber
                         initial[3 * mod + 2] = sigma_est  # Set sigma
                     else:
-                        initial[3 * mod + 1] = np.random.normal(vel_est, vel_est/100)  # Sample wavenumber from a normal distribution around the ML value
-                        initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est/100)  # Sample wavenumber from a normal distribution around the ML value
+                        initial[3 * mod + 1] = np.random.normal(vel_est, vel_est/10)  # Sample wavenumber from a normal distribution around the ML value
+                        initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est/10)  # Sample wavenumber from a normal distribution around the ML value
                 # Set constraints
                 sigma_cons = self.sigma_constraints()  # Call sigma constraints
                 vel_cons = self.vel_constraints()  # Call velocity constraints
@@ -592,8 +592,8 @@ class Fit:
                 
                 soln = minimize(nll, initial,
                             method='SLSQP',
-                            options={'disp': True, 'maxiter': 100},
-                            tol=1e-2,
+                            options={'disp': False, 'maxiter': 100},
+                            tol=1e-4,
                             args=(), constraints=cons
                             )
                         

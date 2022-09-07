@@ -291,62 +291,64 @@ class Luci():
         for j in range(x_max - x_min):
             x_pix = x_min + j  # Set current x pixel
             if mask is not None:  # Check if there is a mask
-                if not mask[x_pix, y_pix]:  # Check that the mask is true
+                if mask[x_pix, y_pix]:  # Check that the mask is true; if so, do the fit
+                    if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
+                        sky = self.cube_binned[x_pix, y_pix, :]
+                    else:  # If not, then take from the unbinned cube
+                        sky = self.cube_final[x_pix, y_pix, :]
+                    if bkg is not None:  # If there is a background variable subtract the bkg spectrum
+                        if binning:  # If binning, then we have to take into account how many pixels are in each bin
+                            sky -= bkg * binning ** 2  # Subtract background spectrum
+                        else:  # No binning so just subtract the background directly
+                            sky -= bkg  # Subtract background spectrum
+                    good_sky_inds = [~np.isnan(sky)]  # Find all NaNs in sky spectrum
+                    sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
+                    axis = self.spectrum_axis#[good_sky_inds]  # Clean up axis  accordingly
+                    if initial_values[0] is not False:   #Frozen parameter
+                        initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
+                    else:
+                        initial_values_to_pass = initial_values
+                    # Call fit!
+                    if len(sky) > 0:  # Ensure that there are values in sky
+                        fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+                                self.model_ML, trans_filter=self.transmission_interpolated,
+                                theta=self.interferometer_theta[x_pix, y_pix],
+                                delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
+                                zpd_index=self.zpd_index,
+                                filter=self.hdr_dict['FILTER'],
+                                bayes_bool=bayes_bool, bayes_method=bayes_method,
+                                uncertainty_bool=uncertainty_bool,
+                                mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
+                                spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift, n_stoch=n_stoch
+                                )
+                        fit_dict = fit.fit()  # Collect fit dictionary
+                        # Save local list of fit values
+                        ampls_local.append(fit_dict['amplitudes'])
+                        flux_local.append(fit_dict['fluxes'])
+                        flux_errs_local.append(fit_dict['flux_errors'])
+                        vels_local.append(fit_dict['velocities'])
+                        broads_local.append(fit_dict['sigmas'])
+                        vels_errs_local.append(fit_dict['vels_errors'])
+                        broads_errs_local.append(fit_dict['sigmas_errors'])
+                        chi2_local.append(fit_dict['chi2'])
+                        corr_local.append(fit_dict['corr'])
+                        step_local.append(fit_dict['axis_step'])
+                        continuum_local.append(fit_dict['continuum'])
+                    else:  # If the sky is empty (this rarely rarely rarely happens), then return zeros for everything
+                        ampls_local.append([0] * len(lines))
+                        flux_local.append([0] * len(lines))
+                        flux_errs_local.append([0] * len(lines))
+                        vels_local.append([0] * len(lines))
+                        broads_local.append([0] * len(lines))
+                        vels_errs_local.append([0] * len(lines))
+                        broads_errs_local.append([0] * len(lines))
+                        chi2_local.append(0)
+                        corr_local.append(0)
+                        step_local.append(0)
+                        continuum_local.append(0)
+                else:
                     pass
-            if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
-                sky = self.cube_binned[x_pix, y_pix, :]
-            else:  # If not, then take from the unbinned cube
-                sky = self.cube_final[x_pix, y_pix, :]
-            if bkg is not None:  # If there is a background variable subtract the bkg spectrum
-                if binning:  # If binning, then we have to take into account how many pixels are in each bin
-                    sky -= bkg * binning ** 2  # Subtract background spectrum
-                else:  # No binning so just subtract the background directly
-                    sky -= bkg  # Subtract background spectrum
-            good_sky_inds = [~np.isnan(sky)]  # Find all NaNs in sky spectrum
-            sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
-            axis = self.spectrum_axis#[good_sky_inds]  # Clean up axis  accordingly
-            if initial_values[0] is not False:   #Frozen parameter
-                initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
-            else:
-                initial_values_to_pass = initial_values
-            # Call fit!
-            if len(sky) > 0:  # Ensure that there are values in sky
-                fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                          self.model_ML, trans_filter=self.transmission_interpolated,
-                          theta=self.interferometer_theta[x_pix, y_pix],
-                          delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
-                          zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'],
-                          bayes_bool=bayes_bool, bayes_method=bayes_method,
-                          uncertainty_bool=uncertainty_bool,
-                          mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
-                          spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift, n_stoch=n_stoch
-                          )
-                fit_dict = fit.fit()  # Collect fit dictionary
-                # Save local list of fit values
-                ampls_local.append(fit_dict['amplitudes'])
-                flux_local.append(fit_dict['fluxes'])
-                flux_errs_local.append(fit_dict['flux_errors'])
-                vels_local.append(fit_dict['velocities'])
-                broads_local.append(fit_dict['sigmas'])
-                vels_errs_local.append(fit_dict['vels_errors'])
-                broads_errs_local.append(fit_dict['sigmas_errors'])
-                chi2_local.append(fit_dict['chi2'])
-                corr_local.append(fit_dict['corr'])
-                step_local.append(fit_dict['axis_step'])
-                continuum_local.append(fit_dict['continuum'])
-            else:  # If the sky is empty (this rarely rarely rarely happens), then return zeros for everything
-                ampls_local.append([0] * len(lines))
-                flux_local.append([0] * len(lines))
-                flux_errs_local.append([0] * len(lines))
-                vels_local.append([0] * len(lines))
-                broads_local.append([0] * len(lines))
-                vels_errs_local.append([0] * len(lines))
-                broads_errs_local.append([0] * len(lines))
-                chi2_local.append(0)
-                corr_local.append(0)
-                step_local.append(0)
-                continuum_local.append(0)
+            
         return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
 
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
@@ -593,7 +595,7 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        results = Parallel(n_jobs=n_threads, require='sharedmem') \
+        results = Parallel(n_jobs=n_threads) \
             (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, mask,
                                     bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
