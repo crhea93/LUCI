@@ -40,7 +40,6 @@ class Gaussian:
     def __init__(self, freeze=False, initial_values=None):
         self.freeze = freeze
         self.initial_values = initial_values
-        pass
 
     def function(self, channel, params):
         A = params[0]
@@ -120,7 +119,6 @@ class Sinc:
     def __init__(self, freeze=False, initial_values=None):
         self.freeze = freeze
         self.initial_values = initial_values
-        pass
 
     def function(self, channel, params, sinc_width):
         p0 = params[0];
@@ -235,7 +233,7 @@ class SincGauss:
             Value of function given input parameters (theta)
 
         """
-        
+        f1 = 0.0
         # Check if velocity and broadening should be frozen -- if they are freeze them!
         thetas = np.zeros(3*line_num)
         if self.freeze:  # If true read off amplitudes and add in velocity and broadening
@@ -244,16 +242,12 @@ class SincGauss:
                 frozen_velocity, frozen_broadening = frozen_values(line_names[model_num], self.initial_values)
                 thetas[3*model_num + 1] = frozen_velocity#[model_num]
                 thetas[3*model_num + 2] = frozen_broadening#[model_num]
-            #thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
             thetas = [thetas[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
         else:  # Just read off parameters directly
             thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
         f1 = np.add.reduce([self.function(channel, thetas[model_num], sinc_width) for model_num in range(line_num)])
-        '''for model_num in range(line_num):
-                        params = theta[model_num * 3:(model_num + 1) * 3]
-                        f1 += self.function(channel, params, sinc_width)'''
         return np.real(f1)
-
+        
     def evaluate_bayes(self, channel, theta, sinc_width):
         """
         Function to initiate the model calculation for Bayesian Analysis
@@ -293,6 +287,6 @@ class SincGauss:
             min_ind = np.argmin(np.abs(channel - theta[3*model_num+1]))
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
-            f1 += self.function(channel, params, sinc_width)
+            f1 += np.nan_to_num(np.array(self.function(channel, params, sinc_width)))
         return np.real(f1)
 

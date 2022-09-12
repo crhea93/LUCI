@@ -48,8 +48,7 @@ class Luci():
             mdn: Boolean for using the Mixed Density Network models; If true, then we use the posterior distributions calculated by our network as our priors for bayesian fits
         """
         self.header_binned = None
-        self.Luci_path = Luci_path
-        check_luci_path(Luci_path)  # Make sure the path is correctly written
+        self.Luci_path = check_luci_path(Luci_path)  # Make sure the path is correctly written
         self.cube_path = cube_path
         self.output_dir = output_dir + '/Luci_outputs'
         if not os.path.exists(self.output_dir):
@@ -567,8 +566,10 @@ class Luci():
             mask = reg_to_mask(region, header)
         elif '.npy' in region:
             mask = np.load(region).T
+        elif region is not None:
+            mask = region
         else:
-            print('Mask was incorrectly passed. Please use either a .reg file or a .npy file')
+            print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
@@ -617,7 +618,7 @@ class Luci():
                           wcs=wcs)
         for sl in tqdm(prange(y_max-y_min)):
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = \
-            self.fit_calc(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
+            self.fit_calc(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, mask=mask, bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, binning=binning, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
                                     obj_redshift=obj_redshift, n_stoch=n_stoch)

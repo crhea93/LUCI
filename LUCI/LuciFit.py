@@ -85,7 +85,7 @@ class Fit:
                           'NII6548C4': 806.062493,
                           'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
                           'OII3729C1': 459.017742, 'OII3726C1': 458.674293, }
-        self.available_functions = ['gaussian', 'sinc', 'sincgauss']
+        self.available_functions = ['gaussian', 'sinc', 'sincgauss', 'gauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
         self.obj_redshift_corr = 1 + obj_redshift
@@ -467,8 +467,10 @@ class Fit:
                 for ind_unique_ in inds_unique[1:]:  # Step through group elements except for the first one
                     sigma_dict_list.append({'type': 'eq', 'fun': lambda x, ind_unique=ind_unique_, ind_0=ind_0_:
                     (SPEED_OF_LIGHT * x[3 * ind_0 + 2]) / x[3 * ind_0 + 1] -
-                    (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]}
-                                           )
+                    (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]})
+        for i in range(len(self.sigma_rel)):
+            sigma_dict_list.append({'type': 'ineq', 'fun': lambda x: x[3*i+2]})  # Sigma always should be bigger than 0
+                                           
         return sigma_dict_list
 
     def vel_constraints(self):
@@ -586,17 +588,15 @@ class Fit:
                 # CONSTRAINTS
                 if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
                     nii_constraints = self.NII_constraints()
-                    cons = sigma_cons + vel_cons + vel_cons_multiple + nii_constraints
+                    cons = sigma_cons + vel_cons# + vel_cons_multiple# + nii_constraints
                 else:
-                    cons = sigma_cons + vel_cons + vel_cons_multiple
-                
+                    cons = sigma_cons + vel_cons# + vel_cons_multiple
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 100},
                             tol=1e-4,
                             args=(), constraints=cons
                             )
-                        
                 if st == 0:
                     best_loss = soln.fun
                     best_fit = soln.x
@@ -619,7 +619,6 @@ class Fit:
                             options={'disp': False, 'maxiter': 30},
                             tol=1e-2,
                             args=())
-
                 if st == 0:
                     best_loss = soln.fun
                     best_fit = soln.x
@@ -665,11 +664,9 @@ class Fit:
         if self.model_type == 'gaussian':
             self.fit_vector = Gaussian().plot(self.axis, parameters[:-1], self.line_num) + parameters[-1]
         elif self.model_type == 'sinc':
-            self.fit_vector = Sinc().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[
-                -1]
+            self.fit_vector = Sinc().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[-1]
         elif self.model_type == 'sincgauss':
-            self.fit_vector = SincGauss().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + \
-                              parameters[-1]
+            self.fit_vector = SincGauss().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[-1]
         else:
             print("Somehow all the checks missed the fact that you didn't enter a valid fit function...")
 
@@ -939,7 +936,8 @@ class Fit:
 
         """
         if self.model_type in self.available_functions:
-            pass
+            if self.model_type == 'gauss':
+                self.model_type = 'gaussian'  # Correct gauss to gaussian
         else:
             raise Exception(
                 'Please submit a fitting function name in the available list: \n {}'.format(self.available_functions))
