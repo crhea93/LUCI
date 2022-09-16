@@ -180,17 +180,18 @@ def update_header(file):
         header_vals = [str(val[1]).replace("'b", '').replace("'", "").replace("b", '') for val in
                     list(file['header'][()])]
         header_types = [val[3] for val in list(file['header'][()])]
-        if 'bool' in str(header_type):
-            hdr_dict[header_col] = bool(header_val)
-        if 'float' in str(header_type):
-            hdr_dict[header_col] = float(header_val)
-        if 'int' in str(header_type):
-            hdr_dict[header_col] = int(header_val)
-        else:
-            try:
+        for header_col, header_val, header_type in zip(header_cols, header_vals, header_types):
+            if 'bool' in str(header_type):
+                hdr_dict[header_col] = bool(header_val)
+            elif 'float' in str(header_type):
                 hdr_dict[header_col] = float(header_val)
-            except:
-                hdr_dict[header_col] = str(header_val)
+            elif 'int' in str(header_type):
+                hdr_dict[header_col] = int(header_val)
+            else:
+                try:
+                    hdr_dict[header_col] = float(header_val)
+                except:
+                    hdr_dict[header_col] = str(header_val)
         clean_hdr_dict = hdr_dict
         print(clean_hdr_dict)
     else:  # New HDF5
