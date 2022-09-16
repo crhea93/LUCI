@@ -1,3 +1,4 @@
+from email import header
 import os
 import numpy as np
 from astropy.wcs import WCS
@@ -120,8 +121,13 @@ def get_interferometer_angles(file, hdr_dict):
     Args:
         file: hdf5 File object containing HDF5 file
     """
+    
     calib_map = file['calib_map'][()]
-    calib_ref = hdr_dict['CALIBNM']
+    print(hdr_dict)
+    try:
+        calib_ref = hdr_dict['CALIBNM']
+    except:
+        calib_ref = hdr_dict['nm_laser']
     interferometer_cos_theta = calib_ref / calib_map  # .T[::-1,::-1]
     # We need to convert to degree so bear with me here
     #del calib_map
@@ -133,6 +139,7 @@ def spectrum_axis_func(hdr_dict, redshift):
     Create the x-axis for the spectra. We must construct this from header information
     since each pixel only has amplitudes of the spectra at each point.
     """
+    
     len_wl = hdr_dict['STEPNB']  # Length of Spectral Axis
     start = hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
     end = start + (len_wl) * hdr_dict['CDELT3']  # End
@@ -165,12 +172,14 @@ def update_header(file):
     """
     
     hdr_dict = {}
-    header_cols = [str(val[0]).replace("'b", '').replace("'", "").replace("b", '') for val in
-                   list(file['header'][()])]
-    header_vals = [str(val[1]).replace("'b", '').replace("'", "").replace("b", '') for val in
-                   list(file['header'][()])]
-    header_types = [val[3] for val in list(file['header'][()])]
-    for header_col, header_val, header_type in zip(header_cols, header_vals, header_types):
+    attribute_list = [attr for attr in list(file.attrs)]
+    clean_hdr_dict = {}
+    if 'quad_nb' in attribute_list:  # Old HDF5
+        header_cols = [str(val[0]).replace("'b", '').replace("'", "").replace("b", '') for val in
+                    list(file['header'][()])]
+        header_vals = [str(val[1]).replace("'b", '').replace("'", "").replace("b", '') for val in
+                    list(file['header'][()])]
+        header_types = [val[3] for val in list(file['header'][()])]
         if 'bool' in str(header_type):
             hdr_dict[header_col] = bool(header_val)
         if 'float' in str(header_type):
@@ -182,6 +191,33 @@ def update_header(file):
                 hdr_dict[header_col] = float(header_val)
             except:
                 hdr_dict[header_col] = str(header_val)
+        clean_hdr_dict = hdr_dict
+        print(clean_hdr_dict)
+    else:  # New HDF5
+        header_cols = [attr for attr in list(file.attrs)]
+        header_vals = [file.attrs[attr] for attr in list(file.attrs)]
+        header_types = [type(file.attrs[attr]) for attr in list(file.attrs)]
+    for header_col, header_val, header_type in zip(header_cols, header_vals, header_types):  # New HDF5 format
+        try:
+            if header_type is np.float64:
+                hdr_dict[header_col] = float(header_val)
+                clean_hdr_dict[header_col] = float(header_val)
+            elif header_type is np.int64:
+                hdr_dict[header_col] = int(header_val)
+                clean_hdr_dict[header_col] = int(header_val)
+            elif header_type is np.str:
+                hdr_dict[header_col] = str(header_val)
+                clean_hdr_dict[header_col] = str(header_val)
+                if 'path' in header_col:
+                    hdr_dict[header_col] = ''
+                    clean_hdr_dict[header_col] = ''
+            elif header_type is np.bool_:
+                hdr_dict[header_col] = bool(header_val)
+                clean_hdr_dict[header_col] = bool(header_val)
+            elif header_type is np.ndarray:
+                hdr_dict[header_col] = np.array(header_val)
+        except:
+            hdr_dict[header_col] = str(header_val)
     hdr_dict['CTYPE3'] = 'WAVE-SIP'
     hdr_dict['CUNIT3'] = 'm'
     # If NAXIS 1 does not exist we will add it
@@ -189,10 +225,21 @@ def update_header(file):
         hdr_dict['NAXIS1'] = 2048
         hdr_dict['NAXIS2'] = 2064
     # Make WCS
-    wcs_data = WCS(hdr_dict, naxis=2)
+    
+    wcs_data = WCS(clean_hdr_dict, naxis=2)
     header = wcs_data.to_header()
     header.insert('WCSAXES', ('SIMPLE', 'T'))
     header.insert('SIMPLE', ('NAXIS', 2), after=True)
+    if 'STEP_NB' in hdr_dict.keys():
+        hdr_dict['STEPNB'] = int(hdr_dict['step_nb'])
+    if 'zpd_index' in hdr_dict.keys():
+        hdr_dict['ZPDINDEX'] = int(hdr_dict['zpd_index'])
+    if 'filter_name' in hdr_dict.keys():
+        hdr_dict['FILTER'] = str(hdr_dict['filter_name'])
+    if 'axis_min' in hdr_dict.keys():
+        hdr_dict['CRVAL3'] = float(hdr_dict['axis_min'])
+    if 'axis_step' in hdr_dict.keys():
+        hdr_dict['CDELT3'] = float(hdr_dict['axis_step'])
     hdr_dict = hdr_dict
     return header, hdr_dict
 

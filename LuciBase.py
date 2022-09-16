@@ -116,19 +116,25 @@ class Luci():
         print('Reading in data...')
         file = h5py.File(self.cube_path + '.hdf5', 'r')  # Read in file
         # file = ht.load(self.cube_path + '.hdf5')
-        self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
-        self.dimx = file.attrs['dimx']  # Get the dimensions in x
-        self.dimy = file.attrs['dimy']  # Get the dimensions in y
-        self.dimz = file.attrs['dimz']  # Get the dimensions in z (spectral axis)
-        self.cube_final = np.zeros((self.dimx, self.dimy, self.dimz))  # Complete data cube
-        for iquad in tqdm(range(self.quad_nb)):
-            xmin, xmax, ymin, ymax = get_quadrant_dims(iquad, self.quad_nb, self.dimx, self.dimy)
-            iquad_data = file['quad00%i' % iquad]['data'][:]  # Save data to intermediate array
-            iquad_data[(np.isfinite(iquad_data) == False)] = 1e-22  # Set infinite values to 1-e22
-            iquad_data[(iquad_data < -1e-16)] = 1e-22  # Set high negative flux values to 1e-22
-            iquad_data[(iquad_data > 1e-9)] = 1e-22  # Set unrealistically high positive flux values to 1e-22
-            self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
-            #iquad_data = None
+        #print(file.keys())
+        #for attr in file.attrs:
+        #    print(file.attrs[attr])
+        try:
+            self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
+            self.dimx = file.attrs['dimx']  # Get the dimensions in x
+            self.dimy = file.attrs['dimy']  # Get the dimensions in y
+            self.dimz = file.attrs['dimz']  # Get the dimensions in z (spectral axis)
+            self.cube_final = np.zeros((self.dimx, self.dimy, self.dimz))  # Complete data cube
+            for iquad in tqdm(range(self.quad_nb)):
+                xmin, xmax, ymin, ymax = get_quadrant_dims(iquad, self.quad_nb, self.dimx, self.dimy)
+                iquad_data = file['quad00%i' % iquad]['data'][:]  # Save data to intermediate array
+                iquad_data[(np.isfinite(iquad_data) == False)] = 1e-22  # Set infinite values to 1-e22
+                iquad_data[(iquad_data < -1e-16)] = 1e-22  # Set high negative flux values to 1e-22
+                iquad_data[(iquad_data > 1e-9)] = 1e-22  # Set unrealistically high positive flux values to 1e-22
+                self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
+                #iquad_data = None
+        except KeyError:
+            self.cube_final = np.real(file['data'])
         self.cube_final = self.cube_final  # .transpose(1, 0, 2)
         '''folder = './joblib_memmap'
         try:
@@ -163,7 +169,9 @@ class Luci():
         if 'deep_frame' in hdf5_file:  # A deep image already exists
             print('Existing deep frame extracted from hdf5 file.')
             self.deep_image = hdf5_file['deep_frame'][:]
-            self.deep_image *= self.dimz
+            if self.dimz != 0:  # had to put this because of new version of cubes
+                print(self.dimz)
+                self.deep_image *= self.dimz
         else:  # Create new deep image
             print('New deep frame created from data.')
             self.deep_image = np.zeros(
@@ -306,7 +314,7 @@ class Luci():
                     sky -= bkg  # Subtract background spectrum
             good_sky_inds = [~np.isnan(sky)]  # Find all NaNs in sky spectrum
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
-            axis = self.spectrum_axis#[good_sky_inds]  # Clean up axis  accordingly
+            axis = self.spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
             if initial_values[0] is not False:   #Frozen parameter
                 initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
             else:

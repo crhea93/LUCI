@@ -111,7 +111,7 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_si
     else:
         print('Please enter either flux, velocity, or broadening')
     quantity_map = np.nan_to_num(quantity_map, 1e-18)
-    units = {'flux': 'ergs/s/cm^2/A', 'velocity': 'km/s', 'broadening': 'km/s'}
+    units = {'flux': r'log[ergs/s/cm$^2$/A]', 'velocity': 'km/s', 'broadening': 'km/s'}
     if clims is None:
         c_min = np.nanpercentile(quantity_map, 5)
         c_max = np.nanpercentile(quantity_map, 95)
