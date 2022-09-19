@@ -193,13 +193,15 @@ def update_header(file):
                 except:
                     hdr_dict[header_col] = str(header_val)
         clean_hdr_dict = hdr_dict
-        print(clean_hdr_dict)
     else:  # New HDF5
         header_cols = [attr for attr in list(file.attrs)]
         header_vals = [file.attrs[attr] for attr in list(file.attrs)]
         header_types = [type(file.attrs[attr]) for attr in list(file.attrs)]
     for header_col, header_val, header_type in zip(header_cols, header_vals, header_types):  # New HDF5 format
         try:
+            if header_col == 'flambda':
+                hdr_dict['flambda'] = header_val
+                clean_hdr_dict['flambda'] = header_val
             if header_type is np.float64:
                 hdr_dict[header_col] = float(header_val)
                 clean_hdr_dict[header_col] = float(header_val)
@@ -358,8 +360,9 @@ def bin_mask(mask, binning, x_min, x_max, y_min, y_max):
         for j in range(y_shape_new):
             summed_spec = mask[x_min + int(i * binning):x_min + int((i + 1) * binning),
                           y_min + int(j * binning):y_min + int((j + 1) * binning)]
-            summed_spec = np.nansum(summed_spec, axis=0)
-            summed_spec = np.nansum(summed_spec, axis=0)
-            binned_mask[i, j] = summed_spec[:]
+            if summed_spec.any() == True or summed_spec.any() == 1:
+                binned_mask[i, j] = True 
+            else:
+                binned_mask[i,j] = False
     binned_mask = binned_mask / (binning ** 2)
     return binned_mask
