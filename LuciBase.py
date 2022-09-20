@@ -18,7 +18,7 @@ from astropy.coordinates import SkyCoord, EarthLocation
 from numba import jit, set_num_threads, prange
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
-    read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function
+    read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function, bin_mask
 from LUCI.LuciWVT import *
 from LUCI.LuciVisualize import visualize as LUCIvisualize
 import multiprocessing as mp
@@ -47,8 +47,7 @@ class Luci():
             mdn: Boolean for using the Mixed Density Network models; If true, then we use the posterior distributions calculated by our network as our priors for bayesian fits
         """
         self.header_binned = None
-        self.Luci_path = Luci_path
-        check_luci_path(Luci_path)  # Make sure the path is correctly written
+        self.Luci_path = check_luci_path(Luci_path)  # Make sure the path is correctly written
         self.cube_path = cube_path
         self.output_dir = output_dir + '/Luci_outputs'
         if not os.path.exists(self.output_dir):
@@ -116,19 +115,23 @@ class Luci():
         print('Reading in data...')
         file = h5py.File(self.cube_path + '.hdf5', 'r')  # Read in file
         # file = ht.load(self.cube_path + '.hdf5')
-        self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
-        self.dimx = file.attrs['dimx']  # Get the dimensions in x
-        self.dimy = file.attrs['dimy']  # Get the dimensions in y
-        self.dimz = file.attrs['dimz']  # Get the dimensions in z (spectral axis)
-        self.cube_final = np.zeros((self.dimx, self.dimy, self.dimz))  # Complete data cube
-        for iquad in tqdm(range(self.quad_nb)):
-            xmin, xmax, ymin, ymax = get_quadrant_dims(iquad, self.quad_nb, self.dimx, self.dimy)
-            iquad_data = file['quad00%i' % iquad]['data'][:]  # Save data to intermediate array
-            iquad_data[(np.isfinite(iquad_data) == False)] = 1e-22  # Set infinite values to 1-e22
-            iquad_data[(iquad_data < -1e-16)] = 1e-22  # Set high negative flux values to 1e-22
-            iquad_data[(iquad_data > 1e-9)] = 1e-22  # Set unrealistically high positive flux values to 1e-22
-            self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
-            #iquad_data = None
+        #print(file.keys())
+        try:
+            self.quad_nb = file.attrs['quad_nb']  # Get the number of quadrants
+            self.dimx = file.attrs['dimx']  # Get the dimensions in x
+            self.dimy = file.attrs['dimy']  # Get the dimensions in y
+            self.dimz = file.attrs['dimz']  # Get the dimensions in z (spectral axis)
+            self.cube_final = np.zeros((self.dimx, self.dimy, self.dimz))  # Complete data cube
+            for iquad in tqdm(range(self.quad_nb)):
+                xmin, xmax, ymin, ymax = get_quadrant_dims(iquad, self.quad_nb, self.dimx, self.dimy)
+                iquad_data = file['quad00%i' % iquad]['data'][:]  # Save data to intermediate array
+                iquad_data[(np.isfinite(iquad_data) == False)] = 1e-22  # Set infinite values to 1-e22
+                iquad_data[(iquad_data < -1e-16)] = 1e-22  # Set high negative flux values to 1e-22
+                iquad_data[(iquad_data > 1e-9)] = 1e-22  # Set unrealistically high positive flux values to 1e-22
+                self.cube_final[xmin:xmax, ymin:ymax, :] = iquad_data  # Save to correct location in main cube
+                #iquad_data = None
+        except KeyError:
+            self.cube_final = np.real(file['data'])
         self.cube_final = self.cube_final  # .transpose(1, 0, 2)
         '''folder = './joblib_memmap'
         try:
@@ -163,7 +166,8 @@ class Luci():
         if 'deep_frame' in hdf5_file:  # A deep image already exists
             print('Existing deep frame extracted from hdf5 file.')
             self.deep_image = hdf5_file['deep_frame'][:]
-            self.deep_image *= self.dimz
+            if self.dimz != 0:  # had to put this because of new version of cubes
+                self.deep_image *= self.dimz
         else:  # Create new deep image
             print('New deep frame created from data.')
             self.deep_image = np.zeros(
@@ -286,12 +290,15 @@ class Luci():
         corr_local = []
         step_local = []
         continuum_local = []
+        bool_fit = True  # Boolean to fit
         # Step through x coordinates
         for j in range(x_max - x_min):
             x_pix = x_min + j  # Set current x pixel
             if mask is not None:  # Check if there is a mask
-                if not mask[x_pix, y_pix]:  # Check that the mask is true
-                    pass
+                if mask[x_pix, y_pix]:  # Check that the mask is true
+                    bool_fit = True
+                else:
+                    bool_fit = False
             if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
                 sky = self.cube_binned[x_pix, y_pix, :]
             else:  # If not, then take from the unbinned cube
@@ -303,13 +310,13 @@ class Luci():
                     sky -= bkg  # Subtract background spectrum
             good_sky_inds = [~np.isnan(sky)]  # Find all NaNs in sky spectrum
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
-            axis = self.spectrum_axis#[good_sky_inds]  # Clean up axis  accordingly
+            axis = self.spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
             if initial_values[0] is not False:   #Frozen parameter
                 initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
             else:
                 initial_values_to_pass = initial_values
             # Call fit!
-            if len(sky) > 0:  # Ensure that there are values in sky
+            if len(sky) > 0 and bool_fit == True:  # Ensure that there are values in sky
                 fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                           self.model_ML, trans_filter=self.transmission_interpolated,
                           theta=self.interferometer_theta[x_pix, y_pix],
@@ -348,6 +355,7 @@ class Luci():
                 continuum_local.append(0)
         return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
 
+    @jit(nopython=False, parallel=True)
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
@@ -445,14 +453,19 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        results = Parallel(n_jobs=n_threads, require='sharedmem') \
-            (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
+        #results = Parallel(n_jobs=n_threads, backend='threading') \
+        '''    (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
                                     obj_redshift=obj_redshift, n_stoch=n_stoch)
-                                     for sl in tqdm(range(y_max - y_min)))
-        for result in results:
-            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
+                                     for sl in tqdm(range(y_max - y_min)))'''
+        
+        for sl in tqdm(prange(y_max-y_min)):
+            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = \
+            self.fit_calc(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
+                                    bayes_method=bayes_method,
+                                    uncertainty_bool=uncertainty_bool, bkg=bkg, binning=binning, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
+                                    obj_redshift=obj_redshift, n_stoch=n_stoch)
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
             flux_errors_fits[i] = flux_errs_local
@@ -464,6 +477,19 @@ class Luci():
             corr_fits[i] = corr_local
             step_fits[i] = step_local
             continuum_fits[i] = continuum_local
+        '''for result in results:
+            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
+            ampls_fits[i] = ampls_local
+            flux_fits[i] = flux_local
+            flux_errors_fits[i] = flux_errs_local
+            velocities_fits[i] = vels_local
+            broadenings_fits[i] = broads_local
+            velocities_errors_fits[i] = vels_errs_local
+            broadenings_errors_fits[i] = broads_errs_local
+            chi2_fits[i] = chi2_local
+            corr_fits[i] = corr_local
+            step_fits[i] = step_local
+            continuum_fits[i] = continuum_local'''
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits,
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,
@@ -525,7 +551,7 @@ class Luci():
         y_min = 0
         y_max = self.cube_final.shape[1]
         # Initialize fit solution arrays
-        if binning != None and binning != 1:
+        if binning != None and binning > 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
                           y_max)
             x_max = int((x_max - x_min) / binning)
@@ -534,7 +560,7 @@ class Luci():
             y_min = 0
         # Create mask
         if '.reg' in region:
-            shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+            # shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
             if binning != None and binning > 1:
                 header = self.header_binned
             else:
@@ -544,8 +570,13 @@ class Luci():
             mask = reg_to_mask(region, header)
         elif '.npy' in region:
             mask = np.load(region).T
+        elif region is not None:
+            mask = region.T
         else:
-            print('Mask was incorrectly passed. Please use either a .reg file or a .npy file')
+            print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
+        if binning != None and binning > 1:
+            mask = bin_mask(mask, binning, x_min, self.cube_final.shape[0], y_min, self.cube_final.shape[1])  # Bin Mask
+        print(mask.shape)
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
@@ -592,16 +623,12 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        results = Parallel(n_jobs=n_threads, require='sharedmem') \
-            (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, mask,
-                                    bayes_bool=bayes_bool,
+        for sl in tqdm(prange(y_max-y_min)):
+            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = \
+            self.fit_calc(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, mask=mask, bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
-                                    uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons,
-                                    initial_values=[vel_init, broad_init], obj_redshift=obj_redshift,
-                                    n_stoch=n_stoch
-                                    ) for sl in tqdm(range(y_max - y_min)))
-        for result in results:
-            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result.get()
+                                    uncertainty_bool=uncertainty_bool, bkg=bkg, binning=binning, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
+                                    obj_redshift=obj_redshift, n_stoch=n_stoch)
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
             flux_errors_fits[i] = flux_errs_local
