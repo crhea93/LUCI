@@ -121,7 +121,7 @@ def get_interferometer_angles(file, hdr_dict):
     Args:
         file: hdf5 File object containing HDF5 file
     """
-    
+
     calib_map = file['calib_map'][()]
     print(hdr_dict)
     try:
@@ -139,7 +139,7 @@ def spectrum_axis_func(hdr_dict, redshift):
     Create the x-axis for the spectra. We must construct this from header information
     since each pixel only has amplitudes of the spectra at each point.
     """
-    
+
     len_wl = hdr_dict['STEPNB']  # Length of Spectral Axis
     start = hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
     end = start + (len_wl) * hdr_dict['CDELT3']  # End
@@ -228,7 +228,7 @@ def update_header(file):
         hdr_dict['NAXIS1'] = 2048
         hdr_dict['NAXIS2'] = 2064
     # Make WCS
-    
+
     wcs_data = WCS(clean_hdr_dict, naxis=2)
     header = wcs_data.to_header()
     header.insert('WCSAXES', ('SIMPLE', 'T'))
@@ -331,6 +331,10 @@ def bin_cube_function(cube_final, header, binning, x_min, x_max, y_min, y_max):
     header_binned['CRPIX2'] = header_binned['CRPIX2'] / binning
     header_binned['CDELT1'] = header_binned['CDELT1'] * binning
     header_binned['CDELT2'] = header_binned['CDELT2'] * binning
+    header_binned['PC1_1'] = header_binned['PC1_1'] * binning
+    header_binned['PC1_2'] = header_binned['PC1_2'] * binning
+    header_binned['PC2_1'] = header_binned['PC2_1'] * binning
+    header_binned['PC2_2'] = header_binned['PC2_2'] * binning
     cube_binned = binned_cube / (binning ** 2)
     return header_binned, cube_binned
 
@@ -361,7 +365,7 @@ def bin_mask(mask, binning, x_min, x_max, y_min, y_max):
             summed_spec = mask[x_min + int(i * binning):x_min + int((i + 1) * binning),
                           y_min + int(j * binning):y_min + int((j + 1) * binning)]
             if summed_spec.any() == True or summed_spec.any() == 1:
-                binned_mask[i, j] = True 
+                binned_mask[i, j] = True
             else:
                 binned_mask[i,j] = False
     binned_mask = binned_mask / (binning ** 2)
