@@ -201,7 +201,7 @@ def update_header(file):
         try:
             if header_col == 'flambda':
                 hdr_dict['flambda'] = header_val
-                clean_hdr_dict['flambda'] = header_val
+                #clean_hdr_dict['flambda'] = header_val
             if header_type is np.float64:
                 hdr_dict[header_col] = float(header_val)
                 clean_hdr_dict[header_col] = float(header_val)
@@ -327,10 +327,10 @@ def bin_cube_function(cube_final, header, binning, x_min, x_max, y_min, y_max):
             summed_spec = np.nansum(summed_spec, axis=0)
             binned_cube[i, j] = summed_spec[:]
     header_binned = header
-    header_binned['CRPIX1'] = header_binned['CRPIX1'] / binning
-    header_binned['CRPIX2'] = header_binned['CRPIX2'] / binning
-    header_binned['CDELT1'] = header_binned['CDELT1'] * binning
-    header_binned['CDELT2'] = header_binned['CDELT2'] * binning
+    header_binned['CRPIX1'] = (header_binned['CRPIX1']-x_min-0.5) / binning + 0.5
+    header_binned['CRPIX2'] = (header_binned['CRPIX2']-y_min-0.5) / binning + 0.5
+    #header_binned['CDELT1'] = header_binned['CDELT1'] * binning
+    #header_binned['CDELT2'] = header_binned['CDELT2'] * binning
     header_binned['PC1_1'] = header_binned['PC1_1'] * binning
     header_binned['PC1_2'] = header_binned['PC1_2'] * binning
     header_binned['PC2_1'] = header_binned['PC2_1'] * binning
