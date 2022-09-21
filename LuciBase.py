@@ -203,8 +203,12 @@ class Luci():
             header_binned = self.header
             header_binned['CRPIX1'] = header_binned['CRPIX1'] / binning
             header_binned['CRPIX2'] = header_binned['CRPIX2'] / binning
-            header_binned['CDELT1'] = header_binned['CDELT1'] * binning
-            header_binned['CDELT2'] = header_binned['CDELT2'] * binning
+            #header_binned['CDELT1'] = header_binned['CDELT1'] * binning
+            #header_binned['CDELT2'] = header_binned['CDELT2'] * binning
+            header_binned['PC1_1'] = header_binned['PC1_1'] * binning
+            header_binned['PC1_2'] = header_binned['PC1_2'] * binning
+            header_binned['PC2_1'] = header_binned['PC2_1'] * binning
+            header_binned['PC2_2'] = header_binned['PC2_2'] * binning
             header_to_use = header_binned
             self.deep_image = binned_deep / (binning ** 2)
         if output_name == None:
@@ -310,7 +314,7 @@ class Luci():
                     sky -= bkg * binning ** 2  # Subtract background spectrum
                 else:  # No binning so just subtract the background directly
                     sky -= bkg  # Subtract background spectrum
-            good_sky_inds = [~np.isnan(sky)]  # Find all NaNs in sky spectrum
+            good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectrum
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
             axis = self.spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
             if initial_values[0] is not False:   #Frozen parameter
