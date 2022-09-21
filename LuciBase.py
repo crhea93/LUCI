@@ -178,6 +178,7 @@ class Luci():
                 self.deep_image[step_size * i:step_size * (i + 1)] = np.nansum(
                     self.cube_final[step_size * i:step_size * (i + 1)], axis=2)
         self.deep_image = self.deep_image.T
+        header_to_use = self.header  # Set header to be used
         # Bin data
         if binning != None and binning != 1:
             # Get cube size
@@ -204,10 +205,11 @@ class Luci():
             header_binned['CRPIX2'] = header_binned['CRPIX2'] / binning
             header_binned['CDELT1'] = header_binned['CDELT1'] * binning
             header_binned['CDELT2'] = header_binned['CDELT2'] * binning
+            header_to_use = header_binned
             self.deep_image = binned_deep / (binning ** 2)
         if output_name == None:
             output_name = self.output_dir + '/' + self.object_name + '_deep.fits'
-        fits.writeto(output_name, self.deep_image, self.header, overwrite=True)
+        fits.writeto(output_name, self.deep_image, header_to_use, overwrite=True)
         hdf5_file.close()
 
     def visualize(self):
@@ -459,7 +461,7 @@ class Luci():
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
                                     obj_redshift=obj_redshift, n_stoch=n_stoch)
                                      for sl in tqdm(range(y_max - y_min)))'''
-        
+
         for sl in tqdm(prange(y_max-y_min)):
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = \
             self.fit_calc(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
