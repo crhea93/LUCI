@@ -123,7 +123,6 @@ def get_interferometer_angles(file, hdr_dict):
     """
 
     calib_map = file['calib_map'][()]
-    print(hdr_dict)
     try:
         calib_ref = hdr_dict['CALIBNM']
     except:
