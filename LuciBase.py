@@ -476,7 +476,6 @@ class Luci():
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         cube_to_slice = self.cube_final  # Set cube for slicing
-        min_, max_ = self.restrict_wavelength(self.filter, self.spectrum_axis)
         hessian = self.calc_hessian(fit_function, lines)
         # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
