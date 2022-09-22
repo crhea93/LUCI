@@ -16,6 +16,8 @@ from astropy.time import Time
 import numpy.ma as ma
 from astropy.coordinates import SkyCoord, EarthLocation
 from numba import jit, set_num_threads, prange
+#from numba_progress import ProgressBar
+
 from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function, bin_mask
@@ -255,7 +257,12 @@ class Luci():
         y_max = self.cube_final.shape[1]
         self.fit_cube(lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
 
-    def fit_calc(self, i, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, mask=None, bayes_bool=False,
+    #@jit(nopython=False, parallel=True, nogil=True)
+    @staticmethod
+    def fit_calc(i, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel,
+                 cube_binned, cube_final, spectrum_axis, wavenumbers_syn,model_ML, transmission_interpolated,
+                 interferometer_theta, hdr_dict, step_nb, zpd_index, mdn,
+                 mask=None, bayes_bool=False,
                  bayes_method='emcee',
                  uncertainty_bool=False, nii_cons=False,
                  bkg=None, binning=None, spec_min=None, spec_max=None, initial_values=[False],
@@ -306,9 +313,9 @@ class Luci():
                 else:
                     bool_fit = False
             if binning is not None and binning != 1:  # If binning, then take spectrum from binned cube
-                sky = self.cube_binned[x_pix, y_pix, :]
+                sky = cube_binned[x_pix, :]  #cube_binned[x_pix, y_pix, :]
             else:  # If not, then take from the unbinned cube
-                sky = self.cube_final[x_pix, y_pix, :]
+                sky = cube_final[x_pix, :]  #cube_final[x_pix, y_pix, :]
             if bkg is not None:  # If there is a background variable subtract the bkg spectrum
                 if binning:  # If binning, then we have to take into account how many pixels are in each bin
                     sky -= bkg * binning ** 2  # Subtract background spectrum
@@ -316,22 +323,22 @@ class Luci():
                     sky -= bkg  # Subtract background spectrum
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectrum
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
-            axis = self.spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
+            axis = spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
             if initial_values[0] is not False:   #Frozen parameter
                 initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
             else:
                 initial_values_to_pass = initial_values
             # Call fit!
             if len(sky) > 0 and bool_fit == True:  # Ensure that there are values in sky
-                fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
-                          self.model_ML, trans_filter=self.transmission_interpolated,
-                          theta=self.interferometer_theta[x_pix, y_pix],
-                          delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
-                          zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'],
+                fit = Fit(sky, axis, wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
+                          model_ML, trans_filter=transmission_interpolated,
+                          theta=interferometer_theta[x_pix, y_pix],
+                          delta_x=hdr_dict['STEP'], n_steps=step_nb,
+                          zpd_index=zpd_index,
+                          filter=hdr_dict['FILTER'],
                           bayes_bool=bayes_bool, bayes_method=bayes_method,
                           uncertainty_bool=uncertainty_bool,
-                          mdn=self.mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
+                          mdn=mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
                           spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift, n_stoch=n_stoch
                           )
                 fit_dict = fit.fit()  # Collect fit dictionary
@@ -361,7 +368,7 @@ class Luci():
                 continuum_local.append(0)
         return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
 
-    @jit(nopython=False, parallel=True)
+    #@jit(nopython=False, parallel=True, nogil=True)
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
@@ -410,6 +417,7 @@ class Luci():
             >>> vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'sincgauss', [1,1,1,1,1], [1,1,1,1,1], 800, 1500, 250, 750, binning=2)
 
         """
+        set_num_threads(n_threads)
         # Initialize fit solution arrays
         if binning != None and binning != 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
@@ -459,16 +467,27 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-        #results = Parallel(n_jobs=n_threads, backend='threading') \
-        '''    (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
+        results = Parallel(n_jobs=4) \
+            (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, 
+                                    cube_binned=None, cube_final=self.cube_final[:, y_min+sl,:],
+                                    spectrum_axis=self.spectrum_axis, wavenumbers_syn=self.wavenumbers_syn,model_ML=self.model_ML, 
+                                    transmission_interpolated=self.transmission_interpolated,
+                                    interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict, step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,    
+                                    bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
                                     obj_redshift=obj_redshift, n_stoch=n_stoch)
-                                     for sl in tqdm(range(y_max - y_min)))'''
-
-        for sl in tqdm(prange(y_max-y_min)):
+                                     for sl in tqdm(range(y_max - y_min)))
+        #print('percentage: 0')
+        '''for sl in tqdm(range(y_max-y_min)):
+            y_ind = y_min + sl
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = \
-            self.fit_calc(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel, bayes_bool=bayes_bool,
+            self.fit_calc(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel,
+                                    cube_binned=None, cube_final=self.cube_final[:, y_ind,:],
+                                    spectrum_axis=self.spectrum_axis, wavenumbers_syn=self.wavenumbers_syn,model_ML=self.model_ML, 
+                                    transmission_interpolated=self.transmission_interpolated,
+                                    interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict, step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
+                                     bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, binning=binning, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
                                     obj_redshift=obj_redshift, n_stoch=n_stoch)
@@ -483,7 +502,10 @@ class Luci():
             corr_fits[i] = corr_local
             step_fits[i] = step_local
             continuum_fits[i] = continuum_local
-        '''for result in results:
+            #prog_update = sl/(y_max-y_min)
+            #print("percentage: %.2f"%prog_update)
+            #progress_proxy.update(prog_update)'''
+        for result in results:
             i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local = result
             ampls_fits[i] = ampls_local
             flux_fits[i] = flux_local
@@ -495,7 +517,7 @@ class Luci():
             chi2_fits[i] = chi2_local
             corr_fits[i] = corr_local
             step_fits[i] = step_local
-            continuum_fits[i] = continuum_local'''
+            continuum_fits[i] = continuum_local
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits,
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits,
