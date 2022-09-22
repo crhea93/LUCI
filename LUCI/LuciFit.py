@@ -46,7 +46,7 @@ class Fit:
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
                  nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=[False],
-                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1, hessian=None, min_=None, max_=None
+                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1, hessian=None
                  ):
         """
         Args:
@@ -107,8 +107,6 @@ class Fit:
         self.line_num = len(lines)  # Number of  lines to fit
         self.n_stoch = n_stoch
         self.trans_filter = trans_filter
-        self.min_ = min_ 
-        self.max_ = max_
         if trans_filter is not None:
             self.apply_transmission()  # Apply transmission filter if one is provided
         self.filter = filter
@@ -190,7 +188,7 @@ class Fit:
         """
         # Determine filter
 
-        '''if self.spec_min is None or self.spec_max is None:  # If the user has not entered explicit bounds
+        if self.spec_min is None or self.spec_max is None:  # If the user has not entered explicit bounds
             global bound_lower, bound_upper
             if self.filter == 'SN3':
                 bound_lower = 14750
@@ -224,9 +222,11 @@ class Fit:
             self.spec_min = bound_lower
             self.spec_max = bound_upper
         else:
-            pass'''
-        ##min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
-        #max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
+            pass
+        min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
+        max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
+        self.min_ = min_
+        self.max_ = max_
         self.spectrum_restricted = self.spectrum_normalized[self.min_:self.max_]
         self.axis_restricted = self.axis[self.min_:self.max_]
         self.spectrum_restricted_norm = self.spectrum_restricted / np.max(self.spectrum_restricted)

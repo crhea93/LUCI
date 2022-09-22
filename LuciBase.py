@@ -265,7 +265,7 @@ class Luci():
                  bayes_method='emcee',
                  uncertainty_bool=False, nii_cons=False,
                  bkg=None, binning=None, spec_min=None, spec_max=None, initial_values=[False],
-                 obj_redshift=0.0, n_stoch=1, hessian=None, min_=None, max_=None):
+                 obj_redshift=0.0, n_stoch=1, hessian=None):
         """
         Function for calling fit for a given y coordinate.
         Args:
@@ -336,7 +336,7 @@ class Luci():
                           uncertainty_bool=uncertainty_bool,
                           mdn=mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
                           spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift, n_stoch=n_stoch,
-                          hessian=hessian, min_=min_, max_=max_
+                          hessian=hessian
                           )
                 fit_dict = fit.fit()  # Collect fit dictionary
                 # Save local list of fit values
@@ -512,8 +512,7 @@ class Luci():
                                     bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
-                                    obj_redshift=obj_redshift, n_stoch=n_stoch, hessian=hessian,
-                                    min_=min_, max_=max_)
+                                    obj_redshift=obj_redshift, n_stoch=n_stoch, hessian=hessian)
                                      for sl in tqdm(range(y_max - y_min)))
         
         for result in results:
