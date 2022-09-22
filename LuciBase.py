@@ -5,6 +5,8 @@ from astropy.wcs import WCS
 import astropy.units as u
 from tqdm import tqdm
 import keras
+from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
+from numdifftools import Hessian
 from joblib import Parallel, delayed, dump, load
 from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
 from LUCI.LuciConvenience import reg_to_mask
@@ -263,7 +265,7 @@ class Luci():
                  bayes_method='emcee',
                  uncertainty_bool=False, nii_cons=False,
                  bkg=None, binning=None, spec_min=None, spec_max=None, initial_values=[False],
-                 obj_redshift=0.0, n_stoch=1):
+                 obj_redshift=0.0, n_stoch=1, hessian=None, min_=None, max_=None):
         """
         Function for calling fit for a given y coordinate.
         Args:
@@ -333,7 +335,8 @@ class Luci():
                           bayes_bool=bayes_bool, bayes_method=bayes_method,
                           uncertainty_bool=uncertainty_bool,
                           mdn=mdn, nii_cons=nii_cons, initial_values=initial_values_to_pass,
-                          spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift, n_stoch=n_stoch
+                          spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift, n_stoch=n_stoch,
+                          hessian=hessian, min_=min_, max_=max_
                           )
                 fit_dict = fit.fit()  # Collect fit dictionary
                 # Save local list of fit values
@@ -362,7 +365,43 @@ class Luci():
                 continuum_local.append(0)
         return i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local
 
-    #@jit(nopython=False, parallel=True, nogil=True)
+    def log_likelihood(self, model_type, lines, line_num, theta, sinc_width, axis_restricted, spectrum_restricted, noise):
+        """
+        Calculate log likelihood function evaluated given parameters on spectral axis
+
+        Args:
+            theta: List of parameters for all the models in the following order
+                            [amplitude, line location, sigma, continuum constant]
+                    The continuum constant is always the last argument regardless of the number of lines being modeled
+        Return:
+            Value of log likelihood
+
+        """
+        model = 0
+        if model_type == 'gaussian':
+            model = Gaussian(False).evaluate(axis_restricted, theta, line_num)
+        elif model_type == 'sinc':
+            model = Sinc(False).evaluate(axis_restricted, theta, line_num, sinc_width,
+                                               )
+        elif model_type == 'sincgauss':
+            model = SincGauss(False).evaluate(axis_restricted, theta, line_num,
+                                                                         sinc_width,
+                                                                         line_names=lines)
+        # Add constant continuum to model
+        model += theta[-1]
+        sigma2 = noise ** 2
+        residual = -0.5 * np.nansum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+        if np.isnan(residual):
+            return -1e44
+        else:
+            return residual
+
+    def calc_hessian(self, fit_function, lines):
+        nll = lambda *args: -self.log_likelihood(fit_function, lines, len(lines), *args)  # Negative Log Likelihood function
+        hess =  Hessian(nll)
+        return hess
+
+
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
                  x_min, x_max, y_min, y_max, bkg=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
@@ -437,9 +476,12 @@ class Luci():
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         cube_to_slice = self.cube_final  # Set cube for slicing
+        min_, max_ = self.restrict_wavelength(self.filter, self.spectrum_axis)
+        hessian = self.calc_hessian(fit_function, lines)
         # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
+        
         # TODO: ALLOW BINNING OF INITIAL CONDITIONS
         if len(initial_values) == 2:
             try:  # Obtain initial condition maps from files
@@ -471,7 +513,8 @@ class Luci():
                                     bayes_bool=bayes_bool,
                                     bayes_method=bayes_method,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
-                                    obj_redshift=obj_redshift, n_stoch=n_stoch)
+                                    obj_redshift=obj_redshift, n_stoch=n_stoch, hessian=hessian,
+                                    min_=min_, max_=max_)
                                      for sl in tqdm(range(y_max - y_min)))
         
         for result in results:
@@ -575,7 +618,6 @@ class Luci():
             print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         if binning != None and binning > 1:
             mask = bin_mask(mask, binning, x_min, self.cube_final.shape[0], y_min, self.cube_final.shape[1])  # Bin Mask
-        print(mask.shape)
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes

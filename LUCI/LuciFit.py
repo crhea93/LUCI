@@ -4,6 +4,7 @@ from scipy import interpolate
 from numdifftools import Hessian, Hessdiag
 import emcee
 import scipy.special as sps
+import scipy as sp
 import astropy.stats as astrostats
 import warnings
 import dynesty
@@ -15,7 +16,6 @@ from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_b
 from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
 
 warnings.filterwarnings("ignore")
-
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
 
@@ -46,7 +46,7 @@ class Fit:
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
                  nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=[False],
-                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1
+                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1, hessian=None, min_=None, max_=None
                  ):
         """
         Args:
@@ -107,6 +107,8 @@ class Fit:
         self.line_num = len(lines)  # Number of  lines to fit
         self.n_stoch = n_stoch
         self.trans_filter = trans_filter
+        self.min_ = min_ 
+        self.max_ = max_
         if trans_filter is not None:
             self.apply_transmission()  # Apply transmission filter if one is provided
         self.filter = filter
@@ -154,6 +156,7 @@ class Fit:
             self.check_lines()
         self.check_fitting_model()
         self.check_lengths()
+        self.hessian = hessian
 
     def apply_transmission(self):
         """
@@ -187,7 +190,7 @@ class Fit:
         """
         # Determine filter
 
-        if self.spec_min is None or self.spec_max is None:  # If the user has not entered explicit bounds
+        '''if self.spec_min is None or self.spec_max is None:  # If the user has not entered explicit bounds
             global bound_lower, bound_upper
             if self.filter == 'SN3':
                 bound_lower = 14750
@@ -221,13 +224,13 @@ class Fit:
             self.spec_min = bound_lower
             self.spec_max = bound_upper
         else:
-            pass
-        min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
-        max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
-        self.spectrum_restricted = self.spectrum_normalized[min_:max_]
-        self.axis_restricted = self.axis[min_:max_]
+            pass'''
+        ##min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
+        #max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
+        self.spectrum_restricted = self.spectrum_normalized[self.min_:self.max_]
+        self.axis_restricted = self.axis[self.min_:self.max_]
         self.spectrum_restricted_norm = self.spectrum_restricted / np.max(self.spectrum_restricted)
-        return min_, max_
+        return self.min_, self.max_
 
     def calculate_noise(self):
         """
@@ -566,6 +569,7 @@ class Fit:
         best_fit = None  # Initialize best fit
         best_loss = 1e46  # Initialize as a large number
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
+        
         if not self.freeze:  # Not freezing velocity and broadening
             for st in range(self.n_stoch):  # Do N fits and record the one with the best loss 
                 initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
@@ -641,13 +645,15 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         if self.uncertainty_bool:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
-            hessian = Hessian(nll)
-            hessian_calc = hessian(parameters)
+            #hessian = Hessian(nll)
+            hessian_calc = self.hessian(parameters, self.sinc_width, self.axis_restricted, self.spectrum_restricted, self.noise)
+            #hess = hessian(nll)
+            #hessian_calc = hess(parameters)
             try:
-                covariance_mat = -np.linalg.inv(hessian_calc)
+                covariance_mat = -sp.linalg.inv(hessian_calc)#-np.linalg.inv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
-            except np.linalg.LinAlgError:
-                covariance_mat = -np.linalg.pinv(hessian_calc)
+            except sp.linalg.LinAlgError:
+                covariance_mat = -sp.linalg.pinv2(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
         if not self.freeze:  # Not freezing velocity and broadening so nothing needs to be done
             self.fit_sol = parameters
