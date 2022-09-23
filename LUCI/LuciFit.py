@@ -13,8 +13,11 @@ from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
     calculate_flux, calculate_flux_err
 from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
-
+from LUCI.LuciUtility import hessianComp
 warnings.filterwarnings("ignore")
+#from autograd import elementwise_grad as egrad
+#from autograd import jacobian
+#import autograd.numpy as np
 
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
@@ -224,9 +227,9 @@ class Fit:
             pass
         min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
         max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
-        self.spectrum_restricted = self.spectrum_normalized[min_:max_]
-        self.axis_restricted = self.axis[min_:max_]
-        self.spectrum_restricted_norm = self.spectrum_restricted / np.max(self.spectrum_restricted)
+        self.spectrum_restricted = np.real(self.spectrum_normalized[min_:max_])
+        self.axis_restricted = np.real(self.axis[min_:max_])
+        self.spectrum_restricted_norm = np.real(self.spectrum_restricted / np.max(self.spectrum_restricted))
         return min_, max_
 
     def calculate_noise(self):
@@ -443,8 +446,8 @@ class Fit:
                                                                          self.sinc_width,
                                                                          line_names=self.lines)
         # Add constant continuum to model
-        model += theta[-1]
-        sigma2 = self.noise ** 2
+        model += np.real(theta[-1])
+        sigma2 = np.real(self.noise ** 2)
         residual = -0.5 * np.nansum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
         if np.isnan(residual):
             return -1e44
@@ -641,8 +644,12 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         if self.uncertainty_bool:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
-            hessian = Hessian(nll)
-            hessian_calc = hessian(parameters)
+            #hessian = Hessian(nll)
+            #hessian_calc = hessian(parameters)
+            #H_f = jacobian(egrad(nll))  # returns a function
+            #hessian_calc = H_f(parameters)
+            hessian_calc = hessianComp(nll,parameters)
+            #print(hessian)
             try:
                 covariance_mat = -np.linalg.inv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))

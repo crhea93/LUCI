@@ -52,11 +52,7 @@ def calculate_vel_err(ind, lines, fit_sol, line_dict, uncertainties):
         Velocity of the Halpha line in units of km/s
     """
     line_name = lines[ind]
-    l_calc1 = 1e7 / (fit_sol[3*ind+1])
-    l_shift1 = (l_calc1 - line_dict[line_name]) / line_dict[line_name]
-    #v1 = SPEED_OF_LIGHT * l_shift1
-    #return v1*uncertainties[3*ind+1]/fit_sol[3*ind+1]
-    return SPEED_OF_LIGHT*uncertainties[3*ind+1] * (1e7/(line_dict[line_name]*fit_sol[3*ind+1]**2))
+    return SPEED_OF_LIGHT*(uncertainties[3*ind+1]) * (1e7/(line_dict[line_name]*fit_sol[3*ind+1]**2))
 
 
 def calculate_broad(ind, fit_sol, axis_step):

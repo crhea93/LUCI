@@ -211,11 +211,13 @@ class SincGauss:
         p2 = sinc_width/np.pi
         p3 = params[2]
         a = p3/(np.sqrt(2)*p2)
+        a = a.astype(float)
         b = (channel-p1)/(np.sqrt(2)*p3)
+        b = b.astype(float)
         dawson1 = sps.dawsn(1j * a + b) * np.exp(2. * 1j * a * b)
-        dawson2 = sps.dawsn(1j * a - b) * np.exp(-2. * 1j * a * b)
+        dawson2 = sps.dawsn(1j * a - b)* np.exp(-2. * 1j * a * b)
         dawson3 = 2. * sps.dawsn(1j * a)
-        return p0*(dawson1 + dawson2)/dawson3
+        return np.real(p0*(dawson1 + dawson2)/dawson3)
 
     def evaluate(self, channel, theta, line_num, sinc_width, line_names=None):
         """
@@ -245,7 +247,9 @@ class SincGauss:
             thetas = [thetas[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
         else:  # Just read off parameters directly
             thetas = [theta[model_num * 3:(model_num + 1) * 3] for model_num in range(line_num)]
-        f1 = np.add.reduce([self.function(channel, thetas[model_num], sinc_width) for model_num in range(line_num)])
+        #f1 = np.add([self.function(channel, thetas[model_num], sinc_width) for model_num in range(line_num)])
+        for model_num in range(line_num):
+            f1 += self.function(channel, thetas[model_num], sinc_width)
         return np.real(f1)
         
     def evaluate_bayes(self, channel, theta, sinc_width):
