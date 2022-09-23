@@ -650,11 +650,13 @@ class Fit:
             #hess = hessian(nll)
             #hessian_calc = hess(parameters)
             try:
-                covariance_mat = -sp.linalg.inv(hessian_calc)#-np.linalg.inv(hessian_calc)
-                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
+                pass
+                #covariance_mat = -sp.linalg.inv(hessian_calc)#-np.linalg.inv(hessian_calc)
+                #self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
             except sp.linalg.LinAlgError:
-                covariance_mat = -sp.linalg.pinv2(hessian_calc)
-                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
+                pass
+                #covariance_mat = -sp.linalg.pinv2(hessian_calc)
+                #self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
         if not self.freeze:  # Not freezing velocity and broadening so nothing needs to be done
             self.fit_sol = parameters
         else:  # We want to add back the velocity and broadening as if they were fit so we don't have to rewrite as much
