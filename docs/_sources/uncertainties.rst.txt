@@ -75,6 +75,6 @@ In this manner, we calculate the 1-sigma uncertainties on our  fit parameters. W
 further propagate these to the velocity and broadening by calculating the relative error.
 
 
-We calculate the Hessian matrix by using `numdifftools.Hessian <https://numdifftools.readthedocs.io/en/latest/reference/generated/numdifftools.core.Hessian.html>`_.
-Additionally, we use `numpy.linalg.inv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html>`_
-and `numpy.diagonal <https://numpy.org/doc/stable/reference/generated/numpy.diagonal.html>`_.
+We calculate the Hessian matrix manually using finite differences -- the implementation can be found in `LuciUtility.py/hessianComp()`. 
+ Previously, we used other packages; however, these introduced
+unnecessary overhead and served as a bottleneck in our fitting scheme.
