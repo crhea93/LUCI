@@ -5,12 +5,13 @@ and the flux as well as their uncertainties.
 import math
 import numpy as np
 from scipy import special as sps
-
+from numba import jit
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
 FWHM_COEFF = 2.*math.sqrt(2. * math.log(2.))
 
 
+@jit(nopython=False, fastmath=True)
 def calculate_vel(ind, lines, fit_sol, line_dict):
     """
     Calculate velocity.
@@ -36,6 +37,7 @@ def calculate_vel(ind, lines, fit_sol, line_dict):
     return v
 
 
+@jit(nopython=False, fastmath=True)
 def calculate_vel_err(ind, lines, fit_sol, line_dict, uncertainties):
     """
     Calculate velocity error
@@ -55,6 +57,7 @@ def calculate_vel_err(ind, lines, fit_sol, line_dict, uncertainties):
     return SPEED_OF_LIGHT*(uncertainties[3*ind+1]) * (1e7/(line_dict[line_name]*fit_sol[3*ind+1]**2))
 
 
+@jit(nopython=False, fastmath=True)
 def calculate_broad(ind, fit_sol, axis_step):
     """
     Calculate velocity dispersion
@@ -79,7 +82,7 @@ def calculate_broad(ind, fit_sol, axis_step):
 
 
 
-
+@jit(nopython=False, fastmath=True)
 def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
     """
     Calculate velocity dispersion error
@@ -93,12 +96,16 @@ def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
     Return:
         Velocity Dispersion of the Halpha line in units of km/s
     """
-    broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
-    broad /= FWHM_COEFF  # Add FWHM correction
-    uncertainty_prop = np.sqrt((uncertainties[3*ind+2]/fit_sol[3*ind+2])**2 + (uncertainties[3*ind+1]/fit_sol[3*ind+1])**2)
-    return broad * uncertainty_prop
+    try:
+        broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
+        broad /= FWHM_COEFF  # Add FWHM correction
+        uncertainty_prop = np.sqrt((uncertainties[3*ind+2]/fit_sol[3*ind+2])**2 + (uncertainties[3*ind+1]/fit_sol[3*ind+1])**2)
+        return broad * uncertainty_prop
+    except:   
+        return broad * uncertainty_prop
 
 
+@jit(nopython=False, fastmath=True)
 def calculate_flux(line_amp, line_sigma, model_type, sinc_width):
     """
     Calculate flux value given fit of line
@@ -125,6 +132,7 @@ def calculate_flux(line_amp, line_sigma, model_type, sinc_width):
     return flux
 
 
+@jit(nopython=False, fastmath=True)
 def calculate_flux_err(ind, fit_sol, uncertainties, model_type, sinc_width):
     """
     Calculate flux error

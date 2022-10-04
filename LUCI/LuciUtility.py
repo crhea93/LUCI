@@ -5,7 +5,7 @@ from astropy.wcs import WCS
 from astropy.io import fits
 from scipy import interpolate
 import scipy as sp
-
+from numba import jit
 
 def check_luci_path(Luci_path):
     """
@@ -390,6 +390,7 @@ def hessian(x):
             hessian[k, l, :, :] = grad_kl
     return hessian
 
+@jit(fastmath=True)
 def hessianComp(func,initial,delta=1e-3):
   """
   Calculate the hessian using finite differences. The function was taken from https://rh8liuqy.github.io/Finite_Difference.html.

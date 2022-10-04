@@ -15,9 +15,7 @@ from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_b
 from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
 from LUCI.LuciUtility import hessianComp
 warnings.filterwarnings("ignore")
-#from autograd import elementwise_grad as egrad
-#from autograd import jacobian
-#import autograd.numpy as np
+from numba import jit
 
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
@@ -158,6 +156,7 @@ class Fit:
         self.check_fitting_model()
         self.check_lengths()
 
+    @jit(nopython=False, fastmath=True)
     def apply_transmission(self):
         """
         Apply transmission curve on the spectra according to un-redshifted axis.
@@ -169,6 +168,7 @@ class Fit:
         self.spectrum = [self.spectrum[i] / self.trans_filter[i] if self.trans_filter[i] > 0.5 else self.spectrum[i] for
                          i in range(len(self.spectrum))]
 
+    @jit(nopython=False, fastmath=True)
     def calculate_correction(self):
         """
         Calculate correction factor based of interferometric angle. This is used to correct the broadening
@@ -176,6 +176,7 @@ class Fit:
         self.correction_factor = 1 / self.cos_theta
         self.axis_step = self.correction_factor / (2 * self.delta_x * (self.n_steps - self.zpd_index)) * 1e7
 
+    @jit(nopython=False, fastmath=True)
     def calc_sinc_width(self, ):
         """
         Calculate sinc width of the sincgauss function
@@ -305,6 +306,7 @@ class Fit:
             self.broad_ml_sigma = 0
         return None
 
+    @jit(nopython=False, fastmath=True)
     def interpolate_spectrum(self):
         """
         Interpolate Spectrum given the wavelength axis of reference spectrum.
@@ -371,6 +373,7 @@ class Fit:
             self.sigma_max = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT + 3 * (line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
         return line_amp_est, line_pos_est, line_broad_est
 
+    @jit(nopython=False, fastmath=True)
     def cont_estimate(self, sigma_level=3):
         """
         TODO: Test
@@ -423,6 +426,7 @@ class Fit:
 
         return cont_val
 
+    @jit(nopython=False, fastmath=True)
     def log_likelihood(self, theta):
         """
         Calculate log likelihood function evaluated given parameters on spectral axis
@@ -644,12 +648,7 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         if self.uncertainty_bool:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
-            #hessian = Hessian(nll)
-            #hessian_calc = hessian(parameters)
-            #H_f = jacobian(egrad(nll))  # returns a function
-            #hessian_calc = H_f(parameters)
             hessian_calc = hessianComp(nll,parameters)
-            #print(hessian)
             try:
                 covariance_mat = -np.linalg.inv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
