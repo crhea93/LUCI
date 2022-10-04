@@ -131,7 +131,7 @@ class Luci():
                 #iquad_data = None
         except KeyError:
             self.cube_final = np.real(file['data'])
-        self.cube_final = self.cube_final  # .transpose(1, 0, 2)
+        self.cube_final =  self.cube_final  # .transpose(1, 0, 2)
         '''folder = './joblib_memmap'
         try:
             os.mkdir(folder)
