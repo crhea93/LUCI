@@ -88,6 +88,9 @@ Software Citation: Carter Lee Rhea, Laurie Rousseau-Nepton, Jessie Covington, Le
 
 Paper Citation:  Carter Rhea et al 2021 Res. Notes AAS 5 208
 
+If you use the mixture density network (MDN) implementation, please include the following citation:
+Carter Rhea et al 2021 Res. Notes AAS 12 276
+
 Prerequisites
 ^^^^^^^^^^^^^
     .. toctree::
