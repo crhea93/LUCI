@@ -207,7 +207,7 @@ class Fit:
                 # We pretend we are looking at SN1
                 bound_lower = 18000
                 bound_upper = 19400
-            elif self.filter == 'C4' and 'HalphaC4' in self.lines:
+            elif self.filter == 'C4' and 'Halpha' in self.lines:
                 ## This is true for objects at redshift ~0.25
                 bound_lower = 12150
                 bound_upper = 12550
@@ -256,7 +256,7 @@ class Fit:
             # In this case we pretend we are in SN1
             bound_lower = 18000
             bound_upper = 19400
-        elif self.filter == 'C4' and 'HalphaC4' in self.lines:
+        elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
             bound_lower = 11800  # 14600  # LYA mods, originally the same as SN3
@@ -477,7 +477,7 @@ class Fit:
                     (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]})
         for i in range(len(self.sigma_rel)):
             sigma_dict_list.append({'type': 'ineq', 'fun': lambda x: x[3*i+2]})  # Sigma always should be bigger than 0
-                                           
+
         return sigma_dict_list
 
     def vel_constraints(self):
@@ -574,7 +574,7 @@ class Fit:
         best_loss = 1e46  # Initialize as a large number
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         if not self.freeze:  # Not freezing velocity and broadening
-            for st in range(self.n_stoch):  # Do N fits and record the one with the best loss 
+            for st in range(self.n_stoch):  # Do N fits and record the one with the best loss
                 initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
                 initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
                 lines_fit = []  # List of lines which already have been set up for fits
@@ -620,7 +620,7 @@ class Fit:
                 initial[mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial_positions[mod] = vel_est
                 initial_sigmas[mod] = sigma_est
-            for st in range(5):  # Do 100 fits and record the one with the best loss 
+            for st in range(5):  # Do 100 fits and record the one with the best loss
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 30},
