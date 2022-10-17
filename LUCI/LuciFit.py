@@ -200,8 +200,8 @@ class Fit:
                 bound_upper = 19400
             elif self.filter == 'C4' and 'Halpha' in self.lines:
                 ## This is true for objects at redshift ~0.25
-                bound_lower = 14750
-                bound_upper = 15400
+                bound_lower = 14700
+                bound_upper = 15600
             elif self.filter == 'C2':
                 ## This is true for objects at redshift ~0.25
                 bound_lower = 18900
@@ -221,6 +221,7 @@ class Fit:
         max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
         self.spectrum_restricted = self.spectrum_normalized[min_:max_]
         self.axis_restricted = self.axis[min_:max_]
+        print('LYA check, axis_restricted:', len(self.axis_restricted), self.axis_restricted[0], self.axis_restricted[-1])
         self.spectrum_restricted_norm = self.spectrum_restricted / np.max(self.spectrum_restricted)
         return min_, max_
 
@@ -307,8 +308,10 @@ class Fit:
 
         """
         self.spectrum_scale = np.max(self.spectrum)
+        print('LYA check axis ends:',len(self.axis), self.axis[0], self.axis[-1])
         f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
+        print('LYA check wavenumbers_syn:',len(self.wavenumbers_syn), self.wavenumbers_syn[0], self.wavenumbers_syn[-1])
         self.spectrum_interp_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_interp_scale
         return None

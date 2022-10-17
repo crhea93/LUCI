@@ -78,6 +78,7 @@ class Luci():
         self.zpd_index = self.hdr_dict['ZPDINDEX']
         self.filter = self.hdr_dict['FILTER']
         self.spectrum_axis, self.spectrum_axis_unshifted = spectrum_axis_func(self.hdr_dict, self.redshift)
+        print('LYA check spectrum_axis:',len(self.spectrum_axis), self.spectrum_axis[0], self.spectrum_axis[-1])
         if ML_bool is True:
             if not self.mdn:
                 if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C3', 'C1']:
@@ -652,6 +653,7 @@ class Luci():
         good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
         sky = sky[good_sky_inds]  # Apply clean to sky
         axis = self.spectrum_axis[good_sky_inds]  # Apply clean to axis
+        print('LYA check axis after sky:',len(axis),axis[0], axis[-1])
         # Call fit!
         fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                   self.model_ML, trans_filter=self.transmission_interpolated,
