@@ -595,9 +595,9 @@ class Fit:
                 # CONSTRAINTS
                 if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
                     nii_constraints = self.NII_constraints()
-                    cons = sigma_cons + vel_cons# + vel_cons_multiple# + nii_constraints
+                    cons = sigma_cons + vel_cons + vel_cons_multiple + nii_constraints
                 else:
-                    cons = sigma_cons + vel_cons# + vel_cons_multiple
+                    cons = sigma_cons + vel_cons + vel_cons_multiple
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 100},
@@ -620,7 +620,7 @@ class Fit:
                 initial[mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial_positions[mod] = vel_est
                 initial_sigmas[mod] = sigma_est
-            for st in range(5):  # Do 100 fits and record the one with the best loss
+            for st in range(10):  # Do 10 fits and record the one with the best loss
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 30},
@@ -744,7 +744,8 @@ class Fit:
                         'velocities': vels, 'sigmas': sigmas,
                         'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                         'axis_step': self.axis_step, 'corr': self.correction_factor,
-                        'continuum': self.fit_sol[-1], 'scale': self.spectrum_scale,
+                        'continuum': self.fit_sol[-1], 'continuum_error': self.uncertainties[-1],
+                        'scale': self.spectrum_scale,
                         'vel_ml': self.vel_ml, 'vel_ml_sigma': self.vel_ml_sigma,
                         'broad_ml': self.broad_ml, 'broad_ml_sigma': self.broad_ml_sigma,
                         'fit_vector': self.fit_vector, 'fit_axis': self.axis,
@@ -760,14 +761,14 @@ class Fit:
             for mod in range(self.line_num):
                 initial[3 * mod] = self.cont_estimate(sigma_level=5) * self.sky_lines_scale[mod]
                 initial[3 * mod + 1] = 1e7 / ((80 * (skylines_vals[mod]) / SPEED_OF_LIGHT) + skylines_vals[mod])
-                initial[3 * mod + 2] = 1
+                initial[3 * mod + 2] = .1
             initial[-1] = self.cont_estimate(sigma_level=5)
             # self.initial_values = initial
             sigma_cons = self.sigma_constraints()  # Call sigma constaints
             vel_cons = self.vel_constraints()  # Call velocity constraints
             cons = sigma_cons + vel_cons
             soln = minimize(nll, initial, method='trust-constr',
-                            options={'disp': False, 'maxiter': 30}, tol=1e-3,
+                            options={'disp': False, 'maxiter': 100}, tol=1e-3,
                             args=())  # , constraints=cons)
             parameters = soln.x
 

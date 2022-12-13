@@ -21,7 +21,8 @@ def check_luci_path(Luci_path):
 
 def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
               broadenings_fits,
-              velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, header, binning, suffix=''):
+              velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits,
+              header, binning, suffix=''):
     """
     Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
     amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
@@ -38,6 +39,7 @@ def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors
         broadenings_errors_fits: 3D Numpy array of broadening errors
         chi2_fits: 2D Numpy array of chi-squared values
         continuum_fits: 2D Numpy array of continuum value
+        continuum_error_fits: 2D numpy array of continuum errors
         header: Header object (either binned or unbinned)
         output_name: Output directory and naming convention
         binning: Value by which to bin (default None)
@@ -78,6 +80,7 @@ def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors
                      broadenings_errors_fits[:, :, ct], header, overwrite=True)
     fits.writeto(output_dir + '/' + output_name + '_Chi2.fits', chi2_fits, header, overwrite=True)
     fits.writeto(output_dir + '/' + output_name + '_continuum.fits', continuum_fits, header, overwrite=True)
+    fits.writeto(output_dir + '/' + output_name + '_continuum_error.fits', continuum_error_fits, header, overwrite=True)
 
 
 def get_quadrant_dims(quad_number, quad_nb, dimx, dimy):
