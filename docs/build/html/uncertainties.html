@@ -17,6 +17,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -170,9 +171,11 @@ uncertainty estimate measurement based solely off the best-fit parameters.</p>
 </dl>
 <p>In this manner, we calculate the 1-sigma uncertainties on our  fit parameters. We
 further propagate these to the velocity and broadening by calculating the relative error.</p>
-<p>We calculate the Hessian matrix by using <a class="reference external" href="https://numdifftools.readthedocs.io/en/latest/reference/generated/numdifftools.core.Hessian.html">numdifftools.Hessian</a>.
-Additionally, we use <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html">numpy.linalg.inv</a>
-and <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.diagonal.html">numpy.diagonal</a>.</p>
+<dl class="simple">
+<dt>We calculate the Hessian matrix manually using finite differences – the implementation can be found in <cite>LuciUtility.py/hessianComp()</cite>.</dt><dd><p>Previously, we used other packages; however, these introduced</p>
+</dd>
+</dl>
+<p>unnecessary overhead and served as a bottleneck in our fitting scheme.</p>
 </section>
 </section>
 
