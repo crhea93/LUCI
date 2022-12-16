@@ -43,7 +43,6 @@ def visualize(deep_image, spectrum_axis, cube_final):
         axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
 
 
-    #deep_image = fits.open('Luci_outputs/NGC628_deep.fits')[0].data
     def onclick(event):
         plt.subplot(212)
         global shift_ct

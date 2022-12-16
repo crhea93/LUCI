@@ -6,7 +6,7 @@ In this document, you will find a brief description of what `LUCI` is, how to in
 You can find the RNAAS article here:
 [Arxiv Paper: 2108.12428](https://arxiv.org/abs/2108.12428)
 
-![LuciLogo.png](LuciLogo.png)
+![LuciLogo.jpg](LuciLogo.jpg)
 
 
 ## What is LUCI
@@ -86,5 +86,7 @@ If you cite LUCI, please use both the following citations.
 
 Software Citation: Carter Lee Rhea, Laurie Rousseau-Nepton, Jessie Covington, Leo Alcorn, Benjamin Vigneron, Julie Hlavacek-Larrondo, & Louis-Simon Guité. (2021). crhea93/LUCI: Luci Updates (v1.1). Zenodo. https://doi.org/10.5281/zenodo.5730149
 
-
 Paper Citation:  Carter Rhea et al 2021 Res. Notes AAS 5 208
+
+If you use the mixture density network (MDN) implementation, please include the following citation:
+Carter Rhea et al 2021 Res. Notes AAS 12 276
