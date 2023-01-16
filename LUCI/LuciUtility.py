@@ -144,6 +144,7 @@ def spectrum_axis_func(hdr_dict, redshift):
     """
 
     len_wl = hdr_dict['STEPNB']  # Length of Spectral Axis
+    print("length: "+str(len_wl))
     start = hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
     end = start + (len_wl) * hdr_dict['CDELT3']  # End
     step = hdr_dict['CDELT3']  # Step size
@@ -152,12 +153,12 @@ def spectrum_axis_func(hdr_dict, redshift):
     spectrum_axis_unshifted = np.array(np.linspace(start, end, len_wl),
                                        dtype=np.float32)  # Do not apply redshift correction
 
-    # min_ = 1e7  * (self.hdr_dict['ORDER'] / (2*self.hdr_dict['STEP']))# + 1e7  / (2*self.delta_x*self.n_steps)
-    # max_ = 1e7  * ((self.hdr_dict['ORDER'] + 1) / (2*self.hdr_dict['STEP']))# - 1e7  / (2*self.delta_x*self.n_steps)
-    # step_ = max_ - min_
-    # axis = np.array([min_+j*step_/self.hdr_dict['STEPNB'] for j in range(self.hdr_dict['STEPNB'])])
-    # self.spectrum_axis = axis#*(1+self.redshift)
-    # self.spectrum_axis_unshifted = axis
+    '''min_ = 1e7  * (hdr_dict['ORDER'] / (2*hdr_dict['STEP']))# + 1e7  / (2*self.delta_x*self.n_steps)
+    max_ = 1e7  * ((hdr_dict['ORDER'] + 1) / (2*hdr_dict['STEP']))# - 1e7  / (2*self.delta_x*self.n_steps)
+    step_ = max_ - min_
+    axis = np.array([min_+j*step_/hdr_dict['STEPNB'] for j in range(hdr_dict['STEPNB'])])
+    spectrum_axis = axis*(1+redshift)
+    spectrum_axis_unshifted = axis'''
     return spectrum_axis, spectrum_axis_unshifted
 
 

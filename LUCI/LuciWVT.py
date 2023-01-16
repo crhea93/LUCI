@@ -481,7 +481,7 @@ def WVT(Bin_list_init,Pixel_Full,StN_Target,ToL,pixel_length,image_dir):
     its_to_conv = 0
     if not os.path.exists(image_dir+'/histograms/'):
         os.mkdir(image_dir+'/histograms/')
-    while converged == False and its_to_conv<  5:
+    while converged == False and its_to_conv < 100:
         print("We are on step "+str(its_to_conv+1))
         bins_with_SN = Rebin_Pixels(Bin_list_prev,Pixel_Full,pixel_length,StN_Target)[:]
         converged = converged_met(bins_with_SN,ToL)

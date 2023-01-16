@@ -82,8 +82,8 @@ class Fit:
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
-                          'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4': 807.88068, 'NII6583C4': 810.417771,
-                          'NII6548C4': 806.062493,
+                          'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4': 807.881, 'NII6583C4': 810.417,
+                          'NII6548C4': 804.7,#806.062,
                           'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
                           'OII3729C1': 459.017742, 'OII3726C1': 458.674293, }
         self.available_functions = ['gaussian', 'sinc', 'sincgauss', 'gauss']
@@ -190,7 +190,6 @@ class Fit:
         We do this so that the continuum is properly calculated.
         """
         # Determine filter
-
         if self.spec_min is None or self.spec_max is None:  # If the user has not entered explicit bounds
             global bound_lower, bound_upper
             if self.filter == 'SN3':
@@ -207,7 +206,7 @@ class Fit:
                 # We pretend we are looking at SN1
                 bound_lower = 18000
                 bound_upper = 19400
-            elif self.filter == 'C4' and 'HalphaC4' in self.lines:
+            elif self.filter == 'C4':
                 ## This is true for objects at redshift ~0.25
                 bound_lower = 12150
                 bound_upper = 12550
@@ -546,16 +545,23 @@ class Fit:
         This should work for three or more components, but I haven't tested it.
         """
         multi_dict_list = []
-        unique_lines = np.unique(self.lines)  # List of unique groups
-        for unique_ in unique_lines:  # Step through each unique group
-            inds_unique = [i for i, e in enumerate(self.lines) if e == unique_]  # Obtain line indices in group
-            if len(inds_unique) > 1:  # If there is more than one element in the group
-                ind_0 = inds_unique[0]  # Get first element
-                for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    expr_dict_vel = {'type': 'ineq',
-                                     'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] - x[
-                                         3 * ind_0 + 1] + 1}
-                    multi_dict_list.append(expr_dict_vel)
+        #unique_lines = np.unique(self.lines)  # List of unique groups
+        #for unique_ in unique_lines:  # Step through each unique group
+        #    inds_unique = [i for i, e in enumerate(self.lines) if e == unique_]  # Obtain line indices in group
+        #    if len(inds_unique) > 1:  # If there is more than one element in the group
+        #        ind_0 = inds_unique[0]  # Get first element
+        #        for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
+        #            expr_dict_vel = {'type': 'ineq',
+        #                             'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] - x[
+        #                                 3 * ind_0 + 1] + 1}
+        #            multi_dict_list.append(expr_dict_vel)
+        inds_unique = [i for i, e in enumerate(self.lines)]  # Obtain line indices in group
+        ind_0 = inds_unique[0]  # Get first element
+        for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
+            expr_dict_vel = {'type': 'ineq',
+                                'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] + x[
+                                    3 * ind_0 + 1]+1}
+            multi_dict_list.append(expr_dict_vel)
         return multi_dict_list
 
     def calculate_params(self):
@@ -837,7 +843,7 @@ class Fit:
             parameters_std = []
             self.flat_samples = flat_samples
             for i in range(n_dim):  # Calculate and store these results
-                median = np.median(flat_samples[:, i])
+                median = np.mean(flat_samples[:, i])
                 std = np.std(flat_samples[:, i])
                 parameters_med.append(median)
                 parameters_std.append(std)
