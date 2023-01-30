@@ -17,6 +17,10 @@ from LUCI.LuciUtility import hessianComp
 warnings.filterwarnings("ignore")
 from numba import jit
 import matplotlib.pyplot as plt
+import os
+import logging
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
