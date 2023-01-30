@@ -77,7 +77,7 @@ def plot_fit(axis, spectrum, fit, ax=None, units='cm-1', output_name=None, fig_s
     return ax
 
 
-def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_size=(10, 8), dark=False, **kwargs):
+def plot_map(quantity_map, quantity_name, object_name='', filter_name='', output_dir='', header=None, clims=None, fig_size=(10, 8), dark=False, **kwargs):
     """
     Function to plot fit map. The three options are 'flux', 'velocity', and 'broadening'.
     The flux map is automatically scaled by log10. The velocity and broadening are not.
@@ -110,7 +110,7 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_si
         quantity_map = np.log10(quantity_map)  # NaNs to extremely small number
     else:
         print('Please enter either flux, velocity, or broadening')
-    quantity_map = np.nan_to_num(quantity_map, 1e-18)
+    #quantity_map = np.nan_to_num(quantity_map, 1e-18)
     units = {'flux': r'log[ergs/s/cm$^2$/A]', 'velocity': 'km/s', 'broadening': 'km/s'}
     if clims is None:
         c_min = np.nanpercentile(quantity_map, 5)
@@ -136,7 +136,7 @@ def plot_map(quantity_map, quantity_name, output_dir, header, clims=None, fig_si
     cbar = plt.colorbar(fraction=0.046, pad=0.04)
     plt.clim(c_min, c_max)
     cbar.ax.set_ylabel(units[quantity_name], rotation=270, labelpad=25, fontsize=20, fontweight='bold')
-    plt.savefig(output_dir + '/' + quantity_name + '_map.png')
+    plt.savefig(output_dir + '/' +object_name+'_'+filter_name+'_'+ quantity_name + '_map.png')
     return None
 
 

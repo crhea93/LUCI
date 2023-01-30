@@ -144,7 +144,6 @@ def spectrum_axis_func(hdr_dict, redshift):
     """
 
     len_wl = hdr_dict['STEPNB']  # Length of Spectral Axis
-    print("length: "+str(len_wl))
     start = hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
     end = start + (len_wl) * hdr_dict['CDELT3']  # End
     step = hdr_dict['CDELT3']  # Step size

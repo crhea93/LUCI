@@ -16,6 +16,7 @@ from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_b
 from LUCI.LuciUtility import hessianComp
 warnings.filterwarnings("ignore")
 from numba import jit
+import matplotlib.pyplot as plt
 
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
@@ -99,8 +100,9 @@ class Fit:
         self.spectrum_clean = spectrum / np.max(spectrum)  # Clean normalized spectrum
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum  Yes it is duplicated
         self.axis = axis  # Redshifted axis
-        self.spectrum_restricted = None
-        self.spectrum_restricted_norm = None
+        self.spectrum_restricted = None  # Restricted spectrum where elements outside the limits are removed
+        self.spectrum_restricted_zeros = None  # Restricted spectrum where values outside the limits are set to zero
+        self.spectrum_restricted_norm = None  # Normalized restricted spectrum where elements outside the limits are removed
         self.axis_restricted = None
         self.wavenumbers_syn = wavenumbers_syn
         self.model_type = model_type
@@ -228,6 +230,8 @@ class Fit:
         min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
         max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
         self.spectrum_restricted = np.real(self.spectrum_normalized[min_:max_])
+        self.spectrum_restricted_zeros = np.zeros_like(self.spectrum)  # Restricted spectrum where values outside the limits are set to zero
+        self.spectrum_restricted_zeros[min_:max_] = np.copy(self.spectrum_restricted)
         self.axis_restricted = np.real(self.axis[min_:max_])
         self.spectrum_restricted_norm = np.real(self.spectrum_restricted / np.max(self.spectrum_restricted))
         return min_, max_
@@ -243,7 +247,7 @@ class Fit:
         global bound_lower, bound_upper
         if self.filter == 'SN3':
             bound_lower = 14300  # 16000
-            bound_upper = 14500  # 16400
+            bound_upper = 14600  # 16400
         elif self.filter == 'SN2':
             bound_lower = 18600
             bound_upper = 19000
@@ -288,6 +292,7 @@ class Fit:
         Return:
             Updates self.vel_ml
         """
+        plt.clf()
         Spectrum = self.spectrum_interp_norm.reshape(1, self.spectrum_interp_norm.shape[0], 1)
         if self.mdn:
             prediction_distribution = self.ML_model(Spectrum, training=False)
@@ -315,8 +320,9 @@ class Fit:
             Populates self.spectrum_interpolated, self.spectrum_scale, and self.spectrum_interp_norm.
 
         """
-        self.spectrum_scale = np.max(self.spectrum)
-        f = interpolate.interp1d(self.axis, self.spectrum, kind='slinear', fill_value='extrapolate')
+        spectrum_for_calc = self.spectrum_restricted_zeros * np.max(self.spectrum) # Spectrum to be used for the interpolation calculation
+        self.spectrum_scale = np.max(spectrum_for_calc)
+        f = interpolate.interp1d(self.axis, spectrum_for_calc, kind='slinear', fill_value='extrapolate')
         self.spectrum_interpolated = f(self.wavenumbers_syn)
         self.spectrum_interp_scale = np.max(self.spectrum_interpolated)
         self.spectrum_interp_norm = self.spectrum_interpolated / self.spectrum_interp_scale
@@ -415,14 +421,16 @@ class Fit:
             max_ = 19000
 
         # Clip values at given sigma level (defined by sigma_level)
-        clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
+        # clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
+        min_ = np.argmin(np.abs(np.array(self.axis) - min_))
+        max_ = np.argmin(np.abs(np.array(self.axis) - max_))
+        clipped_spec = astrostats.sigma_clip(self.spectrum[min_:max_], sigma=sigma_level,
                                              masked=False, copy=False,
                                              maxiters=3, stdfunc=astrostats.mad_std)
         if len(clipped_spec) < 1:
-            clipped_spec = self.spectrum_restricted
+            clipped_spec = self.spectrum
         # Now take the minimum value to serve as the continuum value
         cont_val = np.nanmedian(clipped_spec)
-
         return cont_val
 
     @jit(nopython=False, fastmath=True)
@@ -723,6 +731,7 @@ class Fit:
             # Calculate fit statistic
             chi_sqr, red_chi_sqr = self.calc_chisquare(self.fit_vector, self.spectrum, self.noise,
                                                        3 * self.line_num + 1)
+            red_chi_sqr /= self.spectrum_scale
             # Collect Amplitudes
             ampls = []
             fluxes = []
