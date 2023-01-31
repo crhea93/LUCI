@@ -5,7 +5,7 @@ from astropy.wcs import WCS
 import astropy.units as u
 from tqdm import tqdm
 import keras
-from joblib import Parallel, delayed, dump, load
+from joblib import Parallel, delayed
 from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
 from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit

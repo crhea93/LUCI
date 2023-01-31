@@ -21,7 +21,7 @@ import os
 import logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
-
+from scipy.optimize import SR1
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
 
@@ -90,20 +90,20 @@ class Fit:
                           'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4': 807.881, 'NII6583C4': 810.417,
                           'NII6548C4': 804.7,#806.062,
                           'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
-                          'OII3729C1': 459.017742, 'OII3726C1': 458.674293, }
+                          'OII3729C1': 459.017742, 'OII3726C1': 458.674293}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss', 'gauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
         self.obj_redshift_corr = 1 + obj_redshift
         for line_key in self.line_dict:
-            self.line_dict[line_key] = self.line_dict[line_key] * self.obj_redshift_corr
+            self.line_dict[line_key] = self.line_dict[line_key]# * self.obj_redshift_corr
         self.nii_cons = nii_cons
         self.spec_min = spec_min
         self.spec_max = spec_max
         self.spectrum = spectrum
         self.spectrum_clean = spectrum / np.max(spectrum)  # Clean normalized spectrum
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum  Yes it is duplicated
-        self.axis = axis  # Redshifted axis
+        self.axis = axis * self.obj_redshift_corr  # Redshifted axis
         self.spectrum_restricted = None  # Restricted spectrum where elements outside the limits are removed
         self.spectrum_restricted_zeros = None  # Restricted spectrum where values outside the limits are set to zero
         self.spectrum_restricted_norm = None  # Normalized restricted spectrum where elements outside the limits are removed
@@ -360,15 +360,11 @@ class Fit:
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
             line_amp_est = np.max([
-                # self.spectrum_normalized[line_ind - 4],
-                self.spectrum_normalized[line_ind - 3],
-                self.spectrum_normalized[line_ind - 2],
-                self.spectrum_normalized[line_ind - 1],
-                self.spectrum_normalized[line_ind],
-                self.spectrum_normalized[line_ind + 1],
-                self.spectrum_normalized[line_ind + 2],
-                self.spectrum_normalized[line_ind + 3],
-                # self.spectrum_normalized[line_ind + 4]
+                self.spectrum_normalized[line_ind - 5], self.spectrum_normalized[line_ind - 4],
+                self.spectrum_normalized[line_ind - 3], self.spectrum_normalized[line_ind - 2],
+                self.spectrum_normalized[line_ind - 1], self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind + 1],
+                self.spectrum_normalized[line_ind + 2], self.spectrum_normalized[line_ind + 3],
+                self.spectrum_normalized[line_ind + 4], self.spectrum_normalized[line_ind + 5]
             ])
         except IndexError:
             line_amp_est = self.spectrum_normalized[line_ind]
@@ -403,8 +399,8 @@ class Fit:
         min_ = 0
         max_ = 1e6
         if self.filter == 'SN3':
-            min_ = 14950
-            max_ = 15050
+            min_ = 14850
+            max_ = 14950
         elif self.filter == 'SN2':
             min_ = 19500
             max_ = 19550
@@ -428,7 +424,7 @@ class Fit:
         # clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
         min_ = np.argmin(np.abs(np.array(self.axis) - min_))
         max_ = np.argmin(np.abs(np.array(self.axis) - max_))
-        clipped_spec = astrostats.sigma_clip(self.spectrum[min_:max_], sigma=sigma_level,
+        clipped_spec = astrostats.sigma_clip(self.spectrum_clean[min_:max_], sigma=sigma_level,
                                              masked=False, copy=False,
                                              maxiters=3, stdfunc=astrostats.mad_std)
         if len(clipped_spec) < 1:
@@ -530,7 +526,6 @@ class Fit:
         nii_6583_index = np.argwhere(np.array(self.lines) == 'NII6583')[0][0]
         # Now tie the amplitudes together s/t that amplitude of the NII6548 line is
         # always 1/3 that of the NII6583 line
-        # expr_dict = {'type': 'eq','fun': lambda x: (1/3)*x[3*nii_6548_index] - x[3*nii_6583_index]}
         if self.model_type == 'gaussian':
             func_ = lambda x: (1 / 3) * (x[3 * nii_6583_index] * x[3 * nii_6583_index + 2]) - x[3 * nii_6548_index] * x[
                 3 * nii_6548_index + 2]
@@ -549,24 +544,9 @@ class Fit:
 
     def multiple_component_vel_constraint(self):
         """
-        Constraints for the case that we have multiple components.
-        If there are two components (i.e. the user passes the same line twice),
-        we require that the first component has a higher velocity (wavenumber really) than the second component.
-        This forces the solver to find the two components instead of simply fitting the same
-        component twice.
-        This should work for three or more components, but I haven't tested it.
+        Constraint that requires each line have a different position.
         """
         multi_dict_list = []
-        #unique_lines = np.unique(self.lines)  # List of unique groups
-        #for unique_ in unique_lines:  # Step through each unique group
-        #    inds_unique = [i for i, e in enumerate(self.lines) if e == unique_]  # Obtain line indices in group
-        #    if len(inds_unique) > 1:  # If there is more than one element in the group
-        #        ind_0 = inds_unique[0]  # Get first element
-        #        for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-        #            expr_dict_vel = {'type': 'ineq',
-        #                             'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] - x[
-        #                                 3 * ind_0 + 1] + 1}
-        #            multi_dict_list.append(expr_dict_vel)
         inds_unique = [i for i, e in enumerate(self.lines)]  # Obtain line indices in group
         ind_0 = inds_unique[0]  # Get first element
         for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
@@ -574,6 +554,27 @@ class Fit:
                                 'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] + x[
                                     3 * ind_0 + 1]+1}
             multi_dict_list.append(expr_dict_vel)
+        return multi_dict_list
+
+    def amplitude_constraint(self):
+        """
+        Constraint that requires the amplitude of the line be positive
+        """
+        multi_dict_list = []
+        inds_unique = [i for i, e in enumerate(self.lines)]  # Obtain line indices in group
+        for ind_unique in inds_unique[:]:  # Step through group elements except for the first one
+            expr_dict_vel = {'type': 'ineq',
+                                'fun': lambda x, ind_unique=ind_unique: -x[3 * ind_unique]+1.1}
+            multi_dict_list.append(expr_dict_vel)
+            expr_dict_vel = {'type': 'ineq',
+                                'fun': lambda x, ind_unique=ind_unique: x[3 * ind_unique]+1e-8}
+            multi_dict_list.append(expr_dict_vel)
+        expr_dict_vel = {'type': 'ineq',
+                        'fun': lambda x: -x[-1]+0.5}
+        multi_dict_list.append(expr_dict_vel)
+        expr_dict_vel = {'type': 'ineq',
+                        'fun': lambda x: x[-1]+1.e-8}
+        multi_dict_list.append(expr_dict_vel)
         return multi_dict_list
 
     def calculate_params(self):
@@ -592,9 +593,10 @@ class Fit:
         best_loss = 1e46  # Initialize as a large number
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         if not self.freeze:  # Not freezing velocity and broadening
+            cont_est = self.cont_estimate(sigma_level=2)  # Calculate continuum constant
             for st in range(self.n_stoch):  # Do N fits and record the one with the best loss 
                 initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-                initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
+                initial[-1] = cont_est  # Add continuum constant
                 lines_fit = []  # List of lines which already have been set up for fits
                 for mod in range(self.line_num):  # Step through each line
                     lines_fit.append(self.lines[mod])  # Add to list of lines fit
@@ -604,12 +606,12 @@ class Fit:
                         initial[3 * mod + 1] = vel_est  # Set wavenumber
                         initial[3 * mod + 2] = sigma_est  # Set sigma
                     else:
-                        initial[3 * mod + 1] = np.random.normal(vel_est, vel_est/10)  # Sample wavenumber from a normal distribution around the ML value
-                        initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est/10)  # Sample wavenumber from a normal distribution around the ML value
+                        initial[3 * mod + 1] = np.random.normal(vel_est, vel_est)  # Sample wavenumber from a normal distribution around the ML value
+                        initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est)  # Sample wavenumber from a normal distribution around the ML value
                 # Set constraints
                 sigma_cons = self.sigma_constraints()  # Call sigma constraints
                 vel_cons = self.vel_constraints()  # Call velocity constraints
-                vel_cons_multiple = self.multiple_component_vel_constraint()
+                vel_cons_multiple = self.multiple_component_vel_constraint()+ self.amplitude_constraint()
                 # CONSTRAINTS
                 if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
                     nii_constraints = self.NII_constraints()
@@ -618,8 +620,8 @@ class Fit:
                     cons = sigma_cons + vel_cons + vel_cons_multiple
                 soln = minimize(nll, initial,
                             method='SLSQP',
-                            options={'disp': False, 'maxiter': 100},
-                            tol=1e-4,
+                            options={'disp': False, 'maxiter': 500},
+                            tol=1e-8, jac="2-point", hess=SR1(),
                             args=(), constraints=cons
                             )
                 if st == 0:
