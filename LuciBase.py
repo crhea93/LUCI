@@ -1477,7 +1477,7 @@ class Luci():
             def find_nearest(spectral_axis, line_lambda):
                 indices = np.abs(np.subtract.outer(spectral_axis, line_lambda)).argmin(0)
                 return indices
-
+            slice_sum = np.zeros_like(self.cube_final[:, :, 0])
             # Loop for every emission line
             for i in range(len(wavelength_redshift)):
 
@@ -1495,9 +1495,11 @@ class Luci():
                 # Loop for every slice
                 for j in tqdm(range(idx_axis[0], idx_axis[1] + 1)):
                     cube_slice = self.cube_final[:, :, j]
+                    slice_sum += cube_slice
                     hdu = fits.PrimaryHDU(cube_slice, header=self.header)
                     hdu.writeto(directory + '/slice_{}.fits'.format(j - (idx_axis[0] - 1)), overwrite=True)
-
+                hdu = fits.PrimaryHDU(slice_sum, header=self.header)
+                hdu.writeto(directory + '/slice_sum.fits', overwrite=True)
                 print('')
                 print("#######################################################################")
                 print("Wavelength of the {} line in the redshifted frame: {} nm".format(lines[i], np.round(

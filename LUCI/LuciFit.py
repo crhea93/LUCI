@@ -620,7 +620,7 @@ class Fit:
                     cons = sigma_cons + vel_cons + vel_cons_multiple
                 soln = minimize(nll, initial,
                             method='SLSQP',
-                            options={'disp': False, 'maxiter': 500},
+                            options={'disp': False, 'maxiter': 200},
                             tol=1e-8, jac="2-point", hess=SR1(),
                             args=(), constraints=cons
                             )
