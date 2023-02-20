@@ -250,8 +250,8 @@ class Fit:
         # Determine filter
         global bound_lower, bound_upper
         if self.filter == 'SN3':
-            bound_lower = 14300  # 16000
-            bound_upper = 14600  # 16400
+            bound_lower = 15600#16000
+            bound_upper = 15800#16400
         elif self.filter == 'SN2':
             bound_lower = 18600
             bound_upper = 19000
@@ -282,7 +282,7 @@ class Fit:
         # Calculate standard deviation
         min_ = np.argmin(np.abs(np.array(self.axis) - bound_lower))
         max_ = np.argmin(np.abs(np.array(self.axis) - bound_upper))
-        spec_noise = self.spectrum_clean[min_:max_]
+        spec_noise = self.spectrum_normalized[min_:max_]
         self.noise = np.nanstd(spec_noise)
 
     def estimate_priors_ML(self, mdn=True):
@@ -424,7 +424,7 @@ class Fit:
         # clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
         min_ = np.argmin(np.abs(np.array(self.axis) - min_))
         max_ = np.argmin(np.abs(np.array(self.axis) - max_))
-        clipped_spec = astrostats.sigma_clip(self.spectrum_clean[min_:max_], sigma=sigma_level,
+        clipped_spec = astrostats.sigma_clip(self.spectrum[min_:max_], sigma=sigma_level,
                                              masked=False, copy=False,
                                              maxiters=3, stdfunc=astrostats.mad_std)
         if len(clipped_spec) < 1:
@@ -459,6 +459,8 @@ class Fit:
         # Add constant continuum to model
         model += np.real(theta[-1])
         sigma2 = np.real(self.noise ** 2)
+        if np.isnan(sigma2):
+            sigma2 = 1e-2
         residual = -0.5 * np.nansum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
         if np.isnan(residual):
             return -1e44
@@ -570,7 +572,7 @@ class Fit:
                                 'fun': lambda x, ind_unique=ind_unique: x[3 * ind_unique]+1e-8}
             multi_dict_list.append(expr_dict_vel)
         expr_dict_vel = {'type': 'ineq',
-                        'fun': lambda x: -x[-1]+0.5}
+                        'fun': lambda x: -x[-1]+0.99}
         multi_dict_list.append(expr_dict_vel)
         expr_dict_vel = {'type': 'ineq',
                         'fun': lambda x: x[-1]+1.e-8}
@@ -593,7 +595,7 @@ class Fit:
         best_loss = 1e46  # Initialize as a large number
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         if not self.freeze:  # Not freezing velocity and broadening
-            cont_est = self.cont_estimate(sigma_level=2)  # Calculate continuum constant
+            cont_est = self.cont_estimate(sigma_level=1)  # Calculate continuum constant
             for st in range(self.n_stoch):  # Do N fits and record the one with the best loss 
                 initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
                 initial[-1] = cont_est  # Add continuum constant
@@ -615,13 +617,13 @@ class Fit:
                 # CONSTRAINTS
                 if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
                     nii_constraints = self.NII_constraints()
-                    cons = sigma_cons + vel_cons + vel_cons_multiple + nii_constraints
+                    cons = sigma_cons + vel_cons + vel_cons_multiple #+ nii_constraints
                 else:
                     cons = sigma_cons + vel_cons + vel_cons_multiple
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 200},
-                            tol=1e-8, jac="2-point", hess=SR1(),
+                            tol=1e-8, jac="3-point", hess='3-point',
                             args=(), constraints=cons
                             )
                 if st == 0:
@@ -632,7 +634,7 @@ class Fit:
                     best_fit = soln.x
         else:  # Freezing velocity and broadening
             initial = np.ones((self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-            initial[-1] = self.cont_estimate(sigma_level=2)  # Add continuum constant and initialize it
+            initial[-1] = self.cont_estimate(sigma_level=3)  # Add continuum constant and initialize it
             lines_fit = []  # List of lines which already have been set up for fits
             for mod in range(self.line_num):  # Step through each line
                 lines_fit.append(self.lines[mod])  # Add to list of lines fit
@@ -640,12 +642,12 @@ class Fit:
                 initial[mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial_positions[mod] = vel_est
                 initial_sigmas[mod] = sigma_est
-            for st in range(10):  # Do 10 fits and record the one with the best loss 
+            for st in range(1):  # Do 10 fits and record the one with the best loss 
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 30},
-                            tol=1e-2,
-                            args=())
+                            tol=1e-8, jac="3-point", hess='3-point',
+                            args=(), constraints=cons)
                 if st == 0:
                     best_loss = soln.fun
                     best_fit = soln.x
@@ -731,6 +733,7 @@ class Fit:
                 self.ML_model = ''
                 self.calculate_params()
                 self.ML_model = temp_ML
+            
             # Check if Bayesian approach is required
             if self.bayes_bool:
                 self.fit_Bayes()
@@ -776,22 +779,36 @@ class Fit:
         else:  # Fit sky line
             self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
-            nll = lambda *args: self.log_likelihood(*args)  # Negative Log Likelihood function
+            
+            nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
             initial = np.ones(3 * self.line_num + 1)
             skylines_vals = list(self.sky_lines.values())
             for mod in range(self.line_num):
-                initial[3 * mod] = self.cont_estimate(sigma_level=5) * self.sky_lines_scale[mod]
+                #initial[3 * mod] = self.cont_estimate(sigma_level=3) * self.sky_lines_scale[mod]
+                line_ind = np.argmin(np.abs(np.array(self.axis) - (1e7/skylines_vals[mod])))
+                try:
+                    initial[3 * mod] = np.max([
+                        self.spectrum_normalized[line_ind - 3], self.spectrum_normalized[line_ind - 2],
+                        self.spectrum_normalized[line_ind - 1], self.spectrum_normalized[line_ind], self.spectrum_normalized[line_ind + 1],
+                        self.spectrum_normalized[line_ind + 2], self.spectrum_normalized[line_ind + 3],
+                    ])
+                except IndexError:
+                    initial[3 * mod] = self.spectrum_normalized[line_ind]
                 initial[3 * mod + 1] = 1e7 / ((80 * (skylines_vals[mod]) / SPEED_OF_LIGHT) + skylines_vals[mod])
-                initial[3 * mod + 2] = .1
-            initial[-1] = self.cont_estimate(sigma_level=5)
+                initial[3 * mod + 2] = .01
+            initial[-1] = self.cont_estimate(sigma_level=3)
             # self.initial_values = initial
             sigma_cons = self.sigma_constraints()  # Call sigma constaints
             vel_cons = self.vel_constraints()  # Call velocity constraints
             cons = sigma_cons + vel_cons
-            soln = minimize(nll, initial, method='trust-constr',
-                            options={'disp': False, 'maxiter': 100}, tol=1e-3,
-                            args=())  # , constraints=cons)
+            soln = minimize(nll, initial,
+                            method='SLSQP',
+                            options={'disp': False , 'maxiter': 200},
+                            tol=1e-8, jac="3-point", hess='3-point',
+                            args=()#, constraints=cons
+                            )
             parameters = soln.x
+
 
             # We now must unscale the amplitude
             for i in range(self.line_num):

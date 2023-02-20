@@ -216,8 +216,8 @@ class SincGauss:
     def function(self, channel, params, sinc_width):
         p0 = params[0]
         p1 = params[1]
-        p2 = sinc_width/(np.pi*FWHM_SINC_COEFF)
-        p3 = params[2]/FWHM_COEFF
+        p2 = sinc_width/(np.pi)#*FWHM_SINC_COEFF)
+        p3 = params[2]#/FWHM_COEFF
         a = p3/(np.sqrt(2)*p2)
         a = a.astype(float)
         b = (channel-p1)/(np.sqrt(2)*p3)

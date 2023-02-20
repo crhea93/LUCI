@@ -113,7 +113,7 @@ def plot_map(quantity_map, quantity_name, object_name='', filter_name='', output
     units = {'flux': r'log[ergs/s/cm$^2$/A]', 'velocity': 'km/s', 'broadening': 'km/s'}
     if clims is None:
         c_min = np.nanpercentile(quantity_map, 5)
-        c_max = np.nanpercentile(quantity_map, 95)
+        c_max = np.nanpercentile(quantity_map, 99)
     else:
         c_min = clims[0]
         c_max = clims[1]
@@ -136,6 +136,56 @@ def plot_map(quantity_map, quantity_name, object_name='', filter_name='', output
     plt.savefig(output_dir + '/' +object_name+'_'+filter_name+'_'+ quantity_name + '_map.png')
     return None
 
+
+def plot_map_no_coords(quantity_map, quantity_name, object_name='', filter_name='', output_dir='', clims=None, fig_size=(10, 8), dark=False, **kwargs):
+    """
+    Function to plot fit map. The four options are 'flux', 'velocity', 'broadening', and 'zscore'.
+    The flux map is automatically scaled by log10. The velocity and broadening are not.
+    The plot is saved here: `output_dir+'/'+quantity_name+'_map.png'`
+
+    Args:
+        quantity_map: 2d numpy array from fit
+        quantity_name: Name of quantity (e.x. 'flux')
+        output_dir: Path (absolute or partial) to output directory
+        clims: List containing lower and upper limits of colorbar (e.x. [-500, 500])
+        fig_size: Size of figure (default (10,8))
+        dark: Boolean to turn on dark mode (default False)
+
+    Example:
+        We can plot the flux.
+
+        >>> lplt.plot_map(flux_map[:,:,0], 'flux')
+
+
+
+    """
+    if quantity_name == 'broadening' or quantity_name == 'velocity' or quantity_name == 'zscore':
+        pass
+    elif quantity_name == 'flux':
+        quantity_map = np.log10(quantity_map)  # NaNs to extremely small number
+    else:
+        print('Please enter either flux, velocity, broadening, or zscore')
+    units = {'flux': r'log[ergs/s/cm$^2$/A]', 'velocity': 'km/s', 'broadening': 'km/s', 'zscore': ''}
+    if clims is None:
+        c_min = np.nanpercentile(quantity_map, 5)
+        c_max = np.nanpercentile(quantity_map, 99)
+    else:
+        c_min = clims[0]
+        c_max = clims[1]
+    # Plot
+    plot_style = set_style(dark)
+    fig = plt.figure(figsize=fig_size)
+    plt.imshow(quantity_map, cmap='magma', **kwargs)
+    plt.title((quantity_name + ' map').upper(), fontsize=26, fontweight='bold')
+    plt.xlabel("RA", fontsize=20, fontweight='bold')
+    plt.ylabel("DEC", fontsize=20, fontweight='bold')
+    plt.xlim(0, quantity_map.shape[1])
+    plt.ylim(0, quantity_map.shape[0])
+    cbar = plt.colorbar(fraction=0.046, pad=0.04)
+    plt.clim(c_min, c_max)
+    cbar.ax.set_ylabel(units[quantity_name], rotation=270, labelpad=25, fontsize=20, fontweight='bold')
+    plt.savefig(output_dir + '/' +object_name+'_'+filter_name+'_'+ quantity_name + '_map.png')
+    return None
 
 def check_units(unit):
     """

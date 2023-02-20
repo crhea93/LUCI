@@ -238,7 +238,7 @@ class Luci():
                         output_name=None, uncertainty_bool=False, n_threads=1):
         """
         Fit the entire cube (all spatial dimensions)
-        
+
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
@@ -590,7 +590,6 @@ class Luci():
             print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         if binning != None and binning > 1:
             mask = bin_mask(mask, binning, x_min, self.cube_final.shape[0], y_min, self.cube_final.shape[1])  # Bin Mask
-        print(mask.shape)
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
@@ -705,7 +704,7 @@ class Luci():
             sky = np.nansum(sky, axis=0)
             sky = np.nansum(sky, axis=0)
             if bkg is not None:
-                sky -= bkg * (2 + bin) ** 2  # Subtract background times number of pixels
+                sky -= bkg * (2 * bin) ** 2  # Subtract background times number of pixels
         else:
             sky = self.cube_final[pixel_x, pixel_y, :]
             if bkg is not None:
@@ -1036,7 +1035,7 @@ class Luci():
         helio_kms = heliocorr.to(u.km / u.s)
         return helio_kms
 
-    def skyline_calibration(self, n_grid, bin_size=30):
+    def skyline_calibration(self, Luci_path, n_grid, bin_size=10):
         """
         Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
         of the telescope lead to minor offset that can be measured by high resolution
@@ -1047,6 +1046,7 @@ class Luci():
 
         Args:
             n_grid: NxN grid (int)
+            Luci_path: Full path to LUCI (str)
             bin_size: Size of grouping used for each region (optional int; default=30)
 
         Return:
@@ -1056,8 +1056,7 @@ class Luci():
         fit_vector = None;
         sky = None;
         # Read in sky lines
-        print(os.getcwd())
-        sky_lines_df = pandas.read_csv('../Data/sky_lines.dat', skiprows=2)
+        sky_lines_df = pandas.read_csv(Luci_path+'/Data/sky_lines.dat', skiprows=2)
         sky_lines = sky_lines_df['Wavelength']  # Get wavelengths
         sky_lines = [sky_line / 10 for sky_line in sky_lines]  # Convert from angstroms to nanometers
         sky_lines_scale = [sky_line for sky_line in sky_lines_df['Strength']]  # Get the relative strengths
@@ -1066,12 +1065,12 @@ class Luci():
         for line_ct, line_wvl in enumerate(sky_lines):
             sky_line_dict['OH_%i' % line_ct] = line_wvl
         # Calculate grid
-        x_min = 100
-        x_max = self.cube_final.shape[0] - 100
+        x_min = 400
+        x_max = self.cube_final.shape[0] - x_min
         x_step = int(
             (x_max - x_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
-        y_min = 1000
-        y_max = self.cube_final.shape[1] - 100
+        y_min = 400
+        y_max = self.cube_final.shape[1] - y_min
         y_step = int(
             (y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         vel_grid = np.zeros((n_grid, n_grid))  # Initialize velocity grid
@@ -1111,7 +1110,7 @@ class Luci():
                 vel_grid_final[x_center - x_step:x_center + x_step, y_center - y_step:y_center + y_step] = vel_grid[
                     x_grid, y_grid]
         fits.writeto(self.output_dir + '/velocity_correction.fits', vel_grid, self.header, overwrite=True)
-        return velocity, fit_vector, sky
+        return velocity, fit_vector, sky, vel_grid, self.spectrum_axis
 
     def calculate_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
         # TODO: ADD Documentation and example
