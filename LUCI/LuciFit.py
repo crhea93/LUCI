@@ -595,6 +595,16 @@ class Fit:
         best_loss = 1e46  # Initialize as a large number
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         if not self.freeze:  # Not freezing velocity and broadening
+            # Set constraints
+            sigma_cons = self.sigma_constraints()  # Call sigma constraints
+            vel_cons = self.vel_constraints()  # Call velocity constraints
+            vel_cons_multiple = self.multiple_component_vel_constraint() + self.amplitude_constraint()
+            # CONSTRAINTS
+            if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
+                nii_constraints = self.NII_constraints()
+                cons = sigma_cons + vel_cons + vel_cons_multiple  # + nii_constraints
+            else:
+                cons = sigma_cons + vel_cons + vel_cons_multiple
             cont_est = self.cont_estimate(sigma_level=1)  # Calculate continuum constant
             for st in range(self.n_stoch):  # Do N fits and record the one with the best loss 
                 initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
@@ -610,16 +620,7 @@ class Fit:
                     else:
                         initial[3 * mod + 1] = np.random.normal(vel_est, vel_est)  # Sample wavenumber from a normal distribution around the ML value
                         initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est)  # Sample wavenumber from a normal distribution around the ML value
-                # Set constraints
-                sigma_cons = self.sigma_constraints()  # Call sigma constraints
-                vel_cons = self.vel_constraints()  # Call velocity constraints
-                vel_cons_multiple = self.multiple_component_vel_constraint()+ self.amplitude_constraint()
-                # CONSTRAINTS
-                if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
-                    nii_constraints = self.NII_constraints()
-                    cons = sigma_cons + vel_cons + vel_cons_multiple #+ nii_constraints
-                else:
-                    cons = sigma_cons + vel_cons + vel_cons_multiple
+
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 200},
@@ -647,7 +648,7 @@ class Fit:
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 30},
                             tol=1e-8, jac="3-point", hess='3-point',
-                            args=(), constraints=cons)
+                            args=())  # , constraints=cons)
                 if st == 0:
                     best_loss = soln.fun
                     best_fit = soln.x
@@ -657,6 +658,16 @@ class Fit:
         # Call minimize! This uses the previously defined negative log likelihood function and the restricted axis
         # We do **not** use the interpolated spectrum here!
         parameters = best_fit
+        if self.uncertainty_bool:
+            # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
+            hessian_calc = 0.5*hessianComp(nll,parameters)
+            DOF_scale = np.sqrt(len(self.axis_restricted) - self.line_num + 1)
+            try:
+                covariance_mat = -np.linalg.inv(hessian_calc)
+                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))/DOF_scale
+            except np.linalg.LinAlgError:
+                covariance_mat = -np.linalg.pinv(hessian_calc)
+                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))/DOF_scale
         # We now must unscale the amplitude
         for i in range(self.line_num):
             if self.freeze:  # Freezing velocity and broadening
@@ -665,18 +676,10 @@ class Fit:
             else:
                 parameters[i * 3] *= self.spectrum_scale
                 self.uncertainties[i * 3] *= self.spectrum_scale
+
         # Scale continuum
         parameters[-1] *= self.spectrum_scale
         self.uncertainties[-1] *= self.spectrum_scale
-        if self.uncertainty_bool:
-            # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
-            hessian_calc = hessianComp(nll,parameters)
-            try:
-                covariance_mat = -np.linalg.inv(hessian_calc)
-                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
-            except np.linalg.LinAlgError:
-                covariance_mat = -np.linalg.pinv(hessian_calc)
-                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
         if not self.freeze:  # Not freezing velocity and broadening so nothing needs to be done
             self.fit_sol = parameters
         else:  # We want to add back the velocity and broadening as if they were fit so we don't have to rewrite as much
@@ -779,7 +782,6 @@ class Fit:
         else:  # Fit sky line
             self.spectrum_scale = np.max(self.spectrum)
             # Apply Fit
-            
             nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
             initial = np.ones(3 * self.line_num + 1)
             skylines_vals = list(self.sky_lines.values())
@@ -796,11 +798,11 @@ class Fit:
                     initial[3 * mod] = self.spectrum_normalized[line_ind]
                 initial[3 * mod + 1] = 1e7 / ((80 * (skylines_vals[mod]) / SPEED_OF_LIGHT) + skylines_vals[mod])
                 initial[3 * mod + 2] = .01
-            initial[-1] = self.cont_estimate(sigma_level=3)
+            initial[-1] = self.cont_estimate(sigma_level=2)
             # self.initial_values = initial
-            sigma_cons = self.sigma_constraints()  # Call sigma constaints
-            vel_cons = self.vel_constraints()  # Call velocity constraints
-            cons = sigma_cons + vel_cons
+            #sigma_cons = self.sigma_constraints()  # Call sigma constaints
+            #vel_cons = self.vel_constraints()  # Call velocity constraints
+            cons = self.amplitude_constraint()
             soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False , 'maxiter': 200},
@@ -808,18 +810,62 @@ class Fit:
                             args=()#, constraints=cons
                             )
             parameters = soln.x
-
-
+            if self.uncertainty_bool:
+                # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
+                hessian_calc = hessianComp(nll, parameters)
+                #RSS = np.sum(np.square(df['Predicted'] - df['Actual']))
+                try:
+                    covariance_mat = -np.linalg.inv(hessian_calc)
+                    self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
+                except np.linalg.LinAlgError:
+                    covariance_mat = -np.linalg.pinv(hessian_calc)
+                    self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
             # We now must unscale the amplitude
             for i in range(self.line_num):
                 parameters[i * 3] *= self.spectrum_scale
                 self.uncertainties[i * 3] *= self.spectrum_scale
             # Scale continuum
             parameters[-1] *= self.spectrum_scale
+
+
             self.fit_sol = parameters
+            if self.bayes_bool:
+                #self.fit_Bayes()
+                n_dim = 3 * self.line_num + 1
+                # Set number of MCMC walkers. Again, this is somewhat arbitrary
+                n_walkers = 200  # n_dim * 5
+                random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
+                for i in range(self.line_num):
+                    random_[:, 3 * i + 1] *= 1e3
+                    random_[:, 3 * i] *= 0.1
+                    random_[:, 3 * i + 2] *= 1e1
+                init_ = self.fit_sol + random_  # + self.fit_sol[-1] + random_
+                # Ensure continuum values for walkers are positive
+                init_[:, -1] = np.abs(init_[:, -1])
+                sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
+                                            args=(self.axis_restricted, self.spectrum_restricted,
+                                                  self.noise, self.model_type, self.line_num, skylines_vals,
+                                                  self.line_dict, self.sinc_width,
+                                                  [self.vel_ml, self.broad_ml, self.vel_ml_sigma, self.broad_ml_sigma],
+                                                  self.vel_rel, self.sigma_rel, self.mdn
+                                                  )  # End additional args
+                                            )  # End EnsembleSampler
+                # Call Ensemble Sampler setting 2000 walks
+                sampler.run_mcmc(init_, 2000, progress=False)
+                # Obtain Ensemble Sampler results and discard first 200 walks (10%)
+                flat_samples = sampler.get_chain(discard=200, flat=True)
+                parameters_med = []
+                parameters_std = []
+                self.flat_samples = flat_samples
+                for i in range(n_dim):  # Calculate and store these results
+                    median = np.mean(flat_samples[:, i])
+                    std = np.std(flat_samples[:, i])
+                    parameters_med.append(median)
+                    parameters_std.append(std)
+            velocity_error = SPEED_OF_LIGHT * self.uncertainties[1] * (1e7 / (self.fit_sol[1] **2 * skylines_vals[0]))
             velocity = SPEED_OF_LIGHT * ((1e7 / self.fit_sol[1] - skylines_vals[0]) / skylines_vals[0])
             fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + parameters[-1]
-            return velocity, fit_vector
+            return velocity, velocity_error, fit_vector
 
     def fit_Bayes(self):
         """

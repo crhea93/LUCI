@@ -20,18 +20,17 @@ sys.path.insert(0, path)  # add LUCI to the available paths
 from LuciBase import Luci
 import LUCI.LuciPlotting as lplt
 
-def find_background_pixels(deep_image, sigma_threshold=1, plot_mask=True):
+def find_background_pixels(deep_image, sigma_threshold=0.25, plot_mask=True):
     """
     This algorithm uses a sigma thresholding algorithm on the deep image to determine which pixels belong to the background.
     """
 
     zscore = (deep_image - deep_image.mean())/deep_image.std()  # Calculate z-score for each pixel
-    idx = np.argwhere(np.abs(zscore) < sigma_threshold)  # Get indices in array where z-score is above sigma_threshold
+    idx = np.argwhere(np.abs(zscore) > sigma_threshold)  # Get indices in array where z-score is above sigma_threshold
     if plot_mask == True:
         zscore_masked = np.where(np.abs(zscore) < sigma_threshold, zscore, 0)  
         plot_map_no_coords(zscore_masked, 'zscore')
-        #plt.show()
-    print(idx[0])
+        plt.show()
     return idx
 
 deep = fits.open('/mnt/carterrhea/carterrhea/NGC4449/Luci_outputs/NGC4449_deep.fits')[0].data
@@ -49,6 +48,8 @@ resolution = 5000
 cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, mdn=False)
 
 print(len(idx))
+if len(idx) > 500000:
+    exit
 bkg_spectra = [cube.cube_final[index[0], index[1]] for index in idx if index[0]<2048 and index[1]<2064]
 print(len(bkg_spectra))
 n_components = 5

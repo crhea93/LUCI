@@ -1035,7 +1035,7 @@ class Luci():
         helio_kms = heliocorr.to(u.km / u.s)
         return helio_kms
 
-    def skyline_calibration(self, Luci_path, n_grid, bin_size=10):
+    def skyline_calibration(self, Luci_path, n_grid, bin_size=30):
         """
         Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
         of the telescope lead to minor offset that can be measured by high resolution
@@ -1074,6 +1074,7 @@ class Luci():
         y_step = int(
             (y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         vel_grid = np.zeros((n_grid, n_grid))  # Initialize velocity grid
+        vel_uncertainty_grid = np.zeros((n_grid, n_grid))
         for x_grid in range(n_grid):  # Step through x steps
             for y_grid in range(n_grid):  # Step through y steps
                 # Collect spectrum in 10x10 region
@@ -1093,13 +1094,14 @@ class Luci():
                           self.model_ML, trans_filter=self.transmission_interpolated,
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
-                          zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'], bayes_bool=False, bayes_method='emcee',
+                          zpd_index=self.zpd_index, uncertainty_bool=True,
+                          filter=self.hdr_dict['FILTER'], bayes_bool=True, bayes_method='emcee',
                           sky_lines=sky_line_dict, sky_lines_scale=sky_lines_scale
                           )
 
-                velocity, fit_vector = fit.fit(sky_line=True)
+                velocity, velocity_error, fit_vector = fit.fit(sky_line=True)
                 vel_grid[x_grid, y_grid] = float(velocity)
+                vel_uncertainty_grid[x_grid, y_grid] = float(velocity_error)
         # Now that we have the grid, we need to reproject it onto the original pixel grid
         vel_grid_final = np.zeros((x_max, y_max))
         for x_grid in range(n_grid):  # Step through x steps
@@ -1110,7 +1112,7 @@ class Luci():
                 vel_grid_final[x_center - x_step:x_center + x_step, y_center - y_step:y_center + y_step] = vel_grid[
                     x_grid, y_grid]
         fits.writeto(self.output_dir + '/velocity_correction.fits', vel_grid, self.header, overwrite=True)
-        return velocity, fit_vector, sky, vel_grid, self.spectrum_axis
+        return velocity, fit_vector, sky, vel_grid, vel_uncertainty_grid, self.spectrum_axis
 
     def calculate_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
         # TODO: ADD Documentation and example

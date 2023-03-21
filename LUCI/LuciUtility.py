@@ -394,7 +394,7 @@ def hessian(x):
     return hessian
 
 @jit(fastmath=True)
-def hessianComp(func,initial,delta=1e-3):
+def hessianComp(func,initial,delta=1e-1):
   """
   Calculate the hessian using finite differences. The function was taken from https://rh8liuqy.github.io/Finite_Difference.html.
 
