@@ -338,7 +338,7 @@ def bin_cube_function(cube_final, header, binning, x_min, x_max, y_min, y_max):
     header_binned['PC1_2'] = header_binned['PC1_2'] * binning
     header_binned['PC2_1'] = header_binned['PC2_1'] * binning
     header_binned['PC2_2'] = header_binned['PC2_2'] * binning
-    cube_binned = binned_cube / (binning ** 2)
+    cube_binned = binned_cube  # / (binning ** 2)
     return header_binned, cube_binned
 
 
