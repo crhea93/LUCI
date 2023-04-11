@@ -210,8 +210,8 @@ class Fit:
             elif self.filter == 'C3' and 'OII3726' in self.lines:
                 ## This is true for objects with a redshift around 0.465
                 # We pretend we are looking at SN1
-                bound_lower = 18000
-                bound_upper = 19400
+                bound_lower = 26000
+                bound_upper = 29000
             elif self.filter == 'C4':
                 ## This is true for objects at redshift ~0.25
                 bound_lower = 12150* self.obj_redshift_corr
@@ -263,8 +263,8 @@ class Fit:
         elif self.filter == 'C3' and 'OII3726' in self.lines:
             ## This is true for objects at redshift ~0.465
             # In this case we pretend we are in SN1
-            bound_lower = 18000
-            bound_upper = 19400
+            bound_lower = 26000
+            bound_upper = 26200
         elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
@@ -361,6 +361,10 @@ class Fit:
             if self.freeze:
                 self.vel_ml = self.initial_values[0]  # Velocity component of initial conditions in km/s
                 self.broad_ml = self.initial_values[1]  # Broadening component of initial conditions in km/s
+        if np.isnan(self.broad_ml):  # Correction in case there is an issue -- only need this for C filter and high redshift
+            self.broad_ml = 1.0
+        if np.isnan(self.vel_ml):
+            self.vel_ml = 0.0
         line_pos_est = 1e7 / ((self.vel_ml / SPEED_OF_LIGHT) * line_theo + line_theo)  # Estimate of position of line in cm-1
         line_ind = np.argmin(np.abs(np.array(self.axis) - line_pos_est))
         try:
@@ -625,7 +629,6 @@ class Fit:
                     else:
                         initial[3 * mod + 1] = np.random.normal(vel_est, vel_est)  # Sample wavenumber from a normal distribution around the ML value
                         initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est)  # Sample wavenumber from a normal distribution around the ML value
-
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 200},
@@ -705,7 +708,6 @@ class Fit:
             self.fit_vector = SincGauss().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[-1]
         else:
             print("Somehow all the checks missed the fact that you didn't enter a valid fit function...")
-
         return None
 
     def fit(self, sky_line=False):

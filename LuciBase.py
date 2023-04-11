@@ -709,7 +709,7 @@ class Luci():
             sky = self.cube_final[pixel_x, pixel_y, :]
             if bkg is not None:
                 sky -= bkg  # Subtract background spectrum
-        good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
+        good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
         sky = sky[good_sky_inds]  # Apply clean to sky
         axis = self.spectrum_axis[good_sky_inds]  # Apply clean to axis
         # Call fit!
@@ -902,7 +902,7 @@ class Luci():
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
             integrated_spectrum -= bkg * spec_ct  # Subtract background spectrum
-        good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
+        good_sky_inds = ~np.isnan(integrated_spectrum) # Clean up spectrum
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
         # Call fit!
