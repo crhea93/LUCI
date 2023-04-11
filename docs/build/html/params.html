@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Parameter Calculations &mdash; LUCI v.1.0.0 documentation</title>
@@ -13,9 +13,6 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -30,12 +27,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html">
-            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -101,7 +102,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Parameter Calculations</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/params.rst.txt" rel="nofollow"> View page source</a>
@@ -127,18 +128,18 @@ and the flux as well as their uncertainties.</p>
 <span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate velocity dispersion</p>
 <div class="math">
-<p><img src="_images/math/1633140c7447797f3b981afa8abac6df2f22cb34.png" alt="\sigma = (SPEED_OF_LIGHT*fit\_\sigma * axis\_step)/(fit\_vel)"/></p>
-</div><p>where <img class="math" src="_images/math/c84a0b116afbd35da601f3798b4d6340263efb09.png" alt="fit\_sigma"/> is the gaussian broadening parameter found in the fit, <img class="math" src="_images/math/0b470d717b5d740c79727fe76384de94d8fbb001.png" alt="axis\_step"/> is defined in the HowLuciWorks section,
+<p><span class="math">\sigma = (SPEED_OF_LIGHT*fit\_\sigma )/(fit\_vel)</span></p>
+</div><p>where <img class="math" src="_images/math/c84a0b116afbd35da601f3798b4d6340263efb09.png" alt="fit\_sigma"/> is the gaussian broadening parameter found in the fit,
 and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915.png" alt="fit\_vel"/> is the shifted position of the line in units of cm-1.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ind</strong> – Index of line in lines</p></li>
 <li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
 <li><p><strong>axis_step</strong> – Step due to correction factor (see LuciFit.calculate_correction)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
 </dd>
 </dl>
@@ -150,7 +151,7 @@ and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915
 <dd><p>Calculate velocity dispersion error
 We simply take the difference between the velocity dispersions with and without the uncertainty.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ind</strong> – Index of line in lines</p></li>
 <li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
@@ -158,7 +159,7 @@ We simply take the difference between the velocity dispersions with and without 
 <li><p><strong>uncertaintes</strong> – Uncertainties from fitting algorithm</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Velocity Dispersion of the Halpha line in units of km/s</p>
 </dd>
 </dl>
@@ -170,7 +171,7 @@ We simply take the difference between the velocity dispersions with and without 
 <dd><p>Calculate flux value given fit of line
 See HowLuciWorks for calculations</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>line_amp</strong> – Amplitude of the line (un-normalized)</p></li>
 <li><p><strong>line_sigma</strong> – Sigma of the line fit</p></li>
@@ -178,7 +179,7 @@ See HowLuciWorks for calculations</p>
 <li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Flux of the provided line in units of erg/s/cm-2</p>
 </dd>
 </dl>
@@ -190,7 +191,7 @@ See HowLuciWorks for calculations</p>
 <dd><p>Calculate flux error</p>
 <p>We simply take the difference between the fluxes with and without the uncertainty.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ind</strong> – Index of line in lines</p></li>
 <li><p><strong>fit_sol</strong> – Solution from fitting algorithm</p></li>
@@ -199,7 +200,7 @@ See HowLuciWorks for calculations</p>
 <li><p><strong>sinc_width</strong> – Fixed with of the sinc function</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Error of the provided line in units of ergs/s/cm-2</p>
 </dd>
 </dl>
@@ -214,7 +215,7 @@ See HowLuciWorks for calculations</p>
 </div><p>Where <img class="math" src="_images/math/e4829235a887bfa0b4b1357b4485dadd9f58a941.png" alt="l\_calc = 1e7/fit\_vel"/> and <img class="math" src="_images/math/932e7ef573df9a38a0bae21fc93e212a3011ae84.png" alt="l\_rest"/> is the rest wavelength of the line.
 <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915.png" alt="fit\_vel"/> is the shifted position of the line in units of cm-1.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ind</strong> – Index of line in lines</p></li>
 <li><p><strong>lines</strong> – Lines to be fit (e.x. [‘Halpha’])</p></li>
@@ -222,7 +223,7 @@ See HowLuciWorks for calculations</p>
 <li><p><strong>line_dict</strong> – Dictionary of Line Names and their wavelengths in nm</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Velocity of the Halpha line in units of km/s</p>
 </dd>
 </dl>
@@ -234,7 +235,7 @@ See HowLuciWorks for calculations</p>
 <dd><p>Calculate velocity error</p>
 <p>We simply take the difference between the velocities with and without the uncertainty.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ind</strong> – Index of line in lines</p></li>
 <li><p><strong>lines</strong> – Lines to be fit (e.x. [‘Halpha’])</p></li>
@@ -243,7 +244,7 @@ See HowLuciWorks for calculations</p>
 <li><p><strong>uncertaintes</strong> – Uncertainties from fitting algoritm</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Velocity of the Halpha line in units of km/s</p>
 </dd>
 </dl>

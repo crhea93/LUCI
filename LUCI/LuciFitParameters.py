@@ -63,9 +63,9 @@ def calculate_broad(ind, fit_sol, axis_step):
     Calculate velocity dispersion
 
     .. math::
-        \sigma = (SPEED_OF_LIGHT*fit\_\sigma * axis\_step)/(fit\_vel)
+        \sigma = (SPEED_OF_LIGHT*fit\_\sigma )/(fit\_vel)
 
-    where :math:`fit\_sigma` is the gaussian broadening parameter found in the fit, :math:`axis\_step` is defined in the HowLuciWorks section,
+    where :math:`fit\_sigma` is the gaussian broadening parameter found in the fit,
     and :math:`fit\_vel` is the shifted position of the line in units of cm-1.
 
     Args:
@@ -76,7 +76,7 @@ def calculate_broad(ind, fit_sol, axis_step):
         Velocity Dispersion of the Halpha line in units of km/s
     """
     broad = (SPEED_OF_LIGHT * fit_sol[3*ind+2]) / fit_sol[3*ind+1]
-    return np.abs(broad) * axis_step   
+    return np.abs(broad) 
 
 
 

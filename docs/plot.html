@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ploting Functions &mdash; LUCI v.1.0.0 documentation</title>
@@ -13,9 +13,6 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -30,12 +27,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html">
-            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -74,6 +75,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.check_units"><code class="docutils literal notranslate"><span class="pre">check_units()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.plot_fit"><code class="docutils literal notranslate"><span class="pre">plot_fit()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.plot_map"><code class="docutils literal notranslate"><span class="pre">plot_map()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.plot_map_no_coords"><code class="docutils literal notranslate"><span class="pre">plot_map_no_coords()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.plot_spectrum"><code class="docutils literal notranslate"><span class="pre">plot_spectrum()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.set_style"><code class="docutils literal notranslate"><span class="pre">set_style()</span></code></a></li>
 </ul>
@@ -100,7 +102,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Ploting Functions</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/plot.rst.txt" rel="nofollow"> View page source</a>
@@ -125,7 +127,7 @@
 <dd><p>This function checks to see that the unit provided is in the available options
 :param unit: User supplied unit</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Nothing if the user provides an appropriate unit
 Else it will throw an error</p>
 </dd>
@@ -148,12 +150,12 @@ Else it will throw an error</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_map">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_map" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_map" title="Permalink to this definition"></a></dt>
 <dd><p>Function to plot fit map. The three options are ‘flux’, ‘velocity’, and ‘broadening’.
 The flux map is automatically scaled by log10. The velocity and broadening are not.
 The plot is saved here: <cite>output_dir+’/’+quantity_name+’_map.png’</cite></p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>quantity_map</strong> – 2d numpy array from fit</p></li>
 <li><p><strong>quantity_name</strong> – Name of quantity (e.x. ‘flux’)</p></li>
@@ -175,6 +177,31 @@ The plot is saved here: <cite>output_dir+’/’+quantity_name+’_map.png’</c
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">broad_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;broadening&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_map_no_coords">
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map_no_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_map_no_coords" title="Permalink to this definition"></a></dt>
+<dd><p>Function to plot fit map. The four options are ‘flux’, ‘velocity’, ‘broadening’, and ‘zscore’.
+The flux map is automatically scaled by log10. The velocity and broadening are not.
+The plot is saved here: <cite>output_dir+’/’+quantity_name+’_map.png’</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>quantity_map</strong> – 2d numpy array from fit</p></li>
+<li><p><strong>quantity_name</strong> – Name of quantity (e.x. ‘flux’)</p></li>
+<li><p><strong>output_dir</strong> – Path (absolute or partial) to output directory</p></li>
+<li><p><strong>clims</strong> – List containing lower and upper limits of colorbar (e.x. [-500, 500])</p></li>
+<li><p><strong>fig_size</strong> – Size of figure (default (10,8))</p></li>
+<li><p><strong>dark</strong> – Boolean to turn on dark mode (default False)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>We can plot the flux.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;flux&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
