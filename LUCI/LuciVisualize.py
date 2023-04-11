@@ -7,13 +7,36 @@ import numpy as np
 from matplotlib.widgets  import RectangleSelector, Slider
 import seaborn as sns
 
-def visualize(deep_image, spectrum_axis, cube_final):
+
+def add_lines(header, integrated_spectrum):
+    """
+    This function will add the emission lines depending on the filter used
+    """
+    filter = header['FILTER']
+    min_y = np.min(integrated_spectrum)
+    max_y = np.max(integrated_spectrum)
+    if filter == 'SN1':
+        plt.vlines(372.6, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='coral', linewidths=(2,), label='OII')
+    if filter == 'SN2':
+        plt.vlines(486.1, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='coral', linewidths=(2,), label=r'H$\beta$')
+        plt.vlines(495.9, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='seagreen', linewidths=(2,), label='OIII4959')
+        plt.vlines(500.7, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='forestgreen', linewidths=(2,), label='OIII5007')
+    if filter == 'SN3':
+        plt.vlines(656.3, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='coral', linewidths=(2,), label=r'H$\alpha$')
+        plt.vlines(658.3, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='seagreen', linewidths=(2,), label='NII6583')
+        plt.vlines(654.8, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='forestgreen', linewidths=(2,), label='NII6548')
+        plt.vlines(673.1, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='lightpink', linewidths=(2,), label='NII6583')
+        plt.vlines(671.6, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='plum', linewidths=(2,), label='NII6548')
+    return None
+
+def visualize(deep_image, spectrum_axis, cube_final, header):
     """
     Function that allows you to visualize the deep frame, click on a pixel, and
     then see the sepctrum. This is under development at the moment (4.8.22 -- Carter)
     """
     fig,axes = plt.subplots(2,1,figsize=(15,15))
     plt.style.use('fivethirtyeight')
+    spectrum_axis = [1e7/val for val in spectrum_axis]
 
     shift_ct = 0
     point1 = []
@@ -39,8 +62,10 @@ def visualize(deep_image, spectrum_axis, cube_final):
         axes[1].cla()
         axes[1].set_title('Spectrum of region %i<x<%i %i<y%i'%(int(x1), int(x2), int(y1), int(y2)))
         plt.plot(spectrum_axis, integrated_spectrum, linewidth=2)
+        add_lines(header, integrated_spectrum)
         axes[1].set_xlabel('Wavelength [nm]', fontweight='bold')
         axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
+        plt.legend()
 
 
     def onclick(event):
@@ -68,9 +93,11 @@ def visualize(deep_image, spectrum_axis, cube_final):
             Y_coordinate = int(event.ydata)
             axes[1].cla()
             plt.title('Spectrum of point (%i,%i)'%(X_coordinate, Y_coordinate))
-            plt.plot(spectrum_axis,cube_final[X_coordinate, Y_coordinate], linewidth=2)
+            plt.plot(spectrum_axis, cube_final[X_coordinate, Y_coordinate], linewidth=2)
             axes[1].set_xlabel('Wavelength [nm]', fontweight='bold')
             axes[1].set_ylabel(r'Intensity (Ergs/cm$^2$/s/$\AA$)', fontweight='bold')
+            add_lines(header, cube_final[X_coordinate, Y_coordinate])
+            plt.legend()
             plt.show()
 
     def update_min(min):

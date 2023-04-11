@@ -118,8 +118,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Core Functionality</li>
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Core Functionality</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/luci.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -168,7 +168,7 @@ the binning of the deep image – this is used primarily for astrometry purposes
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.create_snr_map">
-<span class="sig-name descname"><span class="pre">create_snr_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2064</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_snr_map" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_snr_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2064</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_snr_map" title="Permalink to this definition"></a></dt>
 <dd><p>Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
 a map of the entire cube is calculated.</p>
 <dl class="field-list simple">
@@ -180,6 +180,7 @@ a map of the entire cube is calculated.</p>
 <li><p><strong>y_max</strong> – Maximal Y value (default 2064)</p></li>
 <li><p><strong>method</strong> – Method used to calculate SNR (default 1; options 1 or 2)</p></li>
 <li><p><strong>n_threads</strong> – Number of threads to use</p></li>
+<li><p><strong>lines</strong> – Lines to focus on (default None: For SN2 you can choose OIII)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -285,29 +286,36 @@ or the averaged spectrum for background spectra (True).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_calc">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fit_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cube_slice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_ML</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transmission_interpolated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interferometer_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdr_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_nb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zpd_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_calc" title="Permalink to this definition"></a></dt>
-<dd><p>Function for calling fit for a given y coordinate.
-:param i: Y coordinate step
-:param lines: Lines to fit (e.x. [‘Halpha’, ‘NII6583’])
-:param fit_function: Fitting function to use (e.x. ‘gaussian’)
-:param vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
-:param sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
-:param x_min: Lower bound in x
-:param x_max: Upper bound in x
-:param y_min: Lower bound in y
-:param bkg: Background Spectrum (1D numpy array; default None)
-:param binning: Value by which to bin (default None)
-:param bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
-:param bayes_method = Bayesian Inference method. Options are ‘[emcee’:
-:type bayes_method = Bayesian Inference method. Options are ‘[emcee’: default ‘emcee’
-:param ‘dynesty’]:
-:type ‘dynesty’]: default ‘emcee’
-:param uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
-:param nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
-:param initial_values: List of files containing initial conditions (default False)
-:param spec_min: Minimum value of the spectrum to be considered in the fit (we find the closest value)
-:param spec_max: Maximum value of the spectrum to be considered in the fit
-:param obj_redshift: Redshift of object to fit relative to cube’s redshift. This is useful for fitting high redshift objects
-:param n_stoch: The number of stochastic runs – set to 50 for fitting double components (default 1)</p>
+<dd><p>Function for calling fit for a given y coordinate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> – Y coordinate step</p></li>
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
+<li><p><strong>vel_rel</strong> – Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>sigma_rel</strong> – Constraints on sigma (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>x_min</strong> – Lower bound in x</p></li>
+<li><p><strong>x_max</strong> – Upper bound in x</p></li>
+<li><p><strong>y_min</strong> – Lower bound in y</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+<li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default False)</p></li>
+<li><p><strong>'</strong><strong>[</strong><strong>emcee'</strong> (<em>bayes_method = Bayesian Inference method. Options are</em>) – </p></li>
+<li><p><strong>'dynesty'</strong><strong>]</strong> (<em>default 'emcee'</em>) – </p></li>
+<li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
+<li><p><strong>nii_cons</strong> – Boolean to turn on or off NII doublet ratio constraint (default True)</p></li>
+<li><p><strong>initial_values</strong> – List of files containing initial conditions (default False)</p></li>
+<li><p><strong>spec_min</strong> – Minimum value of the spectrum to be considered in the fit (we find the closest value)</p></li>
+<li><p><strong>spec_max</strong> – Maximum value of the spectrum to be considered in the fit</p></li>
+<li><p><strong>obj_redshift</strong> – Redshift of object to fit relative to cube’s redshift. This is useful for fitting high redshift objects</p></li>
+<li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>all fit parameters for y-slice</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -317,7 +325,7 @@ or the averaged spectrum for background spectra (True).</p>
 LuciFits.FIT().fit() call which applies all the fitting steps. This also
 saves the velocity and broadening fits files. All the files will be saved
 in the folder Luci. The files are the fluxes, velocities, broadening, amplitudes,
-and continuum (and their associated errors) for each line.</p>
+and continuum (and their associated errors) for each linespectrum_axis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -361,20 +369,24 @@ we would run the following:</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_entire_cube">
 <span class="sig-name descname"><span class="pre">fit_entire_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_entire_cube" title="Permalink to this definition"></a></dt>
-<dd><p>Fit the entire cube (all spatial dimensions)
-:param lines: Lines to fit (e.x. [‘Halpha’, ‘NII6583’])
-:param fit_function: Fitting function to use (e.x. ‘gaussian’)
-:param vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
-:param sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
-:param bkg: Background Spectrum (1D numpy array; default None)
-:param binning: Value by which to bin (default None)
-:param bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
-:param output_name: User defined output path/name (default None)
-:param uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
-:param n_threads: Number of threads to be passed to joblib for parallelization (default = 1)</p>
+<dd><p>Fit the entire cube (all spatial dimensions)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Velocity and Broadening arrays (2d). Also return amplitudes array (3D).</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
+<li><p><strong>vel_rel</strong> – Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>sigma_rel</strong> – Constraints on sigma (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+<li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default False)</p></li>
+<li><p><strong>output_name</strong> – User defined output path/name (default None)</p></li>
+<li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
+<li><p><strong>n_threads</strong> – Number of threads to be passed to joblib for parallelization (default = 1)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Velocity and Broadening arrays (2d). Also return amplitudes array (3D).</p>
 </dd>
 </dl>
 </dd></dl>
