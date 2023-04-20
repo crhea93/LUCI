@@ -63,9 +63,9 @@ def calculate_broad(ind, fit_sol, axis_step):
     Calculate velocity dispersion
 
     .. math::
-        \sigma = (SPEED_OF_LIGHT*fit\_\sigma * axis\_step)/(fit\_vel)
+        \sigma = (SPEED_OF_LIGHT*fit\_\sigma )/(fit\_vel)
 
-    where :math:`fit\_sigma` is the gaussian broadening parameter found in the fit, :math:`axis\_step` is defined in the HowLuciWorks section,
+    where :math:`fit\_sigma` is the gaussian broadening parameter found in the fit,
     and :math:`fit\_vel` is the shifted position of the line in units of cm-1.
 
     Args:
@@ -75,10 +75,8 @@ def calculate_broad(ind, fit_sol, axis_step):
     Return:
         Velocity Dispersion of the Halpha line in units of km/s
     """
-    #broad = (SPEED_OF_LIGHT * fit_sol[3*ind+2] * axis_step) / fit_sol[3*ind+1]
-    #return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
     broad = (SPEED_OF_LIGHT * fit_sol[3*ind+2]) / fit_sol[3*ind+1]
-    return np.abs(broad)/FWHM_COEFF   # Add FWHM correction
+    return np.abs(broad) 
 
 
 
@@ -98,7 +96,7 @@ def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
     """
     try:
         broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
-        broad /= FWHM_COEFF  # Add FWHM correction
+        broad *= axis_step 
         uncertainty_prop = np.sqrt((uncertainties[3*ind+2]/fit_sol[3*ind+2])**2 + (uncertainties[3*ind+1]/fit_sol[3*ind+1])**2)
         return broad * uncertainty_prop
     except:   

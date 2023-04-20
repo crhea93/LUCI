@@ -5,7 +5,7 @@ from astropy.wcs import WCS
 import astropy.units as u
 from tqdm import tqdm
 import keras
-from joblib import Parallel, delayed, dump, load
+from joblib import Parallel, delayed
 from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
 from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
@@ -24,7 +24,9 @@ import multiprocessing as mp
 import time
 
 import os
+import logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 class Luci():
     """
@@ -230,12 +232,13 @@ class Luci():
                 deep_image = fits.open('Luci_outputs/%s_deep.fits' % self.object_name)[0].data
         else:
             deep_image = self.deep_image
-        LUCIvisualize(deep_image, self.spectrum_axis, self.cube_final)
+        LUCIvisualize(deep_image, self.spectrum_axis, self.cube_final, self.hdr_dict)
 
     def fit_entire_cube(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, binning=None, bayes_bool=False,
                         output_name=None, uncertainty_bool=False, n_threads=1):
         """
         Fit the entire cube (all spatial dimensions)
+
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
             fit_function: Fitting function to use (e.x. 'gaussian')
@@ -269,6 +272,7 @@ class Luci():
                  obj_redshift=0.0, n_stoch=1):
         """
         Function for calling fit for a given y coordinate.
+
         Args:
             i: Y coordinate step
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
@@ -289,6 +293,9 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+
+        Return:
+            all fit parameters for y-slice
         """
         y_pix = y_min + i  # Step y coordinate
         # Set up all the local lists for the current y_pixel step
@@ -319,7 +326,7 @@ class Luci():
                     sky -= bkg * binning ** 2  # Subtract background spectrum
                 else:  # No binning so just subtract the background directly
                     sky -= bkg  # Subtract background spectrum
-            good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectrum
+            good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
             axis = spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
             if initial_values[0] is not False:   #Frozen parameter
@@ -380,7 +387,7 @@ class Luci():
         LuciFits.FIT().fit() call which applies all the fitting steps. This also
         saves the velocity and broadening fits files. All the files will be saved
         in the folder Luci. The files are the fluxes, velocities, broadening, amplitudes,
-        and continuum (and their associated errors) for each line.
+        and continuum (and their associated errors) for each linespectrum_axis.
 
         Args:
             lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
@@ -476,7 +483,7 @@ class Luci():
                                     transmission_interpolated=self.transmission_interpolated,
                                     interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict, step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
                                     bayes_bool=bayes_bool,
-                                    bayes_method=bayes_method,
+                                    bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
                                     obj_redshift=obj_redshift, n_stoch=n_stoch)
                                      for sl in tqdm(range(y_max - y_min)))
@@ -583,7 +590,6 @@ class Luci():
             print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         if binning != None and binning > 1:
             mask = bin_mask(mask, binning, x_min, self.cube_final.shape[0], y_min, self.cube_final.shape[1])  # Bin Mask
-        print(mask.shape)
         # Clean up output name
         if isinstance(region, str):
             if len(region.split('/')) > 1:  # If region file is a path, just keep the name for output purposes
@@ -637,7 +643,7 @@ class Luci():
                                     transmission_interpolated=self.transmission_interpolated,
                                     interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict, step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
                                     bayes_bool=bayes_bool,
-                                    bayes_method=bayes_method,
+                                    bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
                                     obj_redshift=obj_redshift, n_stoch=n_stoch)
                                      for sl in tqdm(range(y_max - y_min)))
@@ -698,7 +704,7 @@ class Luci():
             sky = np.nansum(sky, axis=0)
             sky = np.nansum(sky, axis=0)
             if bkg is not None:
-                sky -= bkg * (2 + bin) ** 2  # Subtract background times number of pixels
+                sky -= bkg * (2 * bin) ** 2  # Subtract background times number of pixels
         else:
             sky = self.cube_final[pixel_x, pixel_y, :]
             if bkg is not None:
@@ -914,7 +920,7 @@ class Luci():
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
-    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, n_threads=2):
+    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, n_threads=2, lines=[None]):
         """
         Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
         a map of the entire cube is calculated.
@@ -926,6 +932,7 @@ class Luci():
             y_max: Maximal Y value (default 2064)
             method: Method used to calculate SNR (default 1; options 1 or 2)
             n_threads: Number of threads to use
+            lines: Lines to focus on (default None: For SN2 you can choose OIII)
         Return:
             snr_map: Signal-to-Noise ratio map
 
@@ -935,17 +942,21 @@ class Luci():
         flux_max = 0;
         noise_min = 0;
         noise_max = 0  # Initializing bounds for flux and noise calculation regions
-        if self.hdr_dict['FILTER'] == 'SN3':
+        if self.hdr_dict['FILTER'] == 'SN3':  # Halpha complex
             flux_min = 15150
             flux_max = 15300
             noise_min = 14500
             noise_max = 14600
         elif self.hdr_dict['FILTER'] == 'SN2':
-            flux_min = 19800
-            flux_max = 20750
+            if 'OIII' in lines:  # OIII lines
+                flux_min = 1e7/485
+                flux_max = 1e7/501
+            else:  # Hbeta by default
+                flux_min = 1e7/486
+                flux_max = 1e7/482
             noise_min = 19000
             noise_max = 19500
-        elif self.hdr_dict['FILTER'] == 'SN1':
+        elif self.hdr_dict['FILTER'] == 'SN1':  ## OII lines
             flux_min = 26550
             flux_max = 27550
             noise_min = 25700
@@ -1024,7 +1035,7 @@ class Luci():
         helio_kms = heliocorr.to(u.km / u.s)
         return helio_kms
 
-    def skyline_calibration(self, n_grid, bin_size=30):
+    def skyline_calibration(self, Luci_path, n_grid, bin_size=30):
         """
         Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
         of the telescope lead to minor offset that can be measured by high resolution
@@ -1035,6 +1046,7 @@ class Luci():
 
         Args:
             n_grid: NxN grid (int)
+            Luci_path: Full path to LUCI (str)
             bin_size: Size of grouping used for each region (optional int; default=30)
 
         Return:
@@ -1044,8 +1056,7 @@ class Luci():
         fit_vector = None;
         sky = None;
         # Read in sky lines
-        print(os.getcwd())
-        sky_lines_df = pandas.read_csv('../Data/sky_lines.dat', skiprows=2)
+        sky_lines_df = pandas.read_csv(Luci_path+'/Data/sky_lines.dat', skiprows=2)
         sky_lines = sky_lines_df['Wavelength']  # Get wavelengths
         sky_lines = [sky_line / 10 for sky_line in sky_lines]  # Convert from angstroms to nanometers
         sky_lines_scale = [sky_line for sky_line in sky_lines_df['Strength']]  # Get the relative strengths
@@ -1054,15 +1065,16 @@ class Luci():
         for line_ct, line_wvl in enumerate(sky_lines):
             sky_line_dict['OH_%i' % line_ct] = line_wvl
         # Calculate grid
-        x_min = 100
-        x_max = self.cube_final.shape[0] - 100
+        x_min = 400
+        x_max = self.cube_final.shape[0] - x_min
         x_step = int(
             (x_max - x_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
-        y_min = 1000
-        y_max = self.cube_final.shape[1] - 100
+        y_min = 400
+        y_max = self.cube_final.shape[1] - y_min
         y_step = int(
             (y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         vel_grid = np.zeros((n_grid, n_grid))  # Initialize velocity grid
+        vel_uncertainty_grid = np.zeros((n_grid, n_grid))
         for x_grid in range(n_grid):  # Step through x steps
             for y_grid in range(n_grid):  # Step through y steps
                 # Collect spectrum in 10x10 region
@@ -1082,13 +1094,14 @@ class Luci():
                           self.model_ML, trans_filter=self.transmission_interpolated,
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
-                          zpd_index=self.zpd_index,
-                          filter=self.hdr_dict['FILTER'], bayes_bool=False, bayes_method='emcee',
+                          zpd_index=self.zpd_index, uncertainty_bool=True,
+                          filter=self.hdr_dict['FILTER'], bayes_bool=True, bayes_method='emcee',
                           sky_lines=sky_line_dict, sky_lines_scale=sky_lines_scale
                           )
 
-                velocity, fit_vector = fit.fit(sky_line=True)
+                velocity, velocity_error, fit_vector = fit.fit(sky_line=True)
                 vel_grid[x_grid, y_grid] = float(velocity)
+                vel_uncertainty_grid[x_grid, y_grid] = float(velocity_error)
         # Now that we have the grid, we need to reproject it onto the original pixel grid
         vel_grid_final = np.zeros((x_max, y_max))
         for x_grid in range(n_grid):  # Step through x steps
@@ -1099,7 +1112,7 @@ class Luci():
                 vel_grid_final[x_center - x_step:x_center + x_step, y_center - y_step:y_center + y_step] = vel_grid[
                     x_grid, y_grid]
         fits.writeto(self.output_dir + '/velocity_correction.fits', vel_grid, self.header, overwrite=True)
-        return velocity, fit_vector, sky
+        return velocity, fit_vector, sky, vel_grid, vel_uncertainty_grid, self.spectrum_axis
 
     def calculate_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
         # TODO: ADD Documentation and example
@@ -1147,7 +1160,7 @@ class Luci():
         print("#----------------WVT Algorithm----------------#")
         print("#----------------Creating SNR Map--------------#")
         Pixels = []
-        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=1)
+        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=8)
         print("#----------------Algorithm Part 1----------------#")
         start = time.time()
         SNR_map = fits.open(self.output_dir + '/' + self.object_name + '_SNR.fits')[0].data
@@ -1236,6 +1249,7 @@ class Luci():
         broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
                                                                                                                    2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
+        continuum_error_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         if len(initial_values) == 2:
             # Obtain initial condition maps from files
             vel_init = fits.open(initial_values[0])[0].data
@@ -1271,11 +1285,12 @@ class Luci():
                 broadenings_errors_fits[a, b] = bin_fit_dict['sigmas_errors']
                 chi2_fits[a, b] = bin_fit_dict['chi2']
                 continuum_fits[a, b] = bin_fit_dict['continuum']
+                continuum_fits[a, b] = bin_fit_dict['continuum_error']
                 velocities_fits[a, b] = bin_fit_dict['velocities']
                 velocities_errors_fits[a, b] = bin_fit_dict['vels_errors']
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits, velocities_errors_fits,
-                  broadenings_errors_fits, chi2_fits, continuum_fits, cutout.wcs.to_header(),
+                  broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits, cutout.wcs.to_header(),
                   binning=1, suffix='_wvt')
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, cutout.wcs.to_header()
 
@@ -1463,7 +1478,7 @@ class Luci():
             def find_nearest(spectral_axis, line_lambda):
                 indices = np.abs(np.subtract.outer(spectral_axis, line_lambda)).argmin(0)
                 return indices
-
+            slice_sum = np.zeros_like(self.cube_final[:, :, 0])
             # Loop for every emission line
             for i in range(len(wavelength_redshift)):
 
@@ -1481,9 +1496,11 @@ class Luci():
                 # Loop for every slice
                 for j in tqdm(range(idx_axis[0], idx_axis[1] + 1)):
                     cube_slice = self.cube_final[:, :, j]
+                    slice_sum += cube_slice
                     hdu = fits.PrimaryHDU(cube_slice, header=self.header)
                     hdu.writeto(directory + '/slice_{}.fits'.format(j - (idx_axis[0] - 1)), overwrite=True)
-
+                hdu = fits.PrimaryHDU(slice_sum, header=self.header)
+                hdu.writeto(directory + '/slice_sum.fits', overwrite=True)
                 print('')
                 print("#######################################################################")
                 print("Wavelength of the {} line in the redshifted frame: {} nm".format(lines[i], np.round(

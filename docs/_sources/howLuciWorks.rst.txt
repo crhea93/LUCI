@@ -35,17 +35,13 @@ position is calculated in units of [cm-1], we translate it into nanometers since
 Velocity Dispersion
 ^^^^^^^^^^^^^^^^^^^
 The velocity dispersion of a line is calculated using the following equation:
-:math:`\Delta v = corr\_factor*\frac{3e5 [km/s] * \sigma}{v [km/s]}`
+:math:`\Delta v = \frac{3e5 [km/s] * \sigma}{v [km/s]}`
 
-where :math:`\sigma` is the calculated width of a the fitted Gaussian and the correction
-factor takes into account the different $\theta$ value given the pixels location in the cube.
-See the section of the *sincgauss* function for a discussion of $\theta$. The equation
-for the correction factor is as follows:
+where :math:`\sigma` is the calculated width of a the fitted Gaussian.
 
 
-:math:`corr\_factor = \frac{1}{\cos{\theta}}`
-
-
+Flux
+^^^^
 
 Similarly, we define the flux for each fitting function as the following:
 

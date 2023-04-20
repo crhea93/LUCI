@@ -152,12 +152,12 @@ def spectrum_axis_func(hdr_dict, redshift):
     spectrum_axis_unshifted = np.array(np.linspace(start, end, len_wl),
                                        dtype=np.float32)  # Do not apply redshift correction
 
-    # min_ = 1e7  * (self.hdr_dict['ORDER'] / (2*self.hdr_dict['STEP']))# + 1e7  / (2*self.delta_x*self.n_steps)
-    # max_ = 1e7  * ((self.hdr_dict['ORDER'] + 1) / (2*self.hdr_dict['STEP']))# - 1e7  / (2*self.delta_x*self.n_steps)
-    # step_ = max_ - min_
-    # axis = np.array([min_+j*step_/self.hdr_dict['STEPNB'] for j in range(self.hdr_dict['STEPNB'])])
-    # self.spectrum_axis = axis#*(1+self.redshift)
-    # self.spectrum_axis_unshifted = axis
+    '''min_ = 1e7  * (hdr_dict['ORDER'] / (2*hdr_dict['STEP']))# + 1e7  / (2*self.delta_x*self.n_steps)
+    max_ = 1e7  * ((hdr_dict['ORDER'] + 1) / (2*hdr_dict['STEP']))# - 1e7  / (2*self.delta_x*self.n_steps)
+    step_ = max_ - min_
+    axis = np.array([min_+j*step_/hdr_dict['STEPNB'] for j in range(hdr_dict['STEPNB'])])
+    spectrum_axis = axis*(1+redshift)
+    spectrum_axis_unshifted = axis'''
     return spectrum_axis, spectrum_axis_unshifted
 
 
@@ -338,7 +338,7 @@ def bin_cube_function(cube_final, header, binning, x_min, x_max, y_min, y_max):
     header_binned['PC1_2'] = header_binned['PC1_2'] * binning
     header_binned['PC2_1'] = header_binned['PC2_1'] * binning
     header_binned['PC2_2'] = header_binned['PC2_2'] * binning
-    cube_binned = binned_cube / (binning ** 2)
+    cube_binned = binned_cube  # / (binning ** 2)
     return header_binned, cube_binned
 
 
@@ -394,7 +394,7 @@ def hessian(x):
     return hessian
 
 @jit(fastmath=True)
-def hessianComp(func,initial,delta=1e-3):
+def hessianComp(func,initial,delta=1e-1):
   """
   Calculate the hessian using finite differences. The function was taken from https://rh8liuqy.github.io/Finite_Difference.html.
 

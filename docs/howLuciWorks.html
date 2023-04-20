@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>How LUCI Works &mdash; LUCI v.1.0.0 documentation</title>
@@ -13,9 +13,6 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -30,12 +27,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html">
-            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -47,6 +48,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#what-we-calculate">What we calculate</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#velocity">Velocity</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#velocity-dispersion">Velocity Dispersion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flux">Flux</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#how-we-calculate">How we calculate</a><ul>
@@ -109,8 +111,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>How LUCI Works</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">How LUCI Works</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/howLuciWorks.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -147,12 +149,11 @@ position is calculated in units of [cm-1], we translate it into nanometers since
 <section id="velocity-dispersion">
 <h3>Velocity Dispersion<a class="headerlink" href="#velocity-dispersion" title="Permalink to this heading"></a></h3>
 <p>The velocity dispersion of a line is calculated using the following equation:
-<img class="math" src="_images/math/9d47bda8c0c8955626d6822e9912353a53218859.png" alt="\Delta v = corr\_factor*\frac{3e5 [km/s] * \sigma}{v [km/s]}"/></p>
-<p>where <img class="math" src="_images/math/b52df27bfb0b1e3af0c2c68a7b9da459178c2a7d.png" alt="\sigma"/> is the calculated width of a the fitted Gaussian and the correction
-factor takes into account the different $theta$ value given the pixels location in the cube.
-See the section of the <em>sincgauss</em> function for a discussion of $theta$. The equation
-for the correction factor is as follows:</p>
-<p><img class="math" src="_images/math/37471fa1d279bca08c19b1acebe1386009e6c1b1.png" alt="corr\_factor = \frac{1}{\cos{\theta}}"/></p>
+<span class="math">\Delta v = \frac{3e5 [km/s] * \sigma}{v [km/s]}</span></p>
+<p>where <img class="math" src="_images/math/b52df27bfb0b1e3af0c2c68a7b9da459178c2a7d.png" alt="\sigma"/> is the calculated width of a the fitted Gaussian.</p>
+</section>
+<section id="flux">
+<h3>Flux<a class="headerlink" href="#flux" title="Permalink to this heading"></a></h3>
 <p>Similarly, we define the flux for each fitting function as the following:</p>
 <p><em>Flux for a Gaussian Function</em>:</p>
 <p><img class="math" src="_images/math/c48a9264cb986ec2d84d77058f6c7d5f387b237f.png" alt="Flux [erg/s/cm^2/Ang] = \sqrt{2\pi}p_0p_2"/></p>
