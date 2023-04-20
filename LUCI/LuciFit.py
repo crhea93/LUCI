@@ -212,18 +212,20 @@ class Fit:
                 # We pretend we are looking at SN1
                 bound_lower = 18000
                 bound_upper = 19400
-            elif self.filter == 'C4' and 'Halpha' in self.lines:
+            elif self.filter == 'C4':
                 ## This is true for objects at redshift ~0.25
-                bound_lower = 12150
-                bound_upper = 12550
+                bound_lower = 12150* self.obj_redshift_corr
+                bound_upper = 12550* self.obj_redshift_corr
+                #bound_lower = 14750
+                #bound_upper = 15400
             elif self.filter == 'C2':
                 ## This is true for objects at redshift ~0.25
-                bound_lower = 15990
-                bound_upper = 17880
+                bound_lower = 15990* self.obj_redshift_corr
+                bound_upper = 17880* self.obj_redshift_corr
             elif self.filter == 'C1':
                 ## This is true for objects at redshift ~0.25
-                bound_lower = 20408  # 20665 #
-                bound_upper = 25974  # 25700
+                bound_lower = 20408* self.obj_redshift_corr  # 20665 #
+                bound_upper = 25974* self.obj_redshift_corr  # 25700
             else:
                 print(
                     'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
@@ -266,16 +268,16 @@ class Fit:
         elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3
-            bound_lower = 11800  # 14600  # LYA mods, originally the same as SN3
-            bound_upper = 12150  # 14950
+            bound_lower = 11800* self.obj_redshift_corr  # 14600  # LYA mods, originally the same as SN3
+            bound_upper = 12150* self.obj_redshift_corr  # 14950
         elif self.filter == 'C2':
             ## This is true for objects at redshift ~0.25
-            bound_lower = 15500
-            bound_upper = 15990
+            bound_lower = 15500* self.obj_redshift_corr
+            bound_upper = 15990* self.obj_redshift_corr
         elif self.filter == 'C1':
             ## This is true for objects at redshift ~0.25
-            bound_lower = 18000
-            bound_upper = 20665
+            bound_lower = 18000* self.obj_redshift_corr
+            bound_upper = 20665* self.obj_redshift_corr
         else:
             print(
                 'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
@@ -597,7 +599,7 @@ class Fit:
         if not self.freeze:  # Not freezing velocity and broadening
             for st in range(self.n_stoch):  # Do N fits and record the one with the best loss
                 initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-                initial[-1] = cont_est  # Add continuum constant
+                initial[-1] = self.cont_estimate(sigma_level=3)  # Add continuum constant
                 lines_fit = []  # List of lines which already have been set up for fits
                 for mod in range(self.line_num):  # Step through each line
                     lines_fit.append(self.lines[mod])  # Add to list of lines fit
@@ -614,7 +616,7 @@ class Fit:
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 200},
                             tol=1e-8, jac="3-point", hess='3-point',
-                            args=(), constraints=cons
+                            args=()#, constraints=cons
                             )
                 if st == 0:
                     best_loss = soln.fun
@@ -876,7 +878,7 @@ class Fit:
             random_[:, 3 * i + 2] *= 1e1
         init_ = self.fit_sol + random_  # + self.fit_sol[-1] + random_
         # Ensure continuum values for walkers are positive
-        init_[:, -1] = np.abs(init_[:, -1])
+        #init_[:, -1] = np.abs(init_[:, -1])
         if self.bayes_method == 'dynesty':
             # Run nested sampling
             dsampler = dynesty.NestedSampler(log_likelihood_bayes, prior_transform, ndim=n_dim,
