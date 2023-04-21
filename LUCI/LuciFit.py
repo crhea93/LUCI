@@ -285,7 +285,10 @@ class Fit:
         min_ = np.argmin(np.abs(np.array(self.axis) - bound_lower))
         max_ = np.argmin(np.abs(np.array(self.axis) - bound_upper))
         spec_noise = self.spectrum_normalized[min_:max_]
+
         self.noise = np.nanstd(spec_noise)
+
+
 
     def estimate_priors_ML(self, mdn=True):
         """
@@ -597,9 +600,20 @@ class Fit:
         best_loss = 1e46  # Initialize as a large number
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
         if not self.freeze:  # Not freezing velocity and broadening
+            # Set constraints
+            sigma_cons = self.sigma_constraints()  # Call sigma constraints
+            vel_cons = self.vel_constraints()  # Call velocity constraints
+            vel_cons_multiple = self.multiple_component_vel_constraint() + self.amplitude_constraint()
+            # CONSTRAINTS
+            if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
+                nii_constraints = self.NII_constraints()
+                cons = sigma_cons + vel_cons + vel_cons_multiple  # + nii_constraints
+            else:
+                cons = sigma_cons + vel_cons + vel_cons_multiple
+            cont_est = self.cont_estimate(sigma_level=1)  # Calculate continuum constant
             for st in range(self.n_stoch):  # Do N fits and record the one with the best loss
                 initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
-                initial[-1] = self.cont_estimate(sigma_level=3)  # Add continuum constant
+                initial[-1] = cont_est  # self.cont_estimate(sigma_level=3)  # Add continuum constant
                 lines_fit = []  # List of lines which already have been set up for fits
                 for mod in range(self.line_num):  # Step through each line
                     lines_fit.append(self.lines[mod])  # Add to list of lines fit
@@ -616,7 +630,7 @@ class Fit:
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 200},
                             tol=1e-8, jac="3-point", hess='3-point',
-                            args=()#, constraints=cons
+                            args=(), constraints=cons
                             )
                 if st == 0:
                     best_loss = soln.fun
@@ -634,7 +648,7 @@ class Fit:
                 initial[mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial_positions[mod] = vel_est
                 initial_sigmas[mod] = sigma_est
-            for st in range(10):  # Do 10 fits and record the one with the best loss
+            for st in range(1):  # Do 10 fits and record the one with the best loss
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 30},
