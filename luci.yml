@@ -8,7 +8,7 @@ dependencies:
   - python
   - scikit-image
   - scipy
-  - tensorflow
+  - tensorflow==2.10.1
   - tensorflow-base
   - tensorflow-probability
   - tqdm
@@ -35,3 +35,4 @@ dependencies:
     - dynesty
     - scikit-learn
     - seaborn
+    - photutils
