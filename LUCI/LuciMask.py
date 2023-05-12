@@ -62,7 +62,7 @@ resolution = 1800
 
 cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, mdn=False)
 
-bkg_spectra = [cube.cube_final[index[0], index[1]] for index in idx if index[0]<2048 and index[1]<2064]
+bkg_spectra = [cube.cube_final[index[0], index[1]] for index in idx if 200<index[0]<700 and 1300<index[1]<1600]
 print(len(bkg_spectra))
 n_components = 50
 pca = decomposition.IncrementalPCA(n_components=n_components)
