@@ -627,8 +627,8 @@ class Fit:
                         initial[3 * mod + 1] = vel_est  # Set wavenumber
                         initial[3 * mod + 2] = sigma_est  # Set sigma
                     else:
-                        initial[3 * mod + 1] = np.random.normal(vel_est, vel_est)  # Sample wavenumber from a normal distribution around the ML value
-                        initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est)  # Sample wavenumber from a normal distribution around the ML value
+                        initial[3 * mod + 1] = np.random.normal(vel_est, np.abs((1e7/float(self.line_dict[self.lines[mod]]) - vel_est))/50)  # Sample wavenumber from a normal distribution around the ML value
+                        initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est/10)  # Sample wavenumber from a normal distribution around the ML value
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 200},
