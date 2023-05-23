@@ -563,8 +563,9 @@ class Luci():
         y_min = 0
         y_max = self.cube_final.shape[1]
         cube_to_slice = self.cube_final  # Set cube for slicing
+        mask = None  # Initialize
         # Initialize fit solution arrays
-        if binning != None and binning > 1:
+        if binning != None and binning > 1:  # Bin if we need to
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
                           y_max)
             x_max = int((x_max - x_min) / binning)
@@ -573,20 +574,19 @@ class Luci():
             y_min = 0
             cube_to_slice = self.cube_binned
         # Create mask
-        if '.reg' in region:
-            # shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+        if '.reg' in region:  # If passed a .reg file
             if binning != None and binning > 1:
                 header = self.header_binned
             else:
                 header = self.header
-            header.set('NAXIS1', 2064)
+            header.set('NAXIS1', 2064)  # Need this for astropy
             header.set('NAXIS2', 2048)
             mask = reg_to_mask(region, header)
-        elif '.npy' in region:
+        elif '.npy' in region:  # If passed numpy file
             mask = np.load(region).T
-        elif region is not None:
+        elif region is not None:  # If passed numpy array
             mask = region.T
-        else:
+        else:  # Not passed a mask in any of the correct formats
             print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         if binning != None and binning > 1:
             mask = bin_mask(mask, binning, x_min, self.cube_final.shape[0], y_min, self.cube_final.shape[1])  # Bin Mask
@@ -636,12 +636,15 @@ class Luci():
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
+        #print(x_min, x_max, y_min, y_max)
+        #print(cube_to_slice[:, y_min,:])
         results = Parallel(n_jobs=n_threads) \
             (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel,
                                     cube_slice=cube_to_slice[:, y_min+sl,:],
                                     spectrum_axis=self.spectrum_axis, wavenumbers_syn=self.wavenumbers_syn,model_ML=self.model_ML,
                                     transmission_interpolated=self.transmission_interpolated,
                                     interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict, step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
+                                    mask=mask,
                                     bayes_bool=bayes_bool,
                                     bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
@@ -710,8 +713,9 @@ class Luci():
             if bkg is not None:
                 sky -= bkg  # Subtract background spectrum
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
-        sky = sky[good_sky_inds]  # Apply clean to sky
-        axis = self.spectrum_axis[good_sky_inds]  # Apply clean to axis
+        sky = sky[~np.isnan(sky)]  # Apply clean to sky
+        axis = self.spectrum_axis[~np.isnan(sky)]  # Apply clean to axis
+
         # Call fit!
         fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                   self.model_ML, trans_filter=self.transmission_interpolated,
@@ -774,10 +778,10 @@ class Luci():
                         sky -= bkg * binning ** 2  # Subtract background spectrum
                     else:
                         sky -= bkg  # Subtract background spectrum
-                good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
-                integrated_spectrum += sky[good_sky_inds]
+                good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
+                integrated_spectrum += sky[~np.isnan(sky)]
                 if spec_ct == 0:
-                    axis = self.spectrum_axis[good_sky_inds]
+                    axis = self.spectrum_axis[~np.isnan(sky)]
                     spec_ct += 1
         if mean:
             integrated_spectrum /= spec_ct
@@ -902,7 +906,8 @@ class Luci():
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
             integrated_spectrum -= bkg * spec_ct  # Subtract background spectrum
-        good_sky_inds = ~np.isnan(integrated_spectrum) # Clean up spectrum
+        good_sky_inds = ~np.isnan(integrated_spectrum)  # Clean up spectrum
+
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
         # Call fit!
