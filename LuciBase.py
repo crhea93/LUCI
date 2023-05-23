@@ -715,6 +715,7 @@ class Luci():
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
         sky = sky[~np.isnan(sky)]  # Apply clean to sky
         axis = self.spectrum_axis[~np.isnan(sky)]  # Apply clean to axis
+
         # Call fit!
         fit = Fit(sky, axis, self.wavenumbers_syn, fit_function, lines, vel_rel, sigma_rel,
                   self.model_ML, trans_filter=self.transmission_interpolated,
@@ -906,6 +907,7 @@ class Luci():
         if bkg is not None:
             integrated_spectrum -= bkg * spec_ct  # Subtract background spectrum
         good_sky_inds = ~np.isnan(integrated_spectrum)  # Clean up spectrum
+
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
         # Call fit!

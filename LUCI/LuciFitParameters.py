@@ -68,6 +68,8 @@ def calculate_broad(ind, fit_sol, axis_step):
     where :math:`fit\_sigma` is the gaussian broadening parameter found in the fit,
     and :math:`fit\_vel` is the shifted position of the line in units of cm-1.
 
+    Note that we do NOT multiply by the axis_step. This kind of correction should have been done already in ORB!
+
     Args:
         ind: Index of line in lines
         fit_sol: Solution from fitting algorithm
@@ -75,12 +77,12 @@ def calculate_broad(ind, fit_sol, axis_step):
     Return:
         Velocity Dispersion of the Halpha line in units of km/s
     """
-    #print(fit_sol[3*ind+2])
-    if fit_sol[3 * ind + 1] > 0:
-        broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
+
+    if fit_sol[3*ind+1] > 0:
+        broad = (SPEED_OF_LIGHT * fit_sol[3*ind+2]) / fit_sol[3*ind+1]
     else:
         broad = 0
-    return np.abs(broad)
+    return np.abs(broad) 
 
 
 
@@ -102,6 +104,7 @@ def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
         broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
         uncertainty_prop = np.sqrt((uncertainties[3 * ind + 2] / fit_sol[3 * ind + 2]) ** 2 + (
                     uncertainties[3 * ind + 1] / fit_sol[3 * ind + 1]) ** 2)
+
         return broad * uncertainty_prop
     else:
         return 0
