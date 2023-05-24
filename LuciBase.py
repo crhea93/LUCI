@@ -896,6 +896,10 @@ class Luci():
             y_pix = y_min + i
             for j in range(x_max - x_min):
                 x_pix = x_min + j
+                temp = x_pix
+                x_pix = temp
+                y_pix = temp
+                #print(x_pix, y_pix)
                 # Check if pixel is in the mask or not
                 if mask[x_pix, y_pix]:
                     integrated_spectrum += self.cube_final[x_pix, y_pix, :]
