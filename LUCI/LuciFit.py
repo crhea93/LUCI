@@ -433,11 +433,11 @@ class Fit:
         # clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
         min_ = np.argmin(np.abs(np.array(self.axis) - min_))
         max_ = np.argmin(np.abs(np.array(self.axis) - max_))
-        clipped_spec = astrostats.sigma_clip(self.spectrum[min_:max_], sigma=sigma_level,
+        clipped_spec = astrostats.sigma_clip(self.spectrum_normalized[min_:max_], sigma=sigma_level,
                                              masked=False, copy=False,
                                              maxiters=3, stdfunc=astrostats.mad_std)
         if len(clipped_spec) < 1:
-            clipped_spec = self.spectrum
+            clipped_spec = self.spectrum_normalized
         # Now take the minimum value to serve as the continuum value
         cont_val = np.nanmedian(clipped_spec)
         return cont_val
@@ -805,16 +805,17 @@ class Fit:
                     initial[3 * mod] = self.spectrum_normalized[line_ind]
                 initial[3 * mod + 1] = 1e7 / ((80 * (skylines_vals[mod]) / SPEED_OF_LIGHT) + skylines_vals[mod])
                 initial[3 * mod + 2] = .01
-            initial[-1] = self.cont_estimate(sigma_level=2)
+            initial[-1] = self.cont_estimate(sigma_level=1)
+            #print(initial)
             # self.initial_values = initial
-            #sigma_cons = self.sigma_constraints()  # Call sigma constaints
-            #vel_cons = self.vel_constraints()  # Call velocity constraints
+            sigma_cons = self.sigma_constraints()  # Call sigma constaints
+            vel_cons = self.vel_constraints()  # Call velocity constraints
             cons = self.amplitude_constraint()
             soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False , 'maxiter': 200},
                             tol=1e-8, jac="3-point", hess='3-point',
-                            args=()#, constraints=cons
+                            args=(), constraints=cons
                             )
             parameters = soln.x
             if self.uncertainty_bool:
