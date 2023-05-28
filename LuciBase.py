@@ -19,6 +19,7 @@ from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function, bin_mask
 from LUCI.LuciWVT import *
+from LUCI.LuciPlotting import plot_fit
 from LUCI.LuciVisualize import visualize as LUCIvisualize
 import multiprocessing as mp
 import time
@@ -896,9 +897,6 @@ class Luci():
             y_pix = y_min + i
             for j in range(x_max - x_min):
                 x_pix = x_min + j
-                temp = x_pix
-                x_pix = temp
-                y_pix = temp
                 #print(x_pix, y_pix)
                 # Check if pixel is in the mask or not
                 if mask[x_pix, y_pix]:
@@ -909,7 +907,7 @@ class Luci():
         if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
-            integrated_spectrum -= bkg * spec_ct  # Subtract background spectrum
+            integrated_spectrum -= bkg #* spec_ct  # Subtract background spectrum
         good_sky_inds = ~np.isnan(integrated_spectrum)  # Clean up spectrum
 
         sky = integrated_spectrum[good_sky_inds]
@@ -1074,17 +1072,18 @@ class Luci():
         for line_ct, line_wvl in enumerate(sky_lines):
             sky_line_dict['OH_%i' % line_ct] = line_wvl
         # Calculate grid
-        x_min = 400
+        x_min = 200
         x_max = self.cube_final.shape[0] - x_min
         x_step = int(
             (x_max - x_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
-        y_min = 400
+        y_min = 200
         y_max = self.cube_final.shape[1] - y_min
         y_step = int(
             (y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         vel_grid = np.zeros((n_grid, n_grid))  # Initialize velocity grid
         vel_uncertainty_grid = np.zeros((n_grid, n_grid))
-        for x_grid in range(n_grid):  # Step through x steps
+
+        for x_grid in tqdm(range(n_grid)):  # Step through x steps
             for y_grid in range(n_grid):  # Step through y steps
                 # Collect spectrum in 10x10 region
                 x_center = x_min + int(0.5 * (x_step) * (x_grid + 1))
@@ -1094,7 +1093,7 @@ class Luci():
                     for j in range(bin_size):
                         integrated_spectrum += self.cube_final[x_center + i, y_center + i, :]
                 # Collapse to single spectrum
-                good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
+                good_sky_inds = ~np.isnan(integrated_spectrum) # Clean up spectrum
                 sky = integrated_spectrum[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
@@ -1104,11 +1103,13 @@ class Luci():
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
                           zpd_index=self.zpd_index, uncertainty_bool=True,
-                          filter=self.hdr_dict['FILTER'], bayes_bool=True, bayes_method='emcee',
+                          filter=self.hdr_dict['FILTER'], bayes_bool=False, bayes_method='emcee',
                           sky_lines=sky_line_dict, sky_lines_scale=sky_lines_scale
                           )
 
                 velocity, velocity_error, fit_vector = fit.fit(sky_line=True)
+                #plot_fit(axis, sky, fit_vector)
+                #plt.show()
                 vel_grid[x_grid, y_grid] = float(velocity)
                 vel_uncertainty_grid[x_grid, y_grid] = float(velocity_error)
         # Now that we have the grid, we need to reproject it onto the original pixel grid
@@ -1121,6 +1122,7 @@ class Luci():
                 vel_grid_final[x_center - x_step:x_center + x_step, y_center - y_step:y_center + y_step] = vel_grid[
                     x_grid, y_grid]
         fits.writeto(self.output_dir + '/velocity_correction.fits', vel_grid, self.header, overwrite=True)
+        #print(vel_grid)
         return velocity, fit_vector, sky, vel_grid, vel_uncertainty_grid, self.spectrum_axis
 
     def calculate_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
