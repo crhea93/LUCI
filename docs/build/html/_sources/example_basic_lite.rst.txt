@@ -72,7 +72,7 @@ Let's extract a background region and take a look at it. The background region i
 .. code-block:: python
 
   bkg_axis, bkg_sky = cube.extract_spectrum_region(cube_dir+'/bkg.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
-
+  lplt.plot_spectrum(bkg_axis, bkg_sky)
 
 We now fit part of our cube defined by the bounding box 500<x<1100 and 700<y<1300 with a Gaussian on the Halpha line, the NII-doublet, and the SII-doublet with a binning of 2.
 We are also going to constrain our velocities and sigmas. Furthermore, we will calculate uncertainties using the Hessian method. We can also run multiple threads with the `n_threads` argument.

@@ -60,6 +60,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
@@ -150,6 +151,7 @@ directory as the hdf5 file.</p>
 </div>
 <p>Let’s extract a background region and take a look at it. The background region is defined in a ds9 region file called <cite>bkg.reg</cite>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum_region</span><span class="p">(</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/bkg.reg&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># We use mean=True to take the mean of the emission in the region instead of the sum</span>
+<span class="n">lplt</span><span class="o">.</span><span class="n">plot_spectrum</span><span class="p">(</span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>We now fit part of our cube defined by the bounding box 500&lt;x&lt;1100 and 700&lt;y&lt;1300 with a Gaussian on the Halpha line, the NII-doublet, and the SII-doublet with a binning of 2.
