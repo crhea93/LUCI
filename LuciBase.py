@@ -774,7 +774,7 @@ class Luci():
                         sky -= bkg * binning ** 2  # Subtract background spectrum
                     else:
                         sky -= bkg  # Subtract background spectrum
-                good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
+                good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
                 integrated_spectrum += sky[good_sky_inds]
                 if spec_ct == 0:
                     axis = self.spectrum_axis[good_sky_inds]

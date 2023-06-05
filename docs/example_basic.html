@@ -222,6 +222,10 @@ can bin 2x2 regions as such:</p>
 </div>
 <p>The <cite>LUCI.LuciPlotting.plot_map</cite> function takes the map of interest, the name of the map (either ‘velocity’, ‘broadening’, or ‘flux’),
 and the output directory as arguments. Of course, we can also use simply <cite>matplotlib</cite> plotting functionality as well.</p>
+<p><cite>LUCI</cite> also has the abilitiy to restrict the wavelength region over which the fit is performed. So, for instance, if you only wish to fit
+Halpha and the NII-doublet, you can set restrict the wavelength to be between 15000 and 15250 cm^-1^ by adding two
+arguments to your fit function: <cite>spec_min</cite> and <cite>spec_max</cite>. Note that these values need to be in wavenumber. We have seen, in
+some cases of low signal-to-noise, that adding this restriction helps the fit algorithm.</p>
 <p>For clarity, we reproduce the commands required to obtain fits here:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Luci_path</span> <span class="o">=</span> <span class="s1">&#39;/media/carterrhea/carterrhea/SIGNALS/LUCI/&#39;</span>  <span class="c1"># Path to Luci</span>
 <span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/media/carterrhea/carterrhea/M33&#39;</span>  <span class="c1"># Path to data cube</span>

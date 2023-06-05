@@ -171,6 +171,13 @@ We can now visualize our fits with our specialized plotting functionality:
 The `LUCI.LuciPlotting.plot_map` function takes the map of interest, the name of the map (either 'velocity', 'broadening', or 'flux'),
 and the output directory as arguments. Of course, we can also use simply `matplotlib` plotting functionality as well.
 
+`LUCI` also has the abilitiy to restrict the wavelength region over which the fit is performed. So, for instance, if you only wish to fit
+Halpha and the NII-doublet, you can set restrict the wavelength to be between 15000 and 15250 cm^-1^ by adding two
+arguments to your fit function: `spec_min` and `spec_max`. Note that these values need to be in wavenumber. We have seen, in
+some cases of low signal-to-noise, that adding this restriction helps the fit algorithm.
+
+
+
 For clarity, we reproduce the commands required to obtain fits here:
 
 .. code-block:: python
