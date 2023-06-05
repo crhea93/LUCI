@@ -700,13 +700,13 @@ class Luci():
         """
         sky = None
         if bin is not None and bin != 1:  # If data is binned
-            sky = self.cube_final[pixel_x - bin:pixel_x + bin, pixel_y - bin:pixel_y + bin, :]
+            sky = np.copy(self.cube_final[pixel_x - bin:pixel_x + bin, pixel_y - bin:pixel_y + bin, :])
             sky = np.nansum(sky, axis=0)
             sky = np.nansum(sky, axis=0)
             if bkg is not None:
                 sky -= bkg * (2 * bin) ** 2  # Subtract background times number of pixels
         else:
-            sky = self.cube_final[pixel_x, pixel_y, :]
+            sky = np.copy(self.cube_final[pixel_x, pixel_y, :])
             if bkg is not None:
                 sky -= bkg  # Subtract background spectrum
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
