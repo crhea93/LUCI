@@ -5,7 +5,7 @@ Collection of plotting functions
 import matplotlib.pyplot as plt
 from astropy.wcs import WCS
 import numpy as np
-
+import seaborn as sns
 
 
 def set_style(dark):
@@ -77,7 +77,7 @@ def plot_fit(axis, spectrum, fit, ax=None, units='cm-1', output_name=None, fig_s
     return ax
 
 
-def plot_map(quantity_map, quantity_name, object_name='', filter_name='', output_dir='', header=None, clims=None, fig_size=(10, 8), dark=False, **kwargs):
+def plot_map(quantity_map, quantity_name, output_dir='', header=None, object_name='', filter_name='', clims=None, fig_size=(10, 8), dark=False, **kwargs):
     """
     Function to plot fit map. The three options are 'flux', 'velocity', and 'broadening'.
     The flux map is automatically scaled by log10. The velocity and broadening are not.
@@ -121,10 +121,13 @@ def plot_map(quantity_map, quantity_name, object_name='', filter_name='', output
     wcs = WCS(header)
     plot_style = set_style(dark)
     fig = plt.figure(figsize=fig_size)
-    ax = plt.subplot(projection=wcs)
-    ax.coords[0].set_major_formatter('hh:mm:ss')
-    ax.coords[1].set_major_formatter('dd:mm:ss')
-    plt.imshow(quantity_map, cmap='magma', **kwargs)
+    try:
+        ax = plt.subplot(projection=wcs)
+        ax.coords[0].set_major_formatter('hh:mm:ss')
+        ax.coords[1].set_major_formatter('dd:mm:ss')
+    except (AttributeError, ValueError):
+        pass
+    plt.imshow(quantity_map, cmap='mako', **kwargs)
     plt.title((quantity_name + ' map').upper(), fontsize=26, fontweight='bold')
     plt.xlabel("RA", fontsize=20, fontweight='bold')
     plt.ylabel("DEC", fontsize=20, fontweight='bold')
@@ -133,6 +136,7 @@ def plot_map(quantity_map, quantity_name, object_name='', filter_name='', output
     cbar = plt.colorbar(fraction=0.046, pad=0.04)
     plt.clim(c_min, c_max)
     cbar.ax.set_ylabel(units[quantity_name], rotation=270, labelpad=25, fontsize=20, fontweight='bold')
+    print(output_dir, object_name, filter, quantity_name)
     plt.savefig(output_dir + '/' +object_name+'_'+filter_name+'_'+ quantity_name + '_map.png')
     return None
 

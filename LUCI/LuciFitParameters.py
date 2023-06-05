@@ -77,11 +77,15 @@ def calculate_broad(ind, fit_sol, axis_step):
     Return:
         Velocity Dispersion of the Halpha line in units of km/s
     """
-    if fit_sol[3*ind+1] > 0:
-        broad = (SPEED_OF_LIGHT * fit_sol[3*ind+2]) / fit_sol[3*ind+1]
-    else:
+    #print(fit_sol[3*ind+2])
+    try:
+        if fit_sol[3 * ind + 1] > 0:
+            broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
+        else:
+            broad = 0
+    except:
         broad = 0
-    return np.abs(broad) 
+    return np.abs(broad)
 
 
 
@@ -99,11 +103,15 @@ def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
     Return:
         Velocity Dispersion of the Halpha line in units of km/s
     """
-    if fit_sol[3*ind+1] > 0 and fit_sol[3*ind+2] > 0:
-        broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
-        uncertainty_prop = np.sqrt((uncertainties[3*ind+2]/fit_sol[3*ind+2])**2 + (uncertainties[3*ind+1]/fit_sol[3*ind+1])**2)
-        return broad * uncertainty_prop
-    else:
+    try:
+        if fit_sol[3 * ind + 1] > 0 and fit_sol[3 * ind + 2] > 0:
+            broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
+            uncertainty_prop = np.sqrt((uncertainties[3 * ind + 2] / fit_sol[3 * ind + 2]) ** 2 + (
+                        uncertainties[3 * ind + 1] / fit_sol[3 * ind + 1]) ** 2)
+            return broad * uncertainty_prop
+        else:
+            return 0
+    except:
         return 0
 
 

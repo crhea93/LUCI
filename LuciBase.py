@@ -19,6 +19,7 @@ from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function, bin_mask
 from LUCI.LuciWVT import *
+from LUCI.LuciPlotting import plot_fit
 from LUCI.LuciVisualize import visualize as LUCIvisualize
 import multiprocessing as mp
 import time
@@ -563,8 +564,9 @@ class Luci():
         y_min = 0
         y_max = self.cube_final.shape[1]
         cube_to_slice = self.cube_final  # Set cube for slicing
+        mask = None  # Initialize
         # Initialize fit solution arrays
-        if binning != None and binning > 1:
+        if binning != None and binning > 1:  # Bin if we need to
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
                           y_max)
             x_max = int((x_max - x_min) / binning)
@@ -573,20 +575,19 @@ class Luci():
             y_min = 0
             cube_to_slice = self.cube_binned
         # Create mask
-        if '.reg' in region:
-            # shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
+        if '.reg' in region:  # If passed a .reg file
             if binning != None and binning > 1:
                 header = self.header_binned
             else:
                 header = self.header
-            header.set('NAXIS1', 2064)
+            header.set('NAXIS1', 2064)  # Need this for astropy
             header.set('NAXIS2', 2048)
             mask = reg_to_mask(region, header)
-        elif '.npy' in region:
+        elif '.npy' in region:  # If passed numpy file
             mask = np.load(region).T
-        elif region is not None:
+        elif region is not None:  # If passed numpy array
             mask = region.T
-        else:
+        else:  # Not passed a mask in any of the correct formats
             print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         if binning != None and binning > 1:
             mask = bin_mask(mask, binning, x_min, self.cube_final.shape[0], y_min, self.cube_final.shape[1])  # Bin Mask
@@ -642,6 +643,7 @@ class Luci():
                                     spectrum_axis=self.spectrum_axis, wavenumbers_syn=self.wavenumbers_syn,model_ML=self.model_ML,
                                     transmission_interpolated=self.transmission_interpolated,
                                     interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict, step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
+                                    mask=mask,
                                     bayes_bool=bayes_bool,
                                     bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons, initial_values=[vel_init, broad_init],
@@ -700,13 +702,13 @@ class Luci():
         """
         sky = None
         if bin is not None and bin != 1:  # If data is binned
-            sky = np.copy(self.cube_final[pixel_x - bin:pixel_x + bin, pixel_y - bin:pixel_y + bin, :])
+            sky = self.cube_final[pixel_x - bin:pixel_x + bin, pixel_y - bin:pixel_y + bin, :]
             sky = np.nansum(sky, axis=0)
             sky = np.nansum(sky, axis=0)
             if bkg is not None:
                 sky -= bkg * (2 * bin) ** 2  # Subtract background times number of pixels
         else:
-            sky = np.copy(self.cube_final[pixel_x, pixel_y, :])
+            sky = self.cube_final[pixel_x, pixel_y, :]
             if bkg is not None:
                 sky -= bkg  # Subtract background spectrum
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
@@ -775,9 +777,9 @@ class Luci():
                     else:
                         sky -= bkg  # Subtract background spectrum
                 good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
-                integrated_spectrum += sky[good_sky_inds]
+                integrated_spectrum += sky[~np.isnan(sky)]
                 if spec_ct == 0:
-                    axis = self.spectrum_axis[good_sky_inds]
+                    axis = self.spectrum_axis[~np.isnan(sky)]
                     spec_ct += 1
         if mean:
             integrated_spectrum /= spec_ct
@@ -901,8 +903,9 @@ class Luci():
         if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
-            integrated_spectrum -= bkg * spec_ct  # Subtract background spectrum
-        good_sky_inds = ~np.isnan(integrated_spectrum) # Clean up spectrum
+            integrated_spectrum -= bkg #* spec_ct  # Subtract background spectrum
+        good_sky_inds = ~np.isnan(integrated_spectrum)  # Clean up spectrum
+
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
         # Call fit!
@@ -1065,17 +1068,18 @@ class Luci():
         for line_ct, line_wvl in enumerate(sky_lines):
             sky_line_dict['OH_%i' % line_ct] = line_wvl
         # Calculate grid
-        x_min = 400
+        x_min = 200
         x_max = self.cube_final.shape[0] - x_min
         x_step = int(
             (x_max - x_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
-        y_min = 400
+        y_min = 200
         y_max = self.cube_final.shape[1] - y_min
         y_step = int(
             (y_max - y_min) / n_grid)  # Calculate step size based on min and max values and the number of grid points
         vel_grid = np.zeros((n_grid, n_grid))  # Initialize velocity grid
         vel_uncertainty_grid = np.zeros((n_grid, n_grid))
-        for x_grid in range(n_grid):  # Step through x steps
+
+        for x_grid in tqdm(range(n_grid)):  # Step through x steps
             for y_grid in range(n_grid):  # Step through y steps
                 # Collect spectrum in 10x10 region
                 x_center = x_min + int(0.5 * (x_step) * (x_grid + 1))
@@ -1085,7 +1089,7 @@ class Luci():
                     for j in range(bin_size):
                         integrated_spectrum += self.cube_final[x_center + i, y_center + i, :]
                 # Collapse to single spectrum
-                good_sky_inds = [~np.isnan(integrated_spectrum)]  # Clean up spectrum
+                good_sky_inds = ~np.isnan(integrated_spectrum) # Clean up spectrum
                 sky = integrated_spectrum[good_sky_inds]
                 axis = self.spectrum_axis[good_sky_inds]
                 # Call fit!
@@ -1095,7 +1099,7 @@ class Luci():
                           theta=self.interferometer_theta[x_center, y_center],
                           delta_x=self.hdr_dict['STEP'], n_steps=self.step_nb,
                           zpd_index=self.zpd_index, uncertainty_bool=True,
-                          filter=self.hdr_dict['FILTER'], bayes_bool=True, bayes_method='emcee',
+                          filter=self.hdr_dict['FILTER'], bayes_bool=False, bayes_method='emcee',
                           sky_lines=sky_line_dict, sky_lines_scale=sky_lines_scale
                           )
 
