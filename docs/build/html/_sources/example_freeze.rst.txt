@@ -1,7 +1,10 @@
 .. _example_freeze:
 
+Example Freeze
+==============
+
 How to use LUCI with frozen parameters
-======================================
+--------------------------------------
 
 In this example we will go through how to fit a spectrum with frozen velocity and broadening parameters. This may
 be useful if you want to say fit the Halpha + NII complex to calculate the velocity and broadening of the gas -- then you

@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>How to use LUCI with frozen parameters &mdash; LUCI v.1.0.0 documentation</title>
+  <title>Example Freeze &mdash; LUCI v.1.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
@@ -17,7 +17,9 @@
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Fitting Algorithm" href="fits.html" />
+    <link rel="prev" title="WVT Example" href="example_wvt.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,7 +51,7 @@
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
@@ -63,6 +65,11 @@
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Example Freeze</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-use-luci-with-frozen-parameters">How to use LUCI with frozen parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#inputs">Inputs</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -91,7 +98,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">How to use LUCI with frozen parameters</li>
+      <li class="breadcrumb-item active">Example Freeze</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/example_freeze.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -101,8 +108,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="how-to-use-luci-with-frozen-parameters">
-<span id="example-freeze"></span><h1>How to use LUCI with frozen parameters<a class="headerlink" href="#how-to-use-luci-with-frozen-parameters" title="Permalink to this heading"></a></h1>
+  <section id="example-freeze">
+<span id="id1"></span><h1>Example Freeze<a class="headerlink" href="#example-freeze" title="Permalink to this heading"></a></h1>
+<section id="how-to-use-luci-with-frozen-parameters">
+<h2>How to use LUCI with frozen parameters<a class="headerlink" href="#how-to-use-luci-with-frozen-parameters" title="Permalink to this heading"></a></h2>
 <p>In this example we will go through how to fit a spectrum with frozen velocity and broadening parameters. This may
 be useful if you want to say fit the Halpha + NII complex to calculate the velocity and broadening of the gas – then you
 can use these values to constrain a fit on the SII doublet which is frequently weaker.</p>
@@ -115,6 +124,7 @@ can use these values to constrain a fit on the SII doublet which is frequently w
 <span class="kn">from</span> <span class="nn">LuciBase</span> <span class="kn">import</span> <span class="n">Luci</span>
 </pre></div>
 </div>
+</section>
 <section id="inputs">
 <h2>Inputs<a class="headerlink" href="#inputs" title="Permalink to this heading"></a></h2>
 <p>We simply need to load our LUCI cube like usual :) So we start by defining the path, the name of the cube,
@@ -176,7 +186,10 @@ values found here to fit the SII-doublet.</p>
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="example_wvt.html" class="btn btn-neutral float-left" title="WVT Example" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fits.html" class="btn btn-neutral float-right" title="Fitting Algorithm" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

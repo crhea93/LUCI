@@ -122,6 +122,7 @@ Examples
        example_double_fit
        example_visualize
        example_wvt
+       example_freeze
 
 
 

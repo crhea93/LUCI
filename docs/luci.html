@@ -65,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">How to use LUCI with frozen parameters</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
@@ -72,6 +73,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Core Functionality</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-LuciBase">Core Functions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#LuciBase.Luci"><code class="docutils literal notranslate"><span class="pre">Luci</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.ML_bool"><code class="docutils literal notranslate"><span class="pre">Luci.ML_bool</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.close"><code class="docutils literal notranslate"><span class="pre">Luci.close()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_background_subspace"><code class="docutils literal notranslate"><span class="pre">Luci.create_background_subspace()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_deep_image"><code class="docutils literal notranslate"><span class="pre">Luci.create_deep_image()</span></code></a></li>
@@ -146,6 +148,55 @@ functions in <cite>LuciFit.py</cite>.</p>
 <dd><p>This is the primary class for the general purpose line fitting code LUCI. This contains
 all io/administrative functionality. The fitting functionality can be found in the
 Fit class (Lucifit.py).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="LuciBase.Luci.ML_bool">
+<span class="sig-name descname"><span class="pre">ML_bool</span></span><a class="headerlink" href="#LuciBase.Luci.ML_bool" title="Permalink to this definition"></a></dt>
+<dd><dl>
+<dt>if ML_bool is True:</dt><dd><dl>
+<dt>if not self.mdn:</dt><dd><dl>
+<dt>if self.filter in [‘SN1’, ‘SN2’, ‘SN3’, ‘C4’, ‘C2’, ‘C3’, ‘C1’]:</dt><dd><p>self.ref_spec = self.Luci_path + ‘ML/Reference-Spectrum-R%i-%s.fits’ % (resolution, self.filter)
+self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,</p>
+<blockquote>
+<div><p>self.hdr_dict)</p>
+</div></blockquote>
+<dl class="simple">
+<dt>self.model_ML = keras.models.load_model(</dt><dd><p>self.Luci_path + ‘ML/R%i-PREDICTOR-I-%s’ % (resolution, self.filter))</p>
+</dd>
+</dl>
+</dd>
+<dt>else:</dt><dd><dl class="simple">
+<dt>print(</dt><dd><p>‘LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.’)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt>else:  # mdn == True</dt><dd><dl>
+<dt>if self.filter in [‘SN3’]:</dt><dd><p>self.ref_spec = self.Luci_path + ‘ML/Reference-Spectrum-R%i-%s.fits’ % (resolution, self.filter)
+self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,</p>
+<blockquote>
+<div><p>self.hdr_dict)</p>
+</div></blockquote>
+<p>self.model_ML = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
+self.model_ML.load_weights(self.Luci_path + ‘ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s’ % (</p>
+<blockquote>
+<div><p>resolution, self.filter, resolution, self.filter))</p>
+</div></blockquote>
+</dd>
+<dt>else:</dt><dd><dl class="simple">
+<dt>print(</dt><dd><p>‘LUCI does not support machine learning parameter estimates using a MDN for the filter you entered. Please set ML_bool=False or mdn=False.’)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt>else:</dt><dd><p>self.model_ML = None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.close">
 <span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.close" title="Permalink to this definition"></a></dt>
@@ -266,6 +317,7 @@ For each pixel,</p>
 </div></blockquote>
 <p>In the end, we have a detection map of the maximum values.</p>
 <p>If no bounds are added, we calculate over the entire map</p>
+<p>Louis-Simon Guité</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -326,7 +378,7 @@ or the averaged spectrum for background spectra (True).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_calc">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fit_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cube_slice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_ML</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transmission_interpolated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interferometer_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdr_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_nb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zpd_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_calc" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fit_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cube_slice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transmission_interpolated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interferometer_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdr_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_nb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zpd_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Luci_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_calc" title="Permalink to this definition"></a></dt>
 <dd><p>Function for calling fit for a given y coordinate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -341,9 +393,9 @@ or the averaged spectrum for background spectra (True).</p>
 <li><p><strong>y_min</strong> – Lower bound in y</p></li>
 <li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
 <li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+<li><p><strong>ML_bool</strong> – Boolean to determione whether or not we use ML priors</p></li>
 <li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default False)</p></li>
-<li><p><strong>'</strong><strong>[</strong><strong>emcee'</strong> (<em>bayes_method = Bayesian Inference method. Options are</em>) – </p></li>
-<li><p><strong>'dynesty'</strong><strong>]</strong> (<em>default 'emcee'</em>) – </p></li>
+<li><p><strong>bayes_method</strong> – Bayesian Inference method. Options are ‘[emcee’, ‘dynesty’] (default ‘emcee’)</p></li>
 <li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
 <li><p><strong>nii_cons</strong> – Boolean to turn on or off NII doublet ratio constraint (default True)</p></li>
 <li><p><strong>initial_values</strong> – List of files containing initial conditions (default False)</p></li>
