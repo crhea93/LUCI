@@ -58,6 +58,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
@@ -131,6 +132,44 @@ the name of the object, the resolution (which isn’t actually used here), and t
 <span class="n">lplt</span><span class="o">.</span><span class="n">plot_spectrum</span><span class="p">(</span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Now let’s go ahead and fit the Halpha complex (i.e. Halpha and NII-doublet). We will use the velocity and broadening
+values found here to fit the SII-doublet.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">ampls_map</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">],</span> <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
+                                                    <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+                                                    <span class="mi">1200</span><span class="p">,</span> <span class="mi">1350</span><span class="p">,</span> <span class="mi">1700</span><span class="p">,</span> <span class="mi">1900</span><span class="p">,</span>
+                                                    <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                                    <span class="n">uncertainty_bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">1</span>
+                                                   <span class="p">)</span>
+</pre></div>
+</div>
+<p>Let’s take a look at our flux, velocity, and broadening maps.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">17</span><span class="p">,</span> <span class="o">-</span><span class="mi">14</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="Flux" src="_images/Freeze1.png" />
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">vel_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="Velocity" src="_images/Freeze2.png" />
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">broad_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;broadening&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">30</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="Broadening" src="_images/Freeze3.png" />
+<p>Now let’s fit the SII-doublet using the previously calculated velocity and broadening as constraints.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map_fr</span><span class="p">,</span> <span class="n">broad_map_fr</span><span class="p">,</span> <span class="n">flux_map_fr</span><span class="p">,</span> <span class="n">ampls_fr</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s2">&quot;SII6716&quot;</span><span class="p">,</span> <span class="s2">&quot;SII6731&quot;</span><span class="p">],</span> <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
+                                                    <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+                                                    <span class="mi">1200</span><span class="p">,</span> <span class="mi">1350</span><span class="p">,</span> <span class="mi">1700</span><span class="p">,</span> <span class="mi">1900</span><span class="p">,</span>
+                                                    <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                                    <span class="n">uncertainty_bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                                    <span class="n">initial_values</span><span class="o">=</span><span class="p">[</span><span class="n">vel_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">broad_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]]</span>
+                                                   <span class="p">)</span>
+</pre></div>
+</div>
+<p>And we can see that the velocity is in fact being held constant by checking out the resulting velocity map!</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">vel_map_fr</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="Velocity Frozen" src="_images/Freeze4.png" />
 </section>
 </section>
 

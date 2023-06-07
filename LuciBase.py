@@ -515,7 +515,7 @@ class Luci():
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits,
                   cutout.wcs.to_header(), binning)
 
-        return velocities_fits, broadenings_fits, flux_fits, chi2_fits
+        return velocities_fits, broadenings_fits, flux_fits, ampls_fits
 
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
                    bkg=None, binning=None, bayes_bool=False, bayes_method='emcee',

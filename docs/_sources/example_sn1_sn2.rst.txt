@@ -59,7 +59,7 @@ We are also going to constrain our velocities and sigmas.
 .. code-block:: python
 
     # Fit!
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['OII3726', 'OII3729'], 'gaussian', [1,1], [1,1], 500, 1100, 700, 1300, bkg=bkg_sky, binning=2)
+    vel_map, broad_map, flux_map, ampls_map = cube.fit_cube(['OII3726', 'OII3729'], 'gaussian', [1,1], [1,1], 500, 1100, 700, 1300, bkg=bkg_sky, binning=2)
 
 The output should look something like this:
 
@@ -70,7 +70,7 @@ Let's take a look at the velocity map. We can play with the colorbar limits with
 
 .. code-block:: python
 
-    lplt.plot_map(flux_map[:,:,0], 'flux', cube_dir, cube.header, clims=[1e-17, 3e-16])
+    lplt.plot_map(flux_map[:,:,0], 'flux', output_dir=cube_dir, header=cube.header, clims=[1e-17, 3e-16])
 
 And let's see what this looks like!
 
@@ -120,7 +120,7 @@ We are also going to constrain our velocities and sigmas.
 .. code-block:: python
 
     # Fit!
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['OIII4959', 'OIII5007', 'Hbeta'], 'gaussian', [1,1,1], [1,1,1], 500, 1100, 700, 1300, bkg=bkg_sky, binning=2)
+    vel_map, broad_map, flux_map, ampls_map = cube.fit_cube(['OIII4959', 'OIII5007', 'Hbeta'], 'gaussian', [1,1,1], [1,1,1], 500, 1100, 700, 1300, bkg=bkg_sky, binning=2)
 
 The output should look something like this:
 
@@ -131,7 +131,7 @@ Let's take a look at the velocity map. We can play with the colorbar limits with
 
 .. code-block:: python
 
-    lplt.plot_map(flux_map[:,:,0], 'flux', cube_dir, cube.header, clims=[1e-17, 3e-16])
+    lplt.plot_map(flux_map[:,:,0], 'flux', output_dir=cube_dir, header=cube.header, clims=[1e-17, 3e-16])
 
 And let's see what this looks like!
 

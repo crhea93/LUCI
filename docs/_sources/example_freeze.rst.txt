@@ -43,3 +43,70 @@ As usual we will extract a background
 
     bkg_axis, bkg_sky = cube.extract_spectrum_region(cube_dir+'/bkg.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
     lplt.plot_spectrum(bkg_axis, bkg_sky)
+
+
+Now let's go ahead and fit the Halpha complex (i.e. Halpha and NII-doublet). We will use the velocity and broadening
+values found here to fit the SII-doublet.
+
+.. code-block:: python
+
+    vel_map, broad_map, flux_map, ampls_map = cube.fit_cube(['Halpha', 'NII6583', 'NII6548'], 'sincgauss',
+                                                        [1,1,1], [1,1,1],
+                                                        1200, 1350, 1700, 1900,
+                                                        bkg=bkg_sky, binning=1,
+                                                        uncertainty_bool=False, n_threads=1
+                                                       )
+
+
+Let's take a look at our flux, velocity, and broadening maps.
+
+.. code-block:: python
+
+    lplt.plot_map(flux_map[:,:,0], 'flux', cube_dir, cube.header, clims=[-17, -14])
+
+
+.. image:: Freeze1.png
+    :alt: Flux
+
+
+.. code-block:: python
+
+    lplt.plot_map(vel_map[:,:,0], 'velocity', cube_dir, cube.header, clims=[-100,100])
+
+
+
+.. image:: Freeze2.png
+    :alt: Velocity
+
+
+.. code-block:: python
+
+    lplt.plot_map(broad_map[:,:,0], 'broadening', cube_dir, cube.header, clims=[0,30])
+
+
+.. image:: Freeze3.png
+    :alt: Broadening
+
+
+Now let's fit the SII-doublet using the previously calculated velocity and broadening as constraints.
+
+.. code-block:: python
+
+    vel_map_fr, broad_map_fr, flux_map_fr, ampls_fr = cube.fit_cube(["SII6716", "SII6731"], 'sincgauss',
+                                                        [1,1], [1,1],
+                                                        1200, 1350, 1700, 1900,
+                                                        bkg=bkg_sky, binning=1,
+                                                        uncertainty_bool=False, n_threads=1,
+                                                        initial_values=[vel_map[:,:,0], broad_map[:,:,0]]
+                                                       )
+
+And we can see that the velocity is in fact being held constant by checking out the resulting velocity map!
+
+.. code-block:: python
+
+    lplt.plot_map(vel_map_fr[:,:,0], 'velocity', cube_dir, cube.header, clims=[-100,100])
+
+
+
+.. image:: Freeze4.png
+    :alt: Velocity Frozen

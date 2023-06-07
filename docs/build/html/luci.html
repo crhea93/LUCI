@@ -73,6 +73,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-LuciBase">Core Functions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#LuciBase.Luci"><code class="docutils literal notranslate"><span class="pre">Luci</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.close"><code class="docutils literal notranslate"><span class="pre">Luci.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_background_subspace"><code class="docutils literal notranslate"><span class="pre">Luci.create_background_subspace()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_deep_image"><code class="docutils literal notranslate"><span class="pre">Luci.create_deep_image()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_snr_map"><code class="docutils literal notranslate"><span class="pre">Luci.create_snr_map()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_wvt"><code class="docutils literal notranslate"><span class="pre">Luci.create_wvt()</span></code></a></li>
@@ -149,6 +150,44 @@ Fit class (Lucifit.py).</p>
 <dt class="sig sig-object py" id="LuciBase.Luci.close">
 <span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.close" title="Permalink to this definition"></a></dt>
 <dd><p>Functionality to delete Luci object (and thus the cube) from memory</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.create_background_subspace">
+<span class="sig-name descname"><span class="pre">create_background_subspace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1900</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1900</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg_image</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'deep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components_keep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_background_subspace" title="Permalink to this definition"></a></dt>
+<dd><p>This function will create a subspace of principal components describing the background emission. It will then interpolate
+the background eigenvectors over the entire field. Please see our paper () describing this methodology in detail.
+After running this code, <cite>LUCI</cite> will create a fits file containing the PCA coefficients for each pixel in the FOV which
+can then be used in other fitting functions by setting the optional argument <cite>bkg</cite> to <cite>PCA</cite>. <cite>LUCI</cite> will also save a
+numpy file with the principal components.
+We also create 3 plots that are saved in <cite>self.output_dir</cite>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Map of background pixels in FOV</p></li>
+<li><p>Visualization of first 10 principal components and mean</p></li>
+<li><p>Scree plot</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min</strong> – Minimum x value (image coordinates) for segmentation region (Default 100)</p></li>
+<li><p><strong>x_max</strong> – Maximum x value (image coordinates) for segmentation region (Default 1900)</p></li>
+<li><p><strong>y_min</strong> – Minimum y value (image coordinates) for segmentation region (Default 100)</p></li>
+<li><p><strong>y_max</strong> – Maximum y value (image coordinates) for segmentation region (Default 1900)</p></li>
+<li><p><strong>bkg_image</strong> – 2D image used for background thresholding (Default deep image). Pass fits file.</p></li>
+<li><p><strong>n_components</strong> – Number of principal components to calculate (Default 50)</p></li>
+<li><p><strong>n_components_keep</strong> – Number of principal components to keep (Default n_components)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Fits file containing the PCA coefficients over the FOV
+PCA_eigenspectra: Numpy file containing the PCA eigenspectra</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>PCA_coeffs</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">

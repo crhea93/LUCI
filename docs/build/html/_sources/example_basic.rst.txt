@@ -119,7 +119,7 @@ The first option, `fit_cube`, fits a rectangular region of the cube and is invok
 
 .. code-block:: python
 
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(line_list, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
+    vel_map, broad_map, flux_map, ampls_map = cube.fit_cube(line_list, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
 
 line_list is a list of lines to fit (e.x. ['Halpha']), fit function is the fitting function to be used (e.x. 'gaussian'), and the remaining
 arguments are the x and y bounds (respectively) of the bounding box. The vel_rel parameter describes the relational constraints between the lines. For example,
@@ -130,7 +130,7 @@ For example if we want to fit the three lines in SN3 with all their parameters t
 
 .. code-block:: python
 
-        vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300)
+        vel_map, broad_map, flux_map, ampls_map = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300)
 
 This final command fits the regions and saves the velocity, velocity dispersion (broadening), amplitude, flux, and fit statistic (chi-squared)
 maps in the output directory defined above. Additionally, it returns the velocity, velocity dispersion, flux, and fit statistics maps for plotting purposes.
@@ -139,14 +139,14 @@ To fit the entire cube, we would simply run the following instead:
 
 .. code-block:: python
 
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_entire_cube(line_list, fit_function)
+    vel_map, broad_map, flux_map, ampls_map = cube.fit_entire_cube(line_list, fit_function)
 
 
 Or we can fit an entire region
 
 .. code-block:: python
 
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_region(line_list, fit_function, region_file)
+    vel_map, broad_map, flux_map, ampls_map = cube.fit_region(line_list, fit_function, region_file)
 
 where `region_file` is the path to the ds9 region file save in **fk5** coordinates.
 
@@ -157,7 +157,7 @@ can bin 2x2 regions as such:
 
 .. code-block:: python
 
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha'], 'gaussian', 1300, 1400, 550, 650, binning=2)
+    vel_map, broad_map, flux_map, ampls_map = cube.fit_cube(['Halpha'], 'gaussian', 1300, 1400, 550, 650, binning=2)
 
 And with those few lines, we have read in our data cube, created a *deep image* and fit the cube.
 
@@ -193,4 +193,4 @@ For clarity, we reproduce the commands required to obtain fits here:
 
     cube.create_deep_image()
 
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300)
+    vel_map, broad_map, flux_map, ampls_map = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300)
