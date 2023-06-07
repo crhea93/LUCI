@@ -1,27 +1,27 @@
 import numpy as np
 from scipy.optimize import minimize
 from scipy import interpolate
-from numdifftools import Hessian, Hessdiag
 import emcee
 import scipy.special as sps
 import astropy.stats as astrostats
 import warnings
 import dynesty
 from dynesty import utils as dyfunc
-import tensorflow as tf
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
     calculate_flux, calculate_flux_err
 from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
 from LUCI.LuciUtility import hessianComp
-warnings.filterwarnings("ignore")
 from numba import jit
 import matplotlib.pyplot as plt
 import os
 import logging
+import keras
+from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
-from scipy.optimize import SR1
+warnings.filterwarnings("ignore")
+
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
 
@@ -46,13 +46,14 @@ class Fit:
     more details on the implementation.
     """
 
-    def __init__(self, spectrum, axis, wavenumbers_syn, model_type, lines, vel_rel, sigma_rel,
-                 ML_model, trans_filter=None,
+    def __init__(self, spectrum, axis, wavenumbers_syn, model_type='sinc', lines=['Halpha'], vel_rel=[1], sigma_rel=[1],
+                 ML_bool=True, trans_filter=None,
                  theta=0, delta_x=2943, n_steps=842, zpd_index=169, filter='SN3',
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
                  nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=[False],
-                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1
+                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1, resolution=1000,
+                 Luci_path=None
                  ):
         """
         Args:
@@ -64,7 +65,7 @@ class Fit:
             lines: Lines to fit (must be in line_dict)
             vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
-            ML_model: Tensorflow/keras machine learning model
+            ML_bool: Boolean to load Tensorflow/keras machine learning model
             trans_filter: Tranmission filter interpolated on unredshifted spectral axis
             theta: Interferometric angle in degrees (defaults to 11.960 -- this is so that the correction coeff is 1)
             delta_x: Step Delta
@@ -83,6 +84,8 @@ class Fit:
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+            resolution: Nominal resolution of cube
+            Luci_path: Path to LUCI repo
         """
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -136,8 +139,7 @@ class Fit:
         self.calculate_noise()
         self.sigma_rel = sigma_rel
         self.vel_rel = vel_rel
-        # ADD ML_MODEL
-        self.ML_model = ML_model
+        self.ML_bool = ML_bool
         self.bayes_bool = bayes_bool
         self.bayes_method = bayes_method
         self.uncertainty_bool = uncertainty_bool
@@ -156,12 +158,37 @@ class Fit:
         self.fit_sol = np.zeros(3 * self.line_num + 1)  # Solution to the fit
         self.uncertainties = np.zeros(3 * self.line_num + 1)  # 1-sigma errors on fit parameters
         self.flat_samples = None
+        self.resolution = resolution
+        self.Luci_path = Luci_path
         # Check that lines inputted by user are in line_dict
         if sky_lines is None:
             self.check_lines()
         self.check_fitting_model()
         self.check_lengths()
+        self.get_ML_model()
 
+
+    def get_ML_model(self):
+        if self.ML_bool is True:
+            if not self.mdn:
+                print('normal network')
+                if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C3', 'C1']:
+                    self.ML_model = keras.models.load_model(
+                        self.Luci_path + 'ML/R%i-PREDICTOR-I-%s' % (self.resolution, self.filter))
+                else:
+                    print(
+                        'LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
+            else:  # mdn == True
+                print('mdn')
+                if self.filter in ['SN3']:
+                    self.ML_model = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
+                    self.ML_model.load_weights(self.Luci_path + 'ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s' % (
+                        self.resolution, self.filter, self.resolution, self.filter))
+                else:
+                    print(
+                        'LUCI does not support machine learning parameter estimates using a MDN for the filter you entered. Please set ML_bool=False or mdn=False.')
+        else:
+            self.ML_model = None
     @jit(nopython=False, fastmath=True)
     def apply_transmission(self):
         """
@@ -725,7 +752,7 @@ class Fit:
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
         if sky_line != True:
-            if self.ML_model != None and self.freeze is False:
+            if self.ML_bool is not False and self.freeze is False:
                 # Interpolate Spectrum
                 self.interpolate_spectrum()
                 # Estimate the priors using machine learning algorithm
