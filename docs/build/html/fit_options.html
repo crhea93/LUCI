@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fit Options &mdash; LUCI v.1.0.0 documentation</title>
@@ -13,9 +13,6 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -30,12 +27,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html">
-            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -90,7 +91,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Fit Options</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/fit_options.rst.txt" rel="nofollow"> View page source</a>
@@ -117,7 +118,17 @@ With the exception of <cite>cube.fit_spectrum_region()</cite>, these methods fit
 <li><p>n_threads: This sets the number of threads that will be used in the fits. Choose this based on the number of threads available to you. I like <cite>n_threads=4</cite>. <strong>Note that this frequently doesn’t work in a jupyter notebook setting</strong>.</p></li>
 <li><p>mdn: This boolean determines whether or not a mixture density model is used to obtain the initial guesses. Details on this algorithm can be found at (<a class="reference external" href="https://arxiv.org/abs/2111.12755">https://arxiv.org/abs/2111.12755</a>). The default value is False.</p></li>
 <li><p>nii_cons: This boolean determines whether or not we constrain the NII doublet emission to the 1/3rds rule. By default, this is included.</p></li>
+<li><p>n_stoch: This integer sets the number of attempts to fit the model to the spectrum. Instead of taking the ML estimates as</p></li>
 </ul>
+<p>the initial values in the fit, we will randomly select a value from a region around the ML estimate. This introduces some stochasticity
+to the fit, and, in some cases, can guide the optimization algorithm to a better final fit. The fit which minimizes the likelihood
+out of all the n_stoch fits will be taken as the best fit.
+- spec_min: Minimal wavelength value over which the fit will be computed
+- spec_max: Maximal wavelength value over which the fit will be computed.</p>
+<p><cite>LUCI</cite> has the abilitiy to restrict the wavelength region over which the fit is performed. So, for instance, if you only wish to fit
+Halpha and the NII-doublet, you can set restrict the wavelength to be between 15000 and 15250 cm^-1^ by adding two
+arguments to your fit function: <cite>spec_min</cite> and <cite>spec_max</cite>. Note that these values need to be in wavenumber. We have seen, in
+some cases of low signal-to-noise, that adding this restriction helps the fit algorithm.</p>
 </section>
 
 

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>How to use LUCI with frozen parameters &mdash; LUCI v.1.0.0 documentation</title>
+  <title>Example Freeze &mdash; LUCI v.1.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
@@ -13,14 +13,13 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Fitting Algorithm" href="fits.html" />
+    <link rel="prev" title="WVT Example" href="example_wvt.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -28,12 +27,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html">
-            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -48,7 +51,7 @@
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
@@ -57,10 +60,16 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Example Freeze</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-use-luci-with-frozen-parameters">How to use LUCI with frozen parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#inputs">Inputs</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -88,8 +97,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">How to use LUCI with frozen parameters</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Example Freeze</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/example_freeze.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -99,8 +108,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="how-to-use-luci-with-frozen-parameters">
-<span id="example-freeze"></span><h1>How to use LUCI with frozen parameters<a class="headerlink" href="#how-to-use-luci-with-frozen-parameters" title="Permalink to this heading"></a></h1>
+  <section id="example-freeze">
+<span id="id1"></span><h1>Example Freeze<a class="headerlink" href="#example-freeze" title="Permalink to this heading"></a></h1>
+<section id="how-to-use-luci-with-frozen-parameters">
+<h2>How to use LUCI with frozen parameters<a class="headerlink" href="#how-to-use-luci-with-frozen-parameters" title="Permalink to this heading"></a></h2>
 <p>In this example we will go through how to fit a spectrum with frozen velocity and broadening parameters. This may
 be useful if you want to say fit the Halpha + NII complex to calculate the velocity and broadening of the gas – then you
 can use these values to constrain a fit on the SII doublet which is frequently weaker.</p>
@@ -113,6 +124,7 @@ can use these values to constrain a fit on the SII doublet which is frequently w
 <span class="kn">from</span> <span class="nn">LuciBase</span> <span class="kn">import</span> <span class="n">Luci</span>
 </pre></div>
 </div>
+</section>
 <section id="inputs">
 <h2>Inputs<a class="headerlink" href="#inputs" title="Permalink to this heading"></a></h2>
 <p>We simply need to load our LUCI cube like usual :) So we start by defining the path, the name of the cube,
@@ -130,13 +142,54 @@ the name of the object, the resolution (which isn’t actually used here), and t
 <span class="n">lplt</span><span class="o">.</span><span class="n">plot_spectrum</span><span class="p">(</span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Now let’s go ahead and fit the Halpha complex (i.e. Halpha and NII-doublet). We will use the velocity and broadening
+values found here to fit the SII-doublet.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">ampls_map</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">],</span> <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
+                                                    <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+                                                    <span class="mi">1200</span><span class="p">,</span> <span class="mi">1350</span><span class="p">,</span> <span class="mi">1700</span><span class="p">,</span> <span class="mi">1900</span><span class="p">,</span>
+                                                    <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                                    <span class="n">uncertainty_bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">1</span>
+                                                   <span class="p">)</span>
+</pre></div>
+</div>
+<p>Let’s take a look at our flux, velocity, and broadening maps.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">17</span><span class="p">,</span> <span class="o">-</span><span class="mi">14</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="Flux" src="_images/Freeze1.png" />
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">vel_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="Velocity" src="_images/Freeze2.png" />
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">broad_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;broadening&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">30</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="Broadening" src="_images/Freeze3.png" />
+<p>Now let’s fit the SII-doublet using the previously calculated velocity and broadening as constraints.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map_fr</span><span class="p">,</span> <span class="n">broad_map_fr</span><span class="p">,</span> <span class="n">flux_map_fr</span><span class="p">,</span> <span class="n">ampls_fr</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s2">&quot;SII6716&quot;</span><span class="p">,</span> <span class="s2">&quot;SII6731&quot;</span><span class="p">],</span> <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
+                                                    <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+                                                    <span class="mi">1200</span><span class="p">,</span> <span class="mi">1350</span><span class="p">,</span> <span class="mi">1700</span><span class="p">,</span> <span class="mi">1900</span><span class="p">,</span>
+                                                    <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                                    <span class="n">uncertainty_bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                                    <span class="n">initial_values</span><span class="o">=</span><span class="p">[</span><span class="n">vel_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">broad_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]]</span>
+                                                   <span class="p">)</span>
+</pre></div>
+</div>
+<p>And we can see that the velocity is in fact being held constant by checking out the resulting velocity map!</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">vel_map_fr</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="Velocity Frozen" src="_images/Freeze4.png" />
 </section>
 </section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="example_wvt.html" class="btn btn-neutral float-left" title="WVT Example" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fits.html" class="btn btn-neutral float-right" title="Fitting Algorithm" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

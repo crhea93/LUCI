@@ -24,7 +24,6 @@ Unfortunately, the wavelength must be calibrated due to slight issues with the S
 instrument itself. Thankfully, this is relatively easy to do. In order to calculate
 the wavelength calibration in each pixel (or spaxel if you prefer), we fit the skylines
 in the pixel. OK... that would actually take way to long, so instead we split the
-cube into 100x100 bins and fit the sky lines in each bin. Once calculated, these
-calibrations will be automatically done for each pixel during the fitting purpose.
+cube into 100x100 bins and fit the sky lines in each bin.
 
-**NOT YET IMPLEMENTED**
+Please see the example notebook entitled `skyline_correction.ipynb`.

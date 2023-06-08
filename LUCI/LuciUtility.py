@@ -22,7 +22,7 @@ def check_luci_path(Luci_path):
 def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
               broadenings_fits,
               velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits,
-              header, binning, suffix=''):
+              header, binning=1, suffix='', fit_function=None):
     """
     Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
     amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
@@ -58,6 +58,8 @@ def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors
     output_name = object_name + suffix
     if binning is not None:
         output_name += "_" + str(binning)
+    if fit_function is not None:
+        output_name += "_" + fit_function
     lines_fit = []  # List of lines which already have maps
     for ct, line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
         if lines_fit.count(line_) >= 1:  # If the line is already present in the list of lines create
@@ -144,7 +146,6 @@ def spectrum_axis_func(hdr_dict, redshift):
     """
 
     len_wl = hdr_dict['STEPNB']  # Length of Spectral Axis
-    print("length: "+str(len_wl))
     start = hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
     end = start + (len_wl) * hdr_dict['CDELT3']  # End
     step = hdr_dict['CDELT3']  # Step size
@@ -339,7 +340,7 @@ def bin_cube_function(cube_final, header, binning, x_min, x_max, y_min, y_max):
     header_binned['PC1_2'] = header_binned['PC1_2'] * binning
     header_binned['PC2_1'] = header_binned['PC2_1'] * binning
     header_binned['PC2_2'] = header_binned['PC2_2'] * binning
-    cube_binned = binned_cube / (binning ** 2)
+    cube_binned = binned_cube  # / (binning ** 2)
     return header_binned, cube_binned
 
 
@@ -395,7 +396,7 @@ def hessian(x):
     return hessian
 
 @jit(fastmath=True)
-def hessianComp(func,initial,delta=1e-3):
+def hessianComp(func,initial,delta=1e-1):
   """
   Calculate the hessian using finite differences. The function was taken from https://rh8liuqy.github.io/Finite_Difference.html.
 

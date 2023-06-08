@@ -72,7 +72,7 @@ Let's extract a background region and take a look at it. The background region i
 .. code-block:: python
 
   bkg_axis, bkg_sky = cube.extract_spectrum_region(cube_dir+'/bkg.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
-
+  lplt.plot_spectrum(bkg_axis, bkg_sky)
 
 We now fit part of our cube defined by the bounding box 500<x<1100 and 700<y<1300 with a Gaussian on the Halpha line, the NII-doublet, and the SII-doublet with a binning of 2.
 We are also going to constrain our velocities and sigmas. Furthermore, we will calculate uncertainties using the Hessian method. We can also run multiple threads with the `n_threads` argument.
@@ -80,7 +80,7 @@ We are also going to constrain our velocities and sigmas. Furthermore, we will c
 .. code-block:: python
 
     # Fit!
-    vel_map, broad_map, flux_map, chi2_fits = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300, bkg=bkg_sky, binning=2, uncertainty_bool=True, n_threads=2)
+    vel_map, broad_map, flux_map, ampls_map = cube.fit_cube(['Halpha', 'NII6548', 'NII6583', 'SII6716', 'SII6731'], 'gaussian', [1,1,1,1,1], [1,1,1,1,1], 500, 1100, 700, 1300, bkg=bkg_sky, binning=2, uncertainty_bool=True, n_threads=2)
 
 The output should look something like this:
 
@@ -92,7 +92,7 @@ flux plot is automatically scaled by log10. However, the velocity and broadening
 
 .. code-block:: python
 
-    lplt.plot_map(flux_map[:,:,0], 'flux', cube_dir, cube.header, clims=[-19, -15])
+    lplt.plot_map(flux_map[:,:,0], 'flux', object_name=object_name, filter_name=filter_name, output_dir=cube_dir, header=cube.header, clims=[-19, -15])
 
 And let's see what this looks like!
 
@@ -103,13 +103,13 @@ We can also plot the velocity and broadening.
 
 .. code-block:: python
 
-    lplt.plot_map(vel_map[:,:,0], 'velocity', cube_dir, cube.header, clims=[-200, 200])
+    lplt.plot_map(vel_map[:,:,0], 'velocity', object_name=object_name, filter_name=filter_name, output_dir=cube_dir, header=cube.header, clims=[-200, 200])
 
 
 .. code-block:: python
 
-    lplt.plot_map(broad_map[:,:,0], 'broadening', cube_dir, cube.header, clims=[10, 50])
+    lplt.plot_map(broad_map[:,:,0], 'broadening', object_name=object_name, filter_name=filter_name, output_dir=cube_dir, header=cube.header, clims=[10, 50])
 
-The resulting data maps will be placed in a folder called *luci*. Inside there, you
+The resulting data maps will be placed in a folder called *Luci_outputs*. Inside there, you
 will find additional folders containing the Flux, Amplitude, Velocity, and Broadening maps
 for each line and their uncertainties.

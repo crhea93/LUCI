@@ -63,10 +63,12 @@ def calculate_broad(ind, fit_sol, axis_step):
     Calculate velocity dispersion
 
     .. math::
-        \sigma = (SPEED_OF_LIGHT*fit\_\sigma * axis\_step)/(fit\_vel)
+        \sigma = (SPEED_OF_LIGHT*fit\_\sigma )/(fit\_vel)
 
-    where :math:`fit\_sigma` is the gaussian broadening parameter found in the fit, :math:`axis\_step` is defined in the HowLuciWorks section,
+    where :math:`fit\_sigma` is the gaussian broadening parameter found in the fit,
     and :math:`fit\_vel` is the shifted position of the line in units of cm-1.
+
+    Note that we do NOT multiply by the axis_step. This kind of correction should have been done already in ORB!
 
     Args:
         ind: Index of line in lines
@@ -75,10 +77,15 @@ def calculate_broad(ind, fit_sol, axis_step):
     Return:
         Velocity Dispersion of the Halpha line in units of km/s
     """
-    #broad = (SPEED_OF_LIGHT * fit_sol[3*ind+2] * axis_step) / fit_sol[3*ind+1]
-    #return np.abs(broad)/abs(2.*np.sqrt(2. * np.log(2.)))  # Add FWHM correction
-    broad = (SPEED_OF_LIGHT * fit_sol[3*ind+2]) / fit_sol[3*ind+1]
-    return np.abs(broad)/FWHM_COEFF   # Add FWHM correction
+    #print(fit_sol[3*ind+2])
+    try:
+        if fit_sol[3 * ind + 1] > 0:
+            broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
+        else:
+            broad = 0
+    except:
+        broad = 0
+    return np.abs(broad)
 
 
 
@@ -97,12 +104,15 @@ def calculate_broad_err(ind, fit_sol, axis_step, uncertainties):
         Velocity Dispersion of the Halpha line in units of km/s
     """
     try:
-        broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
-        broad /= FWHM_COEFF  # Add FWHM correction
-        uncertainty_prop = np.sqrt((uncertainties[3*ind+2]/fit_sol[3*ind+2])**2 + (uncertainties[3*ind+1]/fit_sol[3*ind+1])**2)
-        return broad * uncertainty_prop
-    except:   
-        return broad * uncertainty_prop
+        if fit_sol[3 * ind + 1] > 0 and fit_sol[3 * ind + 2] > 0:
+            broad = (SPEED_OF_LIGHT * fit_sol[3 * ind + 2]) / fit_sol[3 * ind + 1]
+            uncertainty_prop = np.sqrt((uncertainties[3 * ind + 2] / fit_sol[3 * ind + 2]) ** 2 + (
+                        uncertainties[3 * ind + 1] / fit_sol[3 * ind + 1]) ** 2)
+            return broad * uncertainty_prop
+        else:
+            return 0
+    except:
+        return 0
 
 
 @jit(nopython=False, fastmath=True)

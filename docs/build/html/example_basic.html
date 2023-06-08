@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Basic Example &mdash; LUCI v.1.0.0 documentation</title>
@@ -13,9 +13,6 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -30,12 +27,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html">
-            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -59,6 +60,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
@@ -90,7 +92,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Basic Example</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/example_basic.rst.txt" rel="nofollow"> View page source</a>
@@ -108,7 +110,7 @@ region of the data cube. In this tutorial, we will outline how to do just that.<
 <p>If you want to see the complete example code, please see the bottom of the page.
 This is also available as a jupyter notebook (complete with output) under <em>Exmples/BasicExamples.ipynb</em> in the main Luci repository.</p>
 <p>You can download the example data using the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -O NGC6946_SN3.hdf5 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>-O<span class="w"> </span>NGC6946_SN3.hdf5<span class="w"> </span>https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
 </pre></div>
 </div>
 <p>This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
@@ -186,7 +188,7 @@ and the second argument is the full path to the output directory (i.e. the outpu
 <p>We can quickly make a <em>deep image</em> by collapsing (summing) the spectral axis.</p>
 <p>At last, we can fit a region of the cube. There are three functions for fitting the cube: <cite>fit_cube</cite>, <cite>fit_entire_cube</cite>, and <cite>fit_region</cite>.
 The first option, <cite>fit_cube</cite>, fits a rectangular region of the cube and is invoked by calling:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">(</span><span class="n">line_list</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">vel_rel</span><span class="p">,</span> <span class="n">sigma_rel</span><span class="p">,</span> <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_min</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">ampls_map</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">(</span><span class="n">line_list</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">vel_rel</span><span class="p">,</span> <span class="n">sigma_rel</span><span class="p">,</span> <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_min</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>line_list is a list of lines to fit (e.x. [‘Halpha’]), fit function is the fitting function to be used (e.x. ‘gaussian’), and the remaining
@@ -194,24 +196,24 @@ arguments are the x and y bounds (respectively) of the bounding box. The vel_rel
 if we are fitting three lines and we want the velocities of the second and third lines to be tied to one another, we would simply set vel_rel=[1,2,2].
 If we wanted all the lines tied, then we would put [1,1,1]. The sigma_rel parameter functions in the exact same way except it affects the broadening (velocity dispersion) of the lines.</p>
 <p>For example if we want to fit the three lines in SN3 with all their parameters tied together in a small region, we would do:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1100</span><span class="p">,</span> <span class="mi">700</span><span class="p">,</span> <span class="mi">1300</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">ampls_map</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1100</span><span class="p">,</span> <span class="mi">700</span><span class="p">,</span> <span class="mi">1300</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This final command fits the regions and saves the velocity, velocity dispersion (broadening), amplitude, flux, and fit statistic (chi-squared)
 maps in the output directory defined above. Additionally, it returns the velocity, velocity dispersion, flux, and fit statistics maps for plotting purposes.</p>
 <p>To fit the entire cube, we would simply run the following instead:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_entire_cube</span><span class="p">(</span><span class="n">line_list</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">ampls_map</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_entire_cube</span><span class="p">(</span><span class="n">line_list</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Or we can fit an entire region</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_region</span><span class="p">(</span><span class="n">line_list</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">region_file</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">ampls_map</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_region</span><span class="p">(</span><span class="n">line_list</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">region_file</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <cite>region_file</cite> is the path to the ds9 region file save in <strong>fk5</strong> coordinates.</p>
 <p>If you wish to activate the Bayesian MCMC implementation, simply add <cite>bayes_bool=True</cite> to any of the fit functions described above.</p>
 <p>Additionally, <strong>binning</strong> can be applied by adding the <cite>binning</cite> argument to any of the above fit functions. For example, we
 can bin 2x2 regions as such:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="mi">1400</span><span class="p">,</span> <span class="mi">550</span><span class="p">,</span> <span class="mi">650</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">ampls_map</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="mi">1400</span><span class="p">,</span> <span class="mi">550</span><span class="p">,</span> <span class="mi">650</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>And with those few lines, we have read in our data cube, created a <em>deep image</em> and fit the cube.</p>
@@ -221,6 +223,10 @@ can bin 2x2 regions as such:</p>
 </div>
 <p>The <cite>LUCI.LuciPlotting.plot_map</cite> function takes the map of interest, the name of the map (either ‘velocity’, ‘broadening’, or ‘flux’),
 and the output directory as arguments. Of course, we can also use simply <cite>matplotlib</cite> plotting functionality as well.</p>
+<p><cite>LUCI</cite> also has the abilitiy to restrict the wavelength region over which the fit is performed. So, for instance, if you only wish to fit
+Halpha and the NII-doublet, you can set restrict the wavelength to be between 15000 and 15250 cm^-1^ by adding two
+arguments to your fit function: <cite>spec_min</cite> and <cite>spec_max</cite>. Note that these values need to be in wavenumber. We have seen, in
+some cases of low signal-to-noise, that adding this restriction helps the fit algorithm.</p>
 <p>For clarity, we reproduce the commands required to obtain fits here:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Luci_path</span> <span class="o">=</span> <span class="s1">&#39;/media/carterrhea/carterrhea/SIGNALS/LUCI/&#39;</span>  <span class="c1"># Path to Luci</span>
 <span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/media/carterrhea/carterrhea/M33&#39;</span>  <span class="c1"># Path to data cube</span>
@@ -233,7 +239,7 @@ and the output directory as arguments. Of course, we can also use simply <cite>m
 
 <span class="n">cube</span><span class="o">.</span><span class="n">create_deep_image</span><span class="p">()</span>
 
-<span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">chi2_fits</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1100</span><span class="p">,</span> <span class="mi">700</span><span class="p">,</span> <span class="mi">1300</span><span class="p">)</span>
+<span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">ampls_map</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1100</span><span class="p">,</span> <span class="mi">700</span><span class="p">,</span> <span class="mi">1300</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

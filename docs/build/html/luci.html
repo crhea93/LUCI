@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Core Functionality &mdash; LUCI v.1.0.0 documentation</title>
@@ -13,9 +13,6 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -30,12 +27,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html">
-            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -59,10 +60,12 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
@@ -71,6 +74,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-LuciBase">Core Functions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#LuciBase.Luci"><code class="docutils literal notranslate"><span class="pre">Luci</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.close"><code class="docutils literal notranslate"><span class="pre">Luci.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_background_subspace"><code class="docutils literal notranslate"><span class="pre">Luci.create_background_subspace()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_deep_image"><code class="docutils literal notranslate"><span class="pre">Luci.create_deep_image()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_snr_map"><code class="docutils literal notranslate"><span class="pre">Luci.create_snr_map()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_wvt"><code class="docutils literal notranslate"><span class="pre">Luci.create_wvt()</span></code></a></li>
@@ -118,7 +122,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Core Functionality</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/luci.rst.txt" rel="nofollow"> View page source</a>
@@ -150,6 +154,44 @@ Fit class (Lucifit.py).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.create_background_subspace">
+<span class="sig-name descname"><span class="pre">create_background_subspace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1900</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1900</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg_image</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'deep'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components_keep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_background_subspace" title="Permalink to this definition"></a></dt>
+<dd><p>This function will create a subspace of principal components describing the background emission. It will then interpolate
+the background eigenvectors over the entire field. Please see our paper () describing this methodology in detail.
+After running this code, <cite>LUCI</cite> will create a fits file containing the PCA coefficients for each pixel in the FOV which
+can then be used in other fitting functions by setting the optional argument <cite>bkg</cite> to <cite>PCA</cite>. <cite>LUCI</cite> will also save a
+numpy file with the principal components.
+We also create 3 plots that are saved in <cite>self.output_dir</cite>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Map of background pixels in FOV</p></li>
+<li><p>Visualization of first 10 principal components and mean</p></li>
+<li><p>Scree plot</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min</strong> – Minimum x value (image coordinates) for segmentation region (Default 100)</p></li>
+<li><p><strong>x_max</strong> – Maximum x value (image coordinates) for segmentation region (Default 1900)</p></li>
+<li><p><strong>y_min</strong> – Minimum y value (image coordinates) for segmentation region (Default 100)</p></li>
+<li><p><strong>y_max</strong> – Maximum y value (image coordinates) for segmentation region (Default 1900)</p></li>
+<li><p><strong>bkg_image</strong> – 2D image used for background thresholding (Default deep image). Pass fits file.</p></li>
+<li><p><strong>n_components</strong> – Number of principal components to calculate (Default 50)</p></li>
+<li><p><strong>n_components_keep</strong> – Number of principal components to keep (Default n_components)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Fits file containing the PCA coefficients over the FOV
+PCA_eigenspectra: Numpy file containing the PCA eigenspectra</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>PCA_coeffs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.create_deep_image">
 <span class="sig-name descname"><span class="pre">create_deep_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_deep_image" title="Permalink to this definition"></a></dt>
 <dd><p>Create deep image fits file of the cube. This takes the cube and sums
@@ -157,7 +199,7 @@ the spectral axis. Then the deep image is saved as a fits file with the followin
 naming convention: output_dir+’/’+object_name+’_deep.fits’. We also allow for
 the binning of the deep image – this is used primarily for astrometry purposes.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>output_name</strong> – Full path to output (optional)</p></li>
 <li><p><strong>binning</strong> – Binning number (optional integer; default=None)</p></li>
@@ -172,7 +214,7 @@ the binning of the deep image – this is used primarily for astrometry purposes
 <dd><p>Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
 a map of the entire cube is calculated.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x_min</strong> – Minimal X value (default 0)</p></li>
 <li><p><strong>x_max</strong> – Maximal X value (default 2048)</p></li>
@@ -183,10 +225,10 @@ a map of the entire cube is calculated.</p>
 <li><p><strong>lines</strong> – Lines to focus on (default None: For SN2 you can choose OIII)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Signal-to-Noise ratio map</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>snr_map</p>
 </dd>
 </dl>
@@ -198,16 +240,21 @@ a map of the entire cube is calculated.</p>
 <dd><p>Written by Benjamin Vigneron.</p>
 <p>Functionality to create a weighted Voronoi tesselation map from a region and according to
 arguments passed by the user. It creates a folder containing all the Voronoi bins that can
-then be used for the fitting procedure.
-:param x_min_init: Minimal X value
-:param x_max_init: Maximal X value
-:param y_min_init: Minimal Y value
-:param y_max_init: Maximal Y value
-:param pixel_size: Pixel size of the image. For SITELLE use pixel_size = 0.0000436.
-:param stn_target: Signal-to-Noise target value for the Voronoi bins.
-:param roundness_crit: Roundness criteria for the pixel accretion into bins
-:param ToL: Convergence tolerance parameter for the SNR of the bins
-:param bkg: Background Spectrum (1D numpy array; default None)</p>
+then be used for the fitting procedure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min_init</strong> – Minimal X value</p></li>
+<li><p><strong>x_max_init</strong> – Maximal X value</p></li>
+<li><p><strong>y_min_init</strong> – Minimal Y value</p></li>
+<li><p><strong>y_max_init</strong> – Maximal Y value</p></li>
+<li><p><strong>pixel_size</strong> – Pixel size of the image. For SITELLE use pixel_size = 0.0000436.</p></li>
+<li><p><strong>stn_target</strong> – Signal-to-Noise target value for the Voronoi bins.</p></li>
+<li><p><strong>roundness_crit</strong> – Roundness criteria for the pixel accretion into bins</p></li>
+<li><p><strong>ToL</strong> – Convergence tolerance parameter for the SNR of the bins</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -225,8 +272,9 @@ For each pixel,</p>
 </div></blockquote>
 <p>In the end, we have a detection map of the maximum values.</p>
 <p>If no bounds are added, we calculate over the entire map</p>
+<p>Louis-Simon Guité</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x_min</strong> – Lower bound in x</p></li>
 <li><p><strong>x_max</strong> – Upper bound in x</p></li>
@@ -246,7 +294,7 @@ The spectra in the region are summed and then averaged (if mean is selected).
 Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
 or the averaged spectrum for background spectra (True).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x_min</strong> – Lower bound in x</p></li>
 <li><p><strong>x_max</strong> – Upper bound in x</p></li>
@@ -257,7 +305,7 @@ or the averaged spectrum for background spectra (True).</p>
 <li><p><strong>mean</strong> – Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>X-axis (redshifted) and spectral axis of region.</p>
 </dd>
 </dl>
@@ -271,13 +319,13 @@ The spectra in the region are summed and then averaged (if mean is selected).
 Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
 or the averaged spectrum for background spectra (True).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>region</strong> – Name of ds9 region file (e.x. ‘region.reg’). You can also pass a boolean mask array.</p></li>
 <li><p><strong>mean</strong> – Boolean to determine whether or not the mean spectrum is taken. This is used for calculating background spectra.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>X-axis and spectral axis of region.</p>
 </dd>
 </dl>
@@ -285,10 +333,10 @@ or the averaged spectrum for background spectra (True).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_calc">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fit_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cube_slice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_ML</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transmission_interpolated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interferometer_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdr_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_nb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zpd_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_calc" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fit_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cube_slice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transmission_interpolated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interferometer_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdr_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_nb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zpd_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Luci_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_calc" title="Permalink to this definition"></a></dt>
 <dd><p>Function for calling fit for a given y coordinate.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>i</strong> – Y coordinate step</p></li>
 <li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
@@ -300,9 +348,9 @@ or the averaged spectrum for background spectra (True).</p>
 <li><p><strong>y_min</strong> – Lower bound in y</p></li>
 <li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
 <li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
+<li><p><strong>ML_bool</strong> – Boolean to determione whether or not we use ML priors</p></li>
 <li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default False)</p></li>
-<li><p><strong>'</strong><strong>[</strong><strong>emcee'</strong> (<em>bayes_method = Bayesian Inference method. Options are</em>) – </p></li>
-<li><p><strong>'dynesty'</strong><strong>]</strong> (<em>default 'emcee'</em>) – </p></li>
+<li><p><strong>bayes_method</strong> – Bayesian Inference method. Options are ‘[emcee’, ‘dynesty’] (default ‘emcee’)</p></li>
 <li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
 <li><p><strong>nii_cons</strong> – Boolean to turn on or off NII doublet ratio constraint (default True)</p></li>
 <li><p><strong>initial_values</strong> – List of files containing initial conditions (default False)</p></li>
@@ -312,7 +360,7 @@ or the averaged spectrum for background spectra (True).</p>
 <li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>all fit parameters for y-slice</p>
 </dd>
 </dl>
@@ -327,7 +375,7 @@ saves the velocity and broadening fits files. All the files will be saved
 in the folder Luci. The files are the fluxes, velocities, broadening, amplitudes,
 and continuum (and their associated errors) for each linespectrum_axis.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
 <li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
@@ -352,7 +400,7 @@ and continuum (and their associated errors) for each linespectrum_axis.</p>
 <li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Velocity and Broadening arrays (2d). Also return amplitudes array (3D).</p>
 </dd>
 </dl>
@@ -371,7 +419,7 @@ we would run the following:</p>
 <span class="sig-name descname"><span class="pre">fit_entire_cube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_entire_cube" title="Permalink to this definition"></a></dt>
 <dd><p>Fit the entire cube (all spatial dimensions)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
 <li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
@@ -385,7 +433,7 @@ we would run the following:</p>
 <li><p><strong>n_threads</strong> – Number of threads to be passed to joblib for parallelization (default = 1)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Velocity and Broadening arrays (2d). Also return amplitudes array (3D).</p>
 </dd>
 </dl>
@@ -397,7 +445,7 @@ we would run the following:</p>
 <dd><p>Primary fit call to fit a single pixel in the data cube. This wraps the
 LuciFits.FIT().fit() call which applies all the fitting steps.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
 <li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
@@ -417,7 +465,7 @@ LuciFits.FIT().fit() call which applies all the fitting steps.</p>
 <li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Returns the x-axis (redshifted), sky, and fit dictionary</p>
 </dd>
 </dl>
@@ -434,7 +482,7 @@ All the files will be saved
 in the folder Luci. The files are the fluxes, velocities, broadening, amplitudes,
 and continuum (and their associated errors) for each line.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
 <li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
@@ -456,7 +504,7 @@ and continuum (and their associated errors) for each line.</p>
 <li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Velocity and Broadening arrays (2d). Also return amplitudes array (3D).</p>
 </dd>
 </dl>
@@ -481,7 +529,7 @@ The spectra in the region are summed and then averaged (if mean is selected).
 Using the ‘mean’ argument, we can either calculate the total summed spectrum (False)
 or the averaged spectrum for background spectra (True).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
 <li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
@@ -501,7 +549,7 @@ or the averaged spectrum for background spectra (True).</p>
 <li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>X-axis and spectral axis of region.</p>
 </dd>
 </dl>
@@ -513,7 +561,7 @@ or the averaged spectrum for background spectra (True).</p>
 <dd><p>Function that takes the wvt mapping created using <cite>self.create_wvt()</cite> and fits the bins.
 Written by Benjamin Vigneron</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
 <li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
@@ -527,7 +575,7 @@ Written by Benjamin Vigneron</p>
 <li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D) and header for saving
 figure.</p>
 </dd>
@@ -552,7 +600,7 @@ through them and place all the spectra in a single cube.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.skyline_calibration">
-<span class="sig-name descname"><span class="pre">skyline_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.skyline_calibration" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">skyline_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Luci_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.skyline_calibration" title="Permalink to this definition"></a></dt>
 <dd><p>Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
 of the telescope lead to minor offset that can be measured by high resolution
 spectra (R~5000). This function divides the FOV into a grid of NxN spaxel regions
@@ -560,13 +608,14 @@ of 10x10 pixels to increase the signal. The function will output a map of the
 velocity offset. The initial velocity guess is set to 80 km/s. Additionally,
 we fit with a simple sinc function.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_grid</strong> – NxN grid (int)</p></li>
+<li><p><strong>Luci_path</strong> – Full path to LUCI (str)</p></li>
 <li><p><strong>bin_size</strong> – Size of grouping used for each region (optional int; default=30)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Velocity offset map</p>
 </dd>
 </dl>
@@ -579,7 +628,7 @@ we fit with a simple sinc function.</p>
 serves as a rough estimate of the width of the spectral lines to make sure the slices cover a wide enough range on each side
 of the emission lines. The slices are saved in a new folder for each input emission line.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p>
 </dd>
 </dl>
@@ -594,30 +643,34 @@ of the emission lines. The slices are saved in a new folder for each input emiss
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.wvt_fit_region">
 <span class="sig-name descname"><span class="pre">wvt_fit_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stn_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.436</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roundness_crit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ToL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.wvt_fit_region" title="Permalink to this definition"></a></dt>
-<dd><p>Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
-:param x_min_init: Minimal X value
-:param x_max_init: Maximal X value
-:param y_min_init: Minimal Y value
-:param y_max_init: Maximal Y value
-:param lines: Lines to fit (e.x. [‘Halpha’, ‘NII6583’])
-:param fit_function: Fitting function to use (e.x. ‘gaussian’)
-:param vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
-:param sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
-:param stn_target: Signal-to-Noise target value for the Voronoi bins.
-:param pixel_size: Pixel size of the image. For SITELLE use pixel_size = 0.0000436.
-:param roundness_crit: Roundness criteria for the pixel accretion into bins
-:param ToL: Convergence tolerance parameter for the SNR of the bins
-:param bkg: Background Spectrum (1D numpy array; default None)
-:param bayes_bool: Boolean to determine whether or not to run Bayesian analysis
-:param uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
-:param n_threads: Number of threads to use
-:param initial_values: Initial values of velocity and broadening for fitting specific lines (must be list;
-:param e.x. [velocity:
-:param broadening]; default [False]):
-:param n_stoch: The number of stochastic runs – set to 50 for fitting double components (default 1)</p>
+<dd><p>Functionality to wrap-up the creation and fitting of weighted Voronoi bins.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min_init</strong> – Minimal X value</p></li>
+<li><p><strong>x_max_init</strong> – Maximal X value</p></li>
+<li><p><strong>y_min_init</strong> – Minimal Y value</p></li>
+<li><p><strong>y_max_init</strong> – Maximal Y value</p></li>
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
+<li><p><strong>vel_rel</strong> – Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>sigma_rel</strong> – Constraints on sigma (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>stn_target</strong> – Signal-to-Noise target value for the Voronoi bins.</p></li>
+<li><p><strong>pixel_size</strong> – Pixel size of the image. For SITELLE use pixel_size = 0.0000436.</p></li>
+<li><p><strong>roundness_crit</strong> – Roundness criteria for the pixel accretion into bins</p></li>
+<li><p><strong>ToL</strong> – Convergence tolerance parameter for the SNR of the bins</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis</p></li>
+<li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
+<li><p><strong>n_threads</strong> – Number of threads to use</p></li>
+<li><p><strong>initial_values</strong> – Initial values of velocity and broadening for fitting specific lines (must be list;</p></li>
+<li><p><strong>[</strong><strong>velocity</strong> (<em>e.x.</em>) – </p></li>
+<li><p><strong>[</strong><strong>False</strong><strong>]</strong><strong>)</strong> (<em>broadening</em><em>]</em><em>; default</em>) – </p></li>
+<li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).</p>
 </dd>
 </dl>
 </dd></dl>

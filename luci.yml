@@ -2,30 +2,30 @@ name: luci
 channels:
   - defaults
 dependencies:
-  - hdf5=1.10.6
-  - pillow=8.3.1
-  - pip=21.1.3
-  - python=3.9.5
-  - scikit-image=0.17.2
-  - scipy=1.6.2
-  - tensorflow
+  - hdf5
+  - pillow
+  - pip
+  - python
+  - scikit-image
+  - scipy
+  - tensorflow==2.10.1
   - tensorflow-base
   - tensorflow-probability
   - tqdm
-  - urllib3=1.26.6
+  - urllib3
   - pip:
-    - astropy==4.2.1
-    - astroquery==0.4.3
+    - astropy
+    - astroquery
     - emcee==3.1.0
-    - h5py==3.1.0
+    - h5py
     - keras~=2.6
-    - numdifftools==0.9.40
+    - numdifftools
     - numpy
-    - joblib==1.0.1
-    - jupyterlab==3.0.16
-    - pytest==6.2.4
-    - pyregion==2.1.1
-    - tensorboard
+    - joblib
+    - jupyterlab
+    - pytest
+    - pyregion
+    - tensorboard~=2.9
     - tensorboard-data-server
     - tensorboard-plugin-wit
     - tensorflow-estimator
@@ -33,5 +33,6 @@ dependencies:
     - pytest
     - corner
     - dynesty
-    - sklearn
+    - scikit-learn
     - seaborn
+    - photutils

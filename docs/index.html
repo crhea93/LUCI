@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Welcome to LUCI’s documentation! &mdash; LUCI v.1.0.0 documentation</title>
@@ -13,9 +13,6 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -29,12 +26,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="#">
-            <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="#">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -58,10 +59,12 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -89,7 +92,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="#" class="icon icon-home"></a></li>
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Welcome to LUCI’s documentation!</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
@@ -108,7 +111,7 @@ data cubes in mind; however, if you need to fit any emission line spectra, LUCI
 will be able to help!</p>
 <a class="reference external image-reference" href="https://doi.org/10.5281/zenodo.5385351"><img alt="https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg" src="https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg" /></a>
 <p>You can download the example data using the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -O NGC6946_SN3.hdf5 https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>-O<span class="w"> </span>NGC6946_SN3.hdf5<span class="w"> </span>https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
 </pre></div>
 </div>
 <p>This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
@@ -124,10 +127,6 @@ wish to see any new implementation, please send a message to <a class="reference
 <section id="lines-available">
 <h2>Lines Available<a class="headerlink" href="#lines-available" title="Permalink to this heading"></a></h2>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 39%" />
-<col style="width: 61%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Line Name</p></td>
 <td><p>Wavelength (nm)</p></td>
@@ -229,6 +228,7 @@ Carter Rhea et al 2021 Res. Notes AAS 12 276</p>
 <li class="toctree-l2"><a class="reference internal" href="example_fit_snr.html#create-snr-map">Create SNR Map</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="example_synthetic_spectrum.html#inputs">Inputs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="example_synthetic_spectrum.html#create-spectrum">Create Spectrum</a></li>
@@ -241,6 +241,11 @@ Carter Rhea et al 2021 Res. Notes AAS 12 276</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_freeze.html#how-to-use-luci-with-frozen-parameters">How to use LUCI with frozen parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_freeze.html#inputs">Inputs</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div></blockquote>

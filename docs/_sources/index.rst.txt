@@ -117,10 +117,12 @@ Examples
        example_fit_single_spectrum
        example_fit_mask
        example_fit_snr
+       example_pixel
        example_synthetic_spectrum
        example_double_fit
        example_visualize
        example_wvt
+       example_freeze
 
 
 
