@@ -89,30 +89,7 @@ class Luci():
         self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,
                                                                                      self.hdr_dict)
         self.ML_bool = ML_bool
-        '''if ML_bool is True:
-            if not self.mdn:
-                if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C3', 'C1']:
-                    self.ref_spec = self.Luci_path + 'ML/Reference-Spectrum-R%i-%s.fits' % (resolution, self.filter)
-                    self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,
-                                                                                                 self.hdr_dict)
-                    self.model_ML = keras.models.load_model(
-                        self.Luci_path + 'ML/R%i-PREDICTOR-I-%s' % (resolution, self.filter))
-                else:
-                    print(
-                        'LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
-            else:  # mdn == True
-                if self.filter in ['SN3']:
-                    self.ref_spec = self.Luci_path + 'ML/Reference-Spectrum-R%i-%s.fits' % (resolution, self.filter)
-                    self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,
-                                                                                                 self.hdr_dict)
-                    self.model_ML = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
-                    self.model_ML.load_weights(self.Luci_path + 'ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s' % (
-                        resolution, self.filter, resolution, self.filter))
-                else:
-                    print(
-                        'LUCI does not support machine learning parameter estimates using a MDN for the filter you entered. Please set ML_bool=False or mdn=False.')
-        else:
-            self.model_ML = None'''
+
         self.transmission_interpolated = read_in_transmission(self.Luci_path, self.hdr_dict,
                                                               self.spectrum_axis_unshifted)
 
@@ -1167,6 +1144,7 @@ class Luci():
         Functionality to create a weighted Voronoi tesselation map from a region and according to
         arguments passed by the user. It creates a folder containing all the Voronoi bins that can
         then be used for the fitting procedure.
+
         Args:
             x_min_init: Minimal X value
             x_max_init: Maximal X value
@@ -1176,7 +1154,6 @@ class Luci():
             stn_target: Signal-to-Noise target value for the Voronoi bins.
             roundness_crit: Roundness criteria for the pixel accretion into bins
             ToL: Convergence tolerance parameter for the SNR of the bins
-            bkg: Background Spectrum (1D numpy array; default None)
         """
         print("#----------------WVT Algorithm----------------#")
         print("#----------------Creating SNR Map--------------#")
@@ -1322,6 +1299,7 @@ class Luci():
                        bayes_bool=False, uncertainty_bool=False, n_threads=1, n_stoch=1, initial_values=[False]):
         """
         Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
+
         Args:
             x_min_init: Minimal X value
             x_max_init: Maximal X value
@@ -1570,7 +1548,8 @@ class Luci():
         if n_components_keep is None:
             n_components_keep = n_components
         if bkg_image == 'deep':
-            background_image = self.deep_image()
+            self.create_deep_image()
+            background_image = self.deep_image
         else:
             background_image = fits.open(bkg_image)[0].data
         # Find background pixels and save map in self.output_dir
@@ -1581,38 +1560,46 @@ class Luci():
         if self.filter == 'SN3':
             max_spectral = np.argmin(np.abs([1e7 / wavelength - 630 for wavelength in self.spectrum_axis]))
             min_spectral = np.argmin(np.abs([1e7 / wavelength - 680 for wavelength in self.spectrum_axis]))
+            # Check if there are not enough components
+            if len(self.cube_final[100,100, min_spectral:max_spectral]) < n_components:
+                n_components = len(self.cube_final[100,100, min_spectral:max_spectral])
+                if n_components_keep > n_components:
+                    n_components_keep = n_components
         else:
             print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3')
             print('Terminating Program')
             quit()
+
         bkg_spectra = [self.cube_final[index[0], index[1], min_spectral: max_spectral] for index in idx_bkg if
                        x_min < index[0] < x_max and y_min < index[1] < y_max]  # Get background pixels
         # Calculate n most important components
+        spectral_axis_nm = 1e7 / self.spectrum_axis[min_spectral: max_spectral]
         pca = decomposition.IncrementalPCA(n_components=n_components)  # Call pca
         pca.fit(bkg_spectra)  # Fit using background spectra
         BkgTransformedPCA = pca.transform(bkg_spectra)  # Apply on background spectra
         # Plot the primary components
         plt.figure(figsize=(18, 16))
-        l = plt.plot(1e7 / self.spectrum_axis, pca.mean_ / np.max(pca.mean_) - 1, linewidth=3)  # plot the mean first
+        l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 1, linewidth=3)  # plot the mean first
         c = l[0].get_color()
-        plt.text(6, -0.9, 'mean emission', color=c, fontsize='xx-large')
-        shift = 0.6
+        plt.text(635, -0.9, 'mean emission', color=c, fontsize='xx-large')
+        shift = 1.2
         for i in range(10):  # Plot first 10 components
-            l = plt.plot(1e7 / self.spectrum_axis, pca.components_[i] + (i * shift), linewidth=3)
+            l = plt.plot(spectral_axis_nm, pca.components_[i] + (i * shift), linewidth=3)
             c = l[0].get_color()
-            plt.text(6, i * shift + 0.1, "component %i" % (i + 1), color=c, fontsize='xx-large')
+            plt.text(635, i * shift + 0.1, "component %i" % (i + 1), color=c, fontsize='xx-large')
         plt.xlabel('nm', fontsize=24)
         plt.ylabel('Normalized Emission + Offset', fontsize=24)
         plt.xticks(fontsize=24)
         plt.yticks(fontsize=24)
         plt.savefig(os.path.join(self.output_dir, 'PCA_components.png'))
         # Make scree plot
+        plt.figure(figsize=(18, 16))
         PC_values = np.arange(pca.n_components_)[:n_components] + 1
         plt.plot(PC_values, pca.explained_variance_ratio_[:n_components], 'o-', linewidth=2, color='blue')
         plt.title('Scree Plot')
         plt.xlabel('Principal Component')
         plt.ylabel('Variance Explained')
-        plt.savefig(self.output_dir, 'PCA_scree.png')
+        plt.savefig(os.path.join(self.output_dir, 'PCA_scree.png'))
 
     '''def update_astrometry(self, api_key):
             """

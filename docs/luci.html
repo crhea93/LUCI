@@ -65,7 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">How to use LUCI with frozen parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
@@ -73,7 +73,6 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Core Functionality</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-LuciBase">Core Functions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#LuciBase.Luci"><code class="docutils literal notranslate"><span class="pre">Luci</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.ML_bool"><code class="docutils literal notranslate"><span class="pre">Luci.ML_bool</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.close"><code class="docutils literal notranslate"><span class="pre">Luci.close()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_background_subspace"><code class="docutils literal notranslate"><span class="pre">Luci.create_background_subspace()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_deep_image"><code class="docutils literal notranslate"><span class="pre">Luci.create_deep_image()</span></code></a></li>
@@ -148,55 +147,6 @@ functions in <cite>LuciFit.py</cite>.</p>
 <dd><p>This is the primary class for the general purpose line fitting code LUCI. This contains
 all io/administrative functionality. The fitting functionality can be found in the
 Fit class (Lucifit.py).</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="LuciBase.Luci.ML_bool">
-<span class="sig-name descname"><span class="pre">ML_bool</span></span><a class="headerlink" href="#LuciBase.Luci.ML_bool" title="Permalink to this definition"></a></dt>
-<dd><dl>
-<dt>if ML_bool is True:</dt><dd><dl>
-<dt>if not self.mdn:</dt><dd><dl>
-<dt>if self.filter in [‘SN1’, ‘SN2’, ‘SN3’, ‘C4’, ‘C2’, ‘C3’, ‘C1’]:</dt><dd><p>self.ref_spec = self.Luci_path + ‘ML/Reference-Spectrum-R%i-%s.fits’ % (resolution, self.filter)
-self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,</p>
-<blockquote>
-<div><p>self.hdr_dict)</p>
-</div></blockquote>
-<dl class="simple">
-<dt>self.model_ML = keras.models.load_model(</dt><dd><p>self.Luci_path + ‘ML/R%i-PREDICTOR-I-%s’ % (resolution, self.filter))</p>
-</dd>
-</dl>
-</dd>
-<dt>else:</dt><dd><dl class="simple">
-<dt>print(</dt><dd><p>‘LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.’)</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-<dt>else:  # mdn == True</dt><dd><dl>
-<dt>if self.filter in [‘SN3’]:</dt><dd><p>self.ref_spec = self.Luci_path + ‘ML/Reference-Spectrum-R%i-%s.fits’ % (resolution, self.filter)
-self.wavenumbers_syn, self.wavenumbers_syn_full = read_in_reference_spectrum(self.ref_spec,</p>
-<blockquote>
-<div><p>self.hdr_dict)</p>
-</div></blockquote>
-<p>self.model_ML = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
-self.model_ML.load_weights(self.Luci_path + ‘ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s’ % (</p>
-<blockquote>
-<div><p>resolution, self.filter, resolution, self.filter))</p>
-</div></blockquote>
-</dd>
-<dt>else:</dt><dd><dl class="simple">
-<dt>print(</dt><dd><p>‘LUCI does not support machine learning parameter estimates using a MDN for the filter you entered. Please set ML_bool=False or mdn=False.’)</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-<dt>else:</dt><dd><p>self.model_ML = None</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.close">
 <span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.close" title="Permalink to this definition"></a></dt>
@@ -290,16 +240,21 @@ a map of the entire cube is calculated.</p>
 <dd><p>Written by Benjamin Vigneron.</p>
 <p>Functionality to create a weighted Voronoi tesselation map from a region and according to
 arguments passed by the user. It creates a folder containing all the Voronoi bins that can
-then be used for the fitting procedure.
-:param x_min_init: Minimal X value
-:param x_max_init: Maximal X value
-:param y_min_init: Minimal Y value
-:param y_max_init: Maximal Y value
-:param pixel_size: Pixel size of the image. For SITELLE use pixel_size = 0.0000436.
-:param stn_target: Signal-to-Noise target value for the Voronoi bins.
-:param roundness_crit: Roundness criteria for the pixel accretion into bins
-:param ToL: Convergence tolerance parameter for the SNR of the bins
-:param bkg: Background Spectrum (1D numpy array; default None)</p>
+then be used for the fitting procedure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min_init</strong> – Minimal X value</p></li>
+<li><p><strong>x_max_init</strong> – Maximal X value</p></li>
+<li><p><strong>y_min_init</strong> – Minimal Y value</p></li>
+<li><p><strong>y_max_init</strong> – Maximal Y value</p></li>
+<li><p><strong>pixel_size</strong> – Pixel size of the image. For SITELLE use pixel_size = 0.0000436.</p></li>
+<li><p><strong>stn_target</strong> – Signal-to-Noise target value for the Voronoi bins.</p></li>
+<li><p><strong>roundness_crit</strong> – Roundness criteria for the pixel accretion into bins</p></li>
+<li><p><strong>ToL</strong> – Convergence tolerance parameter for the SNR of the bins</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -688,30 +643,34 @@ of the emission lines. The slices are saved in a new folder for each input emiss
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.wvt_fit_region">
 <span class="sig-name descname"><span class="pre">wvt_fit_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stn_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.436</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roundness_crit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ToL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.wvt_fit_region" title="Permalink to this definition"></a></dt>
-<dd><p>Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
-:param x_min_init: Minimal X value
-:param x_max_init: Maximal X value
-:param y_min_init: Minimal Y value
-:param y_max_init: Maximal Y value
-:param lines: Lines to fit (e.x. [‘Halpha’, ‘NII6583’])
-:param fit_function: Fitting function to use (e.x. ‘gaussian’)
-:param vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
-:param sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
-:param stn_target: Signal-to-Noise target value for the Voronoi bins.
-:param pixel_size: Pixel size of the image. For SITELLE use pixel_size = 0.0000436.
-:param roundness_crit: Roundness criteria for the pixel accretion into bins
-:param ToL: Convergence tolerance parameter for the SNR of the bins
-:param bkg: Background Spectrum (1D numpy array; default None)
-:param bayes_bool: Boolean to determine whether or not to run Bayesian analysis
-:param uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
-:param n_threads: Number of threads to use
-:param initial_values: Initial values of velocity and broadening for fitting specific lines (must be list;
-:param e.x. [velocity:
-:param broadening]; default [False]):
-:param n_stoch: The number of stochastic runs – set to 50 for fitting double components (default 1)</p>
+<dd><p>Functionality to wrap-up the creation and fitting of weighted Voronoi bins.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min_init</strong> – Minimal X value</p></li>
+<li><p><strong>x_max_init</strong> – Maximal X value</p></li>
+<li><p><strong>y_min_init</strong> – Minimal Y value</p></li>
+<li><p><strong>y_max_init</strong> – Maximal Y value</p></li>
+<li><p><strong>lines</strong> – Lines to fit (e.x. [‘Halpha’, ‘NII6583’])</p></li>
+<li><p><strong>fit_function</strong> – Fitting function to use (e.x. ‘gaussian’)</p></li>
+<li><p><strong>vel_rel</strong> – Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>sigma_rel</strong> – Constraints on sigma (must be list; e.x. [1, 2, 1])</p></li>
+<li><p><strong>stn_target</strong> – Signal-to-Noise target value for the Voronoi bins.</p></li>
+<li><p><strong>pixel_size</strong> – Pixel size of the image. For SITELLE use pixel_size = 0.0000436.</p></li>
+<li><p><strong>roundness_crit</strong> – Roundness criteria for the pixel accretion into bins</p></li>
+<li><p><strong>ToL</strong> – Convergence tolerance parameter for the SNR of the bins</p></li>
+<li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
+<li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis</p></li>
+<li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
+<li><p><strong>n_threads</strong> – Number of threads to use</p></li>
+<li><p><strong>initial_values</strong> – Initial values of velocity and broadening for fitting specific lines (must be list;</p></li>
+<li><p><strong>[</strong><strong>velocity</strong> (<em>e.x.</em>) – </p></li>
+<li><p><strong>[</strong><strong>False</strong><strong>]</strong><strong>)</strong> (<em>broadening</em><em>]</em><em>; default</em>) – </p></li>
+<li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).</p>
 </dd>
 </dl>
 </dd></dl>
