@@ -95,13 +95,13 @@ def plot_map(quantity_map, quantity_name, output_dir='', header=None, object_nam
     Example:
         We can plot the flux assuming a min and max value of 1e-18 and 1e-16.
 
-        >>> lplt.plot_map(flux_map[:,:,0], 'flux', cube_dir, cube.header, clims=[-18, -16])
+        >>> lplt.plot_map(flux_map[:,:,0], 'flux', output_dir=cube_dir, header=cube.header, object_name=object_name, filter_name=filter_name, clims=[-18, -16])
 
         Similarly, we can plot the velocity and broadening:
 
-        >>> lplt.plot_map(vel_map[:,:,0], 'veloity', cube_dir, cube.header, clims=[-200, -200])
+        >>> lplt.plot_map(vel_map[:,:,0], 'veloity', output_dir=cube_dir, header=cube.header, object_name=object_name, filter_name=filter_name, clims=[-200, -200])
 
-        >>> lplt.plot_map(broad_map[:,:,0], 'broadening', cube_dir, cube.header, clims=[10, 50])
+        >>> lplt.plot_map(broad_map[:,:,0], 'broadening', output_dir=cube_dir, header=cube.header, object_name=object_name, filter_name=filter_name, clims=[10, 50])
 
     """
     if quantity_name == 'broadening' or quantity_name == 'velocity':

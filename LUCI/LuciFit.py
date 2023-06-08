@@ -171,7 +171,6 @@ class Fit:
     def get_ML_model(self):
         if self.ML_bool is True:
             if not self.mdn:
-                print('normal network')
                 if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C3', 'C1']:
                     self.ML_model = keras.models.load_model(
                         self.Luci_path + 'ML/R%i-PREDICTOR-I-%s' % (self.resolution, self.filter))
@@ -179,7 +178,6 @@ class Fit:
                     print(
                         'LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
             else:  # mdn == True
-                print('mdn')
                 if self.filter in ['SN3']:
                     self.ML_model = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
                     self.ML_model.load_weights(self.Luci_path + 'ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s' % (
