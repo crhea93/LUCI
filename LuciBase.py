@@ -414,9 +414,9 @@ class Luci():
         if binning != None and binning != 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min,
                           y_max)
-            x_max = int((x_max - x_min) / binning);
+            x_max = int((x_max - x_min) / binning)
             y_max = int((y_max - y_min) / binning)
-            x_min = 0;
+            x_min = 0
             y_min = 0
         elif binning == 1:
             pass  # Don't do anything if binning is set to 1
@@ -494,7 +494,7 @@ class Luci():
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits,
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits,
-                  cutout.wcs.to_header(), binning)
+                  cutout.wcs.to_header(), binning, fit_function=fit_function)
 
         return velocities_fits, broadenings_fits, flux_fits, ampls_fits
 

@@ -113,7 +113,7 @@ def plot_map(quantity_map, quantity_name, output_dir='', header=None, object_nam
     units = {'flux': r'log[ergs/s/cm$^2$/A]', 'velocity': 'km/s', 'broadening': 'km/s'}
     if clims is None:
         c_min = np.nanpercentile(quantity_map, 5)
-        c_max = np.nanpercentile(quantity_map, 99)
+        c_max = np.nanpercentile(quantity_map, 99.5)
     else:
         c_min = clims[0]
         c_max = clims[1]
@@ -136,8 +136,11 @@ def plot_map(quantity_map, quantity_name, output_dir='', header=None, object_nam
     cbar = plt.colorbar(fraction=0.046, pad=0.04)
     plt.clim(c_min, c_max)
     cbar.ax.set_ylabel(units[quantity_name], rotation=270, labelpad=25, fontsize=20, fontweight='bold')
-    print(output_dir, object_name, filter, quantity_name)
-    plt.savefig(output_dir + '/' +object_name+'_'+filter_name+'_'+ quantity_name + '_map.png')
+    if object_name != '':
+        object_name += '_'
+    if filter_name != '':
+        filter_name += '_'
+    plt.savefig(output_dir + '/' +object_name+filter_name+ quantity_name + '_map.png')
     return None
 
 
