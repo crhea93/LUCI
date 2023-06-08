@@ -17,6 +17,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -66,7 +67,33 @@
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fitting Algorithm</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-LUCI.LuciFit">Fitting Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-LUCI.LuciFit">Fitting Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciFit.Fit"><code class="docutils literal notranslate"><span class="pre">Fit</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.NII_constraints"><code class="docutils literal notranslate"><span class="pre">Fit.NII_constraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.apply_transmission"><code class="docutils literal notranslate"><span class="pre">Fit.apply_transmission()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calc_chisquare"><code class="docutils literal notranslate"><span class="pre">Fit.calc_chisquare()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calc_sinc_width"><code class="docutils literal notranslate"><span class="pre">Fit.calc_sinc_width()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calculate_correction"><code class="docutils literal notranslate"><span class="pre">Fit.calculate_correction()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calculate_noise"><code class="docutils literal notranslate"><span class="pre">Fit.calculate_noise()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calculate_params"><code class="docutils literal notranslate"><span class="pre">Fit.calculate_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.check_fitting_model"><code class="docutils literal notranslate"><span class="pre">Fit.check_fitting_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.check_lengths"><code class="docutils literal notranslate"><span class="pre">Fit.check_lengths()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.check_lines"><code class="docutils literal notranslate"><span class="pre">Fit.check_lines()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.cont_estimate"><code class="docutils literal notranslate"><span class="pre">Fit.cont_estimate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.estimate_priors_ML"><code class="docutils literal notranslate"><span class="pre">Fit.estimate_priors_ML()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.fit"><code class="docutils literal notranslate"><span class="pre">Fit.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.fit_Bayes"><code class="docutils literal notranslate"><span class="pre">Fit.fit_Bayes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.interpolate_spectrum"><code class="docutils literal notranslate"><span class="pre">Fit.interpolate_spectrum()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.line_vals_estimate"><code class="docutils literal notranslate"><span class="pre">Fit.line_vals_estimate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.log_likelihood"><code class="docutils literal notranslate"><span class="pre">Fit.log_likelihood()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.multiple_component_vel_constraint"><code class="docutils literal notranslate"><span class="pre">Fit.multiple_component_vel_constraint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.restrict_wavelength"><code class="docutils literal notranslate"><span class="pre">Fit.restrict_wavelength()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.sigma_constraints"><code class="docutils literal notranslate"><span class="pre">Fit.sigma_constraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.vel_constraints"><code class="docutils literal notranslate"><span class="pre">Fit.vel_constraints()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
@@ -92,8 +119,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Fitting Algorithm</li>
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Fitting Algorithm</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/fits.rst.txt" rel="nofollow"> View page source</a>
       </li>

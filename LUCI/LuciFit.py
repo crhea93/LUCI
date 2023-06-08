@@ -4,7 +4,6 @@ from scipy import interpolate
 from numdifftools import Hessian, Hessdiag
 import emcee
 import scipy.special as sps
-import scipy as sp
 import astropy.stats as astrostats
 import warnings
 import dynesty
@@ -14,8 +13,10 @@ from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
     calculate_flux, calculate_flux_err
 from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
-
+from LUCI.LuciUtility import hessianComp
 warnings.filterwarnings("ignore")
+from numba import jit
+
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
 
@@ -46,7 +47,7 @@ class Fit:
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, mdn=False,
                  nii_cons=True, sky_lines=None, sky_lines_scale=None, initial_values=[False],
-                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1, hessian=None
+                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1
                  ):
         """
         Args:
@@ -81,8 +82,8 @@ class Fit:
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
-                          'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4': 807.88068, 'NII6583C4': 810.417771,
-                          'NII6548C4': 806.062493,
+                          'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4': 807.881, 'NII6583C4': 810.417,
+                          'NII6548C4': 804.7,#806.062,
                           'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
                           'OII3729C1': 459.017742, 'OII3726C1': 458.674293, }
         self.available_functions = ['gaussian', 'sinc', 'sincgauss', 'gauss']
@@ -154,8 +155,8 @@ class Fit:
             self.check_lines()
         self.check_fitting_model()
         self.check_lengths()
-        self.hessian = hessian
 
+    @jit(nopython=False, fastmath=True)
     def apply_transmission(self):
         """
         Apply transmission curve on the spectra according to un-redshifted axis.
@@ -167,6 +168,7 @@ class Fit:
         self.spectrum = [self.spectrum[i] / self.trans_filter[i] if self.trans_filter[i] > 0.5 else self.spectrum[i] for
                          i in range(len(self.spectrum))]
 
+    @jit(nopython=False, fastmath=True)
     def calculate_correction(self):
         """
         Calculate correction factor based of interferometric angle. This is used to correct the broadening
@@ -174,6 +176,7 @@ class Fit:
         self.correction_factor = 1 / self.cos_theta
         self.axis_step = self.correction_factor / (2 * self.delta_x * (self.n_steps - self.zpd_index)) * 1e7
 
+    @jit(nopython=False, fastmath=True)
     def calc_sinc_width(self, ):
         """
         Calculate sinc width of the sincgauss function
@@ -187,7 +190,6 @@ class Fit:
         We do this so that the continuum is properly calculated.
         """
         # Determine filter
-
         if self.spec_min is None or self.spec_max is None:  # If the user has not entered explicit bounds
             global bound_lower, bound_upper
             if self.filter == 'SN3':
@@ -204,7 +206,7 @@ class Fit:
                 # We pretend we are looking at SN1
                 bound_lower = 18000
                 bound_upper = 19400
-            elif self.filter == 'C4' and 'HalphaC4' in self.lines:
+            elif self.filter == 'C4':
                 ## This is true for objects at redshift ~0.25
                 bound_lower = 12150
                 bound_upper = 12550
@@ -225,12 +227,10 @@ class Fit:
             pass
         min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
         max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
-        self.min_ = min_
-        self.max_ = max_
-        self.spectrum_restricted = self.spectrum_normalized[self.min_:self.max_]
-        self.axis_restricted = self.axis[self.min_:self.max_]
-        self.spectrum_restricted_norm = self.spectrum_restricted / np.max(self.spectrum_restricted)
-        return self.min_, self.max_
+        self.spectrum_restricted = np.real(self.spectrum_normalized[min_:max_])
+        self.axis_restricted = np.real(self.axis[min_:max_])
+        self.spectrum_restricted_norm = np.real(self.spectrum_restricted / np.max(self.spectrum_restricted))
+        return min_, max_
 
     def calculate_noise(self):
         """
@@ -305,6 +305,7 @@ class Fit:
             self.broad_ml_sigma = 0
         return None
 
+    @jit(nopython=False, fastmath=True)
     def interpolate_spectrum(self):
         """
         Interpolate Spectrum given the wavelength axis of reference spectrum.
@@ -371,6 +372,7 @@ class Fit:
             self.sigma_max = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT + 3 * (line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
         return line_amp_est, line_pos_est, line_broad_est
 
+    @jit(nopython=False, fastmath=True)
     def cont_estimate(self, sigma_level=3):
         """
         TODO: Test
@@ -423,6 +425,7 @@ class Fit:
 
         return cont_val
 
+    @jit(nopython=False, fastmath=True)
     def log_likelihood(self, theta):
         """
         Calculate log likelihood function evaluated given parameters on spectral axis
@@ -446,8 +449,8 @@ class Fit:
                                                                          self.sinc_width,
                                                                          line_names=self.lines)
         # Add constant continuum to model
-        model += theta[-1]
-        sigma2 = self.noise ** 2
+        model += np.real(theta[-1])
+        sigma2 = np.real(self.noise ** 2)
         residual = -0.5 * np.nansum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
         if np.isnan(residual):
             return -1e44
@@ -542,16 +545,23 @@ class Fit:
         This should work for three or more components, but I haven't tested it.
         """
         multi_dict_list = []
-        unique_lines = np.unique(self.lines)  # List of unique groups
-        for unique_ in unique_lines:  # Step through each unique group
-            inds_unique = [i for i, e in enumerate(self.lines) if e == unique_]  # Obtain line indices in group
-            if len(inds_unique) > 1:  # If there is more than one element in the group
-                ind_0 = inds_unique[0]  # Get first element
-                for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
-                    expr_dict_vel = {'type': 'ineq',
-                                     'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] - x[
-                                         3 * ind_0 + 1] + 1}
-                    multi_dict_list.append(expr_dict_vel)
+        #unique_lines = np.unique(self.lines)  # List of unique groups
+        #for unique_ in unique_lines:  # Step through each unique group
+        #    inds_unique = [i for i, e in enumerate(self.lines) if e == unique_]  # Obtain line indices in group
+        #    if len(inds_unique) > 1:  # If there is more than one element in the group
+        #        ind_0 = inds_unique[0]  # Get first element
+        #        for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
+        #            expr_dict_vel = {'type': 'ineq',
+        #                             'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] - x[
+        #                                 3 * ind_0 + 1] + 1}
+        #            multi_dict_list.append(expr_dict_vel)
+        inds_unique = [i for i, e in enumerate(self.lines)]  # Obtain line indices in group
+        ind_0 = inds_unique[0]  # Get first element
+        for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
+            expr_dict_vel = {'type': 'ineq',
+                                'fun': lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] + x[
+                                    3 * ind_0 + 1]+1}
+            multi_dict_list.append(expr_dict_vel)
         return multi_dict_list
 
     def calculate_params(self):
@@ -569,7 +579,6 @@ class Fit:
         best_fit = None  # Initialize best fit
         best_loss = 1e46  # Initialize as a large number
         nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
-        
         if not self.freeze:  # Not freezing velocity and broadening
             for st in range(self.n_stoch):  # Do N fits and record the one with the best loss 
                 initial = np.ones((3 * self.line_num + 1))  # Initialize solution vector  (3*num_lines plus continuum)
@@ -592,9 +601,9 @@ class Fit:
                 # CONSTRAINTS
                 if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
                     nii_constraints = self.NII_constraints()
-                    cons = sigma_cons + vel_cons# + vel_cons_multiple# + nii_constraints
+                    cons = sigma_cons + vel_cons + vel_cons_multiple + nii_constraints
                 else:
-                    cons = sigma_cons + vel_cons# + vel_cons_multiple
+                    cons = sigma_cons + vel_cons + vel_cons_multiple
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 100},
@@ -617,7 +626,7 @@ class Fit:
                 initial[mod] = amp_est - initial[-1]  # Subtract continuum estimate from amplitude estimate
                 initial_positions[mod] = vel_est
                 initial_sigmas[mod] = sigma_est
-            for st in range(5):  # Do 100 fits and record the one with the best loss 
+            for st in range(10):  # Do 10 fits and record the one with the best loss 
                 soln = minimize(nll, initial,
                             method='SLSQP',
                             options={'disp': False, 'maxiter': 30},
@@ -645,15 +654,12 @@ class Fit:
         self.uncertainties[-1] *= self.spectrum_scale
         if self.uncertainty_bool:
             # Calculate uncertainties using the negative inverse hessian  as the covariance matrix
-            #hessian = Hessian(nll)
-            hessian_calc = self.hessian(parameters, self.sinc_width, self.axis_restricted, self.spectrum_restricted, self.noise)
-            #hess = hessian(nll)
-            #hessian_calc = hess(parameters)
+            hessian_calc = hessianComp(nll,parameters)
             try:
-                covariance_mat = -sp.linalg.inv(hessian_calc)#-np.linalg.inv(hessian_calc)
+                covariance_mat = -np.linalg.inv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
-            except sp.linalg.LinAlgError:
-                covariance_mat = -sp.linalg.pinv2(hessian_calc)
+            except np.linalg.LinAlgError:
+                covariance_mat = -np.linalg.pinv(hessian_calc)
                 self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))
         if not self.freeze:  # Not freezing velocity and broadening so nothing needs to be done
             self.fit_sol = parameters
@@ -744,7 +750,8 @@ class Fit:
                         'velocities': vels, 'sigmas': sigmas,
                         'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                         'axis_step': self.axis_step, 'corr': self.correction_factor,
-                        'continuum': self.fit_sol[-1], 'scale': self.spectrum_scale,
+                        'continuum': self.fit_sol[-1], 'continuum_error': self.uncertainties[-1],
+                        'scale': self.spectrum_scale,
                         'vel_ml': self.vel_ml, 'vel_ml_sigma': self.vel_ml_sigma,
                         'broad_ml': self.broad_ml, 'broad_ml_sigma': self.broad_ml_sigma,
                         'fit_vector': self.fit_vector, 'fit_axis': self.axis,
@@ -760,14 +767,14 @@ class Fit:
             for mod in range(self.line_num):
                 initial[3 * mod] = self.cont_estimate(sigma_level=5) * self.sky_lines_scale[mod]
                 initial[3 * mod + 1] = 1e7 / ((80 * (skylines_vals[mod]) / SPEED_OF_LIGHT) + skylines_vals[mod])
-                initial[3 * mod + 2] = 1
+                initial[3 * mod + 2] = .1
             initial[-1] = self.cont_estimate(sigma_level=5)
             # self.initial_values = initial
             sigma_cons = self.sigma_constraints()  # Call sigma constaints
             vel_cons = self.vel_constraints()  # Call velocity constraints
             cons = sigma_cons + vel_cons
             soln = minimize(nll, initial, method='trust-constr',
-                            options={'disp': False, 'maxiter': 30}, tol=1e-3,
+                            options={'disp': False, 'maxiter': 100}, tol=1e-3,
                             args=())  # , constraints=cons)
             parameters = soln.x
 
@@ -836,7 +843,7 @@ class Fit:
             parameters_std = []
             self.flat_samples = flat_samples
             for i in range(n_dim):  # Calculate and store these results
-                median = np.median(flat_samples[:, i])
+                median = np.mean(flat_samples[:, i])
                 std = np.std(flat_samples[:, i])
                 parameters_med.append(median)
                 parameters_std.append(std)

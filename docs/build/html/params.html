@@ -17,6 +17,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -68,7 +69,15 @@
 <li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Parameter Calculations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-LUCI.LuciFitParameters">Fit Parameter Calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-LUCI.LuciFitParameters">Fit Parameter Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciFitParameters.calculate_broad"><code class="docutils literal notranslate"><span class="pre">calculate_broad()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciFitParameters.calculate_broad_err"><code class="docutils literal notranslate"><span class="pre">calculate_broad_err()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciFitParameters.calculate_flux"><code class="docutils literal notranslate"><span class="pre">calculate_flux()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciFitParameters.calculate_flux_err"><code class="docutils literal notranslate"><span class="pre">calculate_flux_err()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciFitParameters.calculate_vel"><code class="docutils literal notranslate"><span class="pre">calculate_vel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciFitParameters.calculate_vel_err"><code class="docutils literal notranslate"><span class="pre">calculate_vel_err()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
@@ -92,8 +101,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Parameter Calculations</li>
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Parameter Calculations</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/params.rst.txt" rel="nofollow"> View page source</a>
       </li>

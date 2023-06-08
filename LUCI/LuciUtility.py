@@ -4,7 +4,8 @@ import numpy as np
 from astropy.wcs import WCS
 from astropy.io import fits
 from scipy import interpolate
-
+import scipy as sp
+from numba import jit
 
 def check_luci_path(Luci_path):
     """
@@ -20,7 +21,8 @@ def check_luci_path(Luci_path):
 
 def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
               broadenings_fits,
-              velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, header, binning, suffix=''):
+              velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits,
+              header, binning, suffix=''):
     """
     Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
     amplitude, flux, and chi-squared maps with the appropriate headers in the output directory
@@ -37,6 +39,7 @@ def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors
         broadenings_errors_fits: 3D Numpy array of broadening errors
         chi2_fits: 2D Numpy array of chi-squared values
         continuum_fits: 2D Numpy array of continuum value
+        continuum_error_fits: 2D numpy array of continuum errors
         header: Header object (either binned or unbinned)
         output_name: Output directory and naming convention
         binning: Value by which to bin (default None)
@@ -77,6 +80,7 @@ def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors
                      broadenings_errors_fits[:, :, ct], header, overwrite=True)
     fits.writeto(output_dir + '/' + output_name + '_Chi2.fits', chi2_fits, header, overwrite=True)
     fits.writeto(output_dir + '/' + output_name + '_continuum.fits', continuum_fits, header, overwrite=True)
+    fits.writeto(output_dir + '/' + output_name + '_continuum_error.fits', continuum_error_fits, header, overwrite=True)
 
 
 def get_quadrant_dims(quad_number, quad_nb, dimx, dimy):
@@ -140,6 +144,7 @@ def spectrum_axis_func(hdr_dict, redshift):
     """
 
     len_wl = hdr_dict['STEPNB']  # Length of Spectral Axis
+    print("length: "+str(len_wl))
     start = hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
     end = start + (len_wl) * hdr_dict['CDELT3']  # End
     step = hdr_dict['CDELT3']  # Step size
@@ -148,12 +153,12 @@ def spectrum_axis_func(hdr_dict, redshift):
     spectrum_axis_unshifted = np.array(np.linspace(start, end, len_wl),
                                        dtype=np.float32)  # Do not apply redshift correction
 
-    # min_ = 1e7  * (self.hdr_dict['ORDER'] / (2*self.hdr_dict['STEP']))# + 1e7  / (2*self.delta_x*self.n_steps)
-    # max_ = 1e7  * ((self.hdr_dict['ORDER'] + 1) / (2*self.hdr_dict['STEP']))# - 1e7  / (2*self.delta_x*self.n_steps)
-    # step_ = max_ - min_
-    # axis = np.array([min_+j*step_/self.hdr_dict['STEPNB'] for j in range(self.hdr_dict['STEPNB'])])
-    # self.spectrum_axis = axis#*(1+self.redshift)
-    # self.spectrum_axis_unshifted = axis
+    '''min_ = 1e7  * (hdr_dict['ORDER'] / (2*hdr_dict['STEP']))# + 1e7  / (2*self.delta_x*self.n_steps)
+    max_ = 1e7  * ((hdr_dict['ORDER'] + 1) / (2*hdr_dict['STEP']))# - 1e7  / (2*self.delta_x*self.n_steps)
+    step_ = max_ - min_
+    axis = np.array([min_+j*step_/hdr_dict['STEPNB'] for j in range(hdr_dict['STEPNB'])])
+    spectrum_axis = axis*(1+redshift)
+    spectrum_axis_unshifted = axis'''
     return spectrum_axis, spectrum_axis_unshifted
 
 
@@ -369,3 +374,49 @@ def bin_mask(mask, binning, x_min, x_max, y_min, y_max):
                 binned_mask[i,j] = False
     binned_mask = binned_mask / (binning ** 2)
     return binned_mask
+
+def hessian(x):
+    """
+    Calculate the hessian matrix with finite differences
+    Parameters:
+       - x : ndarray
+    Returns:
+       an array of shape (x.dim, x.ndim) + x.shape
+       where the array[i, j, ...] corresponds to the second derivative x_ij
+    """
+    x_grad = np.gradient(x) 
+    hessian = np.empty((x.ndim, x.ndim) + x.shape, dtype=x.dtype) 
+    for k, grad_k in enumerate(x_grad):
+        # iterate over dimensions
+        # apply gradient again to every component of the first derivative.
+        tmp_grad = np.gradient(grad_k) 
+        for l, grad_kl in enumerate(tmp_grad):
+            hessian[k, l, :, :] = grad_kl
+    return hessian
+
+@jit(fastmath=True)
+def hessianComp(func,initial,delta=1e-3):
+  """
+  Calculate the hessian using finite differences. The function was taken from https://rh8liuqy.github.io/Finite_Difference.html.
+
+  Choice of delta does affect the result if you pick delta too small or too large. 
+  See https://math.stackexchange.com/questions/1039428/finite-difference-method
+  """  
+  f = func
+  initial = np.array(initial, dtype=float)
+  n = len(initial)
+  output = np.matrix(np.zeros(n*n))
+  output = output.reshape(n,n)
+  for i in range(n):
+    for j in range(n):
+      ei = np.zeros(n)
+      ei[i] = 1
+      ej = np.zeros(n)
+      ej[j] = 1
+      f1 = f(initial + delta * ei + delta * ej)
+      f2 = f(initial + delta * ei - delta * ej)
+      f3 = f(initial - delta * ei + delta * ej)
+      f4 = f(initial - delta * ei - delta * ej)
+      numdiff = (f1-f2-f3+f4)/(4*delta*delta)
+      output[i,j] = numdiff
+  return output
