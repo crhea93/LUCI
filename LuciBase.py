@@ -591,7 +591,9 @@ class Luci():
                 print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         else:  # User passed list of pixel IDs to create the mask
             mask = np.ones((self.cube_final.shape[0], self.cube_final.shape[1]), dtype=bool)
-            mask[region] = True  # Set region pixels to true
+            for pair in region:
+                mask[pair] = True  # Set region pixel to True
+
         if binning != None and binning > 1:
             mask = bin_mask(mask, binning, x_min, self.cube_final.shape[0], y_min, self.cube_final.shape[1])  # Bin Mask
         # Clean up output name
