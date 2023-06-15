@@ -1,5 +1,8 @@
 import h5py
 import glob
+import scipy.interpolate as spi
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas
 from astropy.wcs import WCS
 import astropy.units as u
@@ -17,13 +20,17 @@ from astropy.coordinates import SkyCoord, EarthLocation
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function, bin_mask
 from LUCI.LuciWVT import *
-from LUCI.LuciPlotting import plot_fit
 from LUCI.LuciVisualize import visualize as LUCIvisualize
 from LUCI.LuciBackground import find_background_pixels
 import multiprocessing as mp
 import time
 from sklearn import decomposition
-
+from tensorflow.keras import layers, losses
+from tensorflow.keras.models import Model
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from keras.models import Sequential
+from keras.layers import Dense
 import os
 import logging
 
@@ -397,6 +404,7 @@ class Luci():
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
 
+
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -501,7 +509,8 @@ class Luci():
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
                    bkg=None, binning=None, bayes_bool=False, bayes_method='emcee',
                    output_name=None, uncertainty_bool=False, n_threads=1, nii_cons=True,
-                   spec_min=None, spec_max=None, obj_redshift=0.0, initial_values=[False], n_stoch=1):
+                   spec_min=None, spec_max=None, obj_redshift=0.0, initial_values=[False], n_stoch=1,
+                   pixel_list=False):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
         it works for ds9 regions. We first create a mask from the ds9 region file. Then
@@ -530,6 +539,8 @@ class Luci():
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             initial_values: List of files containing initial conditions (default [False])
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+            pixel_list: Boolean indicating if the user passes a 2D list containing pixel IDs for the region (default False)
+
         Return:
             Velocity and Broadening arrays (2d). Also return amplitudes array (3D).
 
@@ -563,20 +574,24 @@ class Luci():
             y_min = 0
             cube_to_slice = self.cube_binned
         # Create mask
-        if '.reg' in region:  # If passed a .reg file
-            if binning != None and binning > 1:
-                header = self.header_binned
-            else:
-                header = self.header
-            header.set('NAXIS1', 2064)  # Need this for astropy
-            header.set('NAXIS2', 2048)
-            mask = reg_to_mask(region, header)
-        elif '.npy' in region:  # If passed numpy file
-            mask = np.load(region).T
-        elif region is not None:  # If passed numpy array
-            mask = region.T
-        else:  # Not passed a mask in any of the correct formats
-            print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
+        if pixel_list is False:
+            if '.reg' in region:  # If passed a .reg file
+                if binning != None and binning > 1:
+                    header = self.header_binned
+                else:
+                    header = self.header
+                header.set('NAXIS1', 2064)  # Need this for astropy
+                header.set('NAXIS2', 2048)
+                mask = reg_to_mask(region, header)
+            elif '.npy' in region:  # If passed numpy file
+                mask = np.load(region).T
+            elif region is not None:  # If passed numpy array
+                mask = region.T
+            else:  # Not passed a mask in any of the correct formats
+                print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
+        else:  # User passed list of pixel IDs to create the mask
+            mask = np.ones((self.cube_final.shape[0], self.cube_final.shape[1]), dtype=bool)
+            mask[region] = True  # Set region pixels to true
         if binning != None and binning > 1:
             mask = bin_mask(mask, binning, x_min, self.cube_final.shape[0], y_min, self.cube_final.shape[1])  # Bin Mask
         # Clean up output name
@@ -1549,7 +1564,7 @@ class Luci():
             n_components_keep = n_components
         if bkg_image == 'deep':
             self.create_deep_image()
-            background_image = self.deep_image
+            background_image = self.deep_image[x_min:x_max, y_min:y_max]
         else:
             background_image = fits.open(bkg_image)[0].data
         # Find background pixels and save map in self.output_dir
@@ -1562,7 +1577,7 @@ class Luci():
             min_spectral = np.argmin(np.abs([1e7 / wavelength - 680 for wavelength in self.spectrum_axis]))
             # Check if there are not enough components
             if len(self.cube_final[100,100, min_spectral:max_spectral]) < n_components:
-                n_components = len(self.cube_final[100,100, min_spectral:max_spectral])
+                n_components = len(self.cube_final[100, 100, min_spectral:max_spectral])
                 if n_components_keep > n_components:
                     n_components_keep = n_components
         else:
@@ -1570,13 +1585,18 @@ class Luci():
             print('Terminating Program')
             quit()
 
-        bkg_spectra = [self.cube_final[index[0], index[1], min_spectral: max_spectral] for index in idx_bkg if
-                       x_min < index[0] < x_max and y_min < index[1] < y_max]  # Get background pixels
+        bkg_spectra = [self.cube_final[x_min+index[0], y_min+index[1], min_spectral: max_spectral] for index in idx_bkg if
+                       x_min < x_min+index[0] < x_max and y_min < y_min+index[1] < y_max]  # Get background pixels
+        # Calculate scaling factors and normalize
+        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
+        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
+        bkg_spectra = [bkg_spectrum/np.nanmax(bkg_spectrum[min_spectral_scale:max_spectral_scale]) for bkg_spectrum in bkg_spectra]
+        bkg_spectra = [bkg_spectrum/np.max(bkg_spectrum) for bkg_spectrum in bkg_spectra]
         # Calculate n most important components
         spectral_axis_nm = 1e7 / self.spectrum_axis[min_spectral: max_spectral]
         pca = decomposition.IncrementalPCA(n_components=n_components)  # Call pca
         pca.fit(bkg_spectra)  # Fit using background spectra
-        BkgTransformedPCA = pca.transform(bkg_spectra)  # Apply on background spectra
+        BkgTransformedPCA = pca.transform(bkg_spectra)[:,:n_components_keep]  # Apply on background spectra
         # Plot the primary components
         plt.figure(figsize=(18, 16))
         l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 1, linewidth=3)  # plot the mean first
@@ -1595,11 +1615,93 @@ class Luci():
         # Make scree plot
         plt.figure(figsize=(18, 16))
         PC_values = np.arange(pca.n_components_)[:n_components] + 1
-        plt.plot(PC_values, pca.explained_variance_ratio_[:n_components], 'o-', linewidth=2, color='blue')
+        plt.plot(PC_values, pca.explained_variance_ratio_[:n_components], 'o-', linewidth=2)
         plt.title('Scree Plot')
         plt.xlabel('Principal Component')
         plt.ylabel('Variance Explained')
         plt.savefig(os.path.join(self.output_dir, 'PCA_scree.png'))
+
+
+        # Collect background and source pixels/coordinates
+        bkg_pixels = [[index[0], index[1]] for index in idx_bkg if x_min<x_min+index[0]<x_max and y_min<y_min+index[1]<y_max]
+        src_pixels = [[index[0], index[1]] for index in idx_src if x_min<x_min+index[0]<x_max and y_min<y_min+index[1]+y_max]
+        bkg_x = [bkg[0] for bkg in bkg_pixels]
+        bkg_y = [bkg[1] for bkg in bkg_pixels]
+        src_x = [src[0] for src in src_pixels]
+        src_y = [src[1] for src in src_pixels]
+        # Interpolate
+        interpolatedSourcePixels = spi.griddata(
+            bkg_pixels,
+            BkgTransformedPCA,
+            src_pixels,
+            method='nearest'
+
+        )
+        '''inds = np.argsort(bkg_pixels)
+        bkg_pixels = bkg_pixels[inds]
+        BkgTransformedPCA = BkgTransformedPCA[inds]
+        bkg_x = [bkg[0] for bkg in bkg_pixels]
+        bkg_y = [bkg[1] for bkg in bkg_pixels]
+        src_x = [src[0] for src in src_pixels]
+        src_y = [src[1] for src in src_pixels]
+        interp_func = spi.RegularGridInterpolator(
+            (bkg_x, bkg_y), BkgTransformedPCA
+        )
+        interpolatedSourcePixels = interp_func((src_x, src_y))'''
+        # Construct Neural Network
+        '''X_train, X_test, y_train, y_test = train_test_split(np.column_stack((bkg_x, bkg_y)), np.arcsinh(BkgTransformedPCA[:]),
+                                                            test_size=0.01)
+        ### Model creation: adding layers and compilation
+        model2D = Sequential()
+        model2D.add(Dense(300, input_shape=(None, 2), activation='relu'))
+        model2D.add(Dense(300, activation='relu'))
+        model2D.add(Dense(n_components_keep, activation='linear'))
+        model2D.compile(optimizer='adadelta', loss='mape', metrics=['mse'])
+        # Fit model
+        history = model2D.fit(X_train, y_train, epochs=10, batch_size=128)
+        # Predict using model
+        interpolatedSourcePixels = model2D.predict(np.column_stack((src_x, src_y)))'''
+        # Create 3D array of coefficients
+        coefficient_array = np.zeros((x_max-x_min, y_max-y_min, n_components_keep))
+
+        for pixel_ct, pixel in enumerate(bkg_pixels):
+            coefficient_array[pixel[0], pixel[1]] = BkgTransformedPCA[pixel_ct]
+        for pixel_ct, pixel in enumerate(src_pixels):
+            coefficient_array[pixel[0], pixel[1]] = interpolatedSourcePixels[pixel_ct]  # /np.max(interpolatedSourcePixels[pixel_ct])
+        # Make coefficient maps for first 5 coefficients
+        coeff_map_path = os.path.join(self.output_dir, 'PCACoefficientMaps')
+        if not os.path.exists(coeff_map_path):
+            os.mkdir(coeff_map_path)
+        for n_component in range(n_components_keep):
+            plt.figure(figsize=(18, 16))
+            coeff_map = coefficient_array[:,:,n_component]/np.nanmax(coefficient_array[:,:,n_component])
+            plt.imshow(coeff_map, origin='lower')
+            c_min = np.nanpercentile(coeff_map, 5)
+            c_max = np.nanpercentile(coeff_map, 99.5)
+            plt.title('Component %i'%n_component)
+            plt.xlabel('RA (physical)', fontsize=24, fontweight='bold')
+            plt.ylabel('Dec (physical)', fontsize=24, fontweight='bold')
+            plt.clim(c_min, c_max)
+            plt.savefig(os.path.join(coeff_map_path, 'component%i.png'%n_component))
+
+        plt.figure(figsize=(18, 16))
+        ''''print(BkgTransformedPCA[100][0])
+        plt.plot(1e7/self.spectrum_axis, pca.mean_-np.sum([pca.components_[i]*BkgTransformedPCA[100][i] for i in range(n_components)], axis=1)
+                 , linewidth=3, linestyle='--', label='Reconstructed BKG 1')
+        plt.plot(1e7/self.spectrum_axis, pca.mean_, linewidth=3, linestyle='-.', label='Mean')
+        plt.plot(1e7/self.spectrum_axis,
+                 pca.mean_ - np.sum([pca.components_[i] * interpolatedSourcePixels[10][i] for i in range(n_components_keep)], axis=1),
+                 linewidth=3, linestyle='--', label='Reconstructed Source 1')
+        plt.xlabel('Wavelength (nm)', fontsize='xx-large', fontweight='bold')
+        plt.ylabel('Normalized Flux', fontsize='xx-large', fontweight='bold')
+        plt.xticks(fontsize='x-large')
+        plt.yticks(fontsize='x-large')
+        plt.legend()
+        plt.savefig(os.path.join(self.output_dir, 'PCABackgroundSpectra.png'))'''
+
+        return BkgTransformedPCA, pca, interpolatedSourcePixels
+
+
 
     '''def update_astrometry(self, api_key):
             """
