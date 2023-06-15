@@ -35,6 +35,8 @@ def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name=None, fig_s
     check_units(units)  # Check that user supplied appropriate wavelength option
     if units == 'nm':
         axis = [1e7 / axis_val for axis_val in axis]
+    elif units == 'angstrom' or 'Angstrom':
+        axis = [1e8 / axis_val for axis_val in axis]
     else:
         pass
     ax.plot(axis, spectrum, **kwargs)
@@ -64,6 +66,8 @@ def plot_fit(axis, spectrum, fit, ax=None, units='cm-1', output_name=None, fig_s
     check_units(units)  # Check that user supplied appropriate wavelength option
     if units == 'nm':
         axis = [1e7 / axis_val for axis_val in axis]
+    elif units == 'angstrom' or 'Angstrom':
+        axis = [1e8 / axis_val for axis_val in axis]
     else:
         pass
     ax.plot(axis, spectrum, label='Spectrum', **kwargs)
@@ -108,10 +112,14 @@ def plot_map(quantity_map, quantity_name, output_dir='', header=None, object_nam
         pass
     elif quantity_name == 'flux':
         quantity_map = np.nan_to_num(quantity_map, nan=1e-25)
+<<<<<<< HEAD
         quantity_map[quantity_map<1e-25] = 1e-25
+=======
+>>>>>>> d7665169c8464f7f37c3ae7abb8fe2a1baf67052
         quantity_map = np.log10(quantity_map)  # NaNs to extremely small number
     else:
         print('Please enter either flux, velocity, or broadening')
+    quantity_map = np.nan_to_num(quantity_map, 1e-18)
     units = {'flux': r'log[ergs/s/cm$^2$/A]', 'velocity': 'km/s', 'broadening': 'km/s'}
     if clims is None:
         c_min = np.nanpercentile(quantity_map, 5)
@@ -121,7 +129,6 @@ def plot_map(quantity_map, quantity_name, output_dir='', header=None, object_nam
         c_max = clims[1]
     # Plot
     wcs = WCS(header)
-    plot_style = set_style(dark)
     fig = plt.figure(figsize=fig_size)
     try:
         ax = plt.subplot(projection=wcs)
@@ -196,6 +203,7 @@ def plot_map_no_coords(quantity_map, quantity_name, object_name='', filter_name=
     plt.savefig(output_dir + '/' +object_name+'_'+filter_name+'_'+ quantity_name + '_map.png')
     return None
 
+
 def check_units(unit):
     """
     This function checks to see that the unit provided is in the available options
@@ -205,7 +213,7 @@ def check_units(unit):
         Nothing if the user provides an appropriate unit
         Else it will throw an error
     """
-    unit_options = ['cm-1', 'nm']
+    unit_options = ['cm-1', 'nm', 'angstrom', 'Angstrom']
     if unit in unit_options:
         pass
     else:
