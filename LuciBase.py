@@ -1573,8 +1573,8 @@ class Luci():
         max_spectral = None  # Initialize
         min_spectral = None  # Initialize
         if self.filter == 'SN3':
-            max_spectral = np.argmin(np.abs([1e7 / wavelength - 630 for wavelength in self.spectrum_axis]))
-            min_spectral = np.argmin(np.abs([1e7 / wavelength - 680 for wavelength in self.spectrum_axis]))
+            max_spectral = np.argmin(np.abs([1e7 / wavelength - 646 for wavelength in self.spectrum_axis]))
+            min_spectral = np.argmin(np.abs([1e7 / wavelength - 678 for wavelength in self.spectrum_axis]))
             # Check if there are not enough components
             if len(self.cube_final[100,100, min_spectral:max_spectral]) < n_components:
                 n_components = len(self.cube_final[100, 100, min_spectral:max_spectral])
@@ -1599,7 +1599,7 @@ class Luci():
         BkgTransformedPCA = pca.transform(bkg_spectra)[:,:n_components_keep]  # Apply on background spectra
         # Plot the primary components
         plt.figure(figsize=(18, 16))
-        l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 1, linewidth=3)  # plot the mean first
+        l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 1.2, linewidth=3)  # plot the mean first
         c = l[0].get_color()
         plt.text(635, -0.9, 'mean emission', color=c, fontsize='xx-large')
         shift = 1.2
@@ -1634,7 +1634,7 @@ class Luci():
             bkg_pixels,
             BkgTransformedPCA,
             src_pixels,
-            method='nearest'
+            method='linear'
 
         )
         '''inds = np.argsort(bkg_pixels)

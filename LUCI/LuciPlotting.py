@@ -107,6 +107,8 @@ def plot_map(quantity_map, quantity_name, output_dir='', header=None, object_nam
     if quantity_name == 'broadening' or quantity_name == 'velocity':
         pass
     elif quantity_name == 'flux':
+        quantity_map = np.nan_to_num(quantity_map, nan=1e-25)
+        quantity_map[quantity_map<1e-25] = 1e-25
         quantity_map = np.log10(quantity_map)  # NaNs to extremely small number
     else:
         print('Please enter either flux, velocity, or broadening')
