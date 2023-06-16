@@ -80,6 +80,10 @@ The output files will be in the following structure:
     :alt: LUCI Output Structure
 
 
+
+You can easily  convert the HDF5 data cube to a fits file using the `export_fits()` command. Follow the
+examples to learn how to load in the cube first :)
+
 Citing LUCI
 -----------
 If you cite LUCI, please use both the following citations.

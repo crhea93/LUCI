@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-def find_background_pixels(deep_image, outputDir='', sigma_threshold=2, plot_mask=True):
+def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_mask=True):
     """
     This algorithm uses a sigma thresholding algorithm on the deep image to determine which pixels belong to the background.
 
@@ -25,11 +25,11 @@ def find_background_pixels(deep_image, outputDir='', sigma_threshold=2, plot_mas
         idx_source: List of source pixel positions
     """
     bkg_estimator = MedianBackground()
-    bkg = Background2D(deep_image, (100, 100), filter_size=(3, 3),
+    bkg = Background2D(deep_image, (50, 50), filter_size=(3, 3),
                        bkg_estimator=bkg_estimator)  # Experimentally found this values to be good
     deep_image -= bkg.background  # subtract the background
     threshold = sigma_threshold * bkg.background_rms
-    kernel = make_2dgaussian_kernel(3.0, size=5)  # FWHM = 3.0
+    kernel = make_2dgaussian_kernel(3.0, size=3)  # FWHM = 3.0
     convolved_data = convolve(deep_image, kernel)  # Convolve data
     segment_map = detect_sources(convolved_data, threshold, npixels=10)  # Apply detection
     idx_bkg = np.argwhere(np.abs(segment_map) < 1)  # Get only background pixels
