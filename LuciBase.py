@@ -210,6 +210,23 @@ class Luci():
             output_name = self.output_dir + '/' + self.object_name + '_deep.fits'
         fits.writeto(output_name, self.deep_image, header_to_use, overwrite=True)
         hdf5_file.close()
+        return None
+
+
+    def export_fits(self):
+        """
+        Export HDF file as fits file. The data will be saved in the same location as the cube (`cube_dir`) with the same
+        name (`object_name`).
+
+        """
+        fits_header = fits.PrimaryHDU(header=self.header, data=self.cube_final.transpose(2, 0, 1))
+        #cube_final_fits = fits.ImageHDU(data=self.cube_final.transpose(1, 0, 2))
+        if self.deep_image is False:
+            self.create_deep_image()
+        deep_fits = fits.ImageHDU(self.deep_image)
+        hdu = fits.HDUList([fits_header])
+        hdu.writeto(os.path.join(self.output_dir, self.object_name+'.fits'), overwrite=True)
+        return None
 
     def visualize(self):
         """
