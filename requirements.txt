@@ -14,12 +14,12 @@ joblib
 jupyterlab
 pytest
 pyregion
-tensorflow==2.10.1
+tensorflow==2.11
 tensorboard
 tensorboard-data-server
 tensorboard-plugin-wit
 tensorflow-estimator
-tensorflow-probability
+tensorflow-probability==0.14
 numba
 pytest
 corner
