@@ -859,7 +859,8 @@ class Luci():
                             region, initial_values=[False], bkg=None,
                             bayes_bool=False, bayes_method='emcee',
                             uncertainty_bool=False, mean=False, nii_cons=True,
-                            spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1
+                            spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1,
+                            pixel_list=False
                             ):
         """
         Fit spectrum in region.
@@ -884,6 +885,7 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+            pixel_list: (Default False)
 
         Return:
             X-axis and spectral axis of region.
@@ -891,13 +893,23 @@ class Luci():
         """
         # Create mask
         mask = None  # Initialize
-        if '.reg' in region:
-            mask = reg_to_mask(region, self.header)
-        elif '.npy' in region:
-            mask = np.load(region)
-        else:
-            print("At the moment, we only support '.reg' and '.npy' files for masks.")
-            print("Terminating Program!")
+        # Create mask
+        if pixel_list is False:
+            if '.reg' in region:  # If passed a .reg file
+                header = self.header
+                header.set('NAXIS1', 2064)  # Need this for astropy
+                header.set('NAXIS2', 2048)
+                mask = reg_to_mask(region, header)
+            elif '.npy' in region:  # If passed numpy file
+                mask = np.load(region).T
+            elif region is not None:  # If passed numpy array
+                mask = region.T
+            else:  # Not passed a mask in any of the correct formats
+                print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
+        else:  # User passed list of pixel IDs to create the mask
+            mask = np.ones((self.cube_final.shape[0], self.cube_final.shape[1]), dtype=bool)
+            for pair in region:
+                mask[pair] = True  # Set region pixel to True
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
