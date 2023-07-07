@@ -4,6 +4,7 @@ import scipy.interpolate as spi
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas
+import pickle
 from astropy.wcs import WCS
 import astropy.units as u
 from tqdm import tqdm
@@ -13,9 +14,10 @@ from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
 from astropy.nddata import Cutout2D
 import astropy.stats as astrostats
-# from astroquery.astrometry_net import AstrometryNet
+from astroquery.astrometry_net import AstrometryNet
 from astropy.time import Time
 import numpy.ma as ma
+# from scipy.interpolate import RBFInterpolator
 from astropy.coordinates import SkyCoord, EarthLocation
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function, bin_mask
@@ -26,13 +28,20 @@ import multiprocessing as mp
 import time
 from sklearn import decomposition
 from tensorflow.keras import layers, losses
-from tensorflow.keras.models import Model
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-from keras.models import Sequential
-from keras.layers import Dense
 import os
 import logging
+from keras.backend import clear_session
+from keras.models import Sequential
+from keras.layers import Dense, InputLayer, Flatten, Dropout
+from keras.layers.convolutional import Conv1D
+from keras.layers.convolutional import MaxPooling1D
+from keras.optimizers import Adam
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from sklearn.linear_model import Ridge
+from sklearn.preprocessing import PolynomialFeatures, SplineTransformer
+from sklearn.pipeline import make_pipeline
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
@@ -210,23 +219,6 @@ class Luci():
             output_name = self.output_dir + '/' + self.object_name + '_deep.fits'
         fits.writeto(output_name, self.deep_image, header_to_use, overwrite=True)
         hdf5_file.close()
-        return None
-
-
-    def export_fits(self):
-        """
-        Export HDF file as fits file. The data will be saved in the same location as the cube (`cube_dir`) with the same
-        name (`object_name`).
-
-        """
-        fits_header = fits.PrimaryHDU(header=self.header, data=self.cube_final.transpose(2, 0, 1))
-        #cube_final_fits = fits.ImageHDU(data=self.cube_final.transpose(1, 0, 2))
-        if self.deep_image is False:
-            self.create_deep_image()
-        deep_fits = fits.ImageHDU(self.deep_image)
-        hdu = fits.HDUList([fits_header])
-        hdu.writeto(os.path.join(self.output_dir, self.object_name+'.fits'), overwrite=True)
-        return None
 
     def visualize(self):
         """
@@ -276,8 +268,10 @@ class Luci():
                  mask=None, ML_bool=True, bayes_bool=False,
                  bayes_method='emcee',
                  uncertainty_bool=False, nii_cons=False,
-                 bkg=None, binning=None, spec_min=None, spec_max=None, initial_values=[False],
-                 obj_redshift=0.0, n_stoch=1, resolution=1000, Luci_path=None):
+                 bkg=None, bkgType='standard', binning=None, spec_min=None, spec_max=None, initial_values=[False],
+                 obj_redshift=0.0, n_stoch=1, resolution=1000, Luci_path=None,
+                 pca_coefficient_array=None, pca_vectors=None
+                 ):
         """
         Function for calling fit for a given y coordinate.
 
@@ -291,6 +285,7 @@ class Luci():
             x_max: Upper bound in x
             y_min: Lower bound in y
             bkg: Background Spectrum (1D numpy array; default None)
+            bkgType:
             binning:  Value by which to bin (default None)
             ML_bool: Boolean to determione whether or not we use ML priors
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
@@ -302,6 +297,8 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+            pca_coefficient_array:
+            pca_vectors
 
         Return:
             all fit parameters for y-slice
@@ -321,6 +318,8 @@ class Luci():
         continuum_local = []
         continuum_errs_local = []
         bool_fit = True  # Boolean to fit
+        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in spectrum_axis]))
+        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in spectrum_axis]))
         # Step through x coordinates
         for j in range(x_max - x_min):
             x_pix = x_min + j  # Set current x pixel
@@ -331,10 +330,21 @@ class Luci():
                     bool_fit = False
             sky = np.copy(cube_slice[x_pix, :])  # cube_binned[x_pix, y_pix, :]
             if bkg is not None:  # If there is a background variable subtract the bkg spectrum
-                if binning:  # If binning, then we have to take into account how many pixels are in each bin
-                    sky -= bkg * binning ** 2  # Subtract background spectrum
-                else:  # No binning so just subtract the background directly
-                    sky -= bkg  # Subtract background spectrum
+                if bkgType == 'standard':
+                    if binning:  # If binning, then we have to take into account how many pixels are in each bin
+                        sky -= bkg * binning ** 2  # Subtract background spectrum
+                    else:  # No binning so just subtract the background directly
+                        sky -= bkg  # Subtract background spectrum
+                elif bkgType == 'pca':  # We will be using the pca version
+                    if binning:  # If we are binning we have to group the coefficients
+                        pass  # TODO: Implement
+                    else:
+                        scale_spec = np.max(
+                            [spec / np.nanmax(sky[min_spectral_scale:max_spectral_scale]) for spec in sky])
+                        sky -= (1 / scale_spec) * np.sum(
+                            [pca_coefficient_array[x_pix, y_pix, i] * pca_vectors[i] for i in range(len(pca_vectors))],
+                            axis=1)
+                        # sky -= np.sum([pca_coefficient_array[x_pix, y_pix, i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=1)
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
             axis = spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
@@ -387,10 +397,12 @@ class Luci():
 
     # @jit(nopython=False, parallel=True, nogil=True)
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
-                 x_min, x_max, y_min, y_max, bkg=None, binning=None,
+                 x_min, x_max, y_min, y_max, bkg=None, bkgType='standard', binning=None,
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=[False],
-                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1):
+                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1,
+                 pca_coefficient_array=None, pca_vectors=None
+                 ):
 
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
@@ -420,6 +432,8 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+            pca_coefficient_array:
+            pca_vectors:
 
 
         Return:
@@ -496,10 +510,13 @@ class Luci():
                                     step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
                                     ML_bool=self.ML_bool, bayes_bool=bayes_bool,
                                     bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
-                                    uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons,
+                                    uncertainty_bool=uncertainty_bool, bkg=bkg,
+                                    bkgType=bkgType, nii_cons=nii_cons,
                                     initial_values=[vel_init, broad_init],
                                     obj_redshift=obj_redshift, n_stoch=n_stoch, resolution=self.resolution,
-                                    Luci_path=self.Luci_path)
+                                    Luci_path=self.Luci_path,
+                                    pca_coefficient_array=pca_coefficient_array, pca_vectors=pca_vectors
+                                    )
              for sl in tqdm(range(y_max - y_min)))
 
         for result in results:
@@ -859,8 +876,7 @@ class Luci():
                             region, initial_values=[False], bkg=None,
                             bayes_bool=False, bayes_method='emcee',
                             uncertainty_bool=False, mean=False, nii_cons=True,
-                            spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1,
-                            pixel_list=False
+                            spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1
                             ):
         """
         Fit spectrum in region.
@@ -885,7 +901,6 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
-            pixel_list: (Default False)
 
         Return:
             X-axis and spectral axis of region.
@@ -893,23 +908,13 @@ class Luci():
         """
         # Create mask
         mask = None  # Initialize
-        # Create mask
-        if pixel_list is False:
-            if '.reg' in region:  # If passed a .reg file
-                header = self.header
-                header.set('NAXIS1', 2064)  # Need this for astropy
-                header.set('NAXIS2', 2048)
-                mask = reg_to_mask(region, header)
-            elif '.npy' in region:  # If passed numpy file
-                mask = np.load(region).T
-            elif region is not None:  # If passed numpy array
-                mask = region.T
-            else:  # Not passed a mask in any of the correct formats
-                print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
-        else:  # User passed list of pixel IDs to create the mask
-            mask = np.ones((self.cube_final.shape[0], self.cube_final.shape[1]), dtype=bool)
-            for pair in region:
-                mask[pair] = True  # Set region pixel to True
+        if '.reg' in region:
+            mask = reg_to_mask(region, self.header)
+        elif '.npy' in region:
+            mask = np.load(region)
+        else:
+            print("At the moment, we only support '.reg' and '.npy' files for masks.")
+            print("Terminating Program!")
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -1564,8 +1569,9 @@ class Luci():
         else:
             print("The specified lines are not in the wavelength range covered by the filter of this cube")
 
-    def create_background_subspace(self, x_min=100, x_max=1900, y_min=100, y_max=1900, bkg_image='deep', n_components=50,
-                                   n_components_keep=None):
+    def create_background_subspace(self, x_min=100, x_max=1900, y_min=100, y_max=1900, bkg_image='deep',
+                                   n_components=50,
+                                   n_components_keep=None, sigma_threshold=0.1, npixels=10):
         """
         This function will create a subspace of principal components describing the background emission. It will then interpolate
         the background eigenvectors over the entire field. Please see our paper () describing this methodology in detail.
@@ -1585,6 +1591,8 @@ class Luci():
             bkg_image: 2D image used for background thresholding (Default deep image). Pass fits file.
             n_components: Number of principal components to calculate (Default 50)
             n_components_keep: Number of principal components to keep (Default n_components)
+            sigma_threshold: Threshold parameter for determining the background (default 0.1)
+            npixels: Minimum number of connected pixels in a detected group (default 10)
 
         Return:
             PCA_coeffs: Fits file containing the PCA coefficients over the FOV
@@ -1597,17 +1605,18 @@ class Luci():
             self.create_deep_image()
             background_image = self.deep_image[x_min:x_max, y_min:y_max]
         else:
-            background_image = fits.open(bkg_image)[0].data
+            background_image = fits.open(bkg_image)[0].data[x_min:x_max, y_min:y_max]
         # Find background pixels and save map in self.output_dir
         idx_bkg, idx_src = find_background_pixels(background_image,
-                                                  self.output_dir)  # Get IDs of background and source pixels
+                                                  self.output_dir, sigma_threshold=sigma_threshold,
+                                                  npixels=npixels)  # Get IDs of background and source pixels
         max_spectral = None  # Initialize
         min_spectral = None  # Initialize
         if self.filter == 'SN3':
-            max_spectral = np.argmin(np.abs([1e7 / wavelength - 630 for wavelength in self.spectrum_axis]))
-            min_spectral = np.argmin(np.abs([1e7 / wavelength - 680 for wavelength in self.spectrum_axis]))
+            max_spectral = np.argmin(np.abs([1e7 / wavelength - 646 for wavelength in self.spectrum_axis]))
+            min_spectral = np.argmin(np.abs([1e7 / wavelength - 678 for wavelength in self.spectrum_axis]))
             # Check if there are not enough components
-            if len(self.cube_final[100,100, min_spectral:max_spectral]) < n_components:
+            if len(self.cube_final[100, 100, min_spectral:max_spectral]) < n_components:
                 n_components = len(self.cube_final[100, 100, min_spectral:max_spectral])
                 if n_components_keep > n_components:
                     n_components_keep = n_components
@@ -1615,29 +1624,31 @@ class Luci():
             print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3')
             print('Terminating Program')
             quit()
-
-        bkg_spectra = [self.cube_final[x_min+index[0], y_min+index[1], min_spectral: max_spectral] for index in idx_bkg if
-                       x_min < x_min+index[0] < x_max and y_min < y_min+index[1] < y_max]  # Get background pixels
+        bkg_spectra = [self.cube_final[x_min + index[0], y_min + index[1], min_spectral: max_spectral] for index in
+                       idx_bkg]  # if
+        # x_min < x_min+index[0] < x_max and y_min < y_min+index[1] < y_max]  # Get background pixels
         # Calculate scaling factors and normalize
         min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
         max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
-        bkg_spectra = [bkg_spectrum/np.nanmax(bkg_spectrum[min_spectral_scale:max_spectral_scale]) for bkg_spectrum in bkg_spectra]
-        bkg_spectra = [bkg_spectrum/np.max(bkg_spectrum) for bkg_spectrum in bkg_spectra]
+        bkg_spectra = [bkg_spectrum / np.nanmax(bkg_spectrum[min_spectral_scale:max_spectral_scale]) for bkg_spectrum in
+                       bkg_spectra]
+        bkg_spectra = [bkg_spectrum / np.max(bkg_spectrum) for bkg_spectrum in bkg_spectra]
         # Calculate n most important components
         spectral_axis_nm = 1e7 / self.spectrum_axis[min_spectral: max_spectral]
         pca = decomposition.IncrementalPCA(n_components=n_components)  # Call pca
         pca.fit(bkg_spectra)  # Fit using background spectra
-        BkgTransformedPCA = pca.transform(bkg_spectra)[:,:n_components_keep]  # Apply on background spectra
+        BkgTransformedPCA = pca.transform(bkg_spectra)[:, :n_components_keep]  # Apply on background spectra
+        print(BkgTransformedPCA.shape)
         # Plot the primary components
         plt.figure(figsize=(18, 16))
-        l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 1, linewidth=3)  # plot the mean first
+        l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 1.2, linewidth=3)  # plot the mean first
         c = l[0].get_color()
-        plt.text(635, -0.9, 'mean emission', color=c, fontsize='xx-large')
+        plt.text(646, -0.9, 'mean emission', color=c, fontsize='xx-large')
         shift = 1.2
         for i in range(10):  # Plot first 10 components
             l = plt.plot(spectral_axis_nm, pca.components_[i] + (i * shift), linewidth=3)
             c = l[0].get_color()
-            plt.text(635, i * shift + 0.1, "component %i" % (i + 1), color=c, fontsize='xx-large')
+            plt.text(646, i * shift + 0.1, "component %i" % (i + 1), color=c, fontsize='xx-large')
         plt.xlabel('nm', fontsize=24)
         plt.ylabel('Normalized Emission + Offset', fontsize=24)
         plt.xticks(fontsize=24)
@@ -1651,69 +1662,101 @@ class Luci():
         plt.xlabel('Principal Component')
         plt.ylabel('Variance Explained')
         plt.savefig(os.path.join(self.output_dir, 'PCA_scree.png'))
-
-
         # Collect background and source pixels/coordinates
-        bkg_pixels = [[index[0], index[1]] for index in idx_bkg if x_min<x_min+index[0]<x_max and y_min<y_min+index[1]<y_max]
-        src_pixels = [[index[0], index[1]] for index in idx_src if x_min<x_min+index[0]<x_max and y_min<y_min+index[1]+y_max]
+        bkg_pixels = [[x_min + index[0], y_min + index[1]] for index in
+                      idx_bkg]  # if x_min<x_min+index[0]<x_max and y_min<y_min+index[1]<y_max]
+        src_pixels = [[x_min + index[0], y_min + index[1]] for index in
+                      idx_src]  # if x_min<x_min+index[0]<x_max and y_min<y_min+index[1]<y_max]
         bkg_x = [bkg[0] for bkg in bkg_pixels]
         bkg_y = [bkg[1] for bkg in bkg_pixels]
         src_x = [src[0] for src in src_pixels]
         src_y = [src[1] for src in src_pixels]
         # Interpolate
+        # interpolatedSourcePixels = None
+
         interpolatedSourcePixels = spi.griddata(
             bkg_pixels,
             BkgTransformedPCA,
             src_pixels,
-            method='nearest'
+            method='linear'
+        )
 
-        )
-        '''inds = np.argsort(bkg_pixels)
-        bkg_pixels = bkg_pixels[inds]
-        BkgTransformedPCA = BkgTransformedPCA[inds]
-        bkg_x = [bkg[0] for bkg in bkg_pixels]
-        bkg_y = [bkg[1] for bkg in bkg_pixels]
-        src_x = [src[0] for src in src_pixels]
-        src_y = [src[1] for src in src_pixels]
-        interp_func = spi.RegularGridInterpolator(
-            (bkg_x, bkg_y), BkgTransformedPCA
-        )
-        interpolatedSourcePixels = interp_func((src_x, src_y))'''
         # Construct Neural Network
-        '''X_train, X_test, y_train, y_test = train_test_split(np.column_stack((bkg_x, bkg_y)), np.arcsinh(BkgTransformedPCA[:]),
-                                                            test_size=0.01)
+        '''X_train, X_valid, y_train, y_valid = train_test_split(np.column_stack((bkg_x, bkg_y)), BkgTransformedPCA[:], test_size=0.05)
         ### Model creation: adding layers and compilation
-        model2D = Sequential()
-        model2D.add(Dense(300, input_shape=(None, 2), activation='relu'))
-        model2D.add(Dense(300, activation='relu'))
-        model2D.add(Dense(n_components_keep, activation='linear'))
-        model2D.compile(optimizer='adadelta', loss='mape', metrics=['mse'])
-        # Fit model
-        history = model2D.fit(X_train, y_train, epochs=10, batch_size=128)
+        activation = 'elu'  # activation function
+        initializer = 'he_normal'  # model initializer
+        #input_shape = (None, 2)
+        input_shape = (None, 2, 1)  # shape of input spectra for the input layer
+        num_filters = [4,16]  # number of filters in the convolutional layers
+        filter_length = [3,5]  # length of the filters
+        num_hidden = [80,300]  # number of nodes in the hidden layers
+        batch_size = 256  # number of data fed into model at once
+        max_epochs = 5 # maximum number of interations
+        lr = 0.002  # initial learning rate
+        beta_1 = 0.9  # exponential decay rate  - 1st
+        beta_2 = 0.999  # exponential decay rate  - 2nd
+        optimizer_epsilon = 1e-08  # For the numerical stability
+        early_stopping_min_delta = 0.0001
+        early_stopping_patience = 6
+        reduce_lr_factor = 0.5
+        reuce_lr_epsilon = 0.009
+        reduce_lr_patience = 2
+        reduce_lr_min = 0.00008
+        loss_function = 'mean_squared_logarithmic_error'  # 'mean_squared_error'
+        metrics_ = ['mae', 'mape']
+        model2D = Sequential([
+            InputLayer(batch_input_shape=input_shape),
+            Conv1D(kernel_initializer=initializer, activation=activation, padding="same", filters=num_filters[0], kernel_size=filter_length[0]),
+            Conv1D(kernel_initializer=initializer, activation=activation, padding="same", filters=num_filters[1], kernel_size=filter_length[1]),
+            Flatten(),
+            Dense(units=num_hidden[0], kernel_initializer=initializer, activation=activation),
+            Dense(units=num_hidden[1], kernel_initializer=initializer, activation=activation),
+            Dense(n_components_keep),
+        ])
+        # Set optimizer
+        optimizer = Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, epsilon=optimizer_epsilon, decay=0.0)
+        # Set early stopping conditions
+        early_stopping = EarlyStopping(monitor='loss', min_delta=early_stopping_min_delta,
+                                               patience=early_stopping_patience, verbose=2, mode='min')
+        # Set learn rate reduction conditions
+        reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5, epsilon=reuce_lr_epsilon,
+                                          patience=reduce_lr_patience, min_lr=reduce_lr_min, mode='min', verbose=2)
+        # Compile CNN
+        model2D.compile(optimizer=optimizer, loss=loss_function, metrics=metrics_)
+
+        X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+        y_train = y_train.reshape(y_train.shape[0], y_train.shape[1], 1)
+        X_valid = X_valid.reshape(X_valid.shape[0], X_valid.shape[1], 1)
+        y_valid = y_valid.reshape(y_valid.shape[0], y_valid.shape[1], 1)
+        history = model2D.fit(X_train, y_train, epochs=max_epochs, batch_size=batch_size, validation_data=(X_valid, y_valid), callbacks=[reduce_lr])
         # Predict using model
         interpolatedSourcePixels = model2D.predict(np.column_stack((src_x, src_y)))'''
-        # Create 3D array of coefficients
-        coefficient_array = np.zeros((x_max-x_min, y_max-y_min, n_components_keep))
-
+        # coefficient_array = np.zeros((x_max-x_min, y_max-y_min, n_components_keep))
+        coefficient_array = np.zeros((2048, 2064, n_components_keep))
+        coefficient_array[:] = np.nan
         for pixel_ct, pixel in enumerate(bkg_pixels):
             coefficient_array[pixel[0], pixel[1]] = BkgTransformedPCA[pixel_ct]
         for pixel_ct, pixel in enumerate(src_pixels):
-            coefficient_array[pixel[0], pixel[1]] = interpolatedSourcePixels[pixel_ct]  # /np.max(interpolatedSourcePixels[pixel_ct])
+            coefficient_array[pixel[0], pixel[1]] = interpolatedSourcePixels[pixel_ct]
+        pickle.dump(coefficient_array, open(os.path.join(self.output_dir, 'pca_coefficient_array.pkl'), 'wb'))
+        pickle.dump(pca.components_[:n_components_keep],
+                    open(os.path.join(self.output_dir, 'pca_coefficient_array.pkl'), 'wb'))
         # Make coefficient maps for first 5 coefficients
         coeff_map_path = os.path.join(self.output_dir, 'PCACoefficientMaps')
         if not os.path.exists(coeff_map_path):
             os.mkdir(coeff_map_path)
         for n_component in range(n_components_keep):
             plt.figure(figsize=(18, 16))
-            coeff_map = coefficient_array[:,:,n_component]/np.nanmax(coefficient_array[:,:,n_component])
-            plt.imshow(coeff_map, origin='lower')
+            coeff_map = coefficient_array[:, :, n_component]  # /np.nanmax(coefficient_array[:,:,n_component])
+            plt.imshow(coeff_map.T, origin='lower')
             c_min = np.nanpercentile(coeff_map, 5)
             c_max = np.nanpercentile(coeff_map, 99.5)
-            plt.title('Component %i'%n_component)
+            plt.title('Component %i' % (n_component + 1))
             plt.xlabel('RA (physical)', fontsize=24, fontweight='bold')
             plt.ylabel('Dec (physical)', fontsize=24, fontweight='bold')
             plt.clim(c_min, c_max)
-            plt.savefig(os.path.join(coeff_map_path, 'component%i.png'%n_component))
+            plt.savefig(os.path.join(coeff_map_path, 'component%i.png' % (n_component + 1)))
 
         plt.figure(figsize=(18, 16))
         ''''print(BkgTransformedPCA[100][0])
@@ -1730,68 +1773,66 @@ class Luci():
         plt.legend()
         plt.savefig(os.path.join(self.output_dir, 'PCABackgroundSpectra.png'))'''
 
-        return BkgTransformedPCA, pca, interpolatedSourcePixels
+        return BkgTransformedPCA, pca, interpolatedSourcePixels, idx_bkg, idx_src, coefficient_array
 
+    def update_astrometry(self, api_key):
+        """
+        Use astronomy.net to update the astrometry in the header using the deep image.
+        If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
+        the header is not updated and an exception is thrown.
 
+        This automatically updates the deep images header! If you want the header to be binned, then you can bin it
+        using the standard creation mechanisms (for this example binning at 2x2) and then run this code:
 
-    '''def update_astrometry(self, api_key):
-            """
-            Use astronomy.net to update the astrometry in the header using the deep image.
-            If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
-            the header is not updated and an exception is thrown.
+        >>> cube.create_deep_image(binning=2)
+        >>> cube.update_astrometry(api_key)
 
-            This automatically updates the deep images header! If you want the header to be binned, then you can bin it
-            using the standard creation mechanisms (for this example binning at 2x2) and then run this code:
-
-            >>> cube.create_deep_image(binning=2)
-            >>> cube.update_astrometry(api_key)
-
-            Args:
-                api_key: Astronomy.net user api key
-            """
-            # Initiate Astronomy Net
-            ast = AstrometryNet()
-            ast.key = api_key
-            ast.api_key = api_key
-            try_again = True
-            submission_id = None
-            # Check that deep image exists. Otherwise make one
-            if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
-                self.create_deep_image()
-            # Now submit to astronomy.net until the value is found
-            while try_again:
-                if not submission_id:
-                    try:
-                        wcs_header = ast.solve_from_image(self.output_dir + '/' + self.object_name + '_deep.fits',
-                                                          submission_id=submission_id,
-                                                          solve_timeout=300)  # , use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
-                    except Exception as e:
-                        print("Timedout")
-                        submission_id = e.args[1]
-                    else:
-                        # got a result, so terminate
-                        print("Result")
-                        try_again = False
+        Args:
+            api_key: Astronomy.net user api key
+        """
+        # Initiate Astronomy Net
+        ast = AstrometryNet()
+        ast.key = api_key
+        ast.api_key = api_key
+        try_again = True
+        submission_id = None
+        # Check that deep image exists. Otherwise make one
+        if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
+            self.create_deep_image()
+        # Now submit to astronomy.net until the value is found
+        while try_again:
+            if not submission_id:
+                try:
+                    wcs_header = ast.solve_from_imashapege(self.output_dir + '/' + self.object_name + '_deep.fits',
+                                                           submission_id=submission_id,
+                                                           solve_timeout=300)  # , use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
+                except Exception as e:
+                    print("Timedout")
+                    submission_id = e.args[1]
                 else:
-                    try:
-                        wcs_header = ast.monitor_submission(submission_id, solve_timeout=300)
-                    except Exception as e:
-                        print("Timedout")
-                        submission_id = e.args[1]
-                    else:
-                        # got a result, so terminate
-                        print("Result")
-                        try_again = False
-
-            if wcs_header:
-                # Code to execute when solve succeeds
-                # update deep image header
-                deep = fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')
-                deep[0].header.update(wcs_header)
-                deep.close()
-                # Update normal header
-                self.header = wcs_header
-
+                    # got a result, so terminate
+                    print("Result")
+                    try_again = False
             else:
-                # Code to execute when solve fails
-                print('Astronomy.net failed to solve. This astrometry has not been updated!')'''
+                try:
+                    wcs_header = ast.monitor_submission(submission_id, solve_timeout=300)
+                except Exception as e:
+                    print("Timedout")
+                    submission_id = e.args[1]
+                else:
+                    # got a result, so terminate
+                    print("Result")
+                    try_again = False
+
+        if wcs_header:
+            # Code to execute when solve succeeds
+            # update deep image header
+            deep = fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')
+            deep[0].header.update(wcs_header)
+            deep.close()
+            # Update normal header
+            self.header = wcs_header
+
+        else:
+            # Code to execute when solve fails
+            print('Astronomy.net failed to solve. This astrometry has not been updated!')
