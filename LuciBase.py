@@ -270,7 +270,7 @@ class Luci():
                  uncertainty_bool=False, nii_cons=False,
                  bkg=None, bkgType='standard', binning=None, spec_min=None, spec_max=None, initial_values=[False],
                  obj_redshift=0.0, n_stoch=1, resolution=1000, Luci_path=None,
-                 pca_coefficient_array=None, pca_vectors=None
+                 pca_coefficient_array=None, pca_vectors=None, pca_mean=None
                  ):
         """
         Function for calling fit for a given y coordinate.
@@ -297,8 +297,9 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
-            pca_coefficient_array:
-            pca_vectors
+            pca_coefficient_array: Array of PCA Coefficients (default None)
+            pca_vectors: Vectors corresponding to principal components (default None)
+            pca_mean: Mean vector from PCA analysis (default None)
 
         Return:
             all fit parameters for y-slice
@@ -339,12 +340,11 @@ class Luci():
                     if binning:  # If we are binning we have to group the coefficients
                         pass  # TODO: Implement
                     else:
-                        scale_spec = np.max(
+                        scale_spec = np.nanmax(
                             [spec / np.nanmax(sky[min_spectral_scale:max_spectral_scale]) for spec in sky])
-                        sky -= (1 / scale_spec) * np.sum(
+                        sky -= (1 / scale_spec) * (pca_mean - np.sum(
                             [pca_coefficient_array[x_pix, y_pix, i] * pca_vectors[i] for i in range(len(pca_vectors))],
-                            axis=1)
-                        # sky -= np.sum([pca_coefficient_array[x_pix, y_pix, i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=1)
+                            axis=0))
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
             axis = spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
@@ -401,7 +401,7 @@ class Luci():
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=[False],
                  spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1,
-                 pca_coefficient_array=None, pca_vectors=None
+                 ppca_coefficient_array=None, pca_vectors=None, pca_mean=None
                  ):
 
         """
@@ -432,8 +432,9 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
-            pca_coefficient_array:
-            pca_vectors:
+            pca_coefficient_array: Array of PCA Coefficients (default None)
+            pca_vectors: Vectors corresponding to principal components (default None)
+            pca_mean: Mean vector from PCA analysis (default None)
 
 
         Return:
@@ -1612,10 +1613,10 @@ class Luci():
                                                   npixels=npixels)  # Get IDs of background and source pixels
         max_spectral = None  # Initialize
         min_spectral = None  # Initialize
-        if self.filter == 'SN3':
+        if self.filter == 'SN3':  # Check that we are using filter SN3
             max_spectral = np.argmin(np.abs([1e7 / wavelength - 646 for wavelength in self.spectrum_axis]))
             min_spectral = np.argmin(np.abs([1e7 / wavelength - 678 for wavelength in self.spectrum_axis]))
-            # Check if there are not enough components
+            # Check if there are enough components
             if len(self.cube_final[100, 100, min_spectral:max_spectral]) < n_components:
                 n_components = len(self.cube_final[100, 100, min_spectral:max_spectral])
                 if n_components_keep > n_components:
@@ -1672,22 +1673,18 @@ class Luci():
         src_x = [src[0] for src in src_pixels]
         src_y = [src[1] for src in src_pixels]
         # Interpolate
-        # interpolatedSourcePixels = None
-
-        interpolatedSourcePixels = spi.griddata(
+        '''interpolatedSourcePixels = spi.griddata(
             bkg_pixels,
             BkgTransformedPCA,
             src_pixels,
             method='linear'
-        )
-
+        )'''
         # Construct Neural Network
-        '''X_train, X_valid, y_train, y_valid = train_test_split(np.column_stack((bkg_x, bkg_y)), BkgTransformedPCA[:], test_size=0.05)
+        X_train, X_valid, y_train, y_valid = train_test_split(np.column_stack((bkg_x, bkg_y)), BkgTransformedPCA[:], test_size=0.05)
         ### Model creation: adding layers and compilation
         activation = 'elu'  # activation function
         initializer = 'he_normal'  # model initializer
-        #input_shape = (None, 2)
-        input_shape = (None, 2, 1)  # shape of input spectra for the input layer
+        input_shape = (None, 2)
         num_filters = [4,16]  # number of filters in the convolutional layers
         filter_length = [3,5]  # length of the filters
         num_hidden = [80,300]  # number of nodes in the hidden layers
@@ -1707,9 +1704,6 @@ class Luci():
         metrics_ = ['mae', 'mape']
         model2D = Sequential([
             InputLayer(batch_input_shape=input_shape),
-            Conv1D(kernel_initializer=initializer, activation=activation, padding="same", filters=num_filters[0], kernel_size=filter_length[0]),
-            Conv1D(kernel_initializer=initializer, activation=activation, padding="same", filters=num_filters[1], kernel_size=filter_length[1]),
-            Flatten(),
             Dense(units=num_hidden[0], kernel_initializer=initializer, activation=activation),
             Dense(units=num_hidden[1], kernel_initializer=initializer, activation=activation),
             Dense(n_components_keep),
@@ -1731,7 +1725,7 @@ class Luci():
         y_valid = y_valid.reshape(y_valid.shape[0], y_valid.shape[1], 1)
         history = model2D.fit(X_train, y_train, epochs=max_epochs, batch_size=batch_size, validation_data=(X_valid, y_valid), callbacks=[reduce_lr])
         # Predict using model
-        interpolatedSourcePixels = model2D.predict(np.column_stack((src_x, src_y)))'''
+        interpolatedSourcePixels = model2D.predict(np.column_stack((src_x, src_y)))
         # coefficient_array = np.zeros((x_max-x_min, y_max-y_min, n_components_keep))
         coefficient_array = np.zeros((2048, 2064, n_components_keep))
         coefficient_array[:] = np.nan
@@ -1757,21 +1751,7 @@ class Luci():
             plt.ylabel('Dec (physical)', fontsize=24, fontweight='bold')
             plt.clim(c_min, c_max)
             plt.savefig(os.path.join(coeff_map_path, 'component%i.png' % (n_component + 1)))
-
         plt.figure(figsize=(18, 16))
-        ''''print(BkgTransformedPCA[100][0])
-        plt.plot(1e7/self.spectrum_axis, pca.mean_-np.sum([pca.components_[i]*BkgTransformedPCA[100][i] for i in range(n_components)], axis=1)
-                 , linewidth=3, linestyle='--', label='Reconstructed BKG 1')
-        plt.plot(1e7/self.spectrum_axis, pca.mean_, linewidth=3, linestyle='-.', label='Mean')
-        plt.plot(1e7/self.spectrum_axis,
-                 pca.mean_ - np.sum([pca.components_[i] * interpolatedSourcePixels[10][i] for i in range(n_components_keep)], axis=1),
-                 linewidth=3, linestyle='--', label='Reconstructed Source 1')
-        plt.xlabel('Wavelength (nm)', fontsize='xx-large', fontweight='bold')
-        plt.ylabel('Normalized Flux', fontsize='xx-large', fontweight='bold')
-        plt.xticks(fontsize='x-large')
-        plt.yticks(fontsize='x-large')
-        plt.legend()
-        plt.savefig(os.path.join(self.output_dir, 'PCABackgroundSpectra.png'))'''
 
         return BkgTransformedPCA, pca, interpolatedSourcePixels, idx_bkg, idx_src, coefficient_array
 
