@@ -4,7 +4,7 @@ The functions are taken from https://keras.io/examples/keras_recipes/bayesian_ne
 """
 import tensorflow.keras as keras
 import tensorflow_probability as tfp
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers.legacy import Adam
 
 def create_MDN_model(input_length, loss):
     """
@@ -48,7 +48,7 @@ def create_MDN_model(input_length, loss):
     outputs = tfp.layers.IndependentNormal(2)(distribution_params)
     model = keras.Model(inputs=inputs, outputs=outputs)
     model.compile(
-        optimizer=Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, epsilon=optimizer_epsilon, decay=0.0),
+        optimizer=Adam(learning_rate=lr, beta_1=beta_1, beta_2=beta_2, epsilon=optimizer_epsilon, decay=0.0),
         loss=loss,
         metrics=[keras.metrics.RootMeanSquaredError()],
     )
