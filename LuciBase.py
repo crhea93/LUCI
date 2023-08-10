@@ -286,7 +286,7 @@ class Luci():
             x_min: Lower bound in x
             x_max: Upper bound in x
             y_min: Lower bound in y
-            bkg: Background Spectrum (1D numpy array; default None) 
+            bkg: Background Spectrum (1D numpy array; default None)
             bkgType:
             binning:  Value by which to bin (default None)
             ML_bool: Boolean to determione whether or not we use ML priors
@@ -343,7 +343,7 @@ class Luci():
                         pass  # TODO: Implement
                     else:
                         scale_spec = np.nanmax([spec/np.nanmax(sky[min_spectral_scale:max_spectral_scale]) for spec in sky])
-                        sky -= (1/scale_spec) * (pca_mean - np.sum([pca_coefficient_array[x_pix, y_pix, i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=0))
+                        sky -= (1/scale_spec) * (pca_mean + np.sum([pca_coefficient_array[x_pix, y_pix, i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=0))
 
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
@@ -400,7 +400,7 @@ class Luci():
                  x_min, x_max, y_min, y_max, bkg=None, bkgType='standard', binning=None,
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=[False],
-                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1, 
+                 spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1,
                  pca_coefficient_array=None, pca_vectors=None, pca_mean=None
                  ):
 
@@ -744,8 +744,8 @@ class Luci():
             bkgType:
             pca_coefficient_array:
             pca_vectors:
-            pca_mean: 
-            
+            pca_mean:
+
 
         Return:
             Returns the x-axis (redshifted), sky, and fit dictionary
@@ -1654,14 +1654,14 @@ class Luci():
         BkgTransformedPCA = pca.transform(bkg_spectra)[:,:n_components_keep]  # Apply on background spectra
         # Plot the primary components
         plt.figure(figsize=(18, 16))
-        l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 1.2, linewidth=3)  # plot the mean first
+        l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 2, linewidth=3)  # plot the mean first
         c = l[0].get_color()
-        plt.text(646, -0.9, 'mean emission', color=c, fontsize='xx-large')
+        plt.text(670, -0.9, 'mean emission', color=c, fontsize='xx-large')
         shift = 2
         for i in range(10):  # Plot first 10 components
             l = plt.plot(spectral_axis_nm, pca.components_[i]/np.max(pca.components_[i]) + (i * shift), linewidth=3)
             c = l[0].get_color()
-            plt.text(646, i * shift + 0.2, "component %i" % (i + 1), color=c, fontsize='xx-large')
+            plt.text(670, i * shift + 0.3, "component %i" % (i + 1), color=c, fontsize='xx-large')
         plt.xlabel('nm', fontsize=24)
         plt.ylabel('Normalized Emission + Offset', fontsize=24)
         plt.xticks(fontsize=24)
@@ -1684,22 +1684,22 @@ class Luci():
         src_y = [src[1] for src in src_pixels]
         # Interpolate
         #interpolatedSourcePixels = None
-        
-        interpolatedSourcePixels = spi.griddata(
+
+        '''interpolatedSourcePixels = spi.griddata(
             bkg_pixels,
             BkgTransformedPCA,
             src_pixels,
-            method='nearest'
-        )
-        
-        '''# Construct Neural Network
+            method='linear'
+        )'''
+
+        # Construct Neural Network
         X_train, X_valid, y_train, y_valid = train_test_split(np.column_stack((bkg_x, bkg_y)), BkgTransformedPCA[:], test_size=0.05)
         ### Model creation: adding layers and compilation
         hiddenActivation = 'tanh'  # activation function
         input_shape = (None, 2)
-        num_hidden = [100, 150]  # number of nodes in the hidden layers
+        num_hidden = [200, 250]  # number of nodes in the hidden layers
         batch_size = 64  # number of data fed into model at once
-        max_epochs = 100 # maximum number of interations
+        max_epochs = 50 # maximum number of interations
         lr = 1e-2 #8e-5  # initial learning rate
         beta_1 = 0.9  # exponential decay rate  - 1st
         beta_2 = 0.999  # exponential decay rate  - 2nd
@@ -1714,14 +1714,9 @@ class Luci():
         metrics_ = ['mae', 'mape']
         model2D = Sequential([
             InputLayer(batch_input_shape=input_shape),
-            #Conv1D(activation=hiddenActivation, padding="same", filters=num_filters[0], kernel_size=filter_length[0]),
-            #Conv1D(activation=hiddenActivation, padding="same", filters=num_filters[1], kernel_size=filter_length[1]),
-            #Flatten(),
             Dense(units=num_hidden[0], activation=hiddenActivation, kernel_regularizer=l2(0.00005)),
             Dropout(0.18),
             Dense(units=num_hidden[1], activation=hiddenActivation, kernel_regularizer=l2(0.00005)),
-            #Dropout(0.2),
-            #Dense(units=2*num_hidden[1], activation=hiddenActivation, kernel_regularizer=l2(0.00005)),
             Dense(n_components_keep, activation='linear'),
         ])
         # Set optimizer
@@ -1734,22 +1729,23 @@ class Luci():
                                           patience=reduce_lr_patience, min_lr=reduce_lr_min, mode='min', verbose=2)
         # Compile CNN
         model2D.compile(optimizer=optimizer, loss=loss_function, metrics=metrics_)
-        
+
         X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
         y_train = y_train.reshape(y_train.shape[0], y_train.shape[1], 1)
         X_valid = X_valid.reshape(X_valid.shape[0], X_valid.shape[1], 1)
         y_valid = y_valid.reshape(y_valid.shape[0], y_valid.shape[1], 1)
-        history = model2D.fit(X_train, y_train, epochs=max_epochs, batch_size=batch_size, validation_data=(X_valid, y_valid), callbacks=[reduce_lr])
+        history = model2D.fit(X_train, y_train, epochs=max_epochs, batch_size=batch_size, validation_data=(X_valid, y_valid), callbacks=[reduce_lr, early_stopping])
         # Predict using model
-        interpolatedSourcePixels = model2D.predict(np.column_stack((src_x, src_y)))'''
+        interpolatedSourcePixels = model2D.predict(np.column_stack((src_x, src_y)))
+
         coefficient_array = np.zeros((2048, 2064, n_components_keep))
         coefficient_array[:] = np.nan
         for pixel_ct, pixel in enumerate(bkg_pixels):
             coefficient_array[pixel[0], pixel[1]] = BkgTransformedPCA[pixel_ct]
         for pixel_ct, pixel in enumerate(src_pixels):
             coefficient_array[pixel[0], pixel[1]] = interpolatedSourcePixels[pixel_ct]
-        pickle.dump(coefficient_array, open(os.path.join(self.output_dir, 'pca_coefficient_array.pkl'), 'wb')) 
-        pickle.dump(pca.components_[:n_components_keep], open(os.path.join(self.output_dir, 'pca_coefficient_array.pkl'), 'wb')) 
+        pickle.dump(coefficient_array, open(os.path.join(self.output_dir, 'pca_coefficient_array.pkl'), 'wb'))
+        pickle.dump(pca.components_[:n_components_keep], open(os.path.join(self.output_dir, 'pca_coefficient_array.pkl'), 'wb'))
         # Make coefficient maps for first 5 coefficients
         coeff_map_path = os.path.join(self.output_dir, 'PCACoefficientMaps')
         if not os.path.exists(coeff_map_path):
@@ -1761,9 +1757,11 @@ class Luci():
             c_min = np.nanpercentile(coeff_map, 5)
             c_max = np.nanpercentile(coeff_map, 99.5)
             plt.title('Component %i'%(n_component+1))
-            plt.xlabel('RA (physical)', fontsize=24, fontweight='bold')
-            plt.ylabel('Dec (physical)', fontsize=24, fontweight='bold')
+            plt.xlabel('Physical Coordinates', fontsize=24, fontweight='bold')
+            plt.ylabel('Physical Coordinates', fontsize=24, fontweight='bold')
             plt.clim(c_min, c_max)
+            plt.xlim(x_min, x_max)
+            plt.ylim(y_min, y_max)
             plt.savefig(os.path.join(coeff_map_path, 'component%i.png'%(n_component+1)))
         return BkgTransformedPCA, pca, interpolatedSourcePixels, idx_bkg, idx_src, coefficient_array
 

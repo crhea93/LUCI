@@ -8,7 +8,10 @@ from photutils.segmentation import detect_sources
 from photutils.segmentation import make_2dgaussian_kernel
 from photutils.background import Background2D, MedianBackground
 import matplotlib.pyplot as plt
+import seaborn
 import os
+from astropy.wcs import WCS
+import matplotlib.colors
 
 
 def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_mask=True, npixels=10, bkg_algo='detect_source'):
@@ -26,6 +29,8 @@ def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_ma
         idx_bkg: List of background pixel positions (list of tuples)]
         idx_source: List of source pixel positions
     """
+    #cmap = plt.get_cmap('rainbow')
+    #cmap = matplotlib.colors.ListedColormap(['white', 'black'])
     bkg_estimator = MedianBackground()
     bkg = Background2D(deep_image, (50, 50), filter_size=(3, 3),
                        bkg_estimator=bkg_estimator)  # Experimentally found this values to be good
@@ -41,15 +46,20 @@ def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_ma
             plt.imshow(segment_map, origin='lower', cmap=segment_map.cmap, interpolation='nearest')
             plt.ylim(0, len(deep_image.T))
             plt.xlim(0, len(deep_image))
-            plt.xlabel('Right Ascension (physical)', fontsize=24)
-            plt.ylabel('Declination (physical)', fontsize=24)
+            plt.xlabel('Physical Coordinates', fontsize=24)
+            plt.ylabel('Physical Coordinates', fontsize=24)
             plt.xticks(fontsize=14)
             plt.yticks(fontsize=14)
+            '''if header is not None:
+                wcs = WCS(header)
+                ax = plt.subplot(projection=wcs)
+                ax.coords[0].set_major_formatter('hh:mm:ss')
+                ax.coords[1].set_major_formatter('dd:mm:ss')'''
             plt.savefig(os.path.join(outputDir, 'BackgroundPixelMap.png'))
     elif bkg_algo == 'threshold':
         idx_bkg = np.argwhere(deep_image < 200000)
         idx_source = np.argwhere(deep_image > 200000)
-        
+
     else:
         print('You need to pass an appropriate method: detect_source or threshold')
         quit()
