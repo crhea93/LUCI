@@ -93,7 +93,7 @@ class Fit:
                           'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4': 807.881, 'NII6583C4': 810.417,
                           'NII6548C4': 804.7,#806.062,
                           'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
-                          'OII3729C1': 459.017742, 'OII3726C1': 458.674293}
+                          'OII3729C1': 459.017742, 'OII3726C1': 458.674293, 'OI6364': 636.3776}
         self.available_functions = ['gaussian', 'sinc', 'sincgauss', 'gauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
@@ -178,7 +178,7 @@ class Fit:
                     print(
                         'LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
             else:  # mdn == True
-                if self.filter in ['SN3']:
+                if self.filter in ['SN3', 'SN2']:
                     self.ML_model = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
                     self.ML_model.load_weights(self.Luci_path + 'ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s' % (
                         self.resolution, self.filter, self.resolution, self.filter))

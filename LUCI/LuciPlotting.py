@@ -112,10 +112,10 @@ def plot_map(quantity_map, quantity_name, output_dir='', header=None, object_nam
         pass
     elif quantity_name == 'flux':
         quantity_map = np.nan_to_num(quantity_map, nan=1e-25)
+        quantity_map[quantity_map<1e-25] = 1e-25
         quantity_map = np.log10(quantity_map)  # NaNs to extremely small number
     else:
         print('Please enter either flux, velocity, or broadening')
-    quantity_map = np.nan_to_num(quantity_map, 1e-18)
     units = {'flux': r'log[ergs/s/cm$^2$/A]', 'velocity': 'km/s', 'broadening': 'km/s'}
     if clims is None:
         c_min = np.nanpercentile(quantity_map, 5)
