@@ -299,9 +299,9 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
-            pca_coefficient_array:
-            pca_vectors:
-            pca_mean:
+            pca_coefficient_array: Array of PCA Coefficients (default None)
+            pca_vectors: Vectors corresponding to principal components (default None)
+            pca_mean: Mean vector from PCA analysis (default None)
 
         Return:
             all fit parameters for y-slice
@@ -432,9 +432,9 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
-            pca_coefficient_array:
-            pca_vectors:
-            pca_mean:
+            pca_coefficient_array: Array of PCA Coefficients (default None)
+            pca_vectors: Vectors corresponding to principal components (default None)
+            pca_mean: Mean vector from PCA analysis (default None)
 
 
         Return:
@@ -1609,7 +1609,10 @@ class Luci():
             n_components_keep: Number of principal components to keep (Default n_components)
             sigma_threshold: Threshold parameter for determining the background (default 0.1)
             npixels: Minimum number of connected pixels in a detected group (default 10)
+<<<<<<< HEAD
             bkg_algo: Background algorithm to use (default 'sourece_detect'; options: 'source_detect', 'threshold')
+=======
+>>>>>>> 83f8c30901ee587b2ac46702f7089609240eca24
 
         Return:
             PCA_coeffs: Fits file containing the PCA coefficients over the FOV
@@ -1645,13 +1648,15 @@ class Luci():
         # Calculate scaling factors and normalize
         min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
         max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
-        bkg_spectra = [bkg_spectrum/np.nanmax(bkg_spectrum[min_spectral_scale:max_spectral_scale]) for bkg_spectrum in bkg_spectra]
-        bkg_spectra = [bkg_spectrum/np.max(bkg_spectrum) for bkg_spectrum in bkg_spectra]
+        bkg_spectra = [bkg_spectrum / np.nanmax(bkg_spectrum[min_spectral_scale:max_spectral_scale]) for bkg_spectrum in
+                       bkg_spectra]
+        bkg_spectra = [bkg_spectrum / np.max(bkg_spectrum) for bkg_spectrum in bkg_spectra]
         # Calculate n most important components
         spectral_axis_nm = 1e7 / self.spectrum_axis[min_spectral: max_spectral]
         pca = decomposition.IncrementalPCA(n_components=n_components)  # Call pca
         pca.fit(bkg_spectra)  # Fit using background spectra
-        BkgTransformedPCA = pca.transform(bkg_spectra)[:,:n_components_keep]  # Apply on background spectra
+        BkgTransformedPCA = pca.transform(bkg_spectra)[:, :n_components_keep]  # Apply on background spectra
+        print(BkgTransformedPCA.shape)
         # Plot the primary components
         plt.figure(figsize=(18, 16))
         l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 2, linewidth=3)  # plot the mean first
@@ -1765,7 +1770,14 @@ class Luci():
             plt.savefig(os.path.join(coeff_map_path, 'component%i.png'%(n_component+1)))
         return BkgTransformedPCA, pca, interpolatedSourcePixels, idx_bkg, idx_src, coefficient_array
 
+    def update_astrometry(self, api_key):
+        """
+        Use astronomy.net to update the astrometry in the header using the deep image.
+        If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
+        the header is not updated and an exception is thrown.
 
+        This automatically updates the deep images header! If you want the header to be binned, then you can bin it
+        using the standard creation mechanisms (for this example binning at 2x2) and then run this code:
 
     def update_astrometry(self, api_key):
             """
@@ -1806,25 +1818,9 @@ class Luci():
                         print("Result")
                         try_again = False
                 else:
-                    try:
-                        wcs_header = ast.monitor_submission(submission_id, solve_timeout=300)
-                    except Exception as e:
-                        print("Timedout")
-                        submission_id = e.args[1]
-                    else:
-                        # got a result, so terminate
-                        print("Result")
-                        try_again = False
-
-            if wcs_header:
-                # Code to execute when solve succeeds
-                # update deep image header
-                deep = fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')
-                deep[0].header.update(wcs_header)
-                deep.close()
-                # Update normal header
-                self.header = wcs_header
-
+                    # got a result, so terminate
+                    print("Result")
+                    try_again = False
             else:
                 # Code to execute when solve fails
                 print('Astronomy.net failed to solve. This astrometry has not been updated!')

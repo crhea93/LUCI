@@ -38,6 +38,7 @@ If you are on a Mac, you will need to change step 3 slightly:
     **Create** luci environment with `conda env create -f luci_macOS-11.6` which 
     was kindly created by Johanna Hartke.
 
+I've also created a `requirements_strict.txt` requirements file that has all the version specifications as well.
 
 Now you are all set to use Luci! To load the module into a python file or jupyter notebook, simply add the following lines:
 ```
