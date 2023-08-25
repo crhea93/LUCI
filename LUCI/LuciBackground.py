@@ -44,8 +44,8 @@ def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_ma
         idx_source = np.argwhere(np.abs(segment_map) > 0)  # Get source pixels
         if plot_mask:
             plt.imshow(segment_map, origin='lower', cmap=segment_map.cmap, interpolation='nearest')
-            plt.ylim(0, len(deep_image.T))
-            plt.xlim(0, len(deep_image))
+            ##plt.ylim(0, len(deep_image.T))
+            #plt.xlim(0, len(deep_image))
             plt.xlabel('Physical Coordinates', fontsize=24)
             plt.ylabel('Physical Coordinates', fontsize=24)
             plt.xticks(fontsize=14)

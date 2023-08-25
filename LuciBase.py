@@ -340,10 +340,15 @@ class Luci():
                         sky -= bkg  # Subtract background spectrum
                 elif bkgType == 'pca':  # We will be using the pca version
                     if binning:  # If we are binning we have to group the coefficients
-                        pass  # TODO: Implement
+                        binnedCoefficientArray = pca_coefficient_array[x_min + int(j * binning):x_min + int((j + 1) * binning),
+                                      y_min + int(i * binning):y_min + int((i + 1) * binning), :]
+                        binnedCoefficientArray = np.nansum(binnedCoefficientArray, axis=0)
+                        binnedCoefficientArray = np.nansum(binnedCoefficientArray, axis=0)
+                        bkg = pca_mean + np.sum([binnedCoefficientArray[i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=0)
                     else:
-                        scale_spec = np.nanmax([spec/np.nanmax(sky[min_spectral_scale:max_spectral_scale]) for spec in sky])
-                        sky -= (1/scale_spec) * (pca_mean + np.sum([pca_coefficient_array[x_pix, y_pix, i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=0))
+                        bkg = pca_mean + np.sum([pca_coefficient_array[x_pix, y_pix, i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=0)
+                    scale_spec = np.nanmax([spec/np.nanmax(sky[min_spectral_scale:max_spectral_scale]) for spec in sky])
+                    sky -= (1/scale_spec) * bkg
 
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
@@ -1609,10 +1614,7 @@ class Luci():
             n_components_keep: Number of principal components to keep (Default n_components)
             sigma_threshold: Threshold parameter for determining the background (default 0.1)
             npixels: Minimum number of connected pixels in a detected group (default 10)
-<<<<<<< HEAD
             bkg_algo: Background algorithm to use (default 'sourece_detect'; options: 'source_detect', 'threshold')
-=======
->>>>>>> 83f8c30901ee587b2ac46702f7089609240eca24
 
         Return:
             PCA_coeffs: Fits file containing the PCA coefficients over the FOV
@@ -1623,9 +1625,11 @@ class Luci():
             n_components_keep = n_components
         if bkg_image == 'deep':
             self.create_deep_image()
-            background_image = self.deep_image[x_min:x_max, y_min:y_max]
+            background_image = self.deep_image.T[x_min:x_max, y_min:y_max]
         else:
             background_image = fits.open(bkg_image)[0].data[x_min:x_max, y_min:y_max]
+        #plt.imshow(background_image, origin='lower')
+        #plt.show()
         # Find background pixels and save map in self.output_dir
         idx_bkg, idx_src = find_background_pixels(background_image,
                                                   self.output_dir, sigma_threshold=sigma_threshold, npixels=npixels, bkg_algo=bkg_algo)  # Get IDs of background and source pixels
@@ -1643,8 +1647,7 @@ class Luci():
             print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3')
             print('Terminating Program')
             quit()
-        bkg_spectra = [self.cube_final[x_min+index[0], y_min+index[1], min_spectral: max_spectral] for index in idx_bkg]# if
-                       #x_min < x_min+index[0] < x_max and y_min < y_min+index[1] < y_max]  # Get background pixels
+        bkg_spectra = [self.cube_final[x_min+index[0], y_min+index[1], min_spectral: max_spectral] for index in idx_bkg]  # Get background pixels
         # Calculate scaling factors and normalize
         min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
         max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
@@ -1656,8 +1659,7 @@ class Luci():
         pca = decomposition.IncrementalPCA(n_components=n_components)  # Call pca
         pca.fit(bkg_spectra)  # Fit using background spectra
         BkgTransformedPCA = pca.transform(bkg_spectra)[:, :n_components_keep]  # Apply on background spectra
-        print(BkgTransformedPCA.shape)
-        # Plot the primary components
+        # Plot the normalized primary components
         plt.figure(figsize=(18, 16))
         l = plt.plot(spectral_axis_nm, pca.mean_ / np.max(pca.mean_) - 2, linewidth=3)  # plot the mean first
         c = l[0].get_color()
@@ -1665,6 +1667,21 @@ class Luci():
         shift = 2
         for i in range(10):  # Plot first 10 components
             l = plt.plot(spectral_axis_nm, pca.components_[i]/np.max(pca.components_[i]) + (i * shift), linewidth=3)
+            c = l[0].get_color()
+            plt.text(670, i * shift + 0.3, "component %i" % (i + 1), color=c, fontsize='xx-large')
+        plt.xlabel('nm', fontsize=24)
+        plt.ylabel('Normalized Emission + Offset', fontsize=24)
+        plt.xticks(fontsize=24)
+        plt.yticks(fontsize=24)
+        plt.savefig(os.path.join(self.output_dir, 'PCA_components_normalized.png'))
+        # Plot the primary components
+        plt.figure(figsize=(18, 16))
+        l = plt.plot(spectral_axis_nm, pca.mean_ - 2, linewidth=3)  # plot the mean first
+        c = l[0].get_color()
+        plt.text(670, -0.9, 'mean emission', color=c, fontsize='xx-large')
+        shift = 2
+        for i in range(10):  # Plot first 10 components
+            l = plt.plot(spectral_axis_nm, pca.components_[i] + (i * shift), linewidth=3)
             c = l[0].get_color()
             plt.text(670, i * shift + 0.3, "component %i" % (i + 1), color=c, fontsize='xx-large')
         plt.xlabel('nm', fontsize=24)
@@ -1681,8 +1698,8 @@ class Luci():
         plt.ylabel('Variance Explained')
         plt.savefig(os.path.join(self.output_dir, 'PCA_scree.png'))
         # Collect background and source pixels/coordinates
-        bkg_pixels = [[x_min+index[0], y_min+index[1]] for index in idx_bkg]# if x_min<x_min+index[0]<x_max and y_min<y_min+index[1]<y_max]
-        src_pixels = [[x_min+index[0], y_min+index[1]] for index in idx_src]# if x_min<x_min+index[0]<x_max and y_min<y_min+index[1]<y_max]
+        bkg_pixels = [[x_min+index[0], y_min+index[1]] for index in idx_bkg]
+        src_pixels = [[x_min+index[0], y_min+index[1]] for index in idx_src]
         bkg_x = [bkg[0] for bkg in bkg_pixels]
         bkg_y = [bkg[1] for bkg in bkg_pixels]
         src_x = [src[0] for src in src_pixels]
@@ -1702,18 +1719,18 @@ class Luci():
         ### Model creation: adding layers and compilation
         hiddenActivation = 'tanh'  # activation function
         input_shape = (None, 2)
-        num_hidden = [200, 250]  # number of nodes in the hidden layers
-        batch_size = 64  # number of data fed into model at once
-        max_epochs = 50 # maximum number of interations
+        num_hidden = [200, 300]  # number of nodes in the hidden layers
+        batch_size = 8  # number of data fed into model at once
+        max_epochs = 100 # maximum number of interations
         lr = 1e-2 #8e-5  # initial learning rate
         beta_1 = 0.9  # exponential decay rate  - 1st
         beta_2 = 0.999  # exponential decay rate  - 2nd
         optimizer_epsilon = 1e-08  # For the numerical stability
         early_stopping_min_delta = 0.0001
-        early_stopping_patience = 10
+        early_stopping_patience = 12
         reduce_lr_factor = 0.5
         reuce_lr_epsilon = 0.009
-        reduce_lr_patience = 5
+        reduce_lr_patience = 4
         reduce_lr_min = 0.00008
         loss_function = 'huber'  # 'mean_squared_error'
         metrics_ = ['mae', 'mape']
@@ -1765,9 +1782,8 @@ class Luci():
             plt.xlabel('Physical Coordinates', fontsize=24, fontweight='bold')
             plt.ylabel('Physical Coordinates', fontsize=24, fontweight='bold')
             plt.clim(c_min, c_max)
-            plt.xlim(x_min, x_max)
-            plt.ylim(y_min, y_max)
             plt.savefig(os.path.join(coeff_map_path, 'component%i.png'%(n_component+1)))
+            fits.writeto(os.path.join(coeff_map_path, 'component%i.fits'%(n_component+1)), coefficient_array[:,:,n_component], self.header, overwrite=True)
         return BkgTransformedPCA, pca, interpolatedSourcePixels, idx_bkg, idx_src, coefficient_array
 
     def update_astrometry(self, api_key):
@@ -1779,48 +1795,41 @@ class Luci():
         This automatically updates the deep images header! If you want the header to be binned, then you can bin it
         using the standard creation mechanisms (for this example binning at 2x2) and then run this code:
 
-    def update_astrometry(self, api_key):
-            """
-            Use astronomy.net to update the astrometry in the header using the deep image.
-            If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
-            the header is not updated and an exception is thrown.
 
-            This automatically updates the deep images header! If you want the header to be binned, then you can bin it
-            using the standard creation mechanisms (for this example binning at 2x2) and then run this code:
 
-            >>> cube.create_deep_image(binning=2)
-            >>> cube.update_astrometry(api_key)
+        >>> cube.create_deep_image(binning=2)
+        >>> cube.update_astrometry(api_key)
 
-            Args:
-                api_key: Astronomy.net user api key
-            """
-            # Initiate Astronomy Net
-            ast = AstrometryNet()
-            ast.key = api_key
-            ast.api_key = api_key
-            try_again = True
-            submission_id = None
-            # Check that deep image exists. Otherwise make one
-            if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
-                self.create_deep_image()
-            # Now submit to astronomy.net until the value is found
-            while try_again:
-                if not submission_id:
-                    try:
-                        wcs_header = ast.solve_from_imashapege(self.output_dir + '/' + self.object_name + '_deep.fits',
-                                                          submission_id=submission_id,
-                                                          solve_timeout=300)  # , use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
-                    except Exception as e:
-                        print("Timedout")
-                        submission_id = e.args[1]
-                    else:
-                        # got a result, so terminate
-                        print("Result")
-                        try_again = False
+        Args:
+            api_key: Astronomy.net user api key
+        """
+        # Initiate Astronomy Net
+        ast = AstrometryNet()
+        ast.key = api_key
+        ast.api_key = api_key
+        try_again = True
+        submission_id = None
+        # Check that deep image exists. Otherwise make one
+        if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
+            self.create_deep_image()
+        # Now submit to astronomy.net until the value is found
+        while try_again:
+            if not submission_id:
+                try:
+                    wcs_header = ast.solve_from_imashapege(self.output_dir + '/' + self.object_name + '_deep.fits',
+                                                      submission_id=submission_id,
+                                                      solve_timeout=300)  # , use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
+                except Exception as e:
+                    print("Timedout")
+                    submission_id = e.args[1]
                 else:
                     # got a result, so terminate
                     print("Result")
                     try_again = False
             else:
-                # Code to execute when solve fails
-                print('Astronomy.net failed to solve. This astrometry has not been updated!')
+                # got a result, so terminate
+                print("Result")
+                try_again = False
+        else:
+            # Code to execute when solve fails
+            print('Astronomy.net failed to solve. This astrometry has not been updated!')
