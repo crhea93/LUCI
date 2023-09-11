@@ -14,7 +14,7 @@ from astropy.wcs import WCS
 import matplotlib.colors
 
 
-def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_mask=True, npixels=10, bkg_algo='detect_source'):
+def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_mask=True, npixels=10, bkg_algo='detect_source', filter_='SN3'):
     """
     This algorithm uses a sigma thresholding algorithm on the deep image to determine which pixels belong to the background.
 
@@ -24,7 +24,8 @@ def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_ma
         plot_mask: Boolean to make/save background plot (default True)
         npixels: Minimum number of connected pixels in a detected group (default 10)
         bkg_algo: Background algorithm to use (default 'sourece_detect'; options: 'source_detect', 'threshold')
-
+        filter_: SITELLE Filter used (default 'SN3')
+        
     Return:
         idx_bkg: List of background pixel positions (list of tuples)]
         idx_source: List of source pixel positions
@@ -43,7 +44,7 @@ def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_ma
         idx_bkg = np.argwhere(np.abs(segment_map) == 0)  # Get only background pixels
         idx_source = np.argwhere(np.abs(segment_map) > 0)  # Get source pixels
         if plot_mask:
-            plt.imshow(segment_map, origin='lower', cmap=segment_map.cmap, interpolation='nearest')
+            plt.imshow(segment_map.data.T, origin='lower', cmap=segment_map.cmap, interpolation='nearest')
             ##plt.ylim(0, len(deep_image.T))
             #plt.xlim(0, len(deep_image))
             plt.xlabel('Physical Coordinates', fontsize=24)
@@ -55,7 +56,8 @@ def find_background_pixels(deep_image, outputDir='', sigma_threshold=.1, plot_ma
                 ax = plt.subplot(projection=wcs)
                 ax.coords[0].set_major_formatter('hh:mm:ss')
                 ax.coords[1].set_major_formatter('dd:mm:ss')'''
-            plt.savefig(os.path.join(outputDir, 'BackgroundPixelMap.png'))
+            plt.savefig(os.path.join(outputDir, 'BackgroundPixelMap_%s.png'%filter_))
+            
     elif bkg_algo == 'threshold':
         idx_bkg = np.argwhere(deep_image < 200000)
         idx_source = np.argwhere(deep_image > 200000)
