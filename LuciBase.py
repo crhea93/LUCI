@@ -347,27 +347,14 @@ class Luci():
                         binnedCoefficientArray = np.nansum(binnedCoefficientArray, axis=0)
                         bkg = pca_mean + np.sum([binnedCoefficientArray[i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=0)
                     else:
-                        #print('Mean')
-                        #print(pca_mean)
-                        #print('Component sum')
-                        #print(np.sum([pca_coefficient_array[x_pix, y_pix][i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=0))
-
                         bkg = pca_mean + np.sum([pca_coefficient_array[x_pix, y_pix][i] * pca_vectors[i] for i in range(len(pca_coefficient_array[x_pix, y_pix]))], axis=0)
-                    #scale_spec = np.nanmax([spec/np.nanmax(sky[min_spectral_scale:max_spectral_scale]) for spec in sky])
                     scale_spec = np.nanmax(sky[min_spectral_scale:max_spectral_scale])
-                    #print('Scale')
-                    #print(scale_spec)
-                    #print('BKG')
-                    #print(bkg)
                     sky -= scale_spec * bkg
                     
 
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
             axis = spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
-            #plt.plot(axis, sky)
-            #plt.show()
-            #plt.savefig('/home/carterrhea/Downloads/test.png')
             if initial_values[0] is not False:  # Frozen parameter
                 initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
             else:
