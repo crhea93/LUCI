@@ -134,7 +134,7 @@ def calculate_flux(line_amp, line_sigma, model_type, sinc_width):
     if model_type == 'gaussian':
         flux =  (1.20671/FWHM_COEFF) * np.sqrt(2 * np.pi) * line_amp * line_sigma
     elif model_type == 'sinc':
-        flux =  np.pi *np.sqrt(np.pi) * line_amp * line_sigma
+        flux =  np.pi *np.sqrt(np.pi) * line_amp * sinc_width
     elif model_type == 'sincgauss':
         flux = (1.20671/(np.pi*FWHM_COEFF)) * line_amp * ((np.sqrt(2*np.pi)*line_sigma) / (sps.erf(line_sigma / (np.sqrt(2) * sinc_width))))
     else:
