@@ -6,7 +6,7 @@ urllib3
 astropy
 astroquery
 corner
-emcee~=3
+emcee==3
 h5py
 keras
 numpy
@@ -26,4 +26,4 @@ corner
 dynesty
 sklearn
 seaborn
-photuilts
+photutils
