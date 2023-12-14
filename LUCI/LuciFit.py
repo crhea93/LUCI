@@ -125,12 +125,12 @@ class Fit:
         self.spectrum_interp_norm = np.zeros_like(self.spectrum)
         self.restrict_wavelength()
         self.theta = theta
-        self.cos_theta = np.abs(np.cos(np.deg2rad(self.theta)))
+        self.cos_theta = float(np.abs(np.cos(np.deg2rad(self.theta))))
         self.correction_factor = 1.0  # Initialize Correction factor
         self.axis_step = 0.0  # Initialize
-        self.delta_x = delta_x
-        self.n_steps = n_steps
-        self.zpd_index = zpd_index
+        self.delta_x = float(delta_x)
+        self.n_steps = int(n_steps)
+        self.zpd_index = int(zpd_index)
         self.calculate_correction()
         # Update axis with correction factor
         # self.axis = self.axis*self.correction_factor
@@ -187,7 +187,7 @@ class Fit:
                         'LUCI does not support machine learning parameter estimates using a MDN for the filter you entered. Please set ML_bool=False or mdn=False.')
         else:
             self.ML_model = None
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def apply_transmission(self):
         """
         Apply transmission curve on the spectra according to un-redshifted axis.
@@ -199,7 +199,7 @@ class Fit:
         self.spectrum = [self.spectrum[i] / self.trans_filter[i] if self.trans_filter[i] > 0.5 else self.spectrum[i] for
                          i in range(len(self.spectrum))]
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def calculate_correction(self):
         """
         Calculate correction factor based of interferometric angle. This is used to correct the broadening
@@ -207,7 +207,7 @@ class Fit:
         self.correction_factor = 1 / self.cos_theta
         self.axis_step = self.correction_factor / (2 * self.delta_x * (self.n_steps - self.zpd_index)) * 1e7
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def calc_sinc_width(self, ):
         """
         Calculate sinc width of the sincgauss function
@@ -344,7 +344,7 @@ class Fit:
             self.broad_ml_sigma = 0
         return None
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def interpolate_spectrum(self):
         """
         Interpolate Spectrum given the wavelength axis of reference spectrum.
@@ -412,7 +412,7 @@ class Fit:
             self.sigma_max = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT + 3 * (line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
         return line_amp_est, line_pos_est, line_broad_est
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def cont_estimate(self, sigma_level=3):
         """
         TODO: Test
@@ -467,7 +467,7 @@ class Fit:
         cont_val = np.nanmedian(clipped_spec)
         return cont_val
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def log_likelihood(self, theta):
         """
         Calculate log likelihood function evaluated given parameters on spectral axis

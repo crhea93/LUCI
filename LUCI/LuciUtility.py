@@ -128,11 +128,12 @@ def get_interferometer_angles(file, hdr_dict):
         file: hdf5 File object containing HDF5 file
     """
 
-    calib_map = file['calib_map'][()]
+    calib_map = file['calib_map'][()].astype('float')
     try:
         calib_ref = hdr_dict['CALIBNM']
     except:
         calib_ref = hdr_dict['nm_laser']
+    calib_ref = np.float32(calib_ref)
     interferometer_cos_theta = calib_ref / calib_map  # .T[::-1,::-1]
     # We need to convert to degree so bear with me here
     #del calib_map
@@ -145,10 +146,11 @@ def spectrum_axis_func(hdr_dict, redshift):
     since each pixel only has amplitudes of the spectra at each point.
     """
 
-    len_wl = hdr_dict['STEPNB']  # Length of Spectral Axis
-    start = hdr_dict['CRVAL3']  # Starting value of the spectral x-axis
-    end = start + (len_wl) * hdr_dict['CDELT3']  # End
-    step = hdr_dict['CDELT3']  # Step size
+    len_wl = int(hdr_dict['STEPNB'])  # Length of Spectral Axis
+    start = float(hdr_dict['CRVAL3'])  # Starting value of the spectral x-axis
+    step = float(hdr_dict['CDELT3'])  # Step size
+    end = start + (len_wl) * step  # End
+
     spectrum_axis = np.array(np.linspace(start, end, len_wl) * (redshift + 1),
                              dtype=np.float32)  # Apply redshift correction
     spectrum_axis_unshifted = np.array(np.linspace(start, end, len_wl),
@@ -228,6 +230,9 @@ def update_header(file):
             hdr_dict[header_col] = str(header_val)
     hdr_dict['CTYPE3'] = 'WAVE-SIP'
     hdr_dict['CUNIT3'] = 'm'
+    hdr_dict['A_ORDER'] = int(hdr_dict['A_ORDER'])
+    hdr_dict['AP_ORDER'] = int(hdr_dict['AP_ORDER'])
+    hdr_dict['NAXIS'] = int(hdr_dict['NAXIS'])
     # If NAXIS 1 does not exist we will add it
     if 'NAXIS1' not in hdr_dict.keys():
         hdr_dict['NAXIS1'] = 2048
