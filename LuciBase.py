@@ -43,7 +43,7 @@ from sklearn.linear_model import Ridge
 from sklearn.preprocessing import PolynomialFeatures, SplineTransformer
 from sklearn.pipeline import make_pipeline
 from keras.regularizers import l2
-
+from sklearn.ensemble import IsolationForest
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
@@ -321,8 +321,16 @@ class Luci():
         continuum_local = []
         continuum_errs_local = []
         bool_fit = True  # Boolean to fit
-        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in spectrum_axis]))
-        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in spectrum_axis]))
+        if hdr_dict['FILTER'] == 'SN3':
+            min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in spectrum_axis]))
+            max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in spectrum_axis]))
+        elif hdr_dict['FILTER'] == 'SN2':
+            min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 505 for wavelength in spectrum_axis]))
+            max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 480 for wavelength in spectrum_axis]))
+        else:
+            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3 and SN2.')
+            print('Terminating Program')
+            quit()
         # Step through x coordinates
         for j in range(x_max - x_min):
             x_pix = x_min + j  # Set current x pixel
@@ -428,6 +436,7 @@ class Luci():
             y_min: Lower bound in y
             y_max: Upper bound in y
             bkg: Background Spectrum (1D numpy array; default None)
+            bkgType: Type of background (default 'standard'; options ['standard', 'pca'])
             binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             bayes_method = Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
@@ -477,10 +486,8 @@ class Luci():
         flux_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
         velocities_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
         broadenings_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        velocities_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
-                                                                                                                  2)
-        broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
-                                                                                                                   2)
+        velocities_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
+        broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
         continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         continuum_error_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
         cube_to_slice = self.cube_final  # Set cube for slicing
@@ -626,9 +633,9 @@ class Luci():
                 header.set('NAXIS2', 2048)
                 mask = reg_to_mask(region, header)
             elif '.npy' in region:  # If passed numpy file
-                mask = np.load(region).T
+                mask = np.load(region)
             elif region is not None:  # If passed numpy array
-                mask = region.T
+                mask = region
             else:  # Not passed a mask in any of the correct formats
                 print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         else:  # User passed list of pixel IDs to create the mask
@@ -720,7 +727,7 @@ class Luci():
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
     def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
-                  pixel_x, pixel_y, bin=None, bkg=None,
+                  pixel_x, pixel_y, binning=None, bkg=None, 
                   bayes_bool=False, bayes_method='emcee',
                   uncertainty_bool=False,
                   nii_cons=True, spec_min=None, spec_max=None,
@@ -738,8 +745,9 @@ class Luci():
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             pixel_x: X coordinate (physical)
             pixel_y: Y coordinate (physical)
-            bin: Number of pixels to take around coordinate (i.e. bin=1 will take all pixels touching the X and Y coordinates.
+            binning: Number of pixels to take around coordinate (i.e. bin=1 will take all pixels touching the X and Y coordinates.
             bkg: Background Spectrum (1D numpy array; default None)
+            bkgType: Type of background (default 'standard'; options ['standard', 'pca'])
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
@@ -748,10 +756,10 @@ class Luci():
             spec_max: Maximum value of the spectrum to be considered in the fit
             obj_redshift: Redshift of object to fit relative to cube's redshift. This is useful for fitting high redshift objects
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
-            bkgType:
-            pca_coefficient_array:
-            pca_vectors:
-            pca_mean:
+            bkgType: Type of background (default 'standard'; options ['standard', 'pca'])
+            pca_coefficient_array: Array of PCA Coefficients (default None)
+            pca_vectors: Vectors corresponding to principal components (default None)
+            pca_mean: Mean vector from PCA analysis (default None)
 
 
         Return:
@@ -760,25 +768,40 @@ class Luci():
 
         """
         sky = None
-        if bin is not None and bin != 1:  # If data is binned
-            sky = self.cube_final[pixel_x - bin:pixel_x + bin, pixel_y - bin:pixel_y + bin, :]
+        if binning is not None and binning != 1:  # If data is binned
+            sky = self.cube_final[pixel_x - binning:pixel_x + binning, pixel_y - binning:pixel_y + binning, :]
             sky = np.nansum(sky, axis=0)
             sky = np.nansum(sky, axis=0)
-            if bkg is not None:
-                sky -= bkg * (2 * bin) ** 2  # Subtract background times number of pixels
+            
         else:
             sky = self.cube_final[pixel_x, pixel_y, :]
-            if bkg is not None and bkgType=='standard':
-                sky -= bkg  # Subtract background spectrum
-            elif bkgType == 'pca':  # We will be using the pca version
-                min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in spectrum_axis]))
-                max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in spectrum_axis]))
-                if binning:  # If we are binning we have to group the coefficients
-                    pass  # TODO: Implement
-                else:
-                    scale_spec = np.nanmax([spec/np.nanmax(sky[min_spectral_scale:max_spectral_scale]) for spec in sky])
-                    print(scale_spec)
-                    sky -= (scale_spec) * (pca_mean - np.sum([pca_coefficient_array[x_pix, y_pix, i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=0))
+        if bkgType=='standard':
+            #sky -= bkg  # Subtract background spectrum
+            #if bkg is not None:
+            sky -= bkg * (binning) ** 2  # Subtract background times number of pixels
+        elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':  
+            if self.hdr_dict['FILTER'] == 'SN3':
+                min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
+                max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
+            elif self.hdr_dict['FILTER'] == 'SN2':
+                min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 505 for wavelength in self.spectrum_axis]))
+                max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 480 for wavelength in self.spectrum_axis]))
+            else:
+                print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3 and SN2.')
+                print('Terminating Program')
+                quit()
+            if binning:  # If we are binning we have to group the coefficients
+                binnedCoefficientArray = pca_coefficient_array[pixel_x - binning:pixel_x + binning, pixel_y - binning:pixel_y + binning, :]
+                binnedCoefficientArray = np.nansum(binnedCoefficientArray, axis=0)
+                binnedCoefficientArray = np.nansum(binnedCoefficientArray, axis=0)
+                bkg = pca_mean + np.sum([binnedCoefficientArray[i] * pca_vectors[i] for i in range(len(binnedCoefficientArray))], axis=0)
+                print('binning pca')
+            else:
+                bkg = pca_mean + np.sum([pca_coefficient_array[x_pix, y_pix][i] * pca_vectors[i] for i in range(len(pca_coefficient_array[x_pix, y_pix]))], axis=0)
+            scale_spec = np.nanmax(sky[min_spectral_scale:max_spectral_scale])
+            sky -= scale_spec * bkg
+        else:
+            print('Please set bkgType to either standard or pca')
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
         sky = sky[good_sky_inds]  # Apply clean to sky
         axis = self.spectrum_axis[good_sky_inds]  # Apply clean to axis
@@ -793,7 +816,22 @@ class Luci():
                   uncertainty_bool=uncertainty_bool,
                   mdn=self.mdn, nii_cons=nii_cons,
                   spec_min=spec_min, spec_max=spec_max, obj_redshift=obj_redshift, n_stoch=n_stoch,
-                  resolution=self.resolution, Luci_path=self.Luci_path)
+                  resolution=self.resolution, Luci_path=self.Luci_path
+                  )
+        '''fit = self.fit_calc(0, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel,
+                            cube_slice=cube_to_slice[:, y_min + 0, :],
+                            spectrum_axis=self.spectrum_axis, wavenumbers_syn=self.wavenumbers_syn,
+                            transmission_interpolated=self.transmission_interpolated,
+                            interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict,
+                            step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
+                            ML_bool=self.ML_bool, bayes_bool=bayes_bool,
+                            bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
+                            uncertainty_bool=uncertainty_bool, bkg=bkg,
+                            bkgType=bkgType, nii_cons=nii_cons,
+                            initial_values=[vel_init, broad_init],
+                            obj_redshift=obj_redshift, n_stoch=n_stoch, resolution=self.resolution,
+                            Luci_path=self.Luci_path,
+                            pca_coefficient_array=pca_coefficient_array, pca_vectors=pca_vectors, pca_mean=pca_mean) '''        
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
@@ -867,14 +905,24 @@ class Luci():
 
         """
         # Create mask
-        if '.reg' in region:
-            mask = reg_to_mask(region, self.header)
-        elif '.npy' in region:
+        #if '.reg' in region:
+        #    mask = reg_to_mask(region, self.header)
+        #elif '.npy' in region:
+        #    mask = np.load(region)
+        #else:
+        #    print("At the moment, we only support '.reg' and '.npy' files for masks.")
+        #    print("Terminating Program!")
+        if '.reg' in region:  # If passed a .reg file
+            header = self.header
+            header.set('NAXIS1', 2064)  # Need this for astropy
+            header.set('NAXIS2', 2048)
+            mask = reg_to_mask(region, header)
+        elif '.npy' in region:  # If passed numpy file
             mask = np.load(region)
-        else:
-            print("At the moment, we only support '.reg' and '.npy' files for masks.")
-            print("Terminating Program!")
-
+        elif region is not None:  # If passed numpy array
+            mask = region
+        else:  # Not passed a mask in any of the correct formats
+            print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -932,13 +980,24 @@ class Luci():
         """
         # Create mask
         mask = None  # Initialize
-        if '.reg' in region:
-            mask = reg_to_mask(region, self.header)
-        elif '.npy' in region:
+        #if '.reg' in region:
+        #    mask = reg_to_mask(region, self.header)
+        #elif '.npy' in region:
+        #    mask = np.load(region)
+        #else:
+        #    print("At the moment, we only support '.reg' and '.npy' files for masks.")
+        #    print("Terminating Program!")
+        if '.reg' in region:  # If passed a .reg file
+            header = self.header
+            header.set('NAXIS1', 2064)  # Need this for astropy
+            header.set('NAXIS2', 2048)
+            mask = reg_to_mask(region, header)
+        elif '.npy' in region:  # If passed numpy file
             mask = np.load(region)
-        else:
-            print("At the moment, we only support '.reg' and '.npy' files for masks.")
-            print("Terminating Program!")
+        elif region is not None:  # If passed numpy array
+            mask = region
+        else:  # Not passed a mask in any of the correct formats
+            print('Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray')
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -991,7 +1050,10 @@ class Luci():
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
-    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, n_threads=2, lines=[None]):
+    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, 
+                        n_threads=2, lines=[None], binning=1, bkgType='standard',
+                          pca_coefficient_array=None, pca_vectors=None, pca_mean=None
+                          ):
         """
         Create signal-to-noise ratio (SNR) map of a given region. If no bounds are given,
         a map of the entire cube is calculated.
@@ -1004,11 +1066,21 @@ class Luci():
             method: Method used to calculate SNR (default 1; options 1 or 2)
             n_threads: Number of threads to use
             lines: Lines to focus on (default None: For SN2 you can choose OIII)
+            binning: Bin to apply (default 1)
+            
         Return:
             snr_map: Signal-to-Noise ratio map
 
         """
-        SNR = np.zeros((2048, 2064), dtype=np.float32).T
+        cube_to_use = self.cube_final
+        if binning > 1:
+            self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min, y_max)
+            x_max = int((x_max - x_min) / binning)
+            y_max = int((y_max - y_min) / binning)
+            x_min = 0
+            y_min = 0
+            cube_to_use = self.cube_binned
+        SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         flux_min = 0
         flux_max = 0
         noise_min = 0
@@ -1016,12 +1088,12 @@ class Luci():
         if self.hdr_dict['FILTER'] == 'SN3':  # Halpha complex
             flux_min = 15150
             flux_max = 15300
-            noise_min = 14500
-            noise_max = 14600
+            noise_min = 16000#14500
+            noise_max = 16250#14600
         elif self.hdr_dict['FILTER'] == 'SN2':
             if 'OIII' in lines:  # OIII lines
-                flux_min = 1e7 / 485
-                flux_max = 1e7 / 501
+                flux_min = 1e7 / 505
+                flux_max = 1e7 / 495
             else:  # Hbeta by default
                 flux_min = 1e7 / 486
                 flux_max = 1e7 / 482
@@ -1042,39 +1114,63 @@ class Luci():
 
         def SNR_calc(i):
             y_pix = y_min + i
-            snr_local = np.zeros(2048)
-            for j in range(x_max - x_min):
+            snr_local = np.zeros(x_max-x_min)
+            for j in range(len(snr_local)):
                 x_pix = x_min + j
+                sky = cube_to_use[x_pix, y_pix, :]
                 # Calculate SNR
+                if bkgType=='standard':
+                    sky -= bkg * (binning) ** 2  # Subtract background times number of pixels
+                elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':  
+                    if self.hdr_dict['FILTER'] == 'SN3':
+                        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
+                        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
+                    elif self.hdr_dict['FILTER'] == 'SN2':
+                        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 505 for wavelength in self.spectrum_axis]))
+                        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 480 for wavelength in self.spectrum_axis]))
+                    else:
+                        print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3 and SN2.')
+                        print('Terminating Program')
+                        quit()
+                    if binning:  # If we are binning we have to group the coefficients
+                        binnedCoefficientArray = pca_coefficient_array[x_pix - binning:x_pix + binning, y_pix - binning:y_pix + binning, :]
+                        binnedCoefficientArray = np.nansum(binnedCoefficientArray, axis=0)
+                        binnedCoefficientArray = np.nansum(binnedCoefficientArray, axis=0)
+                        bkg = pca_mean + np.sum([binnedCoefficientArray[i] * pca_vectors[i] for i in range(len(binnedCoefficientArray))], axis=0)
+                    else:
+                        bkg = pca_mean + np.sum([pca_coefficient_array[x_pix, y_pix][i] * pca_vectors[i] for i in range(len(pca_coefficient_array[x_pix, y_pix]))], axis=0)
+                    scale_spec = np.nanmax(sky[min_spectral_scale:max_spectral_scale])
+                    sky -= scale_spec * bkg
+                else:
+                    print('Please set bkgType to either standard or pca')
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_max))
-                in_region = self.cube_final[x_pix, y_pix, min_:max_]
-                flux_in_region = np.nansum(self.cube_final[x_pix, y_pix, min_:max_])
+                flux_in_region = np.nansum(sky[min_:max_])
                 # Subtract off continuum estimate
-                clipped_spec = astrostats.sigma_clip(in_region, sigma=3, masked=False,
+                clipped_spec = astrostats.sigma_clip(sky, sigma=1, masked=False,
                                                      copy=False, maxiters=10)
                 # Now take the mean value to serve as the continuum value
-                cont_val = np.min(clipped_spec)
+                cont_val = np.nanmin(clipped_spec)
                 flux_in_region -= cont_val * (max_ - min_)  # Need to scale by the number of steps along wavelength axis
-                min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_min))
-                max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_max))
-                out_region = self.cube_final[x_pix, y_pix, min_:max_]
+                min_noise = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_min))
+                max_noise = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_max))
+                out_region = sky[min_noise:max_noise]
                 std_out_region = np.nanstd(out_region)
                 if method == 1:
-                    signal = np.nanmax(in_region) - np.nanmedian(in_region)
+                    signal = np.nanmax(sky) - np.nanmean(sky)
                     noise = np.abs(np.nanstd(out_region))
                     snr = float(signal / np.sqrt(noise))
                     if snr < 0:
                         snr = 0
                     else:
-                        snr = snr / (np.sqrt(np.nanmean(np.abs(in_region))))
+                        snr = snr / (np.sqrt(np.nanmean(np.abs(sky))))
                 else:
                     snr = float(flux_in_region / std_out_region)
                     if snr < 0:
                         snr = 0
                     else:
                         pass
-                snr_local[x_pix] = snr
+                snr_local[j] = snr
             return snr_local, i
 
         res = Parallel(n_jobs=n_threads, backend="threading")(delayed(SNR_calc)(i) for i in tqdm(range(y_max - y_min)));
@@ -1082,16 +1178,17 @@ class Luci():
         for snr_ind in res:
             snr_vals, step_i = snr_ind
             SNR[y_min + step_i] = snr_vals
-        SNR[SNR == np.inf] = 0
-        SNR[SNR == -np.inf] = 0
-        fits.writeto(self.output_dir + '/' + self.object_name + '_SNR.fits', SNR, self.header, overwrite=True)
-
+        if os.path.exists(self.output_dir+'/SNR'):
+            pass
+        else:
+            os.mkdir(self.output_dir + '/SNR')
+        fits.writeto(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits', SNR, self.header, overwrite=True)
         # Save masks for SNr 3, 5, and 10
         masks = []
         for snr_val in [1, 3, 5, 10]:
             mask = ma.masked_where(SNR >= snr_val, SNR)
             masks.append(mask)
-            np.save("%s/SNR_%i_mask.npy" % (self.output_dir, snr_val), mask.mask)
+            np.save("%s/SNR/%s_SNR_%i_mask.npy" % (self.output_dir, self.object_name, snr_val), mask.mask)
         return masks
 
     def heliocentric_correction(self):
@@ -1476,14 +1573,11 @@ class Luci():
         # Correct header information
         if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
             self.create_deep_image()
-
         wcs = WCS(self.header, naxis=2)
         cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
                           position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
                           wcs=wcs)
-
         global value_calc
-
         def value_calc(i):
             y_pix = y_min + i
             detection_local = []
@@ -1646,7 +1740,7 @@ class Luci():
             max_spectral = len(self.spectrum_axis)  #np.argmin(np.abs([1e7 / wavelength - 360 for wavelength in self.spectrum_axis]))
             min_spectral = 0  # np.argmin(np.abs([1e7 / wavelength - 380 for wavelength in self.spectrum_axis]))
         else:
-            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3')
+            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3, SN2, and SN1')
             print('Terminating Program')
             quit()
         # Check if there are not enough components
@@ -1666,16 +1760,22 @@ class Luci():
             min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 365 for wavelength in self.spectrum_axis[min_spectral: max_spectral]]))
             max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 360 for wavelength in self.spectrum_axis[min_spectral: max_spectral]]))
         else:
-            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3')
+            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3, SN2, and SN1')
             print('Terminating Program')
             quit()
         bkg_spectra = [bkg_spectrum / np.nanmax(bkg_spectrum[min_spectral_scale:max_spectral_scale]) for bkg_spectrum in
                        bkg_spectra]
         bkg_spectra = [bkg_spectrum / np.max(bkg_spectrum) for bkg_spectrum in bkg_spectra]
+        # Remove outliers
+        #outlier_predictions = IsolationForest(random_state=0).fit_predict(bkg_spectra)  # Outliers have a value of -1 and inliers have a value of 1
+        #outlier_predictions = np.where(outlier_predictions == 1)
+        #outlier_predictions = ma.masked_where(outlier_predictions > 0, outlier_predictions).mask
+        #bkg_spectra = np.array(bkg_spectra)[outlier_predictions[:]]
         # Calculate n most important components
         spectral_axis_nm = 1e7 / self.spectrum_axis[min_spectral: max_spectral]
-        pca = decomposition.IncrementalPCA(n_components=n_components)  # Call pca
+        pca = decomposition.PCA(n_components=n_components)  # Call pca
         pca.fit(bkg_spectra)  # Fit using background spectra
+        pickle.dump(pca, open(os.path.join(self.output_dir, 'pca_%s.pkl'%self.filter), 'wb'))
         BkgTransformedPCA = pca.transform(bkg_spectra)[:, :n_components_keep]  # Apply on background spectra
         # Plot the normalized primary components
         plt.figure(figsize=(18, 16))
@@ -1708,14 +1808,18 @@ class Luci():
         plt.yticks(fontsize=24)
         plt.savefig(os.path.join(self.output_dir, 'PCA_components_%s.png'%self.filter))
         # Make scree plot
-        plt.figure(figsize=(18, 16))
+        plt.figure(figsize=(14, 8))
         PC_values = np.arange(pca.n_components_)[:n_components] + 1
-        plt.plot(PC_values, pca.explained_variance_ratio_[:n_components], 'o-', linewidth=2)
-        plt.title('Scree Plot')
-        plt.xlabel('Principal Component')
-        plt.ylabel('Variance Explained')
+        explained_variance_ratio = [(1/np.sum(pca.explained_variance_ratio_))*pca.explained_variance_ratio_[i] for i in range(n_components)]
+        plt.plot(PC_values, explained_variance_ratio, 'o-', linewidth=3)
+        #plt.title('Scree Plot')
+        plt.xlabel('Principal Component', fontsize=24)
+        plt.ylabel('Variance Explained', fontsize=24)
+        plt.xticks(fontsize=24)
+        plt.yticks(fontsize=24)
         plt.savefig(os.path.join(self.output_dir, 'PCA_scree_%s.png'%self.filter))
         # Collect background and source pixels/coordinates
+        #bkg_pixels = [[x_min+index[0], y_min+index[1]] for index in idx_bkg[outlier_predictions]]
         bkg_pixels = [[x_min+index[0], y_min+index[1]] for index in idx_bkg]
         src_pixels = [[x_min+index[0], y_min+index[1]] for index in idx_src]
         bkg_x = [bkg[0] for bkg in bkg_pixels]
@@ -1785,7 +1889,6 @@ class Luci():
         for pixel_ct, pixel in enumerate(src_pixels):
             coefficient_array[pixel[0], pixel[1]] = interpolatedSourcePixels[pixel_ct]
         pickle.dump(coefficient_array, open(os.path.join(self.output_dir, 'pca_coefficient_array_%s.pkl'%self.filter), 'wb'))
-        pickle.dump(pca.components_[:n_components_keep], open(os.path.join(self.output_dir, 'pca_components_%s.pkl'%self.filter), 'wb'))
         # Make coefficient maps for first 5 coefficients
         coeff_map_path = os.path.join(self.output_dir, 'PCACoefficientMaps')
         if not os.path.exists(coeff_map_path):
