@@ -25,13 +25,7 @@ from sklearn import decomposition
 from sklearn.model_selection import train_test_split
 import os
 import logging
-from keras.models import Sequential
-from keras.layers import Dense, InputLayer, Dropout
-from keras.optimizers.legacy import Adam
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from keras.regularizers import l2
 from sklearn.ensemble import IsolationForest
-
 from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
 import warnings
 
@@ -1900,51 +1894,3 @@ class Luci():
             fits.writeto(os.path.join(coeff_map_path, 'component%i_%s.fits'%(n_component+1, self.filter)), coefficient_array[:,:,n_component], self.header, overwrite=True)
         return BkgTransformedPCA, pca, interpolatedSourcePixels, idx_bkg, idx_src, coefficient_array
 
-    '''def update_astrometry(self, api_key):
-        """
-        Use astronomy.net to update the astrometry in the header using the deep image.
-        If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
-        the header is not updated and an exception is thrown.
-
-        This automatically updates the deep images header! If you want the header to be binned, then you can bin it
-        using the standard creation mechanisms (for this example binning at 2x2) and then run this code:
-
-
-
-        >>> cube.create_deep_image(binning=2)
-        >>> cube.update_astrometry(api_key)
-
-        Args:
-            api_key: Astronomy.net user api key
-        """
-        # Initiate Astronomy Net
-        ast = AstrometryNet()
-        ast.key = api_key
-        ast.api_key = api_key
-        try_again = True
-        submission_id = None
-        # Check that deep image exists. Otherwise make one
-        if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
-            self.create_deep_image()
-        # Now submit to astronomy.net until the value is found
-        while try_again:
-            if not submission_id:
-                try:
-                    wcs_header = ast.solve_from_imashapege(self.output_dir + '/' + self.object_name + '_deep.fits',
-                                                      submission_id=submission_id,
-                                                      solve_timeout=300)  # , use_sextractor=True, center_ra=float(ra), center_dec=float(dec))
-                except Exception as e:
-                    print("Timedout")
-                    submission_id = e.args[1]
-
-                else:
-                    # got a result, so terminate
-                    print("Result")
-                    try_again = False
-            else:
-                # got a result, so terminate
-                print("Result")
-                try_again = False
-        else:
-            # Code to execute when solve fails
-            print('Astronomy.net failed to solve. This astrometry has not been updated!')
