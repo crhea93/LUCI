@@ -2,7 +2,11 @@ import numpy as np
 from scipy import special as sps
 import math
 from numba import jit
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
+import warnings
 
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
 FWHM_COEFF = 2.*math.sqrt(2. * math.log(2.))
@@ -50,7 +54,7 @@ class Gaussian:
         sigma = params[2]
         return A * np.exp((-(channel - x) ** 2) / (2 * sigma ** 2))
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def evaluate(self, channel, theta, line_num):
         """
         Function to initiate the correct number of models to fit
@@ -71,7 +75,7 @@ class Gaussian:
             f1 += self.function(channel, params)
         return f1
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def evaluate_bayes(self, channel, theta):
         """
         Function to initiate the model calculation for Bayesian Analysis
@@ -132,7 +136,7 @@ class Sinc:
         u = (channel - p1) / p2
         return [p0 * np.sinc(u_) if u_ != 0 else p0 for u_ in u]
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def evaluate(self, channel, theta, line_num, sinc_width):
         """
         Function to initiate the correct number of models to fit
@@ -154,7 +158,7 @@ class Sinc:
             f1 += np.array(self.function(channel, params, sinc_width))
         return f1
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def evaluate_bayes(self, channel, theta, sinc_width):
         """
         Function to initiate the model calculation for Bayesian Analysis
@@ -174,7 +178,7 @@ class Sinc:
         f1 += np.array(self.function(channel, params, sinc_width))
         return f1
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def plot(self, channel, theta, line_num, sinc_width):
         """
         Function to initiate the correct number of models to fit
@@ -212,7 +216,7 @@ class SincGauss:
         self.initial_values = initial_values
         pass
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def function(self, channel, params, sinc_width):
         p0 = params[0]
         p1 = params[1]
@@ -227,7 +231,7 @@ class SincGauss:
         dawson3 = 2. * sps.dawsn(1j * a)
         return np.real(p0*(dawson1 + dawson2)/dawson3)
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def evaluate(self, channel, theta, line_num, sinc_width, line_names=None):
         """
         Function to initiate the correct number of models to fit
@@ -261,7 +265,7 @@ class SincGauss:
             f1 += self.function(channel, thetas[model_num], sinc_width)
         return np.real(f1)
 
-    @jit(nopython=False, fastmath=True)    
+    @jit(fastmath=True)
     def evaluate_bayes(self, channel, theta, sinc_width):
         """
         Function to initiate the model calculation for Bayesian Analysis
@@ -281,7 +285,7 @@ class SincGauss:
         f1 += self.function(channel, params, sinc_width)
         return np.real(f1)
 
-    @jit(nopython=False, fastmath=True)
+    @jit(fastmath=True)
     def plot(self, channel, theta, line_num, sinc_width):
         """
         Function to initiate the correct number of models to fit

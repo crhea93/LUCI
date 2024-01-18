@@ -1,8 +1,5 @@
 import h5py
 import glob
-import scipy.interpolate as spi
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas
 import pickle
 from astropy.wcs import WCS
@@ -14,10 +11,8 @@ from LUCI.LuciConvenience import reg_to_mask
 from LUCI.LuciFit import Fit
 from astropy.nddata import Cutout2D
 import astropy.stats as astrostats
-from astroquery.astrometry_net import AstrometryNet
 from astropy.time import Time
 import numpy.ma as ma
-#from scipy.interpolate import RBFInterpolator
 from astropy.coordinates import SkyCoord, EarthLocation
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function, bin_mask
@@ -27,24 +22,21 @@ from LUCI.LuciBackground import find_background_pixels
 import multiprocessing as mp
 import time
 from sklearn import decomposition
-from tensorflow.keras import layers, losses
-import tensorflow as tf
 from sklearn.model_selection import train_test_split
 import os
 import logging
-from keras.backend import clear_session
 from keras.models import Sequential
-from keras.layers import Dense, InputLayer, Flatten, Dropout
-from keras.layers.convolutional import Conv1D
-from keras.layers.convolutional import MaxPooling1D
-from keras.optimizers import Adam
+from keras.layers import Dense, InputLayer, Dropout
+from keras.optimizers.legacy import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import PolynomialFeatures, SplineTransformer
-from sklearn.pipeline import make_pipeline
 from keras.regularizers import l2
 from sklearn.ensemble import IsolationForest
 
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
+import warnings
+
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
@@ -802,6 +794,7 @@ class Luci():
             sky -= scale_spec * bkg
         else:
             print('Please set bkgType to either standard or pca')
+
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
         sky = sky[good_sky_inds]  # Apply clean to sky
         axis = self.spectrum_axis[good_sky_inds]  # Apply clean to axis
@@ -1907,7 +1900,7 @@ class Luci():
             fits.writeto(os.path.join(coeff_map_path, 'component%i_%s.fits'%(n_component+1, self.filter)), coefficient_array[:,:,n_component], self.header, overwrite=True)
         return BkgTransformedPCA, pca, interpolatedSourcePixels, idx_bkg, idx_src, coefficient_array
 
-    def update_astrometry(self, api_key):
+    '''def update_astrometry(self, api_key):
         """
         Use astronomy.net to update the astrometry in the header using the deep image.
         If astronomy.net successfully finds the corrected astrononmy, the self.header is updated. Otherwise,
@@ -1943,6 +1936,7 @@ class Luci():
                 except Exception as e:
                     print("Timedout")
                     submission_id = e.args[1]
+
                 else:
                     # got a result, so terminate
                     print("Result")
