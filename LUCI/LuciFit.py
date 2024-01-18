@@ -521,6 +521,7 @@ class Fit:
                     (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]})
         for i in range(len(self.sigma_rel)):
             sigma_dict_list.append({'type': 'ineq', 'fun': lambda x: x[3*i+2]})  # Sigma always should be bigger than 0
+            sigma_dict_list.append({'type': 'ineq', 'fun': lambda x: -x[3*i+2]+10})  # Sigma always should be smaller than 10
 
         return sigma_dict_list
 
@@ -637,7 +638,7 @@ class Fit:
             # CONSTRAINTS
             if 'NII6548' in self.lines and 'NII6583' in self.lines and self.nii_cons is True:  # Add additional constraint on NII doublet relative amplitudes
                 nii_constraints = self.NII_constraints()
-                cons = sigma_cons + vel_cons + vel_cons_multiple  # + nii_constraints
+                cons = sigma_cons + vel_cons + vel_cons_multiple  + nii_constraints
             else:
                 cons = sigma_cons + vel_cons + vel_cons_multiple
             cont_est = self.cont_estimate(sigma_level=1)  # Calculate continuum constant
@@ -657,7 +658,7 @@ class Fit:
                         initial[3 * mod + 2] = np.random.normal(sigma_est, sigma_est/10)  # Sample wavenumber from a normal distribution around the ML value
                 soln = minimize(nll, initial,
                             method='SLSQP',
-                            options={'disp': False, 'maxiter': 200},
+                            options={'disp': False, 'maxiter': 500},
                             tol=1e-8, jac="3-point", hess='3-point',
                             args=(), constraints=cons
                             )
