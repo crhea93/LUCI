@@ -230,8 +230,11 @@ def update_header(file):
             hdr_dict[header_col] = str(header_val)
     hdr_dict['CTYPE3'] = 'WAVE-SIP'
     hdr_dict['CUNIT3'] = 'm'
-    hdr_dict['A_ORDER'] = int(hdr_dict['A_ORDER'])
-    hdr_dict['AP_ORDER'] = int(hdr_dict['AP_ORDER'])
+    try:
+        hdr_dict['A_ORDER'] = int(hdr_dict['A_ORDER'])
+        hdr_dict['AP_ORDER'] = int(hdr_dict['AP_ORDER'])
+    except KeyError:
+        pass
     hdr_dict['NAXIS'] = int(hdr_dict['NAXIS'])
     # If NAXIS 1 does not exist we will add it
     if 'NAXIS1' not in hdr_dict.keys():
