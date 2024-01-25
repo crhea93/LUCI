@@ -344,7 +344,7 @@ class Luci():
                         bkg = pca_mean + np.sum([pca_coefficient_array[x_pix, y_pix][i] * pca_vectors[i] for i in range(len(pca_coefficient_array[x_pix, y_pix]))], axis=0)
                     scale_spec = np.nanmax(sky[min_spectral_scale:max_spectral_scale])
                     sky -= scale_spec * bkg
-                    
+
 
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
@@ -713,7 +713,7 @@ class Luci():
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
     def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
-                  pixel_x, pixel_y, binning=None, bkg=None, 
+                  pixel_x, pixel_y, binning=None, bkg=None,
                   bayes_bool=False, bayes_method='emcee',
                   uncertainty_bool=False,
                   nii_cons=True, spec_min=None, spec_max=None,
@@ -758,14 +758,14 @@ class Luci():
             sky = self.cube_final[pixel_x - binning:pixel_x + binning, pixel_y - binning:pixel_y + binning, :]
             sky = np.nansum(sky, axis=0)
             sky = np.nansum(sky, axis=0)
-            
+
         else:
             sky = self.cube_final[pixel_x, pixel_y, :]
         if bkgType=='standard':
             #sky -= bkg  # Subtract background spectrum
             #if bkg is not None:
             sky -= bkg * (binning) ** 2  # Subtract background times number of pixels
-        elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':  
+        elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':
             if self.hdr_dict['FILTER'] == 'SN3':
                 min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
                 max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
@@ -818,7 +818,7 @@ class Luci():
                             initial_values=[vel_init, broad_init],
                             obj_redshift=obj_redshift, n_stoch=n_stoch, resolution=self.resolution,
                             Luci_path=self.Luci_path,
-                            pca_coefficient_array=pca_coefficient_array, pca_vectors=pca_vectors, pca_mean=pca_mean) '''        
+                            pca_coefficient_array=pca_coefficient_array, pca_vectors=pca_vectors, pca_mean=pca_mean) '''
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
@@ -1037,8 +1037,8 @@ class Luci():
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
-    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1, 
-                        n_threads=2, lines=[None], binning=1, bkgType='standard',
+    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1,
+                        n_threads=2, lines=[None], binning=1, bkgType=None,
                           pca_coefficient_array=None, pca_vectors=None, pca_mean=None
                           ):
         """
@@ -1054,7 +1054,7 @@ class Luci():
             n_threads: Number of threads to use
             lines: Lines to focus on (default None: For SN2 you can choose OIII)
             binning: Bin to apply (default 1)
-            
+
         Return:
             snr_map: Signal-to-Noise ratio map
 
@@ -1108,7 +1108,7 @@ class Luci():
                 # Calculate SNR
                 if bkgType=='standard':
                     sky -= bkg * (binning) ** 2  # Subtract background times number of pixels
-                elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':  
+                elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':
                     if self.hdr_dict['FILTER'] == 'SN3':
                         min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
                         max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
@@ -1129,7 +1129,7 @@ class Luci():
                     scale_spec = np.nanmax(sky[min_spectral_scale:max_spectral_scale])
                     sky -= scale_spec * bkg
                 else:
-                    print('Please set bkgType to either standard or pca')
+                    pass  # bkgType == None
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_max))
                 flux_in_region = np.nansum(sky[min_:max_])
@@ -1713,7 +1713,7 @@ class Luci():
         else:
             background_image = fits.open(bkg_image)[0].data[x_min:x_max, y_min:y_max]
         # Find background pixels and save map in self.output_dir
-        idx_bkg, idx_src = find_background_pixels(background_image, self.output_dir, sigma_threshold=sigma_threshold, 
+        idx_bkg, idx_src = find_background_pixels(background_image, self.output_dir, sigma_threshold=sigma_threshold,
                                                   npixels=npixels, bkg_algo=bkg_algo, filter_=self.filter)  # Get IDs of background and source pixels
         max_spectral = None  # Initialize
         min_spectral = None  # Initialize
@@ -1893,4 +1893,3 @@ class Luci():
             plt.savefig(os.path.join(coeff_map_path, 'component%i_%s.png'%(n_component+1, self.filter)))
             fits.writeto(os.path.join(coeff_map_path, 'component%i_%s.fits'%(n_component+1, self.filter)), coefficient_array[:,:,n_component], self.header, overwrite=True)
         return BkgTransformedPCA, pca, interpolatedSourcePixels, idx_bkg, idx_src, coefficient_array
-
