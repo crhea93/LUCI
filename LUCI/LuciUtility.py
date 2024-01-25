@@ -344,10 +344,13 @@ def bin_cube_function(cube_final, header, binning, x_min, x_max, y_min, y_max):
     header_binned['CRPIX2'] = (header_binned['CRPIX2']-y_min-0.5) / binning + 0.5
     #header_binned['CDELT1'] = header_binned['CDELT1'] * binning
     #header_binned['CDELT2'] = header_binned['CDELT2'] * binning
-    header_binned['PC1_1'] = header_binned['PC1_1'] * binning
-    header_binned['PC1_2'] = header_binned['PC1_2'] * binning
-    header_binned['PC2_1'] = header_binned['PC2_1'] * binning
-    header_binned['PC2_2'] = header_binned['PC2_2'] * binning
+    try:
+        header_binned['PC1_1'] = header_binned['PC1_1'] * binning
+        header_binned['PC1_2'] = header_binned['PC1_2'] * binning
+        header_binned['PC2_1'] = header_binned['PC2_1'] * binning
+        header_binned['PC2_2'] = header_binned['PC2_2'] * binning
+    except KeyError:
+        pass  # Header doesn't contain PC info
     cube_binned = binned_cube  # / (binning ** 2)
     return header_binned, cube_binned
 

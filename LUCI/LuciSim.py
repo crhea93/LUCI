@@ -183,7 +183,7 @@ class Spectrum:
             min_ind = np.argmin(np.abs(axis - line_pos))
             line_pos = axis[min_ind]
             # Calculate sigma given broadening
-            sigma = (broad_*line_pos)/(3e5*corr)
+            sigma = (broad_*line_pos)/(3e5*corr)#/(2.*np.sqrt(2. * np.log(2.)))
             # Create spectrum
             if self.fit_function == 'gaussian':
                 spectrum += self.gaussian_model(axis, amp_, line_pos, sigma)

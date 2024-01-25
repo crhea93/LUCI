@@ -8,8 +8,8 @@ from LuciBase import Luci
 class Test:
     def __init__(self):
         # Set Parameters
-        Luci_path = '/home/carterrhea/Documents/LUCI/'
-        cube_dir = '/mnt/carterrhea/carterrhea/NGC6946/NGC6946_SN3'  # Path to data cube
+        Luci_path = '/home/carterrhea/LUCI/'
+        cube_dir = '/home/carterrhea/Documents/Luci_test'  # Path to data cube
         cube_name = 'NGC6946_SN3'  # don't add .hdf5 extension
         object_name = 'NGC6946'
         redshift = 0.000133
@@ -54,10 +54,10 @@ def test_fit_cube_sincgauss():
     fit_function = 'sincgauss'
     vel_rel = [1]
     sigma_rel = [1]
-    x_min = 100
-    x_max = 101
-    y_min = 100
-    y_max = 101
+    x_min = 1000
+    x_max = 1001
+    y_min = 1000
+    y_max = 1001
     cube.fit_cube(lines, fit_function, vel_rel, sigma_rel,
              x_min, x_max, y_min, y_max)
 

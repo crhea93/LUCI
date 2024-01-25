@@ -5,18 +5,20 @@ giving crazy values!
 import numpy as np
 from astropy.io import fits
 from scipy import interpolate
-
+import keras
 from LUCI.LuciFit import Fit
 from LUCI.LuciFunctions import Gaussian
 from LUCI.LuciFitParameters import calculate_vel, calculate_broad
-
-
+#import sys
+#sys.path.insert(0, self.Luci_path)  # Location of Luci
+from LUCI.LuciSim import Spectrum
 class Test:
     def __init__(self):
         self.line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                           'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
                           'OII3729': 372.882, 'OIII4959': 495.891, 'OIII5007': 500.684,
                           'Hbeta': 486.133}
+        self.Luci_path = '/home/carterrhea/LUCI/'
 
 
     def luci_fit_single(self):
@@ -28,9 +30,9 @@ class Test:
         self.amp = 1
         self.pos = 15234  # Corresponds to a velocity of 68.55 km/s
         self.sigma = 0.5  # Corresponds to a broadening of 9.85 km/s
-        self.model_type = 'gaussian'
+        self.model_type = 'sincgauss'
         self.lines = ['Halpha']
-        self.ML_model = None  # keras.models.load_model('ML/R5000-PREDICTOR-I')
+        #self.ML_model = keras.models.load_model('ML/R5000-PREDICTOR-I-SN3')
         self.axis = None
         self.spectrum = None
         self.wavenumbers_syn = None
@@ -38,8 +40,9 @@ class Test:
         self.read_ref_spec()
         self.transmission_interpolated = None
         self.read_in_transmission()
-        self.LuciFit_ = Fit(self.spectrum, self.axis, self.wavenumbers_syn, self.model_type, self.lines,
-                            [1] * len(self.lines), [1] * len(self.lines), self.ML_model, self.transmission_interpolated)
+        self.LuciFit_ = Fit(spectrum=self.spectrum, axis=self.axis, wavenumbers_syn=self.wavenumbers_syn, model_type=self.model_type, lines=self.lines,
+                            vel_rel=[1] * len(self.lines), sigma_rel=[1] * len(self.lines), trans_filter=self.transmission_interpolated, resolution=5000,
+                            Luci_path=self.Luci_path)
         self.LuciFit_.interpolate_spectrum()
 
     def read_in_transmission(self):
@@ -58,8 +61,18 @@ class Test:
         Returns:
 
         """
-        self.axis = np.linspace(14400, 15800, 10000)
-        self.spectrum = Gaussian().evaluate(self.axis, [self.amp, self.pos, self.sigma], 1)  # 1 because only fitting a single line
+        #self.axis = np.linspace(14400, 15800, 10000)
+        #self.spectrum = Gaussian().evaluate(self.axis, [self.amp, self.pos, self.sigma], 1)  # 1 because only fitting a single line
+        lines = ['Halpha']#, 'NII6583', 'NII6548', 'SII6716', 'SII6731']
+        fit_function = 'sincgauss'
+        ampls = [10]#, 1, 1, 0.5, 0.45]  # Just randomly choosing these
+        velocity = -300  # km/s
+        broadening = 50  # km/s
+        filter_ = 'SN3'
+        resolution = 5000
+        snr = 100
+        self.axis, self.spectrum = Spectrum(lines, fit_function, ampls, velocity, broadening, filter_, resolution,
+                                           snr).create_spectrum()
         return None
 
 
@@ -88,13 +101,15 @@ class Test:
         """
         self.LuciFit_.fit()
         # Check that amplitude of the fit is within 10% of the true value which is 1
-        assert self.LuciFit_.fit_sol[0]-1 < 0.1
-        # Check that velocity of the fit is within 10% of the true value which is 68.55 km/s
-        assert np.abs((calculate_vel(0, self.lines, self.LuciFit_.fit_sol, self.line_dict) - 68.55)/68.55) < 1.1
+        assert self.LuciFit_.fit_sol[0]-10 < 1
+        # Check that velocity of the fit is within 10% of the true value which is 10km/s#68.55 km/s
+        true_vel = 300
+        assert np.abs((calculate_vel(0, self.lines, self.LuciFit_.fit_sol, self.line_dict) - true_vel)/true_vel) < 1
         # Check that broadening of the fit is within 10% of the true value which is 9.85 km/s
         # Convert broadening by dividing by FWHM
-        sigma_real = 9.85/(2*np.sqrt(2*np.log(2)))
-        assert np.abs((calculate_broad(0, self.LuciFit_.fit_sol, self.LuciFit_.axis_step) - sigma_real)/sigma_real) < 1.1
+        true_broadening = 50
+        sigma_real = true_broadening#/(2*np.sqrt(2*np.log(2)))
+        assert np.abs((calculate_broad(0, self.LuciFit_.fit_sol, self.LuciFit_.axis_step) - sigma_real)/sigma_real) < 1
 
     def test_ML_single(self):
         """
@@ -102,11 +117,13 @@ class Test:
         return values that are within 10% of the true values.
         """
         self.LuciFit_.fit()
-        # Check that velocity of the fit is within 10% of the true value which is 68.55 km/s
+        # Check that velocity of the fit is within 10% of the true value which
         print(self.LuciFit_.vel_ml)
-        assert np.abs((self.LuciFit_.vel_ml - 68.55)/68.55) < 1.1
-        # Check that broadening of the fit is within 10% of the true value which is 9.85 km/s
-        assert np.abs((self.LuciFit_.broad_ml - 9.85)/9.85) < 1.1
+        true_vel = 300
+        assert np.abs((self.LuciFit_.vel_ml - true_vel)/true_vel) < 1.1
+        # Check that broadening of the fit is within 10% of the true value which is
+        true_broadening = 50
+        assert np.abs((self.LuciFit_.broad_ml - true_broadening)/true_broadening) < 1.1
 
 
 

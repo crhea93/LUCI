@@ -326,7 +326,7 @@ class Luci():
                 else:
                     bool_fit = False
             sky = np.copy(cube_slice[x_pix, :])  # cube_binned[x_pix, y_pix, :]
-            #print(bkgType)
+            print(bkgType)
             if bkgType is not None:  # If there is a background variable subtract the bkg spectrum
                 if bkgType == 'standard':
                     if binning:  # If binning, then we have to take into account how many pixels are in each bin
@@ -398,7 +398,7 @@ class Luci():
 
     # @jit(nopython=False, parallel=True, nogil=True)
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
-                 x_min, x_max, y_min, y_max, bkg=None, bkgType='standard', binning=None,
+                 x_min, x_max, y_min, y_max, bkg=None, bkgType=None, binning=None,
                  bayes_bool=False, bayes_method='emcee',
                  uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=[False],
                  spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1,

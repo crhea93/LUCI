@@ -104,6 +104,7 @@ class Fit:
         self.spec_min = spec_min
         self.spec_max = spec_max
         self.spectrum = spectrum
+        print(self.spectrum)
         self.spectrum_clean = spectrum / np.max(spectrum)  # Clean normalized spectrum
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum  Yes it is duplicated
         self.axis = axis * self.obj_redshift_corr  # Redshifted axis
@@ -140,6 +141,7 @@ class Fit:
         self.sigma_rel = sigma_rel
         self.vel_rel = vel_rel
         self.ML_bool = ML_bool
+        self.ML_model = None
         self.bayes_bool = bayes_bool
         self.bayes_method = bayes_method
         self.uncertainty_bool = uncertainty_bool
@@ -168,6 +170,7 @@ class Fit:
         self.get_ML_model()
 
 
+
     def get_ML_model(self):
         if self.ML_bool is True:
             if not self.mdn:
@@ -186,7 +189,8 @@ class Fit:
                     print(
                         'LUCI does not support machine learning parameter estimates using a MDN for the filter you entered. Please set ML_bool=False or mdn=False.')
         else:
-            self.ML_model = None
+            pass  # No ML model
+
     @jit(fastmath=True)
     def apply_transmission(self):
         """
@@ -735,6 +739,10 @@ class Fit:
             self.fit_vector = SincGauss().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[-1]
         else:
             print("Somehow all the checks missed the fact that you didn't enter a valid fit function...")
+        '''plt.plot(self.axis, self.fit_vector)
+        plt.plot(self.axis, self.spectrum)
+        plt.xlim(15100, 15300)
+        plt.show()'''
         return None
 
     def fit(self, sky_line=False):
