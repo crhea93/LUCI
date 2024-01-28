@@ -4,7 +4,10 @@ Suite of simulations tools in LUCI
 
 import numpy as np
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
-
+from os import path
+import ppxf.sps_util as lib
+from urllib import request
+ppxf_dir = path.dirname(path.realpath(lib.__file__))
 
 class Spectrum:
 
@@ -199,8 +202,7 @@ class Spectrum:
         spectrum += np.max(spectrum)*np.random.normal(0.0,1/self.snr,spectrum.shape)
         return axis, spectrum
 
-
-
+    
 
     def check_lines(self):
         """
@@ -229,3 +231,57 @@ class Spectrum:
             print(self.fit_function)
             raise Exception(
                 'Please submit a fitting function name in the available list: \n {}'.format(self.available_functions))
+
+def abs_template(resolution, filter, age=1, metal=-0.2):
+    """
+    Function to calculate the stellar component based off ppxf Miles models
+
+    Args:
+        resolution:
+        filter:
+        age:
+        metal:
+    Return:
+        wavenumber:
+        amplitude:
+
+    Written by Anan Lu
+    """
+    # Calculate velocity scale
+    velscale = 3 * 10 ** 5 / resolution / 2
+    # Make age list and metal list for Miles
+    agelist = np.logspace(np.log10(0.0613), np.log10(15.8489), 25)
+    metallist = [-0.4, -0.71, -1.31, -1.71, 0, 0.22]
+    metallist = np.array(metallist)
+    # Get the age closest to the age provided
+    age_idx = np.abs(agelist - age).argmin()
+    metal_idx = np.abs(metallist - metal).argmin()
+    # Load in miles star templates
+    #ppxf_dir = path.dirname(path.realpath(lib.__file__))
+    #pathname = ppxf_dir + '/miles_models/Eun1.30*.fits'
+    ppxf_dir = path.dirname(path.realpath(lib.__file__))
+    sps_name = 'emiles'
+    basename = f"spectra_{sps_name}_9.0.npz"
+    filename = path.join(ppxf_dir, 'sps_models', basename)
+    if not path.isfile(filename):
+        url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
+        request.urlretrieve(url, filename)
+    miles = lib.sps_lib(filename, velscale, norm_range=[5070, 5950])
+    stars_templates, lam_temp = miles.templates, miles.lam_temp
+    # Initialize output variables
+    wavenumber = 0
+    amplitude = [0]
+    # Calculate for SN3
+    if filter == 'SN3':
+        x_sn3 = np.where((lam_temp >= 6430) & (lam_temp <= 6790))
+        lambda_sn3 = lam_temp[x_sn3]
+        amplitude = stars_templates[x_sn3, age_idx, metal_idx]
+        wavenumber = 10 ** 8 / lambda_sn3
+    # Calculate for SN2
+    if filter == 'SN2':
+        x_sn2 = np.where((lam_temp >= 4770) & (lam_temp <= 5100))
+        lambda_sn2 = lam_temp[x_sn2]
+        amplitude = stars_templates[x_sn2, age_idx, metal_idx]
+        wavenumber = 10 ** 8 / lambda_sn2
+
+    return wavenumber, amplitude[0]
