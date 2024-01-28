@@ -1137,7 +1137,10 @@ class Luci():
                 clipped_spec = astrostats.sigma_clip(sky, sigma=1, masked=False,
                                                      copy=False, maxiters=10)
                 # Now take the mean value to serve as the continuum value
-                cont_val = np.nanmin(clipped_spec)
+                try:
+                    cont_val = np.nanmin(clipped_spec)
+                except ValueError:  # If the clipped spec doesn't contain any elements
+                    cont_val = np.nanmin(sky)
                 flux_in_region -= cont_val * (max_ - min_)  # Need to scale by the number of steps along wavelength axis
                 min_noise = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_min))
                 max_noise = np.argmin(np.abs(np.array(self.spectrum_axis) - noise_max))
