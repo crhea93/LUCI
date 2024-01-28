@@ -1068,7 +1068,7 @@ class Luci():
             y_min = 0
             cube_to_use = self.cube_binned
         #SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        SNR = np.zeros((2048, 2064, dtype=np.float32).T
+        SNR = np.zeros((2048, 2064), dtype=np.float32).T
         flux_min = 0
         flux_max = 0
         noise_min = 0

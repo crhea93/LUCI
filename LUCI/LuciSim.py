@@ -273,7 +273,8 @@ def abs_template(resolution, filter, age=1, metal=-0.2):
     amplitude = [0]
     # Calculate for SN3
     if filter == 'SN3':
-        x_sn3 = np.where((lam_temp >= 6430) & (lam_temp <= 6790))
+        #x_sn3 = np.where((lam_temp >= 6430) & (lam_temp <= 6790))
+        x_sn3 = np.where((lam_temp >= 6400) & (lam_temp <= 6871))
         lambda_sn3 = lam_temp[x_sn3]
         amplitude = stars_templates[x_sn3, age_idx, metal_idx]
         wavenumber = 10 ** 8 / lambda_sn3
