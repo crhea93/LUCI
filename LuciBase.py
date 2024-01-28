@@ -1102,7 +1102,7 @@ class Luci():
 
         def SNR_calc(i):
             y_pix = y_min + i
-            snr_local = np.zeros(x_max-x_min)
+            snr_local = np.zeros(2048)  # np.zeros(x_max-x_min)
             for j in range(len(snr_local)):
                 x_pix = x_min + j
                 sky = cube_to_use[x_pix, y_pix, :]
