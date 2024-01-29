@@ -1067,8 +1067,7 @@ class Luci():
             x_min = 0
             y_min = 0
             cube_to_use = self.cube_binned
-        #SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
-        SNR = np.zeros((2048, 2064), dtype=np.float32).T
+        SNR = np.zeros((x_max-x_min, y_max-y_min), dtype=np.float32).T
         flux_min = 0
         flux_max = 0
         noise_min = 0
@@ -1102,7 +1101,7 @@ class Luci():
 
         def SNR_calc(i):
             y_pix = y_min + i
-            snr_local = np.zeros(2048)  # np.zeros(x_max-x_min)
+            snr_local = np.zeros(x_max-x_min)
             for j in range(len(snr_local)):
                 x_pix = x_min + j
                 sky = cube_to_use[x_pix, y_pix, :]
@@ -1168,7 +1167,7 @@ class Luci():
         # Save
         for snr_ind in res:
             snr_vals, step_i = snr_ind
-            SNR[y_min + step_i] = snr_vals
+            SNR[step_i] = snr_vals
         if os.path.exists(self.output_dir+'/SNR'):
             pass
         else:
