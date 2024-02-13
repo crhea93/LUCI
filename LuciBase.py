@@ -25,6 +25,11 @@ from sklearn import decomposition
 from sklearn.model_selection import train_test_split
 import os
 import logging
+from keras.models import Sequential
+from keras.layers import Dense, InputLayer, Dropout
+from tensorflow.keras.optimizers.legacy import Adam
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.regularizers import l2
 from sklearn.ensemble import IsolationForest
 from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
 import warnings
