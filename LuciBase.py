@@ -312,16 +312,6 @@ class Luci():
         continuum_local = []
         continuum_errs_local = []
         bool_fit = True  # Boolean to fit
-        if hdr_dict['FILTER'] == 'SN3':
-            min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in spectrum_axis]))
-            max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in spectrum_axis]))
-        elif hdr_dict['FILTER'] == 'SN2':
-            min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 505 for wavelength in spectrum_axis]))
-            max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 480 for wavelength in spectrum_axis]))
-        else:
-            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3 and SN2.')
-            print('Terminating Program')
-            quit()
         # Step through x coordinates
         for j in range(x_max - x_min):
             x_pix = x_min + j  # Set current x pixel
@@ -331,7 +321,6 @@ class Luci():
                 else:
                     bool_fit = False
             sky = np.copy(cube_slice[x_pix, :])  # cube_binned[x_pix, y_pix, :]
-            print(bkgType)
             if bkgType is not None:  # If there is a background variable subtract the bkg spectrum
                 if bkgType == 'standard':
                     if binning:  # If binning, then we have to take into account how many pixels are in each bin
@@ -339,6 +328,17 @@ class Luci():
                     else:  # No binning so just subtract the background directly
                         sky -= bkg  # Subtract background spectrum
                 elif bkgType == 'pca':  # We will be using the pca version
+                    if hdr_dict['FILTER'] == 'SN3':
+                        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in spectrum_axis]))
+                        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in spectrum_axis]))
+                    elif hdr_dict['FILTER'] == 'SN2':
+                        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 505 for wavelength in spectrum_axis]))
+                        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 480 for wavelength in spectrum_axis]))
+                    else:
+                        print(
+                            'We have yet to implement this algorithm for this filter. So far we have implemented it for SN3 and SN2.')
+                        print('Terminating Program')
+                        quit()
                     if binning:  # If we are binning we have to group the coefficients
                         binnedCoefficientArray = pca_coefficient_array[x_min + int(j * binning):x_min + int((j + 1) * binning),
                                       y_min + int(i * binning):y_min + int((i + 1) * binning), :]
