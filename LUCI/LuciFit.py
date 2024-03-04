@@ -93,7 +93,9 @@ class Fit:
                           'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4': 807.881, 'NII6583C4': 810.417,
                           'NII6548C4': 804.7,#806.062,
                           'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
-                          'OII3729C1': 459.017742, 'OII3726C1': 458.674293, 'OI6364': 636.3776}
+                          'OII3729C1': 459.017742, 'OII3726C1': 458.674293, 'OI6364': 636.3776,
+                          'FeXIV5303': 530.286, 'NI5200': 520.026, 'FeVII5158': 515.89, 'HeII5411': 541.152
+                          }
         self.available_functions = ['gaussian', 'sinc', 'sincgauss', 'gauss']
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
@@ -104,7 +106,6 @@ class Fit:
         self.spec_min = spec_min
         self.spec_max = spec_max
         self.spectrum = spectrum
-        print(self.spectrum)
         self.spectrum_clean = spectrum / np.max(spectrum)  # Clean normalized spectrum
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum  Yes it is duplicated
         self.axis = axis * self.obj_redshift_corr  # Redshifted axis
@@ -236,11 +237,16 @@ class Fit:
             elif self.filter == 'SN1':
                 bound_lower = 26000
                 bound_upper = 28000
-            elif self.filter == 'C3' and 'OII3726' in self.lines:
-                ## This is true for objects with a redshift around 0.465
-                # We pretend we are looking at SN1
-                bound_lower = 26000
-                bound_upper = 29000
+            elif self.filter == 'C3':
+                if 'OII3726' in self.lines:
+                    ## This is true for objects with a redshift around 0.465
+                    # We pretend we are looking at SN1
+                    bound_lower = 26000
+                    bound_upper = 29000
+                else:
+                    ## Normal C3
+                    bound_lower = 18000  # Needs to be in cm-1
+                    bound_upper = 19500  # Needs to be in cm-1
             elif self.filter == 'C4':
                 ## This is true for objects at redshift ~0.25
                 bound_lower = 12150* self.obj_redshift_corr
@@ -289,11 +295,16 @@ class Fit:
         elif self.filter == 'SN1':
             bound_lower = 26000
             bound_upper = 26200
-        elif self.filter == 'C3' and 'OII3726' in self.lines:
-            ## This is true for objects at redshift ~0.465
-            # In this case we pretend we are in SN1
-            bound_lower = 26000
-            bound_upper = 26200
+        elif self.filter == 'C3':
+            if 'OII3726' in self.lines:
+                ## This is true for objects at redshift ~0.465
+                # In this case we pretend we are in SN1
+                bound_lower = 26000
+                bound_upper = 26200
+            else:
+                ## Normal C3
+                bound_lower = 20000
+                buond_upper = 20250
         elif self.filter == 'C4' and 'Halpha' in self.lines:
             ## This is true for objects at redshift ~0.25
             # In this case we pretend we are in SN3

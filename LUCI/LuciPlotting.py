@@ -35,8 +35,10 @@ def plot_spectrum(axis, spectrum, ax=None, units='cm-1', output_name=None, fig_s
     check_units(units)  # Check that user supplied appropriate wavelength option
     if units == 'nm':
         axis = [1e7 / axis_val for axis_val in axis]
-    elif units == 'angstrom' or 'Angstrom':
+    elif units == 'angstrom' or units == 'Angstrom':
         axis = [1e8 / axis_val for axis_val in axis]
+    elif units == 'cm-1':
+        axis = axis
     else:
         pass
     ax.plot(axis, spectrum, **kwargs)
@@ -66,7 +68,7 @@ def plot_fit(axis, spectrum, fit, ax=None, units='cm-1', output_name=None, fig_s
     check_units(units)  # Check that user supplied appropriate wavelength option
     if units == 'nm':
         axis = [1e7 / axis_val for axis_val in axis]
-    elif units == 'angstrom' or 'Angstrom':
+    elif units == 'angstrom' or units == 'Angstrom':
         axis = [1e8 / axis_val for axis_val in axis]
     else:
         pass

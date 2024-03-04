@@ -972,13 +972,6 @@ class Luci():
         """
         # Create mask
         mask = None  # Initialize
-        #if '.reg' in region:
-        #    mask = reg_to_mask(region, self.header)
-        #elif '.npy' in region:
-        #    mask = np.load(region)
-        #else:
-        #    print("At the moment, we only support '.reg' and '.npy' files for masks.")
-        #    print("Terminating Program!")
         if '.reg' in region:  # If passed a .reg file
             header = self.header
             header.set('NAXIS1', 2064)  # Need this for astropy
