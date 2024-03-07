@@ -245,7 +245,7 @@ class Fit:
                     bound_upper = 29000
                 else:
                     ## Normal C3
-                    bound_lower = 18000  # Needs to be in cm-1
+                    bound_lower = 18100  # Needs to be in cm-1
                     bound_upper = 19500  # Needs to be in cm-1
             elif self.filter == 'C4':
                 ## This is true for objects at redshift ~0.25
@@ -473,14 +473,14 @@ class Fit:
         # clipped_spec = astrostats.sigma_clip(self.spectrum_restricted[min_:max_], sigma=sigma_level,
         min_ = np.argmin(np.abs(np.array(self.axis) - min_))
         max_ = np.argmin(np.abs(np.array(self.axis) - max_))
-        #clipped_spec = astrostats.sigma_clip(self.spectrum_normalized[min_:max_], sigma=sigma_level,
-        #                                     masked=False, copy=False,
-        #                                     maxiters=1, stdfunc=astrostats.mad_std)
-        #if len(clipped_spec) < 1:
-        #    clipped_spec = self.spectrum_normalized
+        clipped_spec = astrostats.sigma_clip(self.spectrum_normalized[min_:max_], sigma=sigma_level,
+                                             masked=False, copy=False,
+                                             maxiters=1, stdfunc=astrostats.mad_std)
+        if len(clipped_spec) < 1:
+            clipped_spec = self.spectrum_normalized[min_:max_]
         # Now take the minimum value to serve as the continuum value
-        #cont_val = np.nanmean(clipped_spec)
-        cont_val = np.nanmedian(self.spectrum_normalized[min_:max_])
+        cont_val = np.nanmean(clipped_spec)
+        #cont_val = np.nanmedian(self.spectrum_normalized[min_:max_])
         return cont_val
 
     @jit(fastmath=True)
