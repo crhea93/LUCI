@@ -1610,8 +1610,34 @@ class Luci():
         serves as a rough estimate of the width of the spectral lines to make sure the slices cover a wide enough range on each side
         of the emission lines. The slices are saved in a new folder for each input emission line.
 
+        We currently have the following lines available:
+
+        'Halpha': 656.280,
+        'NII6583': 658.341,
+        'NII6548': 654.803,
+        'SII6716': 671.647,
+        'SII6731': 673.085,
+        'OII3726': 372.603,
+        'OII3729': 372.882,
+        'OIII4959': 495.891,
+        'OIII5007': 500.684,
+        'Hbeta': 486.133,
+        'OH': 649.873,
+        'HalphaC4': 807.88068,
+        'NII6583C4': 810.417771,
+        'NII6548C4': 806.062493,
+        'OIII5007C2': 616.342,
+        'OIII4959C2': 610.441821,
+        'HbetaC2': 598.429723,
+        'OII3729C1': 459.017742,
+        'OII3726C1': 458.674293,
+        'FeXIV5303': 530.286,
+        'NI5200': 520.026,
+        'FeVII5158': 515.89,
+        'HeII5411': 541.152
+
         Args:
-            lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
+            lines: Lines to extract (e.x. ['Halpha', 'NII6583'])
         """
         line_dict = {'Halpha': 656.280, 'NII6583': 658.341, 'NII6548': 654.803,
                      'SII6716': 671.647, 'SII6731': 673.085, 'OII3726': 372.603,
@@ -1619,10 +1645,14 @@ class Luci():
                      'Hbeta': 486.133, 'OH': 649.873, 'HalphaC4': 807.88068, 'NII6583C4': 810.417771,
                      'NII6548C4': 806.062493,
                      'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
-                     'OII3729C1': 459.017742, 'OII3726C1': 458.674293, }
+                     'OII3729C1': 459.017742, 'OII3726C1': 458.674293,
+                     'FeXIV5303': 530.286, 'NI5200': 520.026, 'FeVII5158': 515.89, 'HeII5411': 541.152
+                     }
 
         filter_line = {'SN1': ['OII3726', 'OII3729'], 'SN2': ['Hbeta', 'OIII4959', 'OIII5007'],
-                       'SN3': ['Halpha', 'NII6583', 'NII6548', 'SII6716', 'SII6731']}
+                       'SN3': ['Halpha', 'NII6583', 'NII6548', 'SII6716', 'SII6731'],
+                       'C3': ['FeXIV5303', 'NI5200', 'FeVII5158', 'HeII5411']
+                       }
 
         spectral_axis = 1e7 / self.spectrum_axis  # Convert wavenumber in cm-1 to nm
 

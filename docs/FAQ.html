@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FAQ and Errors &mdash; LUCI v.1.0.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -116,14 +120,14 @@
            <div itemprop="articleBody">
              
   <section id="faq-and-errors">
-<span id="luci"></span><h1>FAQ and Errors<a class="headerlink" href="#faq-and-errors" title="Permalink to this heading"></a></h1>
+<span id="luci"></span><h1>FAQ and Errors<a class="headerlink" href="#faq-and-errors" title="Link to this heading"></a></h1>
 <p>This section contains a discussion on frequently asked questions and errors that sometimes pop up.</p>
 <div class="toctree-wrapper compound">
 </div>
 <section id="faq">
-<h2>FAQ:<a class="headerlink" href="#faq" title="Permalink to this heading"></a></h2>
+<h2>FAQ:<a class="headerlink" href="#faq" title="Link to this heading"></a></h2>
 <section id="how-is-the-interferometric-angle-taken-into-account">
-<h3>How is the interferometric angle taken into account?<a class="headerlink" href="#how-is-the-interferometric-angle-taken-into-account" title="Permalink to this heading"></a></h3>
+<h3>How is the interferometric angle taken into account?<a class="headerlink" href="#how-is-the-interferometric-angle-taken-into-account" title="Link to this heading"></a></h3>
 <p>We calculate the interferometric angle to calculate a correction factor <cite>(1/cos(theta))</cite> which is applied to the broadening.
 We do not apply this correction factor to the spectral axis of each spaxel since this
 is already done in ORB – therefore, the data product downloaded from the CADC already has this
@@ -131,7 +135,7 @@ correction applied! Normally, we would need to calculate the wavelength axis of 
 and then interpolate it (carefully!!!) onto a standard axis.</p>
 </section>
 <section id="what-is-the-broadening-parameter-in-the-sinc-function">
-<h3>What is the broadening parameter in the sinc function?<a class="headerlink" href="#what-is-the-broadening-parameter-in-the-sinc-function" title="Permalink to this heading"></a></h3>
+<h3>What is the broadening parameter in the sinc function?<a class="headerlink" href="#what-is-the-broadening-parameter-in-the-sinc-function" title="Link to this heading"></a></h3>
 <p>The broadening parameter for the sinc function is <strong>SET</strong> to <img class="math" src="_images/math/493f5592f8d547a2c1ebb6275f8990d0961ddd3b.png" alt="1/(2*MPD)"/>.
 We can adopt the following definition: <img class="math" src="_images/math/a23cbb309bf3f6c43d9219bbe6d83177264f18ce.png" alt="MPD = \cos{\theta}\delta_x N"/> where <img class="math" src="_images/math/06a6ab4f18196f743558d92f701b0dac2211eb37.png" alt="\cos{\theta}"/>
 is the cosine angle defined as <img class="math" src="_images/math/013521e12f828ad7c4f7b905cd3f3f7268d2ad4c.png" alt="\cos{\theta} = \frac{\lambda_{ref}}{\lambda_{ij}}"/>.
@@ -140,15 +144,15 @@ the measured calibration wavelength of a given pixel (thus <img class="math" src
 <p>If you want to obtain a broadening parameter we strongly suggest using the <strong>sincgauss</strong> function!</p>
 </section>
 <section id="are-other-filters-available">
-<h3>Are other filters available?<a class="headerlink" href="#are-other-filters-available" title="Permalink to this heading"></a></h3>
+<h3>Are other filters available?<a class="headerlink" href="#are-other-filters-available" title="Link to this heading"></a></h3>
 <p>YES! However, for the C1, C2, and C4 filters, we can only handle the case of redshift ~ 0.25 objects.
 Please note this is the intended science case for these filters.</p>
 </section>
 </section>
 <section id="common-errors">
-<h2>Common Errors<a class="headerlink" href="#common-errors" title="Permalink to this heading"></a></h2>
+<h2>Common Errors<a class="headerlink" href="#common-errors" title="Link to this heading"></a></h2>
 <section id="valueerror-numpy-ndarray-size-changed-may-indicate-binary-incompatibility-expected-88-from-c-header-got-80-from-pyobject">
-<h3>ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject<a class="headerlink" href="#valueerror-numpy-ndarray-size-changed-may-indicate-binary-incompatibility-expected-88-from-c-header-got-80-from-pyobject" title="Permalink to this heading"></a></h3>
+<h3>ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject<a class="headerlink" href="#valueerror-numpy-ndarray-size-changed-may-indicate-binary-incompatibility-expected-88-from-c-header-got-80-from-pyobject" title="Link to this heading"></a></h3>
 <p>This error occasionally comes up when you have newly installed the luci conda environment and try to run
 <cite>extract_spectrum_region</cite>. This happens because your numpy version is disscordant with the
 environment. This can be simply remedied by reinstalling numpy.</p>

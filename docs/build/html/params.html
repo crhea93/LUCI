@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Parameter Calculations &mdash; LUCI v.1.0.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -116,18 +120,18 @@
            <div itemprop="articleBody">
              
   <section id="parameter-calculations">
-<span id="params"></span><h1>Parameter Calculations<a class="headerlink" href="#parameter-calculations" title="Permalink to this heading"></a></h1>
+<span id="params"></span><h1>Parameter Calculations<a class="headerlink" href="#parameter-calculations" title="Link to this heading"></a></h1>
 <p>In this file we have the functions used to calculate the velocity, the velocity dispersion (broadening),
 and the flux as well as their uncertainties.</p>
 <div class="toctree-wrapper compound">
 </div>
 <section id="module-LUCI.LuciFitParameters">
-<span id="fit-parameter-calculations"></span><h2>Fit Parameter Calculations<a class="headerlink" href="#module-LUCI.LuciFitParameters" title="Permalink to this heading"></a></h2>
+<span id="fit-parameter-calculations"></span><h2>Fit Parameter Calculations<a class="headerlink" href="#module-LUCI.LuciFitParameters" title="Link to this heading"></a></h2>
 <p>In this file we have the functions used to calculate the velocity, the velocity dispersion (broadening),
 and the flux as well as their uncertainties.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_broad">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad" title="Link to this definition"></a></dt>
 <dd><p>Calculate velocity dispersion</p>
 <div class="math">
 <p><span class="math">\sigma = (SPEED_OF_LIGHT*fit\_\sigma )/(fit\_vel)</span></p>
@@ -150,7 +154,7 @@ and <img class="math" src="_images/math/e657fc7b71b41feccdd884ad0a91d8ac45aa1915
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_broad_err">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad_err" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_broad_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_broad_err" title="Link to this definition"></a></dt>
 <dd><p>Calculate velocity dispersion error
 We simply take the difference between the velocity dispersions with and without the uncertainty.</p>
 <dl class="field-list simple">
@@ -170,7 +174,7 @@ We simply take the difference between the velocity dispersions with and without 
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_flux">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_flux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_flux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux" title="Link to this definition"></a></dt>
 <dd><p>Calculate flux value given fit of line
 See HowLuciWorks for calculations</p>
 <dl class="field-list simple">
@@ -190,7 +194,7 @@ See HowLuciWorks for calculations</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_flux_err">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_flux_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux_err" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_flux_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sinc_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_flux_err" title="Link to this definition"></a></dt>
 <dd><p>Calculate flux error</p>
 <p>We simply take the difference between the fluxes with and without the uncertainty.</p>
 <dl class="field-list simple">
@@ -211,7 +215,7 @@ See HowLuciWorks for calculations</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_vel">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel" title="Link to this definition"></a></dt>
 <dd><p>Calculate velocity.</p>
 <div class="math">
 <p><img src="_images/math/2c29c6f6fb849c4dcca734010a377e5e09912a86.png" alt="v = SPEED_OF_LIGHT*(l\_calc - l\_rest)/l\_calc"/></p>
@@ -234,7 +238,7 @@ See HowLuciWorks for calculations</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="LUCI.LuciFitParameters.calculate_vel_err">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_vel_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel_err" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">LUCI.LuciFitParameters.</span></span><span class="sig-name descname"><span class="pre">calculate_vel_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFitParameters.calculate_vel_err" title="Link to this definition"></a></dt>
 <dd><p>Calculate velocity error</p>
 <p>We simply take the difference between the velocities with and without the uncertainty.</p>
 <dl class="field-list simple">

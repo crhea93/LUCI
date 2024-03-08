@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wavelength Correction &mdash; LUCI v.1.0.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -109,21 +113,21 @@
            <div itemprop="articleBody">
              
   <section id="wavelength-correction">
-<span id="wavelength-corrections"></span><h1>Wavelength Correction<a class="headerlink" href="#wavelength-correction" title="Permalink to this heading"></a></h1>
+<span id="wavelength-corrections"></span><h1>Wavelength Correction<a class="headerlink" href="#wavelength-correction" title="Link to this heading"></a></h1>
 <p>In order to ensure that our velocity measurements (and thus broadening measurements)
 are as accurate as possible, we need to add two velocity corrections:
 1 - Heliocentric correction
 2 - Skyline correction</p>
 <p>As of now, only the heliocentric corrections has been applied!</p>
 <section id="heliocentric-correction">
-<h2>Heliocentric Correction<a class="headerlink" href="#heliocentric-correction" title="Permalink to this heading"></a></h2>
+<h2>Heliocentric Correction<a class="headerlink" href="#heliocentric-correction" title="Link to this heading"></a></h2>
 <p>This is the correction due to our movement within our own galaxy. We use the <cite>astropy</cite>
 function <cite>radial_velocity_correction</cite> by passing it the location of the CFHT,
 the RA/DEC of the target, and the time of the observation. This function simply outputs
 the velocity in units of km/s.</p>
 </section>
 <section id="skyline-correction">
-<h2>Skyline Correction<a class="headerlink" href="#skyline-correction" title="Permalink to this heading"></a></h2>
+<h2>Skyline Correction<a class="headerlink" href="#skyline-correction" title="Link to this heading"></a></h2>
 <p>Unfortunately, the wavelength must be calibrated due to slight issues with the SITELLE
 instrument itself. Thankfully, this is relatively easy to do. In order to calculate
 the wavelength calibration in each pixel (or spaxel if you prefer), we fit the skylines

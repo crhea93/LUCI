@@ -67,7 +67,16 @@ Lines Available
 +-----------+-----------------+
 |Hbeta      | 486.133         |
 +-----------+-----------------+
-
+|FeXIV5303  | 530.286         |
++-----------+-----------------+
+|NI5200     | 520.026         |
++-----------+-----------------+
+|FeVII5158  | 515.89          |
++-----------+-----------------+
+|HeII5411   | 541.152         |
++-----------+-----------------+
+|OI6364     | 636.378         |
++-----------+-----------------+
 
 The available fitting functions are as follows:
 'gaussian', 'sinc', 'sincgauss'
@@ -127,6 +136,7 @@ Examples
        example_visualize
        example_wvt
        example_freeze
+       example_slices
 
 
 

@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Example of fitting regions in NGC6888 &mdash; LUCI v.1.0.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -109,7 +113,7 @@
            <div itemprop="articleBody">
              
   <section id="example-of-fitting-regions-in-ngc6888">
-<span id="example-fit-ngc6888"></span><h1>Example of fitting regions in NGC6888<a class="headerlink" href="#example-of-fitting-regions-in-ngc6888" title="Permalink to this heading"></a></h1>
+<span id="example-fit-ngc6888"></span><h1>Example of fitting regions in NGC6888<a class="headerlink" href="#example-of-fitting-regions-in-ngc6888" title="Link to this heading"></a></h1>
 <p>In this notebook, we go through fitting two regions of NGC 6888. This notebook exists for the sole purpose of demonstrating LUCI’s prowess at fitting regions :)</p>
 <p>This notebook thus assumes that you have already gone through the tutorials.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
@@ -136,13 +140,13 @@
 </pre></div>
 </div>
 <section id="picking-the-regions">
-<h2>Picking the regions<a class="headerlink" href="#picking-the-regions" title="Permalink to this heading"></a></h2>
+<h2>Picking the regions<a class="headerlink" href="#picking-the-regions" title="Link to this heading"></a></h2>
 <p>Now let’s take a quick look at the deep image to decide the regions we will fit.</p>
 <img alt="NGC 6888 Deep image" src="_images/NGC6888-deep.png" />
 <p>I’ve highlighted the background red in green and the two fit regions in magenta. Region 1 is near the right edge of the image and reigon 2 is at the center3.</p>
 </section>
 <section id="let-s-take-a-look-at-the-background">
-<h2>Let’s take a look at the background<a class="headerlink" href="#let-s-take-a-look-at-the-background" title="Permalink to this heading"></a></h2>
+<h2>Let’s take a look at the background<a class="headerlink" href="#let-s-take-a-look-at-the-background" title="Link to this heading"></a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum_region</span><span class="p">(</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/bkg.reg&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># We use mean=True to take the mean of the emission in the region instead of the sum</span>
 <span class="n">lplt</span><span class="o">.</span><span class="n">plot_spectrum</span><span class="p">(</span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span><span class="p">)</span>
 </pre></div>

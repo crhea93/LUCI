@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WVT Example &mdash; LUCI v.1.0.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -66,6 +70,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">WVT Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -105,7 +110,7 @@
            <div itemprop="articleBody">
              
   <section id="wvt-example">
-<span id="example-wvt"></span><h1>WVT Example<a class="headerlink" href="#wvt-example" title="Permalink to this heading"></a></h1>
+<span id="example-wvt"></span><h1>WVT Example<a class="headerlink" href="#wvt-example" title="Link to this heading"></a></h1>
 <p>One the new feature added to the fitting procedure of Luci is a weighted Voronoï tessellation. We will describe here an example to showcase this method for your own data analysis.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
 <span class="kn">import</span> <span class="nn">sys</span>
@@ -162,35 +167,35 @@
 <p>We then pass the background we want to subtract, as well as the Boolean parameters to determine whether or not to run Bayesian and uncertainty analysis.</p>
 <p>The n_threads argument determines the number of threads used for the paralelization of the function, which accelerates the whole process.</p>
 <p>The console will output something like this:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>#----------------WVT Algorithm----------------#
-#----------------Creating SNR Map--------------#
-100%|███████████████████████████████████████████| 50/50 [00:01&lt;00:00, 27.58it/s]
-#----------------Algorithm Part 1----------------#
-/home/carterrhea/Documents/LUCI/Examples
-We have 2500 Pixels! :)
-Running Nearest Neighbor Algorithm
-Finished Nearest Neighbor Algorithm
-Starting Bin Accretion Algorithm
-We have 2500 bins.
-We have 0 unassigned pixels.
-Reassigning unsuccessful bins
-Completed Bin Accretion Algorithm
-There are a total of 85 bins!
-#----------------Algorithm Part 2----------------#
-Beginning WVT
-We are on step 1
-We are on step 2
-We are on step 3
-We are on step 4
-We are on step 5
-Stopped WVT algorithm after 5 steps.
-There are a total of 85 bins!
-#----------------Algorithm Complete--------------#
-#----------------Bin Mapping--------------#
-#----------------Numpy Bin Mapping--------------#
-100%|███████████████████████████████████████████| 84/84 [00:01&lt;00:00, 46.50it/s]
-#----------------WVT Fitting--------------#
-100%|███████████████████████████████████████████| 84/84 [01:01&lt;00:00,  1.36it/s]
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#----------------WVT Algorithm----------------#</span>
+<span class="c1">#----------------Creating SNR Map--------------#</span>
+<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████████████</span><span class="o">|</span> <span class="mi">50</span><span class="o">/</span><span class="mi">50</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span> <span class="mf">27.58</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+<span class="c1">#----------------Algorithm Part 1----------------#</span>
+<span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">carterrhea</span><span class="o">/</span><span class="n">Documents</span><span class="o">/</span><span class="n">LUCI</span><span class="o">/</span><span class="n">Examples</span>
+<span class="n">We</span> <span class="n">have</span> <span class="mi">2500</span> <span class="n">Pixels</span><span class="err">!</span> <span class="p">:)</span>
+<span class="n">Running</span> <span class="n">Nearest</span> <span class="n">Neighbor</span> <span class="n">Algorithm</span>
+<span class="n">Finished</span> <span class="n">Nearest</span> <span class="n">Neighbor</span> <span class="n">Algorithm</span>
+<span class="n">Starting</span> <span class="n">Bin</span> <span class="n">Accretion</span> <span class="n">Algorithm</span>
+<span class="n">We</span> <span class="n">have</span> <span class="mi">2500</span> <span class="n">bins</span><span class="o">.</span>
+<span class="n">We</span> <span class="n">have</span> <span class="mi">0</span> <span class="n">unassigned</span> <span class="n">pixels</span><span class="o">.</span>
+<span class="n">Reassigning</span> <span class="n">unsuccessful</span> <span class="n">bins</span>
+<span class="n">Completed</span> <span class="n">Bin</span> <span class="n">Accretion</span> <span class="n">Algorithm</span>
+<span class="n">There</span> <span class="n">are</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">85</span> <span class="n">bins</span><span class="err">!</span>
+<span class="c1">#----------------Algorithm Part 2----------------#</span>
+<span class="n">Beginning</span> <span class="n">WVT</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">1</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">2</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">3</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">4</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">5</span>
+<span class="n">Stopped</span> <span class="n">WVT</span> <span class="n">algorithm</span> <span class="n">after</span> <span class="mi">5</span> <span class="n">steps</span><span class="o">.</span>
+<span class="n">There</span> <span class="n">are</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">85</span> <span class="n">bins</span><span class="err">!</span>
+<span class="c1">#----------------Algorithm Complete--------------#</span>
+<span class="c1">#----------------Bin Mapping--------------#</span>
+<span class="c1">#----------------Numpy Bin Mapping--------------#</span>
+<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████████████</span><span class="o">|</span> <span class="mi">84</span><span class="o">/</span><span class="mi">84</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span> <span class="mf">46.50</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+<span class="c1">#----------------WVT Fitting--------------#</span>
+<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████████████</span><span class="o">|</span> <span class="mi">84</span><span class="o">/</span><span class="mi">84</span> <span class="p">[</span><span class="mi">01</span><span class="p">:</span><span class="mi">01</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span>  <span class="mf">1.36</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">rcdefaults</span><span class="p">()</span>
