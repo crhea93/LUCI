@@ -1655,20 +1655,14 @@ class Luci():
                        }
 
         spectral_axis = 1e7 / self.spectrum_axis  # Convert wavenumber in cm-1 to nm
-
         # Make sure the specified lines are part of the filter of the cube
         if all(line in (filter_line[self.filter]) for line in lines):
-
-            wavelengths = np.array(
-                list(map(line_dict.get, lines)))  # Get the rest wavelength values of the specified lines
-            wavelength_redshift = (
-                                          1 + self.redshift) * wavelengths  # Calculate the wavelength in the redshifted frame
-
+            wavelengths = np.array(list(map(line_dict.get, lines)))  # Get the rest wavelength values of the specified lines
+            wavelength_redshift = (1 + self.redshift) * wavelengths  # Calculate the wavelength in the redshifted frame
             # Match the minimum and maximum wavelengths of each group of slices around the lines with the spectral axis of the cube
             def find_nearest(spectral_axis, line_lambda):
                 indices = np.abs(np.subtract.outer(spectral_axis, line_lambda)).argmin(0)
                 return indices
-
             slice_sum = np.zeros_like(self.cube_final[:, :, 0])
             # Loop for every emission line
             for i in range(len(wavelength_redshift)):
