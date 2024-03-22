@@ -106,6 +106,7 @@ class Fit:
         self.spec_min = spec_min
         self.spec_max = spec_max
         self.spectrum = spectrum
+        self.spectrum_scale_init =  np.max(self.spectrum)
         self.spectrum_clean = spectrum / np.max(spectrum)  # Clean normalized spectrum
         self.spectrum_normalized = self.spectrum / np.max(self.spectrum)  # Normalized spectrum  Yes it is duplicated
         self.axis = axis * self.obj_redshift_corr  # Redshifted axis
@@ -511,7 +512,7 @@ class Fit:
         sigma2 = np.real(self.noise ** 2)
         if np.isnan(sigma2):
             sigma2 = 1e-2
-        residual = -0.5 * np.nansum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+        residual = -0.5 * np.nansum((self.spectrum_restricted_norm - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
         if np.isnan(residual):
             return -1e44
         else:
