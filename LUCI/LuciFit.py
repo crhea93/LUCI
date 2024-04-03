@@ -933,7 +933,7 @@ class Fit:
         # Set the number of dimensions -- this is somewhat arbitrary
         n_dim = 3 * self.line_num + 1
         # Set number of MCMC walkers. Again, this is somewhat arbitrary
-        n_walkers = 200  # n_dim * 5
+        n_walkers = 500  # n_dim * 5
         # Initialize walkers
         random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
         for i in range(self.line_num):
