@@ -476,11 +476,11 @@ class Fit:
         max_ = np.argmin(np.abs(np.array(self.axis) - max_))
         clipped_spec = astrostats.sigma_clip(self.spectrum_normalized[min_:max_], sigma=sigma_level,
                                              masked=False, copy=False,
-                                             maxiters=1, stdfunc=astrostats.mad_std)
+                                             maxiters=3, stdfunc=astrostats.mad_std)
         if len(clipped_spec) < 1:
             clipped_spec = self.spectrum_normalized[min_:max_]
         # Now take the minimum value to serve as the continuum value
-        cont_val = np.nanmean(clipped_spec)
+        cont_val = np.nanmedian(clipped_spec)
         #cont_val = np.nanmedian(self.spectrum_normalized[min_:max_])
         return cont_val
 
