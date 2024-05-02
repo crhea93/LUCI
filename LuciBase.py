@@ -1014,7 +1014,7 @@ class Luci():
         if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
-            integrated_spectrum -= bkg  * spec_ct  # Subtract background spectrum
+            integrated_spectrum -= bkg # * spec_ct  # Subtract background spectrum
         good_sky_inds = ~np.isnan(integrated_spectrum)  # Clean up spectrum
 
         sky = integrated_spectrum[good_sky_inds]
@@ -1321,9 +1321,10 @@ class Luci():
         self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=8)
         print("#----------------Algorithm Part 1----------------#")
         start = time.time()
-        SNR_map = fits.open(self.output_dir + '/' + self.object_name + '_SNR.fits')[0].data
+        SNR_map = fits.open(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits')[0].data
         SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
-        Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir + '/' + self.object_name + '_SNR.fits')
+        #fits.writeto(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits', SNR_map, overwrite=True)
+        Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits')
         Nearest_Neighbors(Pixels)
         Init_bins = Bin_Acc(Pixels, pixel_size, stn_target, roundness_crit)
         plot_Bins(Init_bins, x_min, x_max, y_min, y_max, stn_target, self.output_dir, "bin_acc")
@@ -1368,7 +1369,7 @@ class Luci():
             j += 1
 
     def fit_wvt(self, lines, fit_function, vel_rel, sigma_rel, bkg=None, bayes_bool=False, uncertainty_bool=False,
-                n_threads=1, initial_values=[False], n_stoch=1):
+                n_threads=1, initial_values=[False], n_stoch=1, stn_target=10):
         """
         Function that takes the wvt mapping created using `self.create_wvt()` and fits the bins.
         Written by Benjamin Vigneron
@@ -1384,6 +1385,7 @@ class Luci():
             n_threads: Number of threads to use
             initial_values: Initial values of velocity and broadening for fitting specific lines (must be list)
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+            stn_target: Target signal to noise ratio (default 10)
 
         Return:
             Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D) and header for saving
@@ -1449,7 +1451,7 @@ class Luci():
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits, velocities_errors_fits,
                   broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits, cutout.wcs.to_header(),
-                  binning=1, suffix='_wvt')
+                  binning=1, suffix='_wvt_%i'%stn_target)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, cutout.wcs.to_header()
 
     def wvt_fit_region(self, x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel,
@@ -1493,8 +1495,8 @@ class Luci():
                                                                                        uncertainty_bool=uncertainty_bool,
                                                                                        n_threads=n_threads,
                                                                                        initial_values=initial_values,
-                                                                                       n_stoch=n_stoch)
-        output_name = self.object_name + '_wvt_1'  # Add the '_1' because the binning is set to 1
+                                                                                       n_stoch=n_stoch, stn_target=stn_target)
+        output_name = self.object_name + '_wvt_%i_1'%stn_target  # Add stn target prefix
         for line_ in lines:
             amp = fits.open(self.output_dir + '/Amplitudes/' + output_name + '_' + line_ + '_Amplitude.fits')[0].data.T
             flux = fits.open(self.output_dir + '/Fluxes/' + output_name + '_' + line_ + '_Flux.fits')[0].data.T
