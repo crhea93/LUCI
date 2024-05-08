@@ -1073,8 +1073,8 @@ class Luci():
         if self.hdr_dict['FILTER'] == 'SN3':  # Halpha complex
             flux_min = 15150
             flux_max = 15300
-            noise_min = 16000#14500
-            noise_max = 16250#14600
+            noise_min = 14500
+            noise_max = 14600
         elif self.hdr_dict['FILTER'] == 'SN2':
             if 'OIII' in lines:  # OIII lines
                 flux_min = 1e7 / 505
@@ -1090,23 +1090,23 @@ class Luci():
             noise_min = 25700
             noise_max = 26300
         elif self.hdr_dict['FILTER'] == 'C3':  # Only for MACSJ1621
-            flux_min = 18100
-            flux_max = 19500
-            noise_min = 17450
-            noise_max = 17550
+            flux_min = 18500
+            flux_max = 20500
+            noise_min = 20500
+            noise_max = 21500
         else:
             print('SNR Calculation for this filter has not been implemented')
-
         def SNR_calc(i):
             y_pix = y_min + i
             snr_local = np.zeros(x_max-x_min)
+            
             for j in range(len(snr_local)):
                 x_pix = x_min + j
                 sky = cube_to_use[x_pix, y_pix, :]
                 # Calculate SNR
-                if bkgType=='standard':
-                    sky -= bkg * (binning) ** 2  # Subtract background times number of pixels
-                elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':
+                #if bkgType=='standard':
+                #sky -= bkg * (binning) ** 2  # Subtract background times number of pixels
+                '''elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':
                     if self.hdr_dict['FILTER'] == 'SN3':
                         min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
                         max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
@@ -1127,7 +1127,8 @@ class Luci():
                     scale_spec = np.nanmax(sky[min_spectral_scale:max_spectral_scale])
                     sky -= scale_spec * bkg
                 else:
-                    pass  # bkgType == None
+                    pass  # bkgType == None'''
+                
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_max))
                 flux_in_region = np.nansum(sky[min_:max_])
@@ -1171,7 +1172,6 @@ class Luci():
         else:
             os.mkdir(self.output_dir + '/SNR')
         fits.writeto(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits', SNR, self.header, overwrite=True)
-        print(SNR)
         # Save masks for SNr 3, 5, and 10
         masks = []
         for snr_val in [1, 3, 5, 10]:
@@ -1319,12 +1319,11 @@ class Luci():
         print("#----------------WVT Algorithm----------------#")
         print("#----------------Creating SNR Map--------------#")
         Pixels = []
-        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=8)
+        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1)
         print("#----------------Algorithm Part 1----------------#")
         start = time.time()
         SNR_map = fits.open(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits')[0].data
         SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
-        #fits.writeto(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits', SNR_map, overwrite=True)
         Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits')
         Nearest_Neighbors(Pixels)
         Init_bins = Bin_Acc(Pixels, pixel_size, stn_target, roundness_crit)
@@ -1355,14 +1354,13 @@ class Luci():
             bin_map[pix_x, pix_y] = int(bins[i])
             i += 1
         # bin_map = np.rot90(bin_map)
-        print("#----------------Numpy Bin Mapping--------------#")
         if not os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
             os.mkdir(self.output_dir + '/Numpy_Voronoi_Bins')
         if os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
             files = glob.glob(self.output_dir + '/Numpy_Voronoi_Bins/*.npy')
             for f in files:
                 os.remove(f)
-        for bin_num in tqdm(list(range(len(Final_Bins)))):
+        for bin_num in list(range(len(Final_Bins))):
             bool_bin_map = np.zeros((2048, 2064), dtype=bool)
             for a, b in zip(np.where(bin_map == bin_num)[0][:], np.where(bin_map == bin_num)[1][:]):
                 bool_bin_map[x_min_init + a, y_min_init + b] = True

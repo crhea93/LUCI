@@ -17,13 +17,13 @@
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Core Functionality" href="luci.html" />
-    <link rel="prev" title="Example Freeze" href="example_freeze.html" /> 
+    <link rel="prev" title="Extract Slices" href="example_slices.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -70,38 +70,12 @@
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fitting Algorithm</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-LUCI.LuciFit">Fitting Functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciFit.Fit"><code class="docutils literal notranslate"><span class="pre">Fit</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.NII_constraints"><code class="docutils literal notranslate"><span class="pre">Fit.NII_constraints()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.amplitude_constraint"><code class="docutils literal notranslate"><span class="pre">Fit.amplitude_constraint()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.apply_transmission"><code class="docutils literal notranslate"><span class="pre">Fit.apply_transmission()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calc_chisquare"><code class="docutils literal notranslate"><span class="pre">Fit.calc_chisquare()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calc_sinc_width"><code class="docutils literal notranslate"><span class="pre">Fit.calc_sinc_width()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calculate_correction"><code class="docutils literal notranslate"><span class="pre">Fit.calculate_correction()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calculate_noise"><code class="docutils literal notranslate"><span class="pre">Fit.calculate_noise()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.calculate_params"><code class="docutils literal notranslate"><span class="pre">Fit.calculate_params()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.check_fitting_model"><code class="docutils literal notranslate"><span class="pre">Fit.check_fitting_model()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.check_lengths"><code class="docutils literal notranslate"><span class="pre">Fit.check_lengths()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.check_lines"><code class="docutils literal notranslate"><span class="pre">Fit.check_lines()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.cont_estimate"><code class="docutils literal notranslate"><span class="pre">Fit.cont_estimate()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.estimate_priors_ML"><code class="docutils literal notranslate"><span class="pre">Fit.estimate_priors_ML()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.fit"><code class="docutils literal notranslate"><span class="pre">Fit.fit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.fit_Bayes"><code class="docutils literal notranslate"><span class="pre">Fit.fit_Bayes()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.interpolate_spectrum"><code class="docutils literal notranslate"><span class="pre">Fit.interpolate_spectrum()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.line_vals_estimate"><code class="docutils literal notranslate"><span class="pre">Fit.line_vals_estimate()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.log_likelihood"><code class="docutils literal notranslate"><span class="pre">Fit.log_likelihood()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.multiple_component_vel_constraint"><code class="docutils literal notranslate"><span class="pre">Fit.multiple_component_vel_constraint()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.restrict_wavelength"><code class="docutils literal notranslate"><span class="pre">Fit.restrict_wavelength()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.sigma_constraints"><code class="docutils literal notranslate"><span class="pre">Fit.sigma_constraints()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#LUCI.LuciFit.Fit.vel_constraints"><code class="docutils literal notranslate"><span class="pre">Fit.vel_constraints()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#fitting-functions">Fitting Functions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
@@ -144,264 +118,8 @@
 <img alt="LuciAlgo" src="_images/LuciAlgo.png" />
 <div class="toctree-wrapper compound">
 </div>
-<section id="module-LUCI.LuciFit">
-<span id="fitting-functions"></span><h2>Fitting Functions<a class="headerlink" href="#module-LUCI.LuciFit" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">LUCI.LuciFit.</span></span><span class="sig-name descname"><span class="pre">Fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumbers_syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sinc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Halpha']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ML_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2943</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">842</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zpd_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">169</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SN3'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'emcee'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nii_cons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sky_lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sky_lines_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Luci_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit" title="Link to this definition"></a></dt>
-<dd><p>Class that defines the functions necessary for the modelling aspect. This includes
-the gaussian fit functions, the prior definitions, the log likelihood, and the
-definition of the posterior (log likelihood times prior).</p>
-<p>All the functions (gauss, sinc, and sincgauss) are stored in <cite>LuciFuncitons.py</cite>.</p>
-<p>All functions for calculating the velocity, broadening, and flux are in ‘LuciFitParameters.py’.</p>
-<p>All the functions for Bayesian Inference with the exception of the fit call
-are in ‘LuciBayesian.py’.</p>
-<p>The returned axis is the redshifted axis.</p>
-<p>If the initial_values argument is passed, then the fit algorithm will use these values [velocity, broadening] as
-the initial conditions for the fit <strong>instead</strong> of the machine learning algorithm. See example ‘initial_values’ for
-more details on the implementation.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.NII_constraints">
-<span class="sig-name descname"><span class="pre">NII_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.NII_constraints" title="Link to this definition"></a></dt>
-<dd><p>Enforce the constraint that the NII6548 lines has an amplitude that is 1/3 the amplitude of NII6583.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Constraint on NII doublet relative amplitudes</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.amplitude_constraint">
-<span class="sig-name descname"><span class="pre">amplitude_constraint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.amplitude_constraint" title="Link to this definition"></a></dt>
-<dd><p>Constraint that requires the amplitude of the line be positive</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.apply_transmission">
-<span class="sig-name descname"><span class="pre">apply_transmission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.apply_transmission" title="Link to this definition"></a></dt>
-<dd><p>Apply transmission curve on the spectra according to un-redshifted axis.
-This is done before we interpolate onto the wavenumbers_syn so that the axis
-align properly. Note – the values of the x-axis are not important for this
-division since we have already interpolated the transition filter vector
-over the UNSHIFTED spectral axis.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calc_chisquare">
-<span class="sig-name descname"><span class="pre">calc_chisquare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fit_vector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_errors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_dof</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calc_chisquare" title="Link to this definition"></a></dt>
-<dd><p>Calculate reduced chi 2</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fit_vector</strong> – Spectrum obtained from fit</p></li>
-<li><p><strong>init_spectrum</strong> – Observed spectrum</p></li>
-<li><p><strong>init_errors</strong> – Errors on observed spectrum</p></li>
-<li><p><strong>n_dof</strong> – Number of degrees of freedom</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Chi squared value
-chi2dof: Reduced chi squared value</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>chi2</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calc_sinc_width">
-<span class="sig-name descname"><span class="pre">calc_sinc_width</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calc_sinc_width" title="Link to this definition"></a></dt>
-<dd><p>Calculate sinc width of the sincgauss function</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_correction">
-<span class="sig-name descname"><span class="pre">calculate_correction</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_correction" title="Link to this definition"></a></dt>
-<dd><p>Calculate correction factor based of interferometric angle. This is used to correct the broadening</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_noise">
-<span class="sig-name descname"><span class="pre">calculate_noise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_noise" title="Link to this definition"></a></dt>
-<dd><p>Calculate noise level in spectrum. We assume the noise is homogenous across the
-spectrum. We estimate it by taking a region outside of the filter and calculating
-the standard deviation in that region. We use the normalized spectrum since that
-is what is passed to the fit function.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.calculate_params">
-<span class="sig-name descname"><span class="pre">calculate_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.calculate_params" title="Link to this definition"></a></dt>
-<dd><p>Calculate the amplitude, position, and sigma of the line. These values are
-calculated using the scipy.optimize.minimize function. This is called
-on the log likelood previously described. The minimization algorithm uses
-the SLSQP optimization implementation. We have applied standard bounds in order
-to speed up the fitting. We also apply the fit on the normalized spectrum.
-We then correct the flux by un-normalizing the spectrum.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.check_fitting_model">
-<span class="sig-name descname"><span class="pre">check_fitting_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.check_fitting_model" title="Link to this definition"></a></dt>
-<dd><p>This function checks to see that the model provided is in the available options
-Return:
-Nothing if the user provides an appropriate fitting model
-Else it will throw an error</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.check_lengths">
-<span class="sig-name descname"><span class="pre">check_lengths</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.check_lengths" title="Link to this definition"></a></dt>
-<dd><p>This function checks to see that the length of the sigma_rel and vel_rel arguments are correct
-Return:
-Nothing if the user provides appropriate length
-Else it will throw an error</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.check_lines">
-<span class="sig-name descname"><span class="pre">check_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.check_lines" title="Link to this definition"></a></dt>
-<dd><p>This function checks to see that the lines provided are in the available options
-Return:
-Nothing if the user provides appropriate lines
-Else it will throw an error</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.cont_estimate">
-<span class="sig-name descname"><span class="pre">cont_estimate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.cont_estimate" title="Link to this definition"></a></dt>
-<dd><p>TODO: Test</p>
-<p>Function to estimate the continuum level. We use a sigma clipping algorithm over the(mu_vel/SPEED_OF_LIGHT)*line_dict[line[ct]] + line_dict[line[ct]]
-restricted axis/spectrum to effectively ignore emission lines. Therefore, we
-are left with the continuum. We take the minimum value of this continuum as the initial
-guess.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sigma_level</strong> – Sigma level to clip (Default=3)</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Initial guess for continuum</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.estimate_priors_ML">
-<span class="sig-name descname"><span class="pre">estimate_priors_ML</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mdn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.estimate_priors_ML" title="Link to this definition"></a></dt>
-<dd><p>Apply machine learning algorithm on spectrum in order to estimate the velocity.
-The spectrum fed into this method must be interpolated already onto the
-reference spectrum axis AND normalized as described in Rhea et al. 2020a.
-:param mdn: Boolean to use MDN or not (default True)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Updates self.vel_ml</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sky_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.fit" title="Link to this definition"></a></dt>
-<dd><p>Primary function call for a spectrum. This will estimate the velocity using
-our machine learning algorithm described in Rhea et al. 2020a. Then we will
-fit our lines using scipy.optimize.minimize.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sky_line</strong> – Boolean to fit sky lines (default False)</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>{“fit_vector”: Fitted spectrum, “velocity”: Velocity of the line in km/s (float),
-“broadening”: Velocity Dispersion of the line in km/s (float)}</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dictionary of parameters returned by the fit. The dictionary has the following form</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.fit_Bayes">
-<span class="sig-name descname"><span class="pre">fit_Bayes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.fit_Bayes" title="Link to this definition"></a></dt>
-<dd><p>Apply Bayesian MCMC run to constrain the parameters after solving</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.interpolate_spectrum">
-<span class="sig-name descname"><span class="pre">interpolate_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.interpolate_spectrum" title="Link to this definition"></a></dt>
-<dd><p>Interpolate Spectrum given the wavelength axis of reference spectrum.
-Then normalize the spectrum so that the max value equals 1</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Populates self.spectrum_interpolated, self.spectrum_scale, and self.spectrum_interp_norm.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.line_vals_estimate">
-<span class="sig-name descname"><span class="pre">line_vals_estimate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.line_vals_estimate" title="Link to this definition"></a></dt>
-<dd><p>TODO: Test</p>
-<p>Function to estimate the position and amplitude of a given line.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>line_name</strong> – Name of model. Available options are ‘Halpha’, ‘NII6548’, ‘NII6543’, ‘SII6716’, ‘SII6731’</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Estimated line amplitude in units of cm-1 (line_amp_est) and estimate line position in units of cm-1 (line_pos_est)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.log_likelihood">
-<span class="sig-name descname"><span class="pre">log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.log_likelihood" title="Link to this definition"></a></dt>
-<dd><p>Calculate log likelihood function evaluated given parameters on spectral axis</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>theta</strong> – <dl class="simple">
-<dt>List of parameters for all the models in the following order</dt><dd><p>[amplitude, line location, sigma, continuum constant]</p>
-</dd>
-</dl>
-<p>The continuum constant is always the last argument regardless of the number of lines being modeled</p>
-</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Value of log likelihood</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.multiple_component_vel_constraint">
-<span class="sig-name descname"><span class="pre">multiple_component_vel_constraint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.multiple_component_vel_constraint" title="Link to this definition"></a></dt>
-<dd><p>Constraint that requires each line have a different position.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.restrict_wavelength">
-<span class="sig-name descname"><span class="pre">restrict_wavelength</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.restrict_wavelength" title="Link to this definition"></a></dt>
-<dd><p>Restrict the wavelength range of the fit so that the fit only occurs over the central regions of the spectra.
-We do this so that the continuum is properly calculated.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.sigma_constraints">
-<span class="sig-name descname"><span class="pre">sigma_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.sigma_constraints" title="Link to this definition"></a></dt>
-<dd><p>Set up constraints for sigma values before fitting line
-:returns: Dictionary describing constraints</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="LUCI.LuciFit.Fit.vel_constraints">
-<span class="sig-name descname"><span class="pre">vel_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciFit.Fit.vel_constraints" title="Link to this definition"></a></dt>
-<dd><p>Set up constraints for velocity values before fitting line
-:returns: Dictionary describing constraints</p>
-</dd></dl>
-
-</dd></dl>
-
+<section id="fitting-functions">
+<h2>Fitting Functions<a class="headerlink" href="#fitting-functions" title="Link to this heading"></a></h2>
 </section>
 </section>
 
@@ -409,7 +127,7 @@ We do this so that the continuum is properly calculated.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="example_freeze.html" class="btn btn-neutral float-left" title="Example Freeze" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="example_slices.html" class="btn btn-neutral float-left" title="Extract Slices" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="luci.html" class="btn btn-neutral float-right" title="Core Functionality" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
