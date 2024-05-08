@@ -1528,6 +1528,31 @@ class Luci():
             fits.writeto(self.output_dir + '/' + output_name + '_continuum.fits', cont, header, overwrite=True)
         return None
 
+
+
+    def export_fits(self):
+        """
+        Export HDF file as fits file. The data will be saved in the same location as the cube (`cube_dir`) with the same
+        name (`object_name`).
+        """
+        header3D = self.header.copy()
+        header3D['NAXIS'] = 4
+        # header3D['CUNIT3'] = 'WAVN'
+        header3D['CTYPE3'] = 'FREQ'
+        header3D['CRPIX3'] = 1
+        header3D['CRVAL3'] = self.hdr_dict['axis_min']
+        header3D['CDELT3'] = self.hdr_dict['axis_step']
+        #header3D['CUNIT3'] = '/cm'
+        header3D['NAXIS4'] = 1
+        header3D['CRPIX4'] = 1
+        header3D['CRVAL4'] = 1
+        header3D['CDELT4'] = 1
+        header3D.remove('WCSAXES')
+        fits_header = fits.PrimaryHDU(header=header3D, data=self.cube_final.transpose(2, 1, 0))
+        hdu = fits.HDUList([fits_header])
+        hdu.writeto(os.path.join(self.output_dir, self.object_name+'.fits'), overwrite=True)
+        return None
+
     def detection_map(self, x_min=None, x_max=None, y_min=None, y_max=None, n_threads=1):
         """
         Method to call the detection algorithm. The detection algorithm works as follows:
