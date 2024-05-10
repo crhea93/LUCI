@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basic Example Lite &mdash; LUCI v.1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+    <link rel="shortcut icon" href="_static/LuciLogo.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Example of fitting regions in NGC6888" href="example_fit_ngc6888.html" />
+    <link rel="prev" title="Basic Example" href="example_basic.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Basic Example Lite</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/example_basic_lite.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="basic-example-lite">
+<span id="example-basic-lite"></span><h1>Basic Example Lite<a class="headerlink" href="#basic-example-lite" title="Link to this heading"></a></h1>
+<p>This example is the much condensed version of our basic example for those of us
+already familiar with the parameters and how <cite>LUCI</cite> works. Let’s get started!</p>
+<p>Let’s start with importing <cite>LUCI</cite>. Just as descsribed on the <em>readthedocs</em> page, we need to point our system path to our install location of the <strong>LUCI</strong> folder.
+We will additionally import the Luci plotting functions :)</p>
+<p>You can download the example data using the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>!wget<span class="w"> </span>-O<span class="w"> </span>M33.hdf5<span class="w">  </span>https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/raven/files/cadc:CFHT/2309128z.hdf5
+</pre></div>
+</div>
+<p>This will save a file called <cite>M33.hdf5</cite> to the directory where you run this command. Do not be concerned if it takes a few minutes (or more than a few) to download.</p>
+<p>The region files used in the examples can be
+found in the ‘Examples/regions’ folder. To run the examples, place these region files in the same
+directory as the hdf5 file.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;/media/carterrhea/carterrhea/SIGNALS/LUCI/&#39;</span><span class="p">)</span>  <span class="c1"># Location of Luci</span>
+<span class="kn">from</span> <span class="nn">LuciBase</span> <span class="kn">import</span> <span class="n">Luci</span>
+<span class="kn">import</span> <span class="nn">LUCI.LuciPlotting</span> <span class="k">as</span> <span class="nn">lplt</span>
+</pre></div>
+</div>
+<p>Set the required parameters. We will be using our machine learning algorithm to get the initial guesses - this happens under the hood in <cite>LuciFit</cite>, so that the user is not required to think about the initial guess</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize paths and set parameters</span>
+<span class="n">Luci_path</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span>
+<span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/export/home/carterrhea/M33&#39;</span>  <span class="c1"># Path to data cube</span>
+<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;M33_SN3&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
+<span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;M33&#39;</span>
+<span class="n">filter_name</span> <span class="o">=</span> <span class="s1">&#39;SN3&#39;</span>
+<span class="n">redshift</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.0006</span>  <span class="c1"># Redshift of object</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="mi">5000</span>
+</pre></div>
+</div>
+<p>We intialize our LUCI object</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create Luci object</span>
+<span class="n">cube</span> <span class="o">=</span> <span class="n">Luci</span><span class="p">(</span><span class="n">Luci_path</span><span class="p">,</span> <span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">cube_name</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">object_name</span><span class="p">,</span> <span class="n">redshift</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The output will look something like this:</p>
+<img alt="Luci Initialization Output" src="_images/ReadingIn.png" />
+<p>Let’s quickly create a deep frame</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create Deep Image</span>
+<span class="n">cube</span><span class="o">.</span><span class="n">create_deep_image</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Let’s extract a background region and take a look at it. The background region is defined in a ds9 region file in the <cite>Examples/regions</cite> folder in the LUCI directory.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum_region</span><span class="p">(</span><span class="n">Luci_path</span><span class="o">+</span><span class="s1">&#39;Examples/regions/bkg_M33.reg&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># We use mean=True to take the mean of the emission in the region instead of the sum</span>
+<span class="n">lplt</span><span class="o">.</span><span class="n">plot_spectrum</span><span class="p">(</span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="M33_BKG" src="_images/M33_BKG.png" />
+<p>We now fit part of our cube defined by the bounding box 1200 &lt; x &lt; 1350 and 1700 &lt; y &lt; 1950 with a SincGauss on the Halpha line, the NII-doublet, and the SII-doublet with a binning of 2.
+We are also going to constrain our velocities and sigmas.  We can also run multiple threads with the <cite>n_threads</cite> argument.</p>
+<p>For this example, we do not calculate the errors because it slows down calculations, but note that it can easily be done by adding the argument <cite>uncertainty_bool=True</cite>. If you want the full Bayesian calculation you can add <cite>bayes_bool=True</cite>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fit!</span>
+<span class="n">vel_map</span><span class="p">,</span> <span class="n">broad_map</span><span class="p">,</span> <span class="n">flux_map</span><span class="p">,</span> <span class="n">ampls_map</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">(</span>
+    <span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+    <span class="mi">1200</span><span class="p">,</span> <span class="mi">1350</span><span class="p">,</span>
+    <span class="mi">1700</span><span class="p">,</span> <span class="mi">1950</span><span class="p">,</span>
+    <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">n_threads</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let’s take a look at the velocity map. We can play with the colorbar limits with the <cite>clims</cite> argument. Please note that the
+flux plot is automatically scaled by log10. However, the velocity and broadening maps are not scaled automatically.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="n">filter_name</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">cube_dir</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">18</span><span class="p">,</span> <span class="o">-</span><span class="mi">14</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>And let’s see what this looks like!</p>
+<img alt="M33_Flux" src="_images/M33_Flux.png" />
+<p>We can also plot the velocity and broadening.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">vel_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="n">filter_name</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">cube_dir</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="M33_Velocity" src="_images/M33_velocity.png" />
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">broad_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;broadening&#39;</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="n">filter_name</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">cube_dir</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">40</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="M33_Broadening" src="_images/M33_Broadening.png" />
+<p>The resulting data maps will be placed in a folder called <em>Luci_outputs</em>. Inside there, you
+will find additional folders containing the Flux, Amplitude, Velocity, and Broadening maps
+for each line and their uncertainties (if calculated).</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="example_basic.html" class="btn btn-neutral float-left" title="Basic Example" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="example_fit_ngc6888.html" class="btn btn-neutral float-right" title="Example of fitting regions in NGC6888" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Carter L. Rhea.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

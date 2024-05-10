@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Python Module Index &mdash; LUCI v.1.0.0 documentation</title>
+  <title>Fit Options &mdash; LUCI v.1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -21,9 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
- 
-
-
+    <link rel="next" title="Wavelength Correction" href="wavelength_corrections.html" />
+    <link rel="prev" title="Uncertainties" href="uncertainties.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,10 +47,10 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Fit Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
@@ -99,8 +99,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Python Module Index</li>
+      <li class="breadcrumb-item active">Fit Options</li>
       <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fit_options.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -108,54 +109,42 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-
-   <h1>Python Module Index</h1>
-
-   <div class="modindex-jumpbox">
-   <a href="#cap-l"><strong>l</strong></a>
-   </div>
-
-   <table class="indextable modindextable">
-     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
-     <tr class="cap" id="cap-l"><td></td><td>
-       <strong>l</strong></td><td></td></tr>
-     <tr>
-       <td><img src="_static/minus.png" class="toggler"
-              id="toggle-1" style="display: none" alt="-" /></td>
-       <td>
-       <code class="xref">LUCI</code></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="bayes.html#module-LUCI.LuciBayesian"><code class="xref">LUCI.LuciBayesian</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="fits.html#module-LUCI.LuciFit"><code class="xref">LUCI.LuciFit</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="params.html#module-LUCI.LuciFitParameters"><code class="xref">LUCI.LuciFitParameters</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="plot.html#module-LUCI.LuciPlotting"><code class="xref">LUCI.LuciPlotting</code></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="luci.html#module-LuciBase"><code class="xref">LuciBase</code></a></td><td>
-       <em></em></td></tr>
-   </table>
+  <section id="fit-options">
+<span id="id1"></span><h1>Fit Options<a class="headerlink" href="#fit-options" title="Link to this heading"></a></h1>
+<p><cite>LUCI</cite> has several options that can either be included or not when fitting. The details of these
+options is explained in the <cite>howLuciWorks</cite> page, but we wanted to reiterate them here.</p>
+<p>The fitting methods in <cite>LUCI</cite> are: <cite>cube.fit_cube(), cube.fit_entire_cube(), cube.fit_region(), cube.fit_spectrum_region(), cube.fit_pixel()</cite>.
+With the exception of <cite>cube.fit_spectrum_region()</cite>, these methods fit each pixel in a predefined region of the cube.</p>
+<p>In addition to the required arguments, we have the following set of optional arguments:</p>
+<ul class="simple">
+<li><p>bkg: This is where you define the background region that will be subtracted from each spectrum. This is technically optional, but you really should do this…</p></li>
+<li><p>binning: This will bin your cube into larger pixels of nxn size where n is the integer you supply (i.e. <cite>binning=2</cite> will create 2x2 bins)</p></li>
+<li><p>bayes_bool: This activates the Bayesian inference calculations using EMCEE (<cite>bayes_bool=True</cite>). Might as well grab a beer (or two) while you wait for it to run because it’s going to be a while…</p></li>
+<li><p>output_name: If you want a different output suffix, please add that information here. (i.e. <cite>output_name=’SuperCoolName’</cite>)</p></li>
+<li><p>uncertainty_bool: This is if you don’t want to wait for the full Bayesian inference to run. Instead, it calculates the inverse Hessian of the fit matrix and takes its diagonals as the errors on the fit parameters.</p></li>
+<li><p>n_threads: This sets the number of threads that will be used in the fits. Choose this based on the number of threads available to you. I like <cite>n_threads=4</cite>. <strong>Note that this frequently doesn’t work in a jupyter notebook setting</strong>.</p></li>
+<li><p>mdn: This boolean determines whether or not a mixture density model is used to obtain the initial guesses. Details on this algorithm can be found at (<a class="reference external" href="https://arxiv.org/abs/2111.12755">https://arxiv.org/abs/2111.12755</a>). The default value is False.</p></li>
+<li><p>nii_cons: This boolean determines whether or not we constrain the NII doublet emission to the 1/3rds rule. By default, this is included.</p></li>
+<li><p>n_stoch: This integer sets the number of attempts to fit the model to the spectrum. Instead of taking the ML estimates as</p></li>
+</ul>
+<p>the initial values in the fit, we will randomly select a value from a region around the ML estimate. This introduces some stochasticity
+to the fit, and, in some cases, can guide the optimization algorithm to a better final fit. The fit which minimizes the likelihood
+out of all the n_stoch fits will be taken as the best fit.
+- spec_min: Minimal wavelength value over which the fit will be computed
+- spec_max: Maximal wavelength value over which the fit will be computed.</p>
+<p><cite>LUCI</cite> has the abilitiy to restrict the wavelength region over which the fit is performed. So, for instance, if you only wish to fit
+Halpha and the NII-doublet, you can set restrict the wavelength to be between 15000 and 15250 cm^-1^ by adding two
+arguments to your fit function: <cite>spec_min</cite> and <cite>spec_max</cite>. Note that these values need to be in wavenumber. We have seen, in
+some cases of low signal-to-noise, that adding this restriction helps the fit algorithm.</p>
+</section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="uncertainties.html" class="btn btn-neutral float-left" title="Uncertainties" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="wavelength_corrections.html" class="btn btn-neutral float-right" title="Wavelength Correction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

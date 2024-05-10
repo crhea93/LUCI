@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WVT Example &mdash; LUCI v.1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+    <link rel="shortcut icon" href="_static/LuciLogo.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Example Freeze" href="example_freeze.html" />
+    <link rel="prev" title="How to use LUCI Visualize" href="example_visualize.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">WVT Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">WVT Example</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/example_wvt.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="wvt-example">
+<span id="example-wvt"></span><h1>WVT Example<a class="headerlink" href="#wvt-example" title="Link to this heading"></a></h1>
+<p>One the new feature added to the fitting procedure of Luci is a weighted Voronoï tessellation. We will describe here an example to showcase this method for your own data analysis.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">LuciBase</span> <span class="kn">import</span> <span class="n">Luci</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">LUCI.LuciPlotting</span> <span class="k">as</span> <span class="nn">lplt</span>
+<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="kn">import</span> <span class="n">fits</span>
+<span class="kn">from</span> <span class="nn">astropy.wcs</span> <span class="kn">import</span> <span class="n">WCS</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span>
+<span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">LogNorm</span>
+</pre></div>
+</div>
+<p>The next step is to load/read the HDF5 data cube. To do this we invoke LUCI by initiating an instance of her along with the proper parameters. First we define the correct parameters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#Set Parameters</span>
+<span class="c1"># Using Machine Learning Algorithm for Initial Guess</span>
+  <span class="n">Luci_path</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span>
+  <span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/mnt/carterrhea/carterrhea/M33&#39;</span>  <span class="c1"># Path to data cube</span>
+  <span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;M33_Field7_SN3.merged.cm1.1.0&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
+  <span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;M33_Field7&#39;</span>
+  <span class="n">redshift</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.00006</span>  <span class="c1"># Redshift of M33</span>
+  <span class="n">resolution</span> <span class="o">=</span> <span class="mi">5000</span>
+</pre></div>
+</div>
+<p>From there we will load the HDF5 cube following this command as usual.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span> <span class="o">=</span> <span class="n">Luci</span><span class="p">(</span><span class="n">Luci_path</span><span class="p">,</span> <span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">cube_name</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">object_name</span><span class="p">,</span> <span class="n">redshift</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And extract a background region.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum_region</span><span class="p">(</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/bkg.reg&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># We use mean=True to take the mean of the emission in the region instead of the sum</span>
+</pre></div>
+</div>
+<p>Now we can call the wvt_fit_region function that will create the weighted Voronoï region and fit the bins to produce the maps we need.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span><span class="o">.</span><span class="n">wvt_fit_region</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">850</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span> <span class="mi">850</span><span class="p">,</span>
+              <span class="p">[</span><span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">],</span>
+              <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
+              <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+              <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+              <span class="n">stn_target</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+              <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span>
+              <span class="n">bayes_bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+              <span class="n">uncertainty_bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+              <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">n_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As we can see there are many arguments in this function. Let’s go through them one by one to make sure we use them correctly.</p>
+<p>The first four arguments correspond to the position of the region we want to fit in the cube.</p>
+<p>The fifth argument refers to the emission lines we want to fit.</p>
+<p>‘sincgauss’ is the fitting function to be used.</p>
+<p>The next two arguments describes the relational constraints between the lines. For example, if we are fitting three lines and we want the velocities of the second and third lines to be tied to one another, we would simply set vel_rel=[1,2,2]. If we wanted all the lines tied, then we would put [1,1,1]. The sigma_rel parameter functions in the exact same way except it affects the broadening (velocity dispersion) of the lines.</p>
+<p>The stn_target parameter determines the signal to noise value that will act as a threshold to create the Voronoï tessels.</p>
+<p>We then pass the background we want to subtract, as well as the Boolean parameters to determine whether or not to run Bayesian and uncertainty analysis.</p>
+<p>The n_threads argument determines the number of threads used for the paralelization of the function, which accelerates the whole process.</p>
+<p>The console will output something like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#----------------WVT Algorithm----------------#</span>
+<span class="c1">#----------------Creating SNR Map--------------#</span>
+<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████████████</span><span class="o">|</span> <span class="mi">50</span><span class="o">/</span><span class="mi">50</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span> <span class="mf">27.58</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+<span class="c1">#----------------Algorithm Part 1----------------#</span>
+<span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">carterrhea</span><span class="o">/</span><span class="n">Documents</span><span class="o">/</span><span class="n">LUCI</span><span class="o">/</span><span class="n">Examples</span>
+<span class="n">We</span> <span class="n">have</span> <span class="mi">2500</span> <span class="n">Pixels</span><span class="err">!</span> <span class="p">:)</span>
+<span class="n">Running</span> <span class="n">Nearest</span> <span class="n">Neighbor</span> <span class="n">Algorithm</span>
+<span class="n">Finished</span> <span class="n">Nearest</span> <span class="n">Neighbor</span> <span class="n">Algorithm</span>
+<span class="n">Starting</span> <span class="n">Bin</span> <span class="n">Accretion</span> <span class="n">Algorithm</span>
+<span class="n">We</span> <span class="n">have</span> <span class="mi">2500</span> <span class="n">bins</span><span class="o">.</span>
+<span class="n">We</span> <span class="n">have</span> <span class="mi">0</span> <span class="n">unassigned</span> <span class="n">pixels</span><span class="o">.</span>
+<span class="n">Reassigning</span> <span class="n">unsuccessful</span> <span class="n">bins</span>
+<span class="n">Completed</span> <span class="n">Bin</span> <span class="n">Accretion</span> <span class="n">Algorithm</span>
+<span class="n">There</span> <span class="n">are</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">85</span> <span class="n">bins</span><span class="err">!</span>
+<span class="c1">#----------------Algorithm Part 2----------------#</span>
+<span class="n">Beginning</span> <span class="n">WVT</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">1</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">2</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">3</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">4</span>
+<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">5</span>
+<span class="n">Stopped</span> <span class="n">WVT</span> <span class="n">algorithm</span> <span class="n">after</span> <span class="mi">5</span> <span class="n">steps</span><span class="o">.</span>
+<span class="n">There</span> <span class="n">are</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">85</span> <span class="n">bins</span><span class="err">!</span>
+<span class="c1">#----------------Algorithm Complete--------------#</span>
+<span class="c1">#----------------Bin Mapping--------------#</span>
+<span class="c1">#----------------Numpy Bin Mapping--------------#</span>
+<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████████████</span><span class="o">|</span> <span class="mi">84</span><span class="o">/</span><span class="mi">84</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span> <span class="mf">46.50</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+<span class="c1">#----------------WVT Fitting--------------#</span>
+<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████████████</span><span class="o">|</span> <span class="mi">84</span><span class="o">/</span><span class="mi">84</span> <span class="p">[</span><span class="mi">01</span><span class="p">:</span><span class="mi">01</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span>  <span class="mf">1.36</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">rcdefaults</span><span class="p">()</span>
+
+<span class="n">flux_map</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;/mnt/carterrhea/carterrhea/M33/Luci_outputs/Fluxes/M33_Field7_wvt_1_Halpha_Flux.fits&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">T</span>
+<span class="n">header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;/mnt/carterrhea/carterrhea/M33/Luci_outputs/M33_Field7_deep.fits&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+<span class="n">wcs</span> <span class="o">=</span> <span class="n">WCS</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+<span class="n">cmap</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">CMRmap</span>
+<span class="n">cmap</span><span class="o">.</span><span class="n">set_bad</span><span class="p">(</span><span class="s1">&#39;black&#39;</span><span class="p">,</span><span class="mf">1.</span><span class="p">)</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="n">wcs</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[</span><span class="mi">800</span><span class="p">:</span><span class="mi">850</span><span class="p">,</span><span class="mi">800</span><span class="p">:</span><span class="mi">850</span><span class="p">],</span> <span class="n">norm</span> <span class="o">=</span> <span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mf">1e-18</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">5.01837e-15</span><span class="p">),</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;font.weight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bold&quot;</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.labelweight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bold&quot;</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;RA&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Dec&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">cbar</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="WVT Example" src="WVT_Example.png" />
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="example_visualize.html" class="btn btn-neutral float-left" title="How to use LUCI Visualize" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="example_freeze.html" class="btn btn-neutral float-right" title="Example Freeze" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Carter L. Rhea.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

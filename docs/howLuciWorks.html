@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How LUCI Works &mdash; LUCI v.1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+    <link rel="shortcut icon" href="_static/LuciLogo.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Uncertainties" href="uncertainties.html" />
+    <link rel="prev" title="Welcome to LUCI’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How LUCI Works</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-we-calculate">What we calculate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#velocity">Velocity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#velocity-dispersion">Velocity Dispersion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flux">Flux</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#how-we-calculate">How we calculate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#initial-guess">Initial Guess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fitting-function">Fitting Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#available-models">Available Models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gaussian">Gaussian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sinc">Sinc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sincgauss">SincGauss</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission">Transmission</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">How LUCI Works</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/howLuciWorks.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="how-luci-works">
+<span id="howluciworks"></span><h1>How LUCI Works<a class="headerlink" href="#how-luci-works" title="Link to this heading"></a></h1>
+<p>LUCI is a general purpose line fitting pipeline designed to unveil the inner workings
+of how fits of SITELLE IFU datacubes are calculated. In this section, I will
+explain what we are trying to calculate, how it is calculated, and how you can
+personalize the fits.</p>
+<img alt="Luci overview" src="_images/Luci1.png" />
+<img alt="Luci overview" src="_images/LuciFit.png" />
+<section id="what-we-calculate">
+<h2>What we calculate<a class="headerlink" href="#what-we-calculate" title="Link to this heading"></a></h2>
+<p>The three primary quantities of interest are the <strong>amplitude</strong> of the line, the <strong>position</strong>
+of the line (often described as the velocity and quoted in km/s), and the <strong>broadening</strong>
+of the line (often described as the velocity dispersion).</p>
+<section id="velocity">
+<h3>Velocity<a class="headerlink" href="#velocity" title="Link to this heading"></a></h3>
+<p>The velocity of a line is calculated using the following equation:
+<img class="math" src="_images/math/99ed672d8feffccc820fa5492ab22b3411022b5d.png" alt="v [km/s] = c [km/s] * \Delta \lambda"/></p>
+<p><em>c</em> is the speed of light in kilometers per second. Delta lambda is the shift of the measured line. Although the line
+position is calculated in units of [cm-1], we translate it into nanometers since <img class="math" src="_images/math/47026d06404449de04abb2b421e0508f83e4a21a.png" alt="\lambda [nm] = \frac{1e7}{\lambda[cm-1]}"/>.
+<img class="math" src="_images/math/68666412042da6767370a8ac218ec6b4b773e872.png" alt="\Delta \lambda = (line\_pos[nm]-line\_ref[nm])/line\_ref[nm]"/></p>
+<blockquote>
+<div><p>where <img class="math" src="_images/math/857981d4038305ebce975e7b19a9deecb8ace409.png" alt="line\_ref"/> is the natural position of the line (for example; <img class="math" src="_images/math/1d8bb3dacdaf28553049441cc7bff76f999e1ba1.png" alt="line\_ref=656.28 nm"/> for Halpha.)</p>
+</div></blockquote>
+</section>
+<section id="velocity-dispersion">
+<h3>Velocity Dispersion<a class="headerlink" href="#velocity-dispersion" title="Link to this heading"></a></h3>
+<p>The velocity dispersion of a line is calculated using the following equation:
+<span class="math">\Delta v = \frac{3e5 [km/s] * \sigma}{v [km/s]}</span></p>
+<p>where <img class="math" src="_images/math/b52df27bfb0b1e3af0c2c68a7b9da459178c2a7d.png" alt="\sigma"/> is the calculated width of a the fitted Gaussian.</p>
+</section>
+<section id="flux">
+<h3>Flux<a class="headerlink" href="#flux" title="Link to this heading"></a></h3>
+<p>Similarly, we define the flux for each fitting function as the following:</p>
+<p><em>Flux for a Gaussian Function</em>:</p>
+<p><img class="math" src="_images/math/c48a9264cb986ec2d84d77058f6c7d5f387b237f.png" alt="Flux [erg/s/cm^2/Ang] = \sqrt{2\pi}p_0p_2"/></p>
+<p><em>Flux for a Sinc Function</em>:</p>
+<p><img class="math" src="_images/math/4492ab0988f66cf485ba298f581b522d998d467e.png" alt="Flux [erg/s/cm^2/Ang] = \pi p_0p_2"/></p>
+<p><em>Flux for a SincGauss Function</em>:</p>
+<p><img class="math" src="_images/math/ecac1cb2de56af7ff8b349c5bd4f2fc3aa599eac.png" alt="Flux [erg/s/cm^2/Ang] = \text{coeff} * p_0\frac{\sqrt{2\pi}p_2}{erf(\frac{p_2}{\sqrt{2}\sigma})}"/></p>
+<p>Note that $text{coeff}=frac{1.20671}{pi*FWHM_COEFF}$ where the FWHM_COEFF equals $2sqrt{2log{2}}, the $pi$
+is there because of the sinc function’s definition, and the 1.20671 is the factor used to go between FWHM and sigma.</p>
+</section>
+</section>
+<section id="how-we-calculate">
+<h2>How we calculate<a class="headerlink" href="#how-we-calculate" title="Link to this heading"></a></h2>
+<p>Once we have a spectrum, we do two things: we normalize the spectrum by the maximum amplitude
+and we apply a redshift correction (wavelength = wavelength*(1+redshift)). We do this
+primarily to constrain the velocity to be between -500 and 500 km/s. This allows our
+machine learning technique to obtain better initial guess estimates.</p>
+<section id="initial-guess">
+<h3>Initial Guess<a class="headerlink" href="#initial-guess" title="Link to this heading"></a></h3>
+<p>Having a good initial guess is crucial for the success (and speed) of the fitting algorithm.
+In order to obtain a good initial guess for the fit parameters (line amplitude, line position,
+and line broadening), we apply a machine learning technique described in <a class="reference external" href="https://arxiv.org/abs/2008.08093">Rhea et al. 2020a</a>
+(disclosure: the author of this code is also the author of this paper). The method
+uses pre-trained convolutional neural networks to estimate the velocity and broadening
+of the line in km/s. These are then translated into the line position and broadening. Next,
+the amplitude is taken as the height of the line corresponding to the shifted line position.
+We note that the machine learning model has only been trained to obtain velocities
+between -500 and 500 km/s. Similarly, the model was trained to obtain broadening
+values between 10 and 200 km/s. You can find more information on this at
+<cite>https://sitelle-signals.github.io/Pamplemousse/index.html &lt;https://sitelle-signals.github.io/Pamplemousse/index.html&gt;</cite>.
+We estimate the amplitude by taking the maximum value of spectrum corresponding to the
+estimated position plus or minus 2 channels.</p>
+<p>Since we understand that machine learning is not everyone’s cup of tea, we have
+an alternative method to calculate the initial guesses.</p>
+</section>
+<section id="fitting-function">
+<h3>Fitting Function<a class="headerlink" href="#fitting-function" title="Link to this heading"></a></h3>
+<p>The fitting function utilizes <em>scipy.optimize.minimize</em>. Currently, we are using the <cite>trust-constr &lt;https://docs.scipy.org/doc/scipy/reference/optimize.minimize-trustconstr.html&gt;</cite>
+optimization algorithm. Before fitting the spectrum, we normalize the spectrum by the maximum
+amplitude – this makes the fitting process simpler. The fit returns the amplitude of the line
+(which we then scale to be correct for the un-normalized spectrum), the velocity in km/s,
+and the velocity dispersion in km/s. If the user chooses, the line velocities and velocity dispersions
+can be coupled. Additionally, we automatically include the constraint on the NII-doublet flux ratio
+(setting NII_6583 = 3*NII_6548) using the <cite>nii_cons</cite> boolean. This can be changed by adding
+<cite>nii_cons=False</cite> as an argument to any of the fitting functions.</p>
+</section>
+<section id="available-models">
+<h3>Available Models<a class="headerlink" href="#available-models" title="Link to this heading"></a></h3>
+<p>We have implemented three functions: <cite>gaussian</cite>, <cite>sinc</cite>, and <cite>sincgauss</cite>.</p>
+<section id="gaussian">
+<h4>Gaussian<a class="headerlink" href="#gaussian" title="Link to this heading"></a></h4>
+<p>We assume a standard form of a Gaussian:
+<img class="math" src="_images/math/8ffc4c0cb7a274c543050a5710c4817ab3fb76ad.png" alt="p_0*exp{(-(x-p_1)**2)/(2*p_2**2)}"/></p>
+<p>We solve for p_0, p_1, and p_2 (x is the wavelength channel and is thus provided).
+<img class="math" src="_images/math/8968e4fd6ebe2d668010ed37e2172340daaefa2d.png" alt="p_0"/> is the amplitude, <img class="math" src="_images/math/48633556290f50fdc8d2ff3eb6ff99ad557327e5.png" alt="p_1"/> is the position of the line, and <img class="math" src="_images/math/0ba5a12df77ecc7e17158f419025b5acca993472.png" alt="p_2"/> is the broadening.</p>
+</section>
+<section id="sinc">
+<h4>Sinc<a class="headerlink" href="#sinc" title="Link to this heading"></a></h4>
+<p>We adopt the following form
+<img class="math" src="_images/math/c474dee175514a34c8e9cbd504a4c13434da9300.png" alt="u=(x-p_1)/p_2"/>
+<img class="math" src="_images/math/a20738bedc4a37bf151f44f516084dd98ffd7f15.png" alt="p_0*sinc(\pi*u)/(\pi*u)"/></p>
+<p>Note that <img class="math" src="_images/math/0ba5a12df77ecc7e17158f419025b5acca993472.png" alt="p_2"/> is <strong>FIXED</strong> for the sinc function as 1/(2*MPD) (where <strong>MPD</strong> is the maximum path difference).</p>
+</section>
+<section id="sincgauss">
+<h4>SincGauss<a class="headerlink" href="#sincgauss" title="Link to this heading"></a></h4>
+<p><img class="math" src="_images/math/8424329dfbcad8634b81da7d0f7ce2de477d441f.png" alt="p_0*exp(-b*^2)*((erf(a-i*b)+erf(a+i*b))/(2*erf(a)))"/></p>
+<p>where
+<img class="math" src="_images/math/a6aefce2dd21aeffb0728e759e2cc633eaeb2190.png" alt="a = p_2/(\sqrt{2}*\sigma)"/>
+<img class="math" src="_images/math/226d01e1feb29f5d38d1088c16211ada23093076.png" alt="b = (x-p_1)/(\sqrt{2}*\sigma)"/></p>
+<p>We also have the Dawson integral calculation of the <em>sincgauss</em> function:</p>
+<p><img class="math" src="_images/math/2d07b16743222c62ed7c47ef7f6f4f638c11a485.png" alt="p_0*( (dawson(ai+b)exp(2iab) + dawson(ai-b)exp(-2iab)) / 2*dawson(ai) )"/></p>
+<p>where sigma is 1/(2*MPD).</p>
+<p>Therefore, when using a <strong>sincgauss</strong>, we have to calculate the <strong>MPD</strong>. We can
+adopt the following definition: <img class="math" src="_images/math/a23cbb309bf3f6c43d9219bbe6d83177264f18ce.png" alt="MPD = \cos{\theta}\delta_x N"/> where <img class="math" src="_images/math/06a6ab4f18196f743558d92f701b0dac2211eb37.png" alt="\cos{\theta}"/>
+is the cosine angle defined as <img class="math" src="_images/math/013521e12f828ad7c4f7b905cd3f3f7268d2ad4c.png" alt="\cos{\theta} = \frac{\lambda_{ref}}{\lambda_{ij}}"/>.
+<img class="math" src="_images/math/2b899994ef65e5177b3c166379e701041dbf2dcb.png" alt="\lambda_{ref}"/> is the wavelength of the calibration laser and <img class="math" src="_images/math/4ac0de4c00ba1f6a2ce1ab3214cdbc33cb05d40c.png" alt="\lambda_{ij}"/> is
+the measured calibration wavelength of a given pixel (thus <img class="math" src="_images/math/8a87f04e7d7cca18343c084cceca5237fae62491.png" alt="\theta"/> is a function of the pixel).</p>
+<p>Also note that we divide the sinc width (<img class="math" src="_images/math/0ba5a12df77ecc7e17158f419025b5acca993472.png" alt="p_2"/>) by <img class="math" src="_images/math/9cc8517129c87252edd7fe2e4532af9dcf7a54d9.png" alt="\pi"/> based on our definition of the sinc width above.</p>
+<p>If you are interested in the broadening,
+we strongly suggest you use the <em>sincgauss</em> function :)</p>
+</section>
+</section>
+<section id="transmission">
+<h3>Transmission<a class="headerlink" href="#transmission" title="Link to this heading"></a></h3>
+<p>We take into account the transmission of the SITTELLE filters (SN1, SN2, and SN3).
+We take the true transmission as the mean of the transmission at different filter angles;
+the raw data can be found [here](<a class="reference external" href="https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php">https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php</a>).
+The transmission is then applied to the spectrum in the following manner:
+if the transmission is above 0.5, then we multiply the spectrum by the transmission percentage. Otherwise, we set it to zero.
+Note that we calculate the noise <strong>before</strong> applying the transmission.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to LUCI’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="uncertainties.html" class="btn btn-neutral float-right" title="Uncertainties" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Carter L. Rhea.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

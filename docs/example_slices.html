@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fit Pixel &mdash; LUCI v.1.0.0 documentation</title>
+  <title>Extract Slices &mdash; LUCI v.1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -22,8 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Example Synthetic Spectrum" href="example_synthetic_spectrum.html" />
-    <link rel="prev" title="Example SNR Calculation" href="example_fit_snr.html" /> 
+    <link rel="next" title="Fitting Algorithm" href="fits.html" />
+    <link rel="prev" title="Example Freeze" href="example_freeze.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -64,13 +64,13 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Fit Pixel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
-<li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Extract Slices</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul>
@@ -99,9 +99,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Fit Pixel</li>
+      <li class="breadcrumb-item active">Extract Slices</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/example_pixel.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/example_slices.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -109,73 +109,97 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="fit-pixel">
-<span id="example-basic"></span><h1>Fit Pixel<a class="headerlink" href="#fit-pixel" title="Link to this heading"></a></h1>
-<p>In this notebook we will fit a single pixel in a data cube for M33 Field 7 SN3.</p>
+  <section id="extract-slices">
+<span id="example-slices"></span><h1>Extract Slices<a class="headerlink" href="#extract-slices" title="Link to this heading"></a></h1>
+<p>In this notebook, we will look at how you can use <cite>LUCI</cite> to extract the channels from your datacube corresponding to a certain emission line! This can be useful if you simply want to see what a channel in the cube looks like.</p>
+<p>We currently allow a user to extract the following lines:</p>
+<p>‘Halpha’: 656.280,
+‘NII6583’: 658.341,
+‘NII6548’: 654.803,
+‘SII6716’: 671.647,
+‘SII6731’: 673.085,
+‘OII3726’: 372.603,
+‘OII3729’: 372.882,
+‘OIII4959’: 495.891,
+‘OIII5007’: 500.684,
+‘Hbeta’: 486.133,
+‘OH’: 649.873,
+‘HalphaC4’: 807.88068,
+‘NII6583C4’: 810.417771,
+‘NII6548C4’: 806.062493,
+‘OIII5007C2’: 616.342,
+‘OIII4959C2’: 610.441821,
+‘HbetaC2’: 598.429723,
+‘OII3729C1’: 459.017742,
+‘OII3726C1’: 458.674293,
+‘FeXIV5303’: 530.286,
+‘NI5200’: 520.026,
+‘FeVII5158’: 515.89,
+‘HeII5411’: 541.152</p>
+<p>You can download the example data using the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>-O<span class="w"> </span>NGC6946_SN3.hdf5<span class="w"> </span>https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHT/2307000z.hdf5?RUNID<span class="o">=</span>xc9le6u8llecp7fp
+</pre></div>
+</div>
+<p>This will download the hdf5 file for SN3 (R~400) NGC 6946. The file is just under 900 Mb,
+so the download may take a while.
+Note you may need to change the name of the HDF5 file to <cite>NGC6946_SN3.merged.cm1.1.0</cite>.</p>
+<p>The region files used in the examples can be
+found in the ‘Examples/regions’ folder. To run the examples, place these region files in the same
+directory as the hdf5 file.</p>
 <p>We should start by import the appropriate modules.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-
+<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="kn">import</span> <span class="n">fits</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
 <span class="c1"># Get location of LUCI</span>
 <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">pardir</span><span class="p">)</span>
+<span class="n">Luci_path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>  <span class="c1"># add LUCI to the available paths</span>
 
 <span class="kn">from</span> <span class="nn">LuciBase</span> <span class="kn">import</span> <span class="n">Luci</span>
 <span class="kn">import</span> <span class="nn">LUCI.LuciPlotting</span> <span class="k">as</span> <span class="nn">lplt</span>
+
 <span class="o">%</span><span class="n">config</span> <span class="n">Completer</span><span class="o">.</span><span class="n">use_jedi</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># enable autocompletion when typing in Jupyter notebooks</span>
 </pre></div>
 </div>
 <p>For example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize paths and set parameters</span>
-<span class="n">Luci_path</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span>
-<span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/export/home/carterrhea/M33&#39;</span>  <span class="c1"># Path to data cube</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#Set Parameters</span>
+<span class="c1"># Using Machine Learning Algorithm for Initial Guess</span>
+<span class="c1"># Initialize paths and set parameters</span>
+<span class="n">cube_dir</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s1">&#39;/Data/ExampleData/&#39;</span>  <span class="c1"># Path to data cube</span>
 <span class="c1">#cube_dir = &#39;/mnt/carterrhea/carterrhea/NGC628&#39;  # Full path to data cube (example 2)</span>
-<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;M33_SN3&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
-<span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;M33&#39;</span>
+<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;NGC628_SN3&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
+<span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;NGC628&#39;</span>
 <span class="n">filter_name</span> <span class="o">=</span> <span class="s1">&#39;SN3&#39;</span>
-<span class="n">redshift</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.0006</span>  <span class="c1"># Redshift of object</span>
-<span class="n">resolution</span> <span class="o">=</span> <span class="mi">5000</span>
+<span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.000133</span>  <span class="c1"># Redshift of object</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># The actual resolution is 400, but we don&#39;t have ML algorithms for that resolution, so use 1000</span>
 </pre></div>
 </div>
 <p>With these parameters set, we can invoke <cite>LUCI</cite> with the following command:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span> <span class="o">=</span> <span class="n">Luci</span><span class="p">(</span><span class="n">luci_path</span><span class="p">,</span> <span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">cube_name</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">object_name</span><span class="p">,</span> <span class="n">redshift</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">ML_bool</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Now we should get our background region.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># We use &#39;mean = True&#39; to take the mean of the emission in the region instead of the sum</span>
-<span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum_region</span><span class="p">(</span><span class="n">Luci_path</span><span class="o">+</span><span class="s1">&#39;Examples/regions/bkg_M33.reg&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">lplt</span><span class="o">.</span><span class="n">plot_spectrum</span><span class="p">(</span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span><span class="p">)</span>
+<p>To extract the slice, we simply need to call <cite>cube.slicing()</cite> and provide the appropriate lines. Let’s just extract H$alpha$. A special thanks to Louis-Simon Guité for this implementation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span><span class="o">.</span><span class="n">slicing</span><span class="p">(</span><span class="n">lines</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>We will now fit a single pixel and take a look at the fit. This fit commands has all the same options as all the other commands except for binning :)</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">axis</span><span class="p">,</span> <span class="n">sky</span><span class="p">,</span> <span class="n">fit_dict</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">fit_pixel</span><span class="p">(</span>
-    <span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">],</span>  <span class="c1"># lines</span>
-    <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>   <span class="c1"># fit function</span>
-    <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># velocity relationship</span>
-    <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># sigma relationship</span>
-    <span class="mi">1265</span><span class="p">,</span> <span class="mi">1789</span><span class="p">,</span>    <span class="c1"># x &amp; y coordinate</span>
-    <span class="n">binning</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># Set binnning around coordinate -- this will just fit the one pixel</span>
-    <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span>  <span class="c1"># Set background</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p>We can plot the fit with the following:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_fit</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">sky</span><span class="p">,</span> <span class="n">fit_dict</span><span class="p">[</span><span class="s1">&#39;fit_vector&#39;</span><span class="p">],</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;nm&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">650</span><span class="p">,</span> <span class="mi">670</span><span class="p">)</span>
-</pre></div>
-</div>
-<img alt="Pixel Fit Example" src="_images/Pixel_Fit.png" />
+<p>This will give us the following output:</p>
+<p><a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a></p>
+<p>Wavelength of the first slice: 661.25 nm</p>
+<p><a href="#id5"><span class="problematic" id="id6">``</span></a><a href="#id7"><span class="problematic" id="id8">`</span></a></p>
+<p>In the cube directory, under the <cite>Luci_outputs</cite> subfolder, we have now created a new folder called <cite>Slice_Halpha</cite> that contains the fits files for each slice and the summed slice. Let’s check out the summed slice!</p>
+<img alt="Mask" src="_images/Slice_Halpha.png" />
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="example_fit_snr.html" class="btn btn-neutral float-left" title="Example SNR Calculation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="example_synthetic_spectrum.html" class="btn btn-neutral float-right" title="Example Synthetic Spectrum" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="example_freeze.html" class="btn btn-neutral float-left" title="Example Freeze" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fits.html" class="btn btn-neutral float-right" title="Fitting Algorithm" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Python Module Index &mdash; LUCI v.1.0.0 documentation</title>
+  <title>FAQ and Errors &mdash; LUCI v.1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -21,9 +22,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
- 
-
-
+    <link rel="prev" title="Bayesian Methods" href="bayes.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -81,8 +80,20 @@
 <li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">FAQ:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">FAQ and Errors</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#faq">FAQ:</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-is-the-interferometric-angle-taken-into-account">How is the interferometric angle taken into account?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-the-broadening-parameter-in-the-sinc-function">What is the broadening parameter in the sinc function?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#are-other-filters-available">Are other filters available?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#common-errors">Common Errors</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#valueerror-numpy-ndarray-size-changed-may-indicate-binary-incompatibility-expected-88-from-c-header-got-80-from-pyobject">ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -99,8 +110,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Python Module Index</li>
+      <li class="breadcrumb-item active">FAQ and Errors</li>
       <li class="wy-breadcrumbs-aside">
+            <a href="_sources/FAQ.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -108,54 +120,55 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-
-   <h1>Python Module Index</h1>
-
-   <div class="modindex-jumpbox">
-   <a href="#cap-l"><strong>l</strong></a>
-   </div>
-
-   <table class="indextable modindextable">
-     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
-     <tr class="cap" id="cap-l"><td></td><td>
-       <strong>l</strong></td><td></td></tr>
-     <tr>
-       <td><img src="_static/minus.png" class="toggler"
-              id="toggle-1" style="display: none" alt="-" /></td>
-       <td>
-       <code class="xref">LUCI</code></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="bayes.html#module-LUCI.LuciBayesian"><code class="xref">LUCI.LuciBayesian</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="fits.html#module-LUCI.LuciFit"><code class="xref">LUCI.LuciFit</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="params.html#module-LUCI.LuciFitParameters"><code class="xref">LUCI.LuciFitParameters</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="plot.html#module-LUCI.LuciPlotting"><code class="xref">LUCI.LuciPlotting</code></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="luci.html#module-LuciBase"><code class="xref">LuciBase</code></a></td><td>
-       <em></em></td></tr>
-   </table>
+  <section id="faq-and-errors">
+<span id="luci"></span><h1>FAQ and Errors<a class="headerlink" href="#faq-and-errors" title="Link to this heading"></a></h1>
+<p>This section contains a discussion on frequently asked questions and errors that sometimes pop up.</p>
+<div class="toctree-wrapper compound">
+</div>
+<section id="faq">
+<h2>FAQ:<a class="headerlink" href="#faq" title="Link to this heading"></a></h2>
+<section id="how-is-the-interferometric-angle-taken-into-account">
+<h3>How is the interferometric angle taken into account?<a class="headerlink" href="#how-is-the-interferometric-angle-taken-into-account" title="Link to this heading"></a></h3>
+<p>We calculate the interferometric angle to calculate a correction factor <cite>(1/cos(theta))</cite> which is applied to the broadening.
+We do not apply this correction factor to the spectral axis of each spaxel since this
+is already done in ORB – therefore, the data product downloaded from the CADC already has this
+correction applied! Normally, we would need to calculate the wavelength axis of each spaxel individually
+and then interpolate it (carefully!!!) onto a standard axis.</p>
+</section>
+<section id="what-is-the-broadening-parameter-in-the-sinc-function">
+<h3>What is the broadening parameter in the sinc function?<a class="headerlink" href="#what-is-the-broadening-parameter-in-the-sinc-function" title="Link to this heading"></a></h3>
+<p>The broadening parameter for the sinc function is <strong>SET</strong> to <img class="math" src="_images/math/493f5592f8d547a2c1ebb6275f8990d0961ddd3b.png" alt="1/(2*MPD)"/>.
+We can adopt the following definition: <img class="math" src="_images/math/a23cbb309bf3f6c43d9219bbe6d83177264f18ce.png" alt="MPD = \cos{\theta}\delta_x N"/> where <img class="math" src="_images/math/06a6ab4f18196f743558d92f701b0dac2211eb37.png" alt="\cos{\theta}"/>
+is the cosine angle defined as <img class="math" src="_images/math/013521e12f828ad7c4f7b905cd3f3f7268d2ad4c.png" alt="\cos{\theta} = \frac{\lambda_{ref}}{\lambda_{ij}}"/>.
+<img class="math" src="_images/math/2b899994ef65e5177b3c166379e701041dbf2dcb.png" alt="\lambda_{ref}"/> is the wavelength of the calibration laser and <img class="math" src="_images/math/4ac0de4c00ba1f6a2ce1ab3214cdbc33cb05d40c.png" alt="\lambda_{ij}"/> is
+the measured calibration wavelength of a given pixel (thus <img class="math" src="_images/math/8a87f04e7d7cca18343c084cceca5237fae62491.png" alt="\theta"/> is a function of the pixel).</p>
+<p>If you want to obtain a broadening parameter we strongly suggest using the <strong>sincgauss</strong> function!</p>
+</section>
+<section id="are-other-filters-available">
+<h3>Are other filters available?<a class="headerlink" href="#are-other-filters-available" title="Link to this heading"></a></h3>
+<p>YES! However, for the C1, C2, and C4 filters, we can only handle the case of redshift ~ 0.25 objects.
+Please note this is the intended science case for these filters.</p>
+</section>
+</section>
+<section id="common-errors">
+<h2>Common Errors<a class="headerlink" href="#common-errors" title="Link to this heading"></a></h2>
+<section id="valueerror-numpy-ndarray-size-changed-may-indicate-binary-incompatibility-expected-88-from-c-header-got-80-from-pyobject">
+<h3>ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject<a class="headerlink" href="#valueerror-numpy-ndarray-size-changed-may-indicate-binary-incompatibility-expected-88-from-c-header-got-80-from-pyobject" title="Link to this heading"></a></h3>
+<p>This error occasionally comes up when you have newly installed the luci conda environment and try to run
+<cite>extract_spectrum_region</cite>. This happens because your numpy version is disscordant with the
+environment. This can be simply remedied by reinstalling numpy.</p>
+<p><cite>pip uninstall numpy</cite></p>
+<p><cite>pip install numpy</cite></p>
+</section>
+</section>
+</section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bayes.html" class="btn btn-neutral float-left" title="Bayesian Methods" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
 
   <hr/>
 

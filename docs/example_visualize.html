@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Python Module Index &mdash; LUCI v.1.0.0 documentation</title>
+  <title>How to use LUCI Visualize &mdash; LUCI v.1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -21,9 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
- 
-
-
+    <link rel="next" title="WVT Example" href="example_wvt.html" />
+    <link rel="prev" title="Fitting Double Components" href="example_double_fit.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -55,7 +55,7 @@
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
@@ -67,7 +67,11 @@
 <li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How to use LUCI Visualize</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#inputs">Inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visualize">Visualize!</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
@@ -99,8 +103,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Python Module Index</li>
+      <li class="breadcrumb-item active">How to use LUCI Visualize</li>
       <li class="wy-breadcrumbs-aside">
+            <a href="_sources/example_visualize.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -108,54 +113,55 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-
-   <h1>Python Module Index</h1>
-
-   <div class="modindex-jumpbox">
-   <a href="#cap-l"><strong>l</strong></a>
-   </div>
-
-   <table class="indextable modindextable">
-     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
-     <tr class="cap" id="cap-l"><td></td><td>
-       <strong>l</strong></td><td></td></tr>
-     <tr>
-       <td><img src="_static/minus.png" class="toggler"
-              id="toggle-1" style="display: none" alt="-" /></td>
-       <td>
-       <code class="xref">LUCI</code></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="bayes.html#module-LUCI.LuciBayesian"><code class="xref">LUCI.LuciBayesian</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="fits.html#module-LUCI.LuciFit"><code class="xref">LUCI.LuciFit</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="params.html#module-LUCI.LuciFitParameters"><code class="xref">LUCI.LuciFitParameters</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="plot.html#module-LUCI.LuciPlotting"><code class="xref">LUCI.LuciPlotting</code></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="luci.html#module-LuciBase"><code class="xref">LuciBase</code></a></td><td>
-       <em></em></td></tr>
-   </table>
+  <section id="how-to-use-luci-visualize">
+<span id="example-visualize"></span><h1>How to use LUCI Visualize<a class="headerlink" href="#how-to-use-luci-visualize" title="Link to this heading"></a></h1>
+<p>In this example we will go through how to use LUCI’s built in visualization tool. This example can be
+found as a python file in “LUCI/Examples/viewer.py”.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span><span class="p">)</span>  <span class="c1"># Location of Luci</span>
+<span class="kn">from</span> <span class="nn">LuciBase</span> <span class="kn">import</span> <span class="n">Luci</span>
+</pre></div>
+</div>
+<section id="inputs">
+<h2>Inputs<a class="headerlink" href="#inputs" title="Link to this heading"></a></h2>
+<p>We simply need to load our LUCI cube like usual :) So we start by defining the path, the name of the cube,
+the name of the object, the resolution (which isn’t actually used here), and the redshift.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Luci_path</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span>
+<span class="n">cube_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/Luci_test&#39;</span>  <span class="c1"># Path to data cube</span>
+<span class="n">cube_name</span> <span class="o">=</span> <span class="s1">&#39;NGC6946_SN3&#39;</span>  <span class="c1"># don&#39;t add .hdf5 extension</span>
+<span class="n">object_name</span> <span class="o">=</span> <span class="s1">&#39;NGC6946&#39;</span>
+<span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.00068</span>  <span class="c1"># Redshift</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="mi">5000</span>
+</pre></div>
+</div>
+</section>
+<section id="visualize">
+<h2>Visualize!<a class="headerlink" href="#visualize" title="Link to this heading"></a></h2>
+<p>We can now read in the cube and visualize the cube!</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span> <span class="o">=</span> <span class="n">Luci</span><span class="p">(</span><span class="n">Luci_path</span><span class="p">,</span> <span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">cube_name</span><span class="p">,</span> <span class="n">cube_dir</span><span class="p">,</span> <span class="n">object_name</span><span class="p">,</span> <span class="n">redshift</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">mdn</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">cube</span><span class="o">.</span><span class="n">visualize</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>If you use our normal example, you’ll see something like this.</p>
+<img alt="Visualization Empty" src="_images/Visualize1.png" />
+<p>On the top panel we have our deep image scaled logarithmically. Once we select a region, the spectrum will be
+displayed in the bottom panel.</p>
+<p>By clicking on a pixel you can plot the spectrum as such:</p>
+<img alt="Visualization Single" src="_images/Visualize2.png" />
+<p>Or you can click and drag to create a rectangular region.</p>
+<img alt="Visualization Rectangle" src="_images/Visualize3.png" />
+</section>
+</section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="example_double_fit.html" class="btn btn-neutral float-left" title="Fitting Double Components" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="example_wvt.html" class="btn btn-neutral float-right" title="WVT Example" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
