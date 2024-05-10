@@ -78,15 +78,7 @@
 <li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
 <li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Ploting Functions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-LUCI.LuciPlotting">Plot Functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.check_units"><code class="docutils literal notranslate"><span class="pre">check_units()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.plot_fit"><code class="docutils literal notranslate"><span class="pre">plot_fit()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.plot_map"><code class="docutils literal notranslate"><span class="pre">plot_map()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.plot_map_no_coords"><code class="docutils literal notranslate"><span class="pre">plot_map_no_coords()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.plot_spectrum"><code class="docutils literal notranslate"><span class="pre">plot_spectrum()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#LUCI.LuciPlotting.set_style"><code class="docutils literal notranslate"><span class="pre">set_style()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#plot-functions">Plot Functions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
@@ -125,112 +117,8 @@
 <p>Description of plotting functions</p>
 <div class="toctree-wrapper compound">
 </div>
-<section id="module-LUCI.LuciPlotting">
-<span id="plot-functions"></span><h2>Plot Functions<a class="headerlink" href="#module-LUCI.LuciPlotting" title="Link to this heading"></a></h2>
-<p>Collection of plotting functions</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="LUCI.LuciPlotting.check_units">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">check_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.check_units" title="Link to this definition"></a></dt>
-<dd><p>This function checks to see that the unit provided is in the available options
-:param unit: User supplied unit</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Nothing if the user provides an appropriate unit
-Else it will throw an error</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_fit">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cm-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_fit" title="Link to this definition"></a></dt>
-<dd><p>Plot Spectrum and fit with Luci format. If output name is supplied, the plot will be saved
-:param axis: X axis of spectrum (1d numpy array)
-:param spectrum: Y axis of spectrum (1d numpy array)
-:param fit: Fit vector (1d numpy array)
-:param ax: Current axis (defaults to None)
-:param units: Wavelength units (e.x. ‘cm’)
-:param output_name: Path to output file (default None)
-:param fig_size: Size of figure (default (10,8))
-:param dark: Boolean to turn on dark mode (default False)</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_map">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_map" title="Link to this definition"></a></dt>
-<dd><p>Function to plot fit map. The three options are ‘flux’, ‘velocity’, and ‘broadening’.
-The flux map is automatically scaled by log10. The velocity and broadening are not.
-The plot is saved here: <cite>output_dir+’/’+quantity_name+’_map.png’</cite></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>quantity_map</strong> – 2d numpy array from fit</p></li>
-<li><p><strong>quantity_name</strong> – Name of quantity (e.x. ‘flux’)</p></li>
-<li><p><strong>output_dir</strong> – Path (absolute or partial) to output directory</p></li>
-<li><p><strong>header</strong> – Header information for plot</p></li>
-<li><p><strong>clims</strong> – List containing lower and upper limits of colorbar (e.x. [-500, 500])</p></li>
-<li><p><strong>fig_size</strong> – Size of figure (default (10,8))</p></li>
-<li><p><strong>dark</strong> – Boolean to turn on dark mode (default False)</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<p>We can plot the flux assuming a min and max value of 1e-18 and 1e-16.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">cube_dir</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="n">filter_name</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">18</span><span class="p">,</span> <span class="o">-</span><span class="mi">16</span><span class="p">])</span>
-</pre></div>
-</div>
-<p>Similarly, we can plot the velocity and broadening:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">vel_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;veloity&#39;</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">cube_dir</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="n">filter_name</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="o">-</span><span class="mi">200</span><span class="p">])</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">broad_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;broadening&#39;</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">cube_dir</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">cube</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="n">filter_name</span><span class="p">,</span> <span class="n">clims</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">])</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_map_no_coords">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_map_no_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_map_no_coords" title="Link to this definition"></a></dt>
-<dd><p>Function to plot fit map. The four options are ‘flux’, ‘velocity’, ‘broadening’, and ‘zscore’.
-The flux map is automatically scaled by log10. The velocity and broadening are not.
-The plot is saved here: <cite>output_dir+’/’+quantity_name+’_map.png’</cite></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>quantity_map</strong> – 2d numpy array from fit</p></li>
-<li><p><strong>quantity_name</strong> – Name of quantity (e.x. ‘flux’)</p></li>
-<li><p><strong>output_dir</strong> – Path (absolute or partial) to output directory</p></li>
-<li><p><strong>clims</strong> – List containing lower and upper limits of colorbar (e.x. [-500, 500])</p></li>
-<li><p><strong>fig_size</strong> – Size of figure (default (10,8))</p></li>
-<li><p><strong>dark</strong> – Boolean to turn on dark mode (default False)</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<p>We can plot the flux.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lplt</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;flux&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="LUCI.LuciPlotting.plot_spectrum">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">plot_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cm-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.plot_spectrum" title="Link to this definition"></a></dt>
-<dd><p>Plot Spectrum with Luci format. If output name is supplied, the plot will be saved
-:param axis: X axis of spectrum (1d numpy array)
-:param spectrum: Y axis of spectrum (1d numpy array)
-:param units: Wavelength units (e.x. ‘cm’)
-:param output_name: Path to output file (default None)
-:param fig_size: Size of figure (default (10,8))
-:param dark: Boolean to turn on dark mode (default False)</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="LUCI.LuciPlotting.set_style">
-<span class="sig-prename descclassname"><span class="pre">LUCI.LuciPlotting.</span></span><span class="sig-name descname"><span class="pre">set_style</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dark</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LUCI.LuciPlotting.set_style" title="Link to this definition"></a></dt>
-<dd><p>Set style as light or dark</p>
-</dd></dl>
-
+<section id="plot-functions">
+<h2>Plot Functions<a class="headerlink" href="#plot-functions" title="Link to this heading"></a></h2>
 </section>
 </section>
 

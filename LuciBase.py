@@ -1298,7 +1298,7 @@ class Luci():
         if self.cube_binned:
             del self.cube_binned
 
-    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL):
+    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL, n_threads):
         """
         Written by Benjamin Vigneron.
 
@@ -1315,11 +1315,14 @@ class Luci():
             stn_target: Signal-to-Noise target value for the Voronoi bins.
             roundness_crit: Roundness criteria for the pixel accretion into bins
             ToL: Convergence tolerance parameter for the SNR of the bins
+            n_threads: Number of threads to use
+            
+            
         """
         print("#----------------WVT Algorithm----------------#")
         print("#----------------Creating SNR Map--------------#")
         Pixels = []
-        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1)
+        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=n_threads)
         print("#----------------Algorithm Part 1----------------#")
         start = time.time()
         SNR_map = fits.open(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits')[0].data
@@ -1485,7 +1488,7 @@ class Luci():
             Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).
         """
         # Call create wvt function to create the WVT map and numpy files corresponding to each bin
-        self.create_wvt(x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL)
+        self.create_wvt(x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL, n_threads)
         print("#----------------WVT Fitting--------------#")
         # Fit the bins
         velocities_fits, broadenings_fits, flux_fits, chi2_fits, header = self.fit_wvt(lines,

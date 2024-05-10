@@ -141,21 +141,22 @@
 </pre></div>
 </div>
 <p>And extract a background region.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum_region</span><span class="p">(</span><span class="n">cube_dir</span><span class="o">+</span><span class="s1">&#39;/bkg.reg&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># We use mean=True to take the mean of the emission in the region instead of the sum</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bkg_axis</span><span class="p">,</span> <span class="n">bkg_sky</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">extract_spectrum_region</span><span class="p">(</span><span class="n">Luci_path</span><span class="o">+</span><span class="s1">&#39;Examples/regions/bkg_M33.reg&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># We use mean=True to take the mean of the emission in the region instead of the sum</span>
 </pre></div>
 </div>
 <p>Now we can call the wvt_fit_region function that will create the weighted Voronoï region and fit the bins to produce the maps we need.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span><span class="o">.</span><span class="n">wvt_fit_region</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">850</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span> <span class="mi">850</span><span class="p">,</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span><span class="o">.</span><span class="n">wvt_fit_region</span><span class="p">(</span>
+              <span class="mi">1200</span><span class="p">,</span> <span class="mi">1350</span><span class="p">,</span>    <span class="c1"># x bounds</span>
+              <span class="mi">1700</span><span class="p">,</span> <span class="mi">1950</span><span class="p">,</span>    <span class="c1"># y bounds</span>
               <span class="p">[</span><span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">],</span>
               <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
               <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
               <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
-              <span class="n">stn_target</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+              <span class="n">stn_target</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
               <span class="n">bkg</span><span class="o">=</span><span class="n">bkg_sky</span><span class="p">,</span>
               <span class="n">bayes_bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
               <span class="n">uncertainty_bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-              <span class="n">mean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-              <span class="n">n_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+              <span class="n">n_threads</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>As we can see there are many arguments in this function. Let’s go through them one by one to make sure we use them correctly.</p>
@@ -169,55 +170,51 @@
 <p>The console will output something like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#----------------WVT Algorithm----------------#</span>
 <span class="c1">#----------------Creating SNR Map--------------#</span>
-<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████████████</span><span class="o">|</span> <span class="mi">50</span><span class="o">/</span><span class="mi">50</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span> <span class="mf">27.58</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+<span class="mi">100</span><span class="o">%|</span><span class="err">█████████████████████████████████████████</span><span class="o">|</span> <span class="mi">250</span><span class="o">/</span><span class="mi">250</span> <span class="p">[</span><span class="mi">03</span><span class="p">:</span><span class="mi">37</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span>  <span class="mf">1.15</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
 <span class="c1">#----------------Algorithm Part 1----------------#</span>
 <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">carterrhea</span><span class="o">/</span><span class="n">Documents</span><span class="o">/</span><span class="n">LUCI</span><span class="o">/</span><span class="n">Examples</span>
-<span class="n">We</span> <span class="n">have</span> <span class="mi">2500</span> <span class="n">Pixels</span><span class="err">!</span> <span class="p">:)</span>
+<span class="n">We</span> <span class="n">have</span> <span class="mi">37500</span> <span class="n">Pixels</span><span class="err">!</span> <span class="p">:)</span>
 <span class="n">Running</span> <span class="n">Nearest</span> <span class="n">Neighbor</span> <span class="n">Algorithm</span>
 <span class="n">Finished</span> <span class="n">Nearest</span> <span class="n">Neighbor</span> <span class="n">Algorithm</span>
 <span class="n">Starting</span> <span class="n">Bin</span> <span class="n">Accretion</span> <span class="n">Algorithm</span>
-<span class="n">We</span> <span class="n">have</span> <span class="mi">2500</span> <span class="n">bins</span><span class="o">.</span>
-<span class="n">We</span> <span class="n">have</span> <span class="mi">0</span> <span class="n">unassigned</span> <span class="n">pixels</span><span class="o">.</span>
-<span class="n">Reassigning</span> <span class="n">unsuccessful</span> <span class="n">bins</span>
 <span class="n">Completed</span> <span class="n">Bin</span> <span class="n">Accretion</span> <span class="n">Algorithm</span>
-<span class="n">There</span> <span class="n">are</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">85</span> <span class="n">bins</span><span class="err">!</span>
+<span class="n">There</span> <span class="n">are</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">16790</span> <span class="n">bins</span><span class="err">!</span>
+<span class="n">The</span> <span class="n">first</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">algorithm</span> <span class="n">took</span> <span class="mi">00</span><span class="p">:</span><span class="mi">08</span><span class="p">:</span><span class="mf">37.</span>
 <span class="c1">#----------------Algorithm Part 2----------------#</span>
 <span class="n">Beginning</span> <span class="n">WVT</span>
 <span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">1</span>
-<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">2</span>
-<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">3</span>
-<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">4</span>
-<span class="n">We</span> <span class="n">are</span> <span class="n">on</span> <span class="n">step</span> <span class="mi">5</span>
-<span class="n">Stopped</span> <span class="n">WVT</span> <span class="n">algorithm</span> <span class="n">after</span> <span class="mi">5</span> <span class="n">steps</span><span class="o">.</span>
-<span class="n">There</span> <span class="n">are</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">85</span> <span class="n">bins</span><span class="err">!</span>
+<span class="n">Completed</span> <span class="n">WVT</span> <span class="ow">in</span> <span class="mi">1</span> <span class="n">step</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="err">!</span>
+<span class="n">There</span> <span class="n">are</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">16790</span> <span class="n">bins</span><span class="err">!</span>
 <span class="c1">#----------------Algorithm Complete--------------#</span>
 <span class="c1">#----------------Bin Mapping--------------#</span>
 <span class="c1">#----------------Numpy Bin Mapping--------------#</span>
-<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████████████</span><span class="o">|</span> <span class="mi">84</span><span class="o">/</span><span class="mi">84</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span> <span class="mf">46.50</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+<span class="mi">100</span><span class="o">%|</span><span class="err">████████████████████████████████████</span><span class="o">|</span> <span class="mi">16789</span><span class="o">/</span><span class="mi">16789</span> <span class="p">[</span><span class="mi">01</span><span class="p">:</span><span class="mi">02</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span> <span class="mf">268.26</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
 <span class="c1">#----------------WVT Fitting--------------#</span>
-<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████████████</span><span class="o">|</span> <span class="mi">84</span><span class="o">/</span><span class="mi">84</span> <span class="p">[</span><span class="mi">01</span><span class="p">:</span><span class="mi">01</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span>  <span class="mf">1.36</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+<span class="mi">100</span><span class="o">%|</span><span class="err">███████████████████████████████████</span><span class="o">|</span> <span class="mi">16789</span><span class="o">/</span><span class="mi">16789</span> <span class="p">[</span><span class="mi">9</span><span class="p">:</span><span class="mi">29</span><span class="p">:</span><span class="mi">06</span><span class="o">&lt;</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span>  <span class="mf">2.03</span><span class="n">s</span><span class="o">/</span><span class="n">it</span><span class="p">]</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">rcdefaults</span><span class="p">()</span>
 
-<span class="n">flux_map</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;/mnt/carterrhea/carterrhea/M33/Luci_outputs/Fluxes/M33_Field7_wvt_1_Halpha_Flux.fits&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">T</span>
-<span class="n">header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;/mnt/carterrhea/carterrhea/M33/Luci_outputs/M33_Field7_deep.fits&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+<span class="n">flux_map</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;/export/home/carterrhea/M33/Luci_outputs/Fluxes/M33_wvt_20_1_Halpha_Flux.fits&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">T</span>
+<span class="n">header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;/export/home/carterrhea/M33/Luci_outputs/M33_deep.fits&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
 <span class="n">wcs</span> <span class="o">=</span> <span class="n">WCS</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
 <span class="n">cmap</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">CMRmap</span>
 <span class="n">cmap</span><span class="o">.</span><span class="n">set_bad</span><span class="p">(</span><span class="s1">&#39;black&#39;</span><span class="p">,</span><span class="mf">1.</span><span class="p">)</span>
 
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="n">wcs</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[</span><span class="mi">800</span><span class="p">:</span><span class="mi">850</span><span class="p">,</span><span class="mi">800</span><span class="p">:</span><span class="mi">850</span><span class="p">],</span> <span class="n">norm</span> <span class="o">=</span> <span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mf">1e-18</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">5.01837e-15</span><span class="p">),</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">flux_map</span><span class="p">[</span><span class="mi">1200</span><span class="p">:</span> <span class="mi">1350</span><span class="p">,</span> <span class="mi">1700</span><span class="p">:</span> <span class="mi">1950</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">norm</span> <span class="o">=</span> <span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mf">1e-17</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">2e-15</span><span class="p">),</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;font.weight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bold&quot;</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.labelweight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bold&quot;</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;RA&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Dec&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
 <span class="n">cbar</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
 <span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;/home/carterrhea/Downloads/WVT_Example.png&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="WVT Example" src="WVT_Example.png" />
+<img alt="WVT Example" src="_images/WVT_Example.png" />
+<p>Since the SNR in around the nebula is low we have very large bins. Comparitively, the bins in the central regions are quite small.</p>
 </section>
 
 

@@ -48,24 +48,25 @@ And extract a background region.
 
 .. code-block:: python
 
-  bkg_axis, bkg_sky = cube.extract_spectrum_region(cube_dir+'/bkg.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
+ bkg_axis, bkg_sky = cube.extract_spectrum_region(Luci_path+'Examples/regions/bkg_M33.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
 
 Now we can call the wvt_fit_region function that will create the weighted Voronoï region and fit the bins to produce the maps we need.
 
 
 .. code-block:: python
 
-  cube.wvt_fit_region(800, 850, 800, 850,
-                ['NII6548', 'Halpha', 'NII6583'],
+  cube.wvt_fit_region(
+                1200, 1350,    # x bounds
+                1700, 1950,    # y bounds
+                ['NII6548', 'Halpha', 'NII6583'], 
                 'sincgauss',
                 [1,1,1],
                 [1,1,1],
-                stn_target = 30,
+                stn_target = 20,
                 bkg=bkg_sky,
-                bayes_bool=False,
-                uncertainty_bool=False,
-                mean=True,
-                n_threads=4)
+                bayes_bool=False, 
+                uncertainty_bool=False, 
+                n_threads=20)
 
 
 As we can see there are many arguments in this function. Let's go through them one by one to make sure we use them correctly.
@@ -92,33 +93,27 @@ The console will output something like this:
 
     #----------------WVT Algorithm----------------#
     #----------------Creating SNR Map--------------#
-    100%|███████████████████████████████████████████| 50/50 [00:01<00:00, 27.58it/s]
+    100%|█████████████████████████████████████████| 250/250 [03:37<00:00,  1.15it/s]
     #----------------Algorithm Part 1----------------#
     /home/carterrhea/Documents/LUCI/Examples
-    We have 2500 Pixels! :)
+    We have 37500 Pixels! :)
     Running Nearest Neighbor Algorithm
     Finished Nearest Neighbor Algorithm
     Starting Bin Accretion Algorithm
-    We have 2500 bins.
-    We have 0 unassigned pixels.
-    Reassigning unsuccessful bins
     Completed Bin Accretion Algorithm
-    There are a total of 85 bins!
+    There are a total of 16790 bins!
+    The first part of the algorithm took 00:08:37.
     #----------------Algorithm Part 2----------------#
     Beginning WVT
     We are on step 1
-    We are on step 2
-    We are on step 3
-    We are on step 4
-    We are on step 5
-    Stopped WVT algorithm after 5 steps.
-    There are a total of 85 bins!
+    Completed WVT in 1 step(s)!
+    There are a total of 16790 bins!
     #----------------Algorithm Complete--------------#
     #----------------Bin Mapping--------------#
     #----------------Numpy Bin Mapping--------------#
-    100%|███████████████████████████████████████████| 84/84 [00:01<00:00, 46.50it/s]
+    100%|████████████████████████████████████| 16789/16789 [01:02<00:00, 268.26it/s]
     #----------------WVT Fitting--------------#
-    100%|███████████████████████████████████████████| 84/84 [01:01<00:00,  1.36it/s]
+    100%|███████████████████████████████████| 16789/16789 [9:29:06<00:00,  2.03s/it]
 
 
 
@@ -126,23 +121,27 @@ The console will output something like this:
 
     plt.rcdefaults()
 
-    flux_map = fits.open('/mnt/carterrhea/carterrhea/M33/Luci_outputs/Fluxes/M33_Field7_wvt_1_Halpha_Flux.fits')[0].data.T
-    header = fits.open('/mnt/carterrhea/carterrhea/M33/Luci_outputs/M33_Field7_deep.fits')[0].header
+    flux_map = fits.open('/export/home/carterrhea/M33/Luci_outputs/Fluxes/M33_wvt_20_1_Halpha_Flux.fits')[0].data.T
+    header = fits.open('/export/home/carterrhea/M33/Luci_outputs/M33_deep.fits')[0].header
     wcs = WCS(header)
     cmap = cm.CMRmap
     cmap.set_bad('black',1.)
 
-    fig = plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(8, 8))
     ax = plt.subplot(projection=wcs)
-    plt.imshow(flux_map[800:850,800:850], norm = LogNorm(vmin=1e-18, vmax=5.01837e-15), origin='lower', cmap=cmap)
+    plt.imshow(flux_map[1200: 1350, 1700: 1950].T, norm = LogNorm(vmin=1e-17, vmax=2e-15), origin='lower', cmap=cmap)
     plt.rcParams["font.weight"] = "bold"
     plt.rcParams["axes.labelweight"] = "bold"
     plt.xlabel(r'RA', fontsize=16)
     plt.ylabel(r'Dec', fontsize=16)
     cbar = plt.colorbar()
     cbar.set_label(r'Flux [ergs s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]', fontsize=16)
+    plt.savefig('/home/carterrhea/Downloads/WVT_Example.png')
 
 
 .. image:: WVT_Example.png
     :alt: WVT Example
+    
+    
+Since the SNR in around the nebula is low we have very large bins. Comparitively, the bins in the central regions are quite small.
 
