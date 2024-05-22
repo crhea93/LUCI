@@ -17,7 +17,7 @@
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -70,6 +70,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
 <ul class="current">
@@ -83,6 +84,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_snr_map"><code class="docutils literal notranslate"><span class="pre">Luci.create_snr_map()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.create_wvt"><code class="docutils literal notranslate"><span class="pre">Luci.create_wvt()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.detection_map"><code class="docutils literal notranslate"><span class="pre">Luci.detection_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.export_fits"><code class="docutils literal notranslate"><span class="pre">Luci.export_fits()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.extract_spectrum"><code class="docutils literal notranslate"><span class="pre">Luci.extract_spectrum()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.extract_spectrum_region"><code class="docutils literal notranslate"><span class="pre">Luci.extract_spectrum_region()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#LuciBase.Luci.fit_calc"><code class="docutils literal notranslate"><span class="pre">Luci.fit_calc()</span></code></a></li>
@@ -245,7 +247,7 @@ a map of the entire cube is calculated.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.create_wvt">
-<span class="sig-name descname"><span class="pre">create_wvt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stn_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roundness_crit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ToL</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_wvt" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_wvt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stn_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roundness_crit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ToL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.create_wvt" title="Link to this definition"></a></dt>
 <dd><p>Written by Benjamin Vigneron.</p>
 <p>Functionality to create a weighted Voronoi tesselation map from a region and according to
 arguments passed by the user. It creates a folder containing all the Voronoi bins that can
@@ -261,6 +263,7 @@ then be used for the fitting procedure.</p>
 <li><p><strong>stn_target</strong> – Signal-to-Noise target value for the Voronoi bins.</p></li>
 <li><p><strong>roundness_crit</strong> – Roundness criteria for the pixel accretion into bins</p></li>
 <li><p><strong>ToL</strong> – Convergence tolerance parameter for the SNR of the bins</p></li>
+<li><p><strong>n_threads</strong> – Number of threads to use</p></li>
 </ul>
 </dd>
 </dl>
@@ -293,6 +296,13 @@ For each pixel,</p>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="LuciBase.Luci.export_fits">
+<span class="sig-name descname"><span class="pre">export_fits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.export_fits" title="Link to this definition"></a></dt>
+<dd><p>Export HDF file as fits file. The data will be saved in the same location as the cube (<cite>cube_dir</cite>) with the same
+name (<cite>object_name</cite>).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -402,8 +412,8 @@ and continuum (and their associated errors) for each linespectrum_axis.</p>
 <li><p><strong>bkgType</strong> – Type of background (default ‘standard’; options [‘standard’, ‘pca’])</p></li>
 <li><p><strong>binning</strong> – Value by which to bin (default None)</p></li>
 <li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis (default False)</p></li>
-<li><p><strong>'</strong><strong>[</strong><strong>emcee'</strong> (<em>bayes_method = Bayesian Inference method. Options are</em>) – </p></li>
-<li><p><strong>'dynesty'</strong><strong>]</strong> (<em>default 'emcee'</em>) – </p></li>
+<li><p><strong>'</strong><strong>[</strong><strong>emcee'</strong> (<em>bayes_method = Bayesian Inference method. Options are</em>)</p></li>
+<li><p><strong>'dynesty'</strong><strong>]</strong> (<em>default 'emcee'</em>)</p></li>
 <li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
 <li><p><strong>n_threads</strong> – Number of threads to be passed to joblib for parallelization (default = 1)</p></li>
 <li><p><strong>nii_cons</strong> – Boolean to turn on or off NII doublet ratio constraint (default True)</p></li>
@@ -559,7 +569,7 @@ or the averaged spectrum for background spectra (True).</p>
 <li><p><strong>vel_rel</strong> – Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])</p></li>
 <li><p><strong>sigma_rel</strong> – Constraints on sigma (must be list; e.x. [1, 2, 1])</p></li>
 <li><p><strong>region</strong> – Name of ds9 region file (e.x. ‘region.reg’). You can also pass a boolean mask array.</p></li>
-<li><p><strong>initial_values</strong> – </p></li>
+<li><p><strong>initial_values</strong></p></li>
 <li><p><strong>bkg</strong> – Background Spectrum (1D numpy array; default None)</p></li>
 <li><p><strong>bayes_bool</strong> – Boolean to determine whether or not to run Bayesian analysis</p></li>
 <li><p><strong>bayes_method</strong> – Bayesian Inference method. Options are ‘[emcee’, ‘dynesty’] (default ‘emcee’)</p></li>
@@ -580,7 +590,7 @@ or the averaged spectrum for background spectra (True).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="LuciBase.Luci.fit_wvt">
-<span class="sig-name descname"><span class="pre">fit_wvt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_wvt" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fit_wvt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bkg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bayes_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty_bool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[False]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stn_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LuciBase.Luci.fit_wvt" title="Link to this definition"></a></dt>
 <dd><p>Function that takes the wvt mapping created using <cite>self.create_wvt()</cite> and fits the bins.
 Written by Benjamin Vigneron</p>
 <dl class="field-list simple">
@@ -596,6 +606,7 @@ Written by Benjamin Vigneron</p>
 <li><p><strong>n_threads</strong> – Number of threads to use</p></li>
 <li><p><strong>initial_values</strong> – Initial values of velocity and broadening for fitting specific lines (must be list)</p></li>
 <li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
+<li><p><strong>stn_target</strong> – Target signal to noise ratio (default 10)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -711,8 +722,8 @@ of the emission lines. The slices are saved in a new folder for each input emiss
 <li><p><strong>uncertainty_bool</strong> – Boolean to determine whether or not to run the uncertainty analysis (default False)</p></li>
 <li><p><strong>n_threads</strong> – Number of threads to use</p></li>
 <li><p><strong>initial_values</strong> – Initial values of velocity and broadening for fitting specific lines (must be list;</p></li>
-<li><p><strong>[</strong><strong>velocity</strong> (<em>e.x.</em>) – </p></li>
-<li><p><strong>[</strong><strong>False</strong><strong>]</strong><strong>)</strong> (<em>broadening</em><em>]</em><em>; default</em>) – </p></li>
+<li><p><strong>[</strong><strong>velocity</strong> (<em>e.x.</em>)</p></li>
+<li><p><strong>[</strong><strong>False</strong><strong>]</strong><strong>)</strong> (<em>broadening</em><em>]</em><em>; default</em>)</p></li>
 <li><p><strong>n_stoch</strong> – The number of stochastic runs – set to 50 for fitting double components (default 1)</p></li>
 </ul>
 </dd>

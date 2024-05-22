@@ -226,11 +226,10 @@ def read_in(SNR_map):
             SNR = counts[row][col]
             Pixels.append(Pixel(pixel_count,x_min+col,y_min+row,SNR)) #Bottom Left Corner!
             pixel_count += 1
-    print("We have "+str(pixel_count)+" Pixels! :)")
+    print("We have "+str(pixel_count)+" Pixels.")
     return Pixels, x_min, x_max, y_min, y_max
 
 def Nearest_Neighbors(pixel_list):
-    print("Running Nearest Neighbor Algorithm")
     xvals = []
     yvals = []
     num_neigh = 9
@@ -249,7 +248,6 @@ def Nearest_Neighbors(pixel_list):
             else:
                 pass #not adjacent
         pix_num += 1
-    print("Finished Nearest Neighbor Algorithm")
     return None
 
 def dist(p1x,p1y,p2x,p2y):
@@ -416,9 +414,6 @@ def Bin_Acc(Pixels,pixel_length,StN_Target,roundness_crit):
             Current_bin.CalcCentroid()
             closest_not_in_pix.add_to_bin(binCount)
             unassigned_pixels.remove(closest_not_in_pix)
-    print('We have '+str(len(Bin_list))+' bins.')
-    print('We have '+str(len(unassigned_pixels))+' unassigned pixels.')
-    print("Reassigning unsuccessful bins")
     for bin in bins_successful:
         bin.CalcCentroid()
         bin.CalcArea(pixel_length)
@@ -481,7 +476,7 @@ def WVT(Bin_list_init,Pixel_Full,StN_Target,ToL,pixel_length,image_dir):
     its_to_conv = 0
     if not os.path.exists(image_dir+'/histograms/'):
         os.mkdir(image_dir+'/histograms/')
-    while converged == False and its_to_conv < 100:
+    while converged == False and its_to_conv < 5:
         print("We are on step "+str(its_to_conv+1))
         bins_with_SN = Rebin_Pixels(Bin_list_prev,Pixel_Full,pixel_length,StN_Target)[:]
         converged = converged_met(bins_with_SN,ToL)

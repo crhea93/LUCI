@@ -1014,7 +1014,7 @@ class Luci():
         if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
-            integrated_spectrum -= bkg # * spec_ct  # Subtract background spectrum
+            integrated_spectrum -= bkg  * spec_ct  # Subtract background spectrum
         good_sky_inds = ~np.isnan(integrated_spectrum)  # Clean up spectrum
 
         sky = integrated_spectrum[good_sky_inds]
@@ -1073,8 +1073,8 @@ class Luci():
         if self.hdr_dict['FILTER'] == 'SN3':  # Halpha complex
             flux_min = 15150
             flux_max = 15300
-            noise_min = 16000#14500
-            noise_max = 16250#14600
+            noise_min = 14500
+            noise_max = 14600
         elif self.hdr_dict['FILTER'] == 'SN2':
             if 'OIII' in lines:  # OIII lines
                 flux_min = 1e7 / 505
@@ -1090,23 +1090,23 @@ class Luci():
             noise_min = 25700
             noise_max = 26300
         elif self.hdr_dict['FILTER'] == 'C3':  # Only for MACSJ1621
-            flux_min = 18100
-            flux_max = 19500
-            noise_min = 17450
-            noise_max = 17550
+            flux_min = 18500
+            flux_max = 20500
+            noise_min = 20500
+            noise_max = 21500
         else:
             print('SNR Calculation for this filter has not been implemented')
-
         def SNR_calc(i):
             y_pix = y_min + i
             snr_local = np.zeros(x_max-x_min)
+            
             for j in range(len(snr_local)):
                 x_pix = x_min + j
                 sky = cube_to_use[x_pix, y_pix, :]
                 # Calculate SNR
-                if bkgType=='standard':
-                    sky -= bkg * (binning) ** 2  # Subtract background times number of pixels
-                elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':
+                #if bkgType=='standard':
+                #sky -= bkg * (binning) ** 2  # Subtract background times number of pixels
+                '''elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':
                     if self.hdr_dict['FILTER'] == 'SN3':
                         min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
                         max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
@@ -1127,7 +1127,8 @@ class Luci():
                     scale_spec = np.nanmax(sky[min_spectral_scale:max_spectral_scale])
                     sky -= scale_spec * bkg
                 else:
-                    pass  # bkgType == None
+                    pass  # bkgType == None'''
+                
                 min_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_min))
                 max_ = np.argmin(np.abs(np.array(self.spectrum_axis) - flux_max))
                 flux_in_region = np.nansum(sky[min_:max_])
@@ -1297,7 +1298,7 @@ class Luci():
         if self.cube_binned:
             del self.cube_binned
 
-    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL):
+    def create_wvt(self, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL, n_threads):
         """
         Written by Benjamin Vigneron.
 
@@ -1314,16 +1315,18 @@ class Luci():
             stn_target: Signal-to-Noise target value for the Voronoi bins.
             roundness_crit: Roundness criteria for the pixel accretion into bins
             ToL: Convergence tolerance parameter for the SNR of the bins
+            n_threads: Number of threads to use
+            
+            
         """
         print("#----------------WVT Algorithm----------------#")
         print("#----------------Creating SNR Map--------------#")
         Pixels = []
-        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=8)
+        self.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=n_threads)
         print("#----------------Algorithm Part 1----------------#")
         start = time.time()
         SNR_map = fits.open(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits')[0].data
         SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
-        #fits.writeto(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits', SNR_map, overwrite=True)
         Pixels, x_min, x_max, y_min, y_max = read_in(self.output_dir + '/SNR/' + self.object_name + '_SNR.fits')
         Nearest_Neighbors(Pixels)
         Init_bins = Bin_Acc(Pixels, pixel_size, stn_target, roundness_crit)
@@ -1354,14 +1357,13 @@ class Luci():
             bin_map[pix_x, pix_y] = int(bins[i])
             i += 1
         # bin_map = np.rot90(bin_map)
-        print("#----------------Numpy Bin Mapping--------------#")
         if not os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
             os.mkdir(self.output_dir + '/Numpy_Voronoi_Bins')
         if os.path.exists(self.output_dir + '/Numpy_Voronoi_Bins'):
             files = glob.glob(self.output_dir + '/Numpy_Voronoi_Bins/*.npy')
             for f in files:
                 os.remove(f)
-        for bin_num in tqdm(list(range(len(Final_Bins)))):
+        for bin_num in list(range(len(Final_Bins))):
             bool_bin_map = np.zeros((2048, 2064), dtype=bool)
             for a, b in zip(np.where(bin_map == bin_num)[0][:], np.where(bin_map == bin_num)[1][:]):
                 bool_bin_map[x_min_init + a, y_min_init + b] = True
@@ -1486,7 +1488,7 @@ class Luci():
             Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).
         """
         # Call create wvt function to create the WVT map and numpy files corresponding to each bin
-        self.create_wvt(x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL)
+        self.create_wvt(x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL, n_threads)
         print("#----------------WVT Fitting--------------#")
         # Fit the bins
         velocities_fits, broadenings_fits, flux_fits, chi2_fits, header = self.fit_wvt(lines,
