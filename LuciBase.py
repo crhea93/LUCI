@@ -1685,7 +1685,7 @@ class Luci():
 
         spectral_axis = 1e7 / self.spectrum_axis  # Convert wavenumber in cm-1 to nm
         # If a background is provided then we need to update the cube to be background subtracted
-        if bkg != None:
+        if bkg.all() != None:
             # Reshape the background to (1, 1, lambda) so it can be broadcasted
             bkg_reshaped = bkg.reshape(1, 1, -1)
             # Subtract the vector from the matrix using broadcasting
