@@ -204,30 +204,30 @@ def update_header(file):
         header_cols = [attr for attr in list(file.attrs)]
         header_vals = [file.attrs[attr] for attr in list(file.attrs)]
         header_types = [type(file.attrs[attr]) for attr in list(file.attrs)]
-    for header_col, header_val, header_type in zip(header_cols, header_vals, header_types):  # New HDF5 format
-        try:
-            if header_col == 'flambda':
-                hdr_dict['flambda'] = header_val
-                #clean_hdr_dict['flambda'] = header_val
-            if header_type is np.float64:
-                hdr_dict[header_col] = float(header_val)
-                clean_hdr_dict[header_col] = float(header_val)
-            elif header_type is np.int64:
-                hdr_dict[header_col] = int(header_val)
-                clean_hdr_dict[header_col] = int(header_val)
-            elif header_type is np.str:
+        for header_col, header_val, header_type in zip(header_cols, header_vals, header_types):  # New HDF5 format
+            try:
+                if header_col == 'flambda':
+                    hdr_dict['flambda'] = header_val
+                    #clean_hdr_dict['flambda'] = header_val
+                if header_type is np.float64:
+                    hdr_dict[header_col] = float(header_val)
+                    clean_hdr_dict[header_col] = float(header_val)
+                elif header_type is np.int64:
+                    hdr_dict[header_col] = int(header_val)
+                    clean_hdr_dict[header_col] = int(header_val)
+                elif header_type is np.str:
+                    hdr_dict[header_col] = str(header_val)
+                    clean_hdr_dict[header_col] = str(header_val)
+                    if 'path' in header_col:
+                        hdr_dict[header_col] = ''
+                        clean_hdr_dict[header_col] = ''
+                elif header_type is np.bool_:
+                    hdr_dict[header_col] = bool(header_val)
+                    clean_hdr_dict[header_col] = bool(header_val)
+                elif header_type is np.ndarray:
+                    hdr_dict[header_col] = np.array(header_val)
+            except:
                 hdr_dict[header_col] = str(header_val)
-                clean_hdr_dict[header_col] = str(header_val)
-                if 'path' in header_col:
-                    hdr_dict[header_col] = ''
-                    clean_hdr_dict[header_col] = ''
-            elif header_type is np.bool_:
-                hdr_dict[header_col] = bool(header_val)
-                clean_hdr_dict[header_col] = bool(header_val)
-            elif header_type is np.ndarray:
-                hdr_dict[header_col] = np.array(header_val)
-        except:
-            hdr_dict[header_col] = str(header_val)
     hdr_dict['CTYPE3'] = 'WAVE-SIP'
     hdr_dict['CUNIT3'] = 'm'
     try:
