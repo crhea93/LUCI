@@ -94,7 +94,8 @@ class Fit:
                           'NII6548C4': 804.7,#806.062,
                           'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
                           'OII3729C1': 459.017742, 'OII3726C1': 458.674293, 'OI6364': 636.3776,
-                          'FeXIV5303': 530.286, 'NI5200': 520.026, 'FeVII5158': 515.89, 'HeII5411': 541.152
+                          'FeXIV5303': 530.286, 'NI5200': 520.026, 'FeVII5158': 515.89, 'HeII5411': 541.152,
+                          'FeXI6624': 662.43, 'NiXV6703': 670.332
                           }
         self.available_functions = ['gaussian', 'sinc', 'sincgauss', 'gauss']
         self.sky_lines = sky_lines

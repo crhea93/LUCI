@@ -1675,12 +1675,13 @@ class Luci():
                      'NII6548C4': 806.062493,
                      'OIII5007C2': 616.342, 'OIII4959C2': 610.441821, 'HbetaC2': 598.429723,
                      'OII3729C1': 459.017742, 'OII3726C1': 458.674293,
-                     'FeXIV5303': 530.286, 'NI5200': 520.026, 'FeVII5158': 515.89, 'HeII5411': 541.152
+                     'FeXIV5303': 530.286, 'NI5200': 520.026, 'FeVII5158': 515.89, 'HeII5411': 541.152,
+                     'FeXI6624':  662.43, 'NiXV6703': 670.332
                      }
 
         filter_line = {'SN1': ['OII3726', 'OII3729'], 'SN2': ['Hbeta', 'OIII4959', 'OIII5007'],
                        'SN3': ['Halpha', 'NII6583', 'NII6548', 'SII6716', 'SII6731'],
-                       'C3': ['FeXIV5303', 'NI5200', 'FeVII5158', 'HeII5411']
+                       'C3': ['FeXIV5303', 'NI5200', 'FeVII5158', 'HeII5411', 'FeXI6624', 'NiXV6703']
                        }
 
         spectral_axis = 1e7 / self.spectrum_axis  # Convert wavenumber in cm-1 to nm
