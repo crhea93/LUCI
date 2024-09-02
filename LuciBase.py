@@ -33,6 +33,7 @@ from keras.regularizers import l2
 from sklearn.ensemble import IsolationForest
 from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
 import warnings
+import matplotlib.pyplot as plt
 
 warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
@@ -259,7 +260,7 @@ class Luci():
                  cube_slice, spectrum_axis, wavenumbers_syn, transmission_interpolated,
                  interferometer_theta, hdr_dict, step_nb, zpd_index, mdn,
                  mask=None, ML_bool=True, bayes_bool=False,
-                 bayes_method='emcee',
+                 bayes_method='emcee', absorp=None,
                  uncertainty_bool=False, nii_cons=False,
                  bkg=None, bkgType=None, binning=None, spec_min=None, spec_max=None, initial_values=[False],
                  obj_redshift=0.0, n_stoch=1, resolution=1000, Luci_path=None,
@@ -350,6 +351,9 @@ class Luci():
                     scale_spec = np.nanmax(sky[min_spectral_scale:max_spectral_scale])
                     sky -= scale_spec * bkg
 
+            if absorp is not None:
+                spectralcut = int(len(sky)*0.25)
+                sky=sky-absorp/np.nanmedian(absorp)*np.nanmedian(sky[spectralcut:-spectralcut])+np.nanmedian(sky[spectralcut:-spectralcut])
 
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
@@ -404,7 +408,7 @@ class Luci():
     # @jit(nopython=False, parallel=True, nogil=True)
     def fit_cube(self, lines, fit_function, vel_rel, sigma_rel,
                  x_min, x_max, y_min, y_max, bkg=None, bkgType=None, binning=None,
-                 bayes_bool=False, bayes_method='emcee',
+                 bayes_bool=False, bayes_method='emcee', absorp=None,
                  uncertainty_bool=False, n_threads=2, nii_cons=True, initial_values=[False],
                  spec_min=None, spec_max=None, obj_redshift=0.0, n_stoch=1,
                  pca_coefficient_array=None, pca_vectors=None, pca_mean=None
@@ -514,7 +518,7 @@ class Luci():
                                     transmission_interpolated=self.transmission_interpolated,
                                     interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict,
                                     step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
-                                    ML_bool=self.ML_bool, bayes_bool=bayes_bool,
+                                    ML_bool=self.ML_bool, bayes_bool=bayes_bool, absorp=absorp,
                                     bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
                                     uncertainty_bool=uncertainty_bool, bkg=bkg,
                                     bkgType=bkgType, nii_cons=nii_cons,
@@ -718,7 +722,7 @@ class Luci():
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
     def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
-                  pixel_x, pixel_y, binning=None, bkg=None,
+                  pixel_x, pixel_y, binning=None, bkg=None, absorp=None,
                   bayes_bool=False, bayes_method='emcee',
                   uncertainty_bool=False,
                   nii_cons=True, spec_min=None, spec_max=None,
@@ -793,6 +797,12 @@ class Luci():
             sky -= scale_spec * bkg
         else:
             print('Please set bkgType to either standard or pca')
+
+
+        if absorp is not None:
+            spectralcut = int(len(sky)*0.25)
+            sky=sky-absorp/np.nanmedian(absorp)*np.nanmedian(sky[spectralcut:-spectralcut])+np.nanmedian(sky[spectralcut:-spectralcut])
+
 
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
         sky = sky[good_sky_inds]  # Apply clean to sky
