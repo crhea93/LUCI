@@ -716,10 +716,10 @@ class Fit:
             DOF_scale = np.sqrt(len(self.axis_restricted) - self.line_num + 1)
             try:
                 covariance_mat = -np.linalg.inv(hessian_calc)
-                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))/DOF_scale
+                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))#/DOF_scale
             except np.linalg.LinAlgError:
                 covariance_mat = -np.linalg.pinv(hessian_calc)
-                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))/DOF_scale
+                self.uncertainties = np.sqrt(np.abs(np.diagonal(covariance_mat)))#/DOF_scale
         # We now must unscale the amplitude
         for i in range(self.line_num):
             if self.freeze:  # Freezing velocity and broadening
@@ -827,7 +827,7 @@ class Fit:
                         'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
                         'axis_step': self.axis_step, 'corr': self.correction_factor,
                         'continuum': self.fit_sol[-1], 'continuum_error': self.uncertainties[-1],
-                        'scale': self.spectrum_scale,
+                        'scale': self.spectrum_scale, 'flat_samples': self.flat_samples,
                         'vel_ml': self.vel_ml, 'vel_ml_sigma': self.vel_ml_sigma,
                         'broad_ml': self.broad_ml, 'broad_ml_sigma': self.broad_ml_sigma,
                         'fit_vector': self.fit_vector, 'fit_axis': self.axis,
@@ -917,7 +917,11 @@ class Fit:
                     median = np.mean(flat_samples[:, i])
                     std = np.std(flat_samples[:, i])
                     parameters_med.append(median)
+                    mcmc_percentile = np.percentile(flat_samples[:,i], [16, 50, 84])
+                    std = np.diff(mcmc_percentile)[0]
                     parameters_std.append(std)
+
+
             velocity_error = SPEED_OF_LIGHT * self.uncertainties[1] * (1e7 / (self.fit_sol[1] **2 * skylines_vals[0]))
             velocity = SPEED_OF_LIGHT * ((1e7 / self.fit_sol[1] - skylines_vals[0]) / skylines_vals[0])
             fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + parameters[-1]
@@ -976,10 +980,13 @@ class Fit:
             parameters_med = []
             parameters_std = []
             self.flat_samples = flat_samples
+
             for i in range(n_dim):  # Calculate and store these results
                 median = np.mean(flat_samples[:, i])
                 std = np.std(flat_samples[:, i])
                 parameters_med.append(median)
+                mcmc_percentile = np.percentile(flat_samples[:,i], [16, 50, 84])
+                std = np.diff(mcmc_percentile)[0]
                 parameters_std.append(std)
             # self.fit_sol = parameters_med
             # self.uncertainties = parameters_std
