@@ -154,8 +154,8 @@ class Fit:
         self.mdn = mdn
         self.vel_ml = 0.0  # ML Estimate of the velocity [km/s]
         self.broad_ml = 0.0  # ML Estimate of the velocity dispersion [km/s]
-        self.vel_ml_sigma = 0.0  # ML Estimate for velocity 1-sigma error
-        self.broad_ml_sigma = 0.0  # ML Estimate for velocity dispersion 1-sigma error
+        self.vel_ml_sigma = 100.0  # ML Estimate for velocity 1-sigma error
+        self.broad_ml_sigma = 10.0  # ML Estimate for velocity dispersion 1-sigma error
         self.initial_values = initial_values  # List for initial values (or default False)
         self.freeze = False
         if self.initial_values[0] is not False:# and False not in self.initial_values:
@@ -942,9 +942,9 @@ class Fit:
         # Initialize walkers
         random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
         for i in range(self.line_num):
-            random_[:, 3 * i + 1] *= 1e3
-            random_[:, 3 * i] *= 0.1
-            random_[:, 3 * i + 2] *= 1e1
+            random_[:, 3 * i + 1] *= 1e2  # Step around shift (velocity)
+            random_[:, 3 * i] *= 0.1  # Step around amplitude
+            random_[:, 3 * i + 2] *= 1e1  # Step around sigma
         init_ = self.fit_sol + random_  # + self.fit_sol[-1] + random_
         # Ensure continuum values for walkers are positive
         #init_[:, -1] = np.abs(init_[:, -1])
@@ -974,9 +974,9 @@ class Fit:
                                                   )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
-            sampler.run_mcmc(init_, 2000, progress=False)
-            # Obtain Ensemble Sampler results and discard first 200 walks (10%)
-            flat_samples = sampler.get_chain(discard=200, flat=True)
+            sampler.run_mcmc(init_, 2000, progress=True)
+            # Obtain Ensemble Sampler results and discard first 500 walks (25%)
+            flat_samples = sampler.get_chain(discard=500, flat=True)
             parameters_med = []
             parameters_std = []
             self.flat_samples = flat_samples

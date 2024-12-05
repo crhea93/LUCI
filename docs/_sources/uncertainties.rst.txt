@@ -6,6 +6,54 @@ Uncertainties
 In order to calculate uncertainties, set `uncertainty_bool=True` as an argument
 of a fitting function (i.e. `cube.fit_cube()` or `cube.fit_region()`).
 
+Before we describe how we calculate uncertainties using the standard vs Bayesian approach, let's look at the theoretical
+calculation of uncertainties using the Cramer-Rao lower bound. To calculate the uncertainty of a Gaussian line, :math:`\delta \mu`, we can use the following equation:
+
+.. math::
+    \delta \mu = \frac{\sqrt{2}\cdot{}\text{FWHM}}{\text{SNR}\cdot{} \sqrt{N}}
+
+
+where FWHM is the full-width half-max defined as :math:`\text{FWHM}=2 \sqrt{2\ln{2}} \cdot{} \sigma` where $\sigma$ is the standard deviation of the Gaussian line.
+SNR is the signal-to-noise ratio and $N$ is the number of independent data points across the line profile. If you have multiple lines
+that are independent you can approximate the uncertainty as
+
+.. math::
+    \delta \mu_{multi} \approx \delta \mu_{single} \cdot{} \frac{1}{\sqrt{M}}
+
+where $M$ is the number of lines.
+
+We can estimate $N$ as
+
+.. math::
+    N = \frac{\text{FWHM}}{\Delta \nu}
+
+where :math:`\Delta \nu` is the sampling step size.
+
+Let's walk through an example. Assume that the SNR is 100,:math:`$\sigma=10` (a typical value -- keep in mind this is in units of :math:`cm^{-1}`),
+and we are fitting H\alpha. For a resolution 5000 observation, this is typical of SN3 for the SIGNALS program, :math:`\Delta \nu \approx 2.254 cm^{-1}`
+Thus :math:`N = \frac{2.335 \cdot{} 10 \text{cm}^{-1} }{2.254 \text{cm}^{-1}} \approx 10`.
+
+We can then calculate the theoretical uncertainty in terms of km/s. Note that the velocity resolution would be
+
+.. math::
+     \Delta v = c \cdot{} \frac{\Delta \nu}{\nu_0}  = 299,792 \text{km/s} * \Bigg(\frac{2.524 \text{cm$^{-1}$}}{15244.4\text{cm$^{-1}$}}\Bigg) \approx 49.6 \text{km/s}
+
+which is more or less the FWHM.
+
+So
+
+.. math::
+    \delta \mu = \frac{ \sqrt{2} \cdot{} 49.64 \text{km/s}^{-1} }{ 100 \cdot{} \sqrt{10} } \approx 0.222 \text{km/s}
+
+
+So, for this particular case, the best possible uncertainty on the velocity is around 0.2 km/s.
+
+
+For an illustration of this on synthetic data in `LUCI` check out the example entitled `Fit-Synthetic`.
+
+
+----
+
 Since uncertainty estimates are often crucial in astrophysical calculations, we apply
 a full Bayesian MCMC approach (using the python module *emcee*). The likelihood function
 is defined as a standard Gaussian function. Additionally, we employ the same priors described

@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
@@ -6,19 +8,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Uncertainties &mdash; LUCI v.1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -125,6 +123,33 @@
 <span id="id1"></span><h1>Uncertainties<a class="headerlink" href="#uncertainties" title="Link to this heading"></a></h1>
 <p>In order to calculate uncertainties, set <cite>uncertainty_bool=True</cite> as an argument
 of a fitting function (i.e. <cite>cube.fit_cube()</cite> or <cite>cube.fit_region()</cite>).</p>
+<p>Before we describe how we calculate uncertainties using the standard vs Bayesian approach, let’s look at the theoretical
+calculation of uncertainties using the Cramer-Rao lower bound. To calculate the uncertainty of a Gaussian line, <span class="math">\delta \mu</span>, we can use the following equation:</p>
+<div class="math">
+<p><span class="math">\delta \mu = \frac{\sqrt{2}\cdot{}\text{FWHM}}{\text{SNR}\cdot{} \sqrt{N}}</span></p>
+</div><p>where FWHM is the full-width half-max defined as <span class="math">\text{FWHM}=2 \sqrt{2\ln{2}} \cdot{} \sigma</span> where $sigma$ is the standard deviation of the Gaussian line.
+SNR is the signal-to-noise ratio and $N$ is the number of independent data points across the line profile. If you have multiple lines
+that are independent you can approximate the uncertainty as</p>
+<div class="math">
+<p><span class="math">\delta \mu_{multi} \approx \delta \mu_{single} \cdot{} \frac{1}{\sqrt{M}}</span></p>
+</div><p>where $M$ is the number of lines.</p>
+<p>We can estimate $N$ as</p>
+<div class="math">
+<p><span class="math">N = \frac{\text{FWHM}}{\Delta \nu}</span></p>
+</div><p>where <span class="math">\Delta \nu</span> is the sampling step size.</p>
+<p>Let’s walk through an example. Assume that the SNR is 100,:math:<cite>$sigma=10</cite> (a typical value – keep in mind this is in units of <span class="math">cm^{-1}</span>),
+and we are fitting Halpha. For a resolution 5000 observation, this is typical of SN3 for the SIGNALS program, <span class="math">\Delta \nu \approx 2.254 cm^{-1}</span>
+Thus <span class="math">N = \frac{2.335 \cdot{} 10 \text{cm}^{-1} }{2.254 \text{cm}^{-1}} \approx 10</span>.</p>
+<p>We can then calculate the theoretical uncertainty in terms of km/s. Note that the velocity resolution would be</p>
+<div class="math">
+<p><span class="math">\Delta v = c \cdot{} \frac{\Delta \nu}{\nu_0}  = 299,792 \text{km/s} * \Bigg(\frac{2.524 \text{cm$^{-1}$}}{15244.4\text{cm$^{-1}$}}\Bigg) \approx 49.6 \text{km/s}</span></p>
+</div><p>which is more or less the FWHM.</p>
+<p>So</p>
+<div class="math">
+<p><span class="math">\delta \mu = \frac{ \sqrt{2} \cdot{} 49.64 \text{km/s}^{-1} }{ 100 \cdot{} \sqrt{10} } \approx 0.222 \text{km/s}</span></p>
+</div><p>So, for this particular case, the best possible uncertainty on the velocity is around 0.2 km/s.</p>
+<p>For an illustration of this on synthetic data in <cite>LUCI</cite> check out the example entitled <cite>Fit-Synthetic</cite>.</p>
+<hr class="docutils" />
 <p>Since uncertainty estimates are often crucial in astrophysical calculations, we apply
 a full Bayesian MCMC approach (using the python module <em>emcee</em>). The likelihood function
 is defined as a standard Gaussian function. Additionally, we employ the same priors described
