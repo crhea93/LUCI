@@ -76,7 +76,7 @@ class Gaussian:
         return f1
 
     @jit(fastmath=True)
-    def evaluate_bayes(self, channel, theta):
+    def evaluate_bayes(self, channel, theta, line_num,  lines, line_dict):
         """
         Function to initiate the model calculation for Bayesian Analysis
 
@@ -91,7 +91,9 @@ class Gaussian:
         """
         f1 = 0.0
         params = theta
-        f1 += self.function(channel, params)
+        for model_num in range(line_num):
+            new_pos = 1e7/line_dict[lines[model_num]] + params[-2]
+            f1 += self.function(channel, [params[model_num], new_pos, params[-1]])
         return f1
 
     def plot(self, channel, theta, line_num):
@@ -220,8 +222,8 @@ class SincGauss:
     def function(self, channel, params, sinc_width):
         p0 = params[0]
         p1 = params[1]
-        p2 = sinc_width/(np.pi)#*FWHM_SINC_COEFF)
-        p3 = params[2]#/FWHM_COEFF
+        p2 = sinc_width/np.pi
+        p3 = params[2]
         a = p3/(np.sqrt(2)*p2)
         a = a.astype(float)
         b = (channel-p1)/(np.sqrt(2)*p3)
@@ -266,9 +268,10 @@ class SincGauss:
         return np.real(f1)
 
     @jit(fastmath=True)
-    def evaluate_bayes(self, channel, theta, sinc_width):
+    def evaluate_bayes(self, channel, theta, line_num, sinc_width):
         """
-        Function to initiate the model calculation for Bayesian Analysis
+        Function to initiate the model calculation for Bayesian Analysis.
+        Reminder that params[-2] and params[-1] are the shift (encoding the velocity) and the sigma
 
         Args:
             channel: Wavelength Axis in cm-1
@@ -282,7 +285,8 @@ class SincGauss:
         """
         f1 = 0.0
         params = theta
-        f1 += self.function(channel, params, sinc_width)
+        for model_num in range(line_num):
+            f1 += self.function(channel, [params[model_num], params[-2], params[-1]], sinc_width)
         return np.real(f1)
 
     @jit(fastmath=True)
@@ -307,5 +311,30 @@ class SincGauss:
             pos_on_axis = channel[min_ind]
             params = [theta[model_num * 3], pos_on_axis, theta[model_num*3 + 2]]
             f1 += np.nan_to_num(np.array(self.function(channel, params, sinc_width)))
+        return np.real(f1)
+
+    @jit(fastmath=True)
+    def plot_bayes(self, channel, theta, line_num, sinc_width):
+        """
+        Function to initiate the correct number of models to fit
+
+        Args:
+            channel: Wavelength Axis in cm-1
+            theta: List of parameters for all the models in the following order
+                            [amplitude, line location, sigma]
+            line_num: Number of lines for fit
+            sinc_width: Fixed with of the sinc function
+
+        Return:
+            Value of function given input parameters (theta)
+
+        """
+        f1 = 0.0
+        for model_num in range(line_num):
+            min_ind = np.argmin(np.abs(channel - theta[-3]))
+            pos_on_axis = channel[min_ind]
+            params = [theta[model_num], pos_on_axis, theta[-1]]
+            f1 += self.function(channel, params, sinc_width)
+
         return np.real(f1)
 

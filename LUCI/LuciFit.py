@@ -1,4 +1,5 @@
 import numpy as np
+from joblib.testing import param
 from scipy.optimize import minimize
 from scipy import interpolate
 import emcee
@@ -7,6 +8,8 @@ import astropy.stats as astrostats
 import warnings
 import dynesty
 from dynesty import utils as dyfunc
+from six import moves
+
 from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
 from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
     calculate_flux, calculate_flux_err
@@ -545,6 +548,10 @@ class Fit:
     def vel_constraints(self):
         """
         Set up constraints for velocity values before fitting line
+
+        The velocity of one line will be tied to the velocity of another line within the error of the step size.
+
+
         Return:
             Dictionary describing constraints
         """
@@ -557,13 +564,13 @@ class Fit:
                 ind_0_line = self.lines[ind_0]
                 for ind_unique in inds_unique[1:]:  # Step through group elements except for the first one
                     ind_unique_line = self.lines[ind_unique]
-                    expr_dict = {'type': 'eq',
+                    expr_dict = {'type': 'ineq',
                                  'fun': lambda x, ind_unique_=ind_unique, ind_0_=ind_0,
                                                ind_unique_line_=ind_unique_line, ind_0_line_=ind_0_line:
                                  SPEED_OF_LIGHT * ((1e7 / x[3 * ind_unique_ + 1] - self.line_dict[ind_unique_line_]) / (
                                      self.line_dict[ind_unique_line_]))
                                  - SPEED_OF_LIGHT * ((1e7 / x[3 * ind_0_ + 1] - self.line_dict[ind_0_line_]) / (
-                                     self.line_dict[ind_0_line_]))}
+                                     self.line_dict[ind_0_line_])) - self.axis_step}
                     vel_dict_list.append(expr_dict)
         return vel_dict_list
 
@@ -885,8 +892,7 @@ class Fit:
 
 
             self.fit_sol = parameters
-            if self.bayes_bool:
-                #self.fit_Bayes()
+            if self.bayes_bool:  # Bayesian fitting
                 n_dim = 3 * self.line_num + 1
                 # Set number of MCMC walkers. Again, this is somewhat arbitrary
                 n_walkers = 200  # n_dim * 5
@@ -898,6 +904,7 @@ class Fit:
                 init_ = self.fit_sol + random_  # + self.fit_sol[-1] + random_
                 # Ensure continuum values for walkers are positive
                 init_[:, -1] = np.abs(init_[:, -1])
+
                 sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
                                             args=(self.axis_restricted, self.spectrum_restricted,
                                                   self.noise, self.model_type, self.line_num, skylines_vals,
@@ -932,22 +939,25 @@ class Fit:
         Apply Bayesian MCMC run to constrain the parameters after solving
         """
         # Unscale the amplitude
+        parameters_med = []
+        parameters_std = []
         for i in range(self.line_num):
             self.fit_sol[i * 3] /= self.spectrum_scale
         self.fit_sol[-1] /= self.spectrum_scale
-        # Set the number of dimensions -- this is somewhat arbitrary
-        n_dim = 3 * self.line_num + 1
+        n_dim =  self.line_num + 3  # Line amplitudes plus shift plus sigma plus continuum
         # Set number of MCMC walkers. Again, this is somewhat arbitrary
-        n_walkers = 500  # n_dim * 5
+        n_walkers = 2000
         # Initialize walkers
         random_ = 1e-2 * np.random.randn(n_walkers, n_dim)
+        fit_init = np.zeros(n_dim)
         for i in range(self.line_num):
-            random_[:, 3 * i + 1] *= 1e2  # Step around shift (velocity)
-            random_[:, 3 * i] *= 0.1  # Step around amplitude
-            random_[:, 3 * i + 2] *= 1e1  # Step around sigma
-        init_ = self.fit_sol + random_  # + self.fit_sol[-1] + random_
-        # Ensure continuum values for walkers are positive
-        #init_[:, -1] = np.abs(init_[:, -1])
+            fit_init[i] = self.fit_sol[3*i]  # amplitudes
+
+        fit_init[-3] = 1e7/next(iter(self.line_dict.values()), None) - self.fit_sol[1]  # Shift from first line fit (WLOG)
+        fit_init[-2] = self.fit_sol[2]  # Broadening from first line (WLOG)
+        fit_init[-1] = self.fit_sol[-1]  # Continuum
+        init_ = fit_init + random_
+        print(init_)
         if self.bayes_method == 'dynesty':
             # Run nested sampling
             dsampler = dynesty.NestedSampler(log_likelihood_bayes, prior_transform, ndim=n_dim,
@@ -965,7 +975,9 @@ class Fit:
             parameters_std = std
         elif self.bayes_method == 'emcee':
             # Set Ensemble Sampler
-            sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,
+            # Create the StretchMove object
+            stretch_move = emcee.moves.StretchMove()  # `a` controls the stretch scale
+            sampler = emcee.EnsembleSampler(n_walkers, n_dim, log_probability,# moves=stretch_move,
                                             args=(self.axis_restricted, self.spectrum_restricted,
                                                   self.noise, self.model_type, self.line_num, self.lines,
                                                   self.line_dict, self.sinc_width,
@@ -974,44 +986,42 @@ class Fit:
                                                   )  # End additional args
                                             )  # End EnsembleSampler
             # Call Ensemble Sampler setting 2000 walks
-            sampler.run_mcmc(init_, 2000, progress=True)
+            sampler.run_mcmc(init_, 3000, progress=True)
             # Obtain Ensemble Sampler results and discard first 500 walks (25%)
             flat_samples = sampler.get_chain(discard=500, flat=True)
-            parameters_med = []
-            parameters_std = []
-            self.flat_samples = flat_samples
 
+            self.flat_samples = flat_samples
             for i in range(n_dim):  # Calculate and store these results
-                median = np.mean(flat_samples[:, i])
+                median = np.median(flat_samples[:, i])
                 std = np.std(flat_samples[:, i])
                 parameters_med.append(median)
-                mcmc_percentile = np.percentile(flat_samples[:,i], [16, 50, 84])
-                std = np.diff(mcmc_percentile)[0]
                 parameters_std.append(std)
-            # self.fit_sol = parameters_med
-            # self.uncertainties = parameters_std
 
         else:
             print("The bayes_method parameter has been incorrectly set to '%s'" % self.bayes_method)
             print("Please enter either 'emcee' or 'dynesty' instead.")
-        # We now must scale the amplitude
+        # Reshape output to match normal fit structure. We will also scale
+        output_reshaped = np.zeros(3*self.line_num + 1)
+        uncertainties_reshaped = np.zeros(3*self.line_num + 1)
         for i in range(self.line_num):
-            parameters_med[i * 3] *= self.spectrum_scale
-            parameters_std[i * 3] *= self.spectrum_scale
-        # Scale continuum
-        parameters_med[-1] *= self.spectrum_scale
-        parameters_std[-1] *= self.spectrum_scale
-
-        self.fit_sol = parameters_med
-        self.uncertainties = parameters_std
+            output_reshaped[3 * i] = parameters_med[i] * self.spectrum_scale  # Amplitude
+            output_reshaped[3 * i + 1] = 1e7/list(self.line_dict.values())[i] + parameters_med[-3]  # Position plus shift
+            output_reshaped[3 * i + 2] = parameters_med[-2]  # Broadening
+            uncertainties_reshaped[3 * i] = parameters_std[i] * self.spectrum_scale  # Amplitude uncertainty
+            uncertainties_reshaped[3 * i + 1] = parameters_std[-3]  # Shift uncertainty
+            uncertainties_reshaped[3 * i + 2] = parameters_std[-2]  # Broadening uncertainty
+        output_reshaped[-1] = parameters_med[-1] * self.spectrum_scale  # Continuum
+        uncertainties_reshaped[-1] = parameters_std[-1] * self.spectrum_scale # Continuum uncertainty
+        # Set to solutions to make plotting and mapping easier
+        self.fit_sol = output_reshaped
+        self.uncertainties = uncertainties_reshaped
         # Calculate fit vector using updated values
         if self.model_type == 'gaussian':
-            self.fit_vector = Gaussian().plot(self.axis, self.fit_sol[:-1], self.line_num) + self.fit_sol[-1]
+            self.fit_vector = Gaussian().plot(self.axis, self.fit_sol, self.line_num) + self.fit_sol[-1]
         elif self.model_type == 'sinc':
-            self.fit_vector = Sinc().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + self.fit_sol[
-                -1]
+            self.fit_vector = Sinc().plot(self.axis, self.fit_sol, self.line_num, self.sinc_width) + self.fit_sol[-1]
         elif self.model_type == 'sincgauss':
-            self.fit_vector = SincGauss().plot(self.axis, self.fit_sol[:-1], self.line_num, self.sinc_width) + \
+            self.fit_vector = SincGauss().plot(self.axis, self.fit_sol, self.line_num, self.sinc_width) + \
                               self.fit_sol[-1]
 
     def fit_absorption(self):
