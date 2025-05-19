@@ -66,14 +66,14 @@ Documentation can also be found on our [read the docs (https://crhea93.github.io
 
 
 ## Contributing
-If you wish to contribute, that's awesome! Please shoot me an email at [carter.rhea@umontreal.ca](mailto:carter.rhea@umontreal.ca).
+If you wish to contribute, that's awesome! Please shoot me an email at [carter.rhea@umontreal.ca](mailto:carterrhea93@gmail.com).
 The easiest way to get involved is to make an issue or fork the repo, make your changes, and submit a well-documented pull request.
 
 ## Contact
-If you have any questions about how to install, use, or modify `LUCI`, please send an email to [Carter Rhea](mailto:carter.rhea@umontreal.ca).
+If you have any questions about how to install, use, or modify `LUCI`, please send an email to [Carter Rhea](mailto:carterrhea93@gmail.com).
 
 ## Copyright & License
-2021 Carter Rhea ([carter.rhea@umontreal.ca](mailto:carter.rhea@umontreal.ca))
+2021 Carter Rhea ([carter.rhea@umontreal.ca](mailto:carterrhea93@gmail.com))
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
