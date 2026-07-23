@@ -39,10 +39,12 @@ here (it printed *"Please set ML_bool=False"* for filters without a trained pred
 failure was easy to hit. `sinc` was unaffected for velocity (its width is the fixed instrumental
 `sinc_width`); the fix covers all three models.
 
-### B2. `extract_spectrum(mean=True)` is a no-op
-**Where:** [LuciBase.py:893-898](LuciBase.py#L893-L898)
-**Tests:** `tests/test_cube.py::test_extract_spectrum_mean_is_currently_a_no_op`
-(+ xfail `..._should_divide_by_pixel_count`)
+### B2. `extract_spectrum(mean=True)` is a no-op — FIXED (Phase 5)
+**Where (was):** `Luci.extract_spectrum`
+**Fixed by:** counting every contributing spaxel instead of incrementing only inside the axis-init
+guard. `mean=True` now genuinely averages.
+**Tests:** `tests/test_cube.py::test_extract_spectrum_mean_divides_by_pixel_count` and
+`::test_extract_spectrum_and_region_agree_on_the_mean`.
 
 ```python
 integrated_spectrum += sky[~np.isnan(sky)]
@@ -63,13 +65,20 @@ The sibling `extract_spectrum_region` increments correctly. The two functions
 disagree, which is pinned by
 `test_extract_spectrum_region_mean_does_divide_by_pixel_count`.
 
-### B3. `fit_region` never subtracts the background
-**Where:** [LuciBase.py:694-707](LuciBase.py#L694-L707)
-**Test:** not yet written — needs the Phase 5 selection refactor to test cleanly.
+### B3. `fit_region` never subtracts the background — FIXED (Phase 5)
+**Where (was):** `Luci.fit_region`
+**Fixed by:** adding a `bkgType='standard'` parameter to `fit_region` and forwarding it to
+`fit_calc`. The standard path is also now guarded on `bkg is not None`, so `bkgType` can be passed
+unconditionally without tripping over `sky -= None`.
+**Test:** `tests/test_background_and_regions.py::test_fit_region_subtracts_the_background`.
 
-`fit_region` forwards `bkg=bkg` to `fit_calc` but never passes `bkgType`. Inside
-`fit_calc` the subtraction is gated on `if bkgType is not None`, so the background
-is silently ignored. Callers get an unsubtracted fit with no warning.
+`fit_region` forwarded `bkg` but never `bkgType`, and `fit_calc` gates subtraction on `bkgType`, so
+the background was silently ignored — an unsubtracted fit with no warning. Measured on the fixture,
+the fix takes the fitted Halpha flux from 1.14e-16 to 4.27e-18 when a background is supplied.
+
+> Note for anyone writing a test like this: the fluxes are ~1e-16, and `np.allclose` defaults to
+> `atol=1e-8`, which calls *any* two such arrays equal. The first version of this test passed
+> vacuously against the fixed code. Use `atol=0`.
 
 ### B4. C3 noise window leaks across fits via a module global — FIXED (Phase 3)
 **Where (was):** `LuciFit.calculate_noise` — `buond_upper` typo
@@ -89,65 +98,76 @@ the whole class of bug.
 
 ## S2 — Crashes and wrong output on valid input
 
-### B5. `fit_pixel` PCA path raises `NameError`
-**Where:** [LuciBase.py:801](LuciBase.py#L801)
+### B5. `fit_pixel` PCA path raises `NameError` — FIXED (Phase 5)
+**Where (was):** the unbinned branch of `Luci.fit_pixel`'s PCA path
+**Fixed by:** using `pixel_x` / `pixel_y`, the coordinates the method actually receives.
+**Test:** covered by the `fit_pixel` tests in `tests/test_background_and_regions.py`.
 
-References `x_pix` / `y_pix`, which do not exist in that scope. Unbinned PCA
-background subtraction on a single pixel always crashes.
+It referenced `x_pix` / `y_pix`, which do not exist in that scope, so unbinned PCA background
+subtraction on a single pixel always died with `NameError`.
 
-### B6. `fit_pixel` crashes with `binning=None`
-**Where:** [LuciBase.py:779](LuciBase.py#L779)
+### B6. `fit_pixel` crashes with `binning=None` — FIXED (Phase 5)
+**Where (was):** `Luci.fit_pixel`
+**Fixed by:** treating an unbinned pixel as one spaxel and only subtracting when a background was
+supplied. An unknown `bkgType` now raises `ValueError` instead of printing and continuing.
+**Test:** `tests/test_background_and_regions.py::test_fit_pixel_works_with_default_arguments`.
 
-`sky -= bkg * (binning) ** 2` with the default `binning=None` raises `TypeError`.
-The default arguments of the function cannot be used together.
+`sky -= bkg * (binning) ** 2` with the documented default `binning=None` raised `TypeError`, so the
+function's own defaults could not be used together.
 
-### B7. `create_deep_image` silently drops trailing rows
-**Where:** [LuciBase.py:173-177](LuciBase.py#L173-L177)
-**Test:** `tests/test_cube.py::test_deep_image_drops_trailing_rows` (xfail)
+### B7. `create_deep_image` silently drops trailing rows — FIXED (Phase 5)
+**Where (was):** `Luci.create_deep_image`
+**Fixed by:** deriving the slab count from the step size so the loop covers the whole cube.
+**Test:** `tests/test_cube.py::test_deep_image_covers_cubes_whose_height_is_not_a_multiple_of_ten`
+(parametrised over dimx = 24, 25, 33).
 
-The cube is summed in exactly ten slabs of `int(shape[0] / 10)` rows. When the
-x-dimension is not divisible by 10 the remainder is left as zeros — for a real
-2048-row cube, **the last 8 rows of every deep image are blank**.
+The cube was summed in exactly ten slabs of `int(shape[0] / 10)` rows, so when the x-dimension was not
+divisible by 10 the remainder stayed zero — on a real 2048-row cube, **the last 8 rows of every deep
+image were blank**.
 
-### B8. `bin_mask` divides a boolean mask by `binning ** 2`
-**Where:** [LUCI/LuciUtility.py:389](LUCI/LuciUtility.py#L389)
-**Test:** `tests/test_pure_functions.py::test_bin_mask_*` (+ xfail)
+### B8. `bin_mask` divides a boolean mask by `binning ** 2` — FIXED (Phase 5)
+**Where (was):** `LuciUtility.bin_mask`
+**Fixed by:** dropping the stray division and returning a genuine boolean array.
+**Tests:** `tests/test_pure_functions.py::test_bin_mask_returns_a_boolean_mask` (which also checks it
+is usable for boolean indexing, which the float version was not).
 
-Builds a correct boolean mask, then runs `binned_mask = binned_mask / (binning ** 2)`
-— a line copy-pasted from the flux-averaging path in `bin_cube_function`. `True`
-becomes `0.25`, and the return type is float, not bool.
+It built a correct boolean mask, then ran `binned_mask = binned_mask / (binning ** 2)` — copy-pasted
+from the flux-averaging path in `bin_cube_function` — turning `True` into `0.25` and the result into a
+float array. It survived only because its one consumer tests `if mask[x, y]:` and 0.25 is truthy.
 
-Survives only because its one consumer tests `if mask[x, y]:` and 0.25 is truthy.
-Any caller that sums the mask, counts non-zeros, or uses it for boolean indexing
-gets wrong answers.
+### B9. `fit_region` outputs are named differently from `fit_cube`'s — FIXED (Phase 5)
+**Where (was):** `Luci.fit_region`'s `save_fits` call
+**Fixed by:** forwarding `fit_function`, so `fit_region` and `fit_cube` name their products
+identically.
+**Test:** `tests/test_background_and_regions.py::test_fit_region_names_outputs_like_fit_cube`.
 
-### B9. `fit_region` outputs are named differently from `fit_cube`'s
-**Where:** [LuciBase.py:709-724](LuciBase.py#L709-L724)
+Without it the two entry points wrote different filenames for the same fit, and downstream scripts
+globbing for outputs silently missed them.
 
-`fit_region` never assigns `corr_fits` / `step_fits`, and does not forward
-`fit_function` to `save_fits`, so its FITS products land under different filenames
-than the equivalent `fit_cube` call. Downstream scripts that glob for outputs
-silently miss them.
+### B16. Multi-component fits overwrite each other's output maps — FIXED (Phase 5)
+**Where (was):** `LuciUtility.save_fits`
+**Fixed by:** actually appending to `lines_fit`, so repeated line names get `_2`, `_3`, ... suffixes.
+**Tests:** `tests/test_output_contract.py::test_duplicate_line_names_get_a_component_suffix` and
+`::test_three_components_are_numbered_sequentially` (each asserts the right component landed in the
+right file, not merely that the files exist).
 
-### B16. Multi-component fits overwrite each other's output maps
-**Where:** [LUCI/LuciUtility.py:63-68](LUCI/LuciUtility.py#L63-L68)
-**Test:** `tests/test_output_contract.py::test_duplicate_line_names_*` (+ xfail)
-
-`save_fits` intends to disambiguate repeated line names (a two-component fit
-passes `['Halpha', 'Halpha']`) by appending `_2` to the second. But `lines_fit`
-is initialised to `[]` and **never appended to**, so `lines_fit.count(line_)` is
-always 0 and the renaming branch is dead code. Both components write the same
-filename; the second silently overwrites the first. Only one map survives, and
-it holds the *second* component. This is the concrete failure behind the
-`# TODO: Only works for 2 components` note in
+`save_fits` intended to disambiguate repeated line names, but `lines_fit` was never appended to, so
+`.count()` was always 0 and the renaming branch was dead code. Every component wrote the same
+filename and the second silently overwrote the first, leaving only the last. This is the concrete
+failure behind the `# TODO: Only works for 2 components` note in
 [LuciConvenience.py:32](LUCI/LuciConvenience.py#L32).
 
-### B10. Hardcoded `2048` / `2064` cube dimensions
-**Where:** [LuciBase.py:1054](LuciBase.py#L1054), [L630](LuciBase.py#L630), [L1913](LuciBase.py#L1913)
+### B10. Hardcoded `2048` / `2064` cube dimensions — FIXED (Phase 5)
+**Where (was):** `create_snr_map` / `calculate_component_map` default arguments, three `header.set`
+blocks, the Voronoi bin map, and the PCA coefficient array.
+**Fixed by:** taking every extent from `self.cube_final.shape`. The two default arguments became
+`None` and resolve to the cube's extent.
+**Tests:** `tests/test_background_and_regions.py::test_snr_map_defaults_to_this_cubes_extent` and
+`::test_no_hardcoded_detector_dimensions_remain`, which greps `LuciBase.py` so the pattern cannot
+quietly return.
 
-Default arguments and the PCA coefficient array assume the standard SITELLE
-detector size. Anything else — a trimmed cube, a test fixture, a future detector —
-silently mis-indexes or truncates.
+Defaults and array shapes assumed the standard SITELLE detector, so anything else — a trimmed cube, a
+test fixture, a future detector — silently mis-indexed or truncated.
 
 ---
 
@@ -236,14 +256,19 @@ The Dawson form evaluates `dawsn((channel - p1) / (sqrt(2) * sigma))`, whose
 argument diverges as σ→0. Instead of tending to a pure sinc, the profile becomes
 uncorrelated noise. Directly compounds B1, whose failure mode is σ=0.
 
-### B15. New-format HDF5 cubes are broken on numpy ≥1.24
-**Where:** [LUCI/LuciUtility.py:218](LUCI/LuciUtility.py#L218), [L224](LUCI/LuciUtility.py#L224)
+### B15. New-format HDF5 cubes are broken on numpy ≥1.24 — FIXED (Phase 5)
+**Where (was):** the new-format branch of `LuciUtility.update_header`
+**Fixed by:** dispatching with `issubclass` against `np.floating` / `np.integer` / `np.str_` / `str` /
+`bytes` / `np.bool_` instead of `is np.str`, and narrowing the bare `except:` to `except Exception:`.
+`np.bool_` is checked *before* the integer branch, since `bool` subclasses `int` in Python.
+**Tests:** the new `tests/test_new_format_cube.py` (5 tests), backed by a
+`write_new_format_cube` fixture generator — the new-format path previously had **no coverage at all**,
+which is exactly how this survived.
 
-The new-format branch of `update_header` tests `header_type is np.str` and
-`np.bool_`. `np.str` was **removed** in numpy 1.24, so it raises `AttributeError`
-— caught by the surrounding bare `except:`, which leaves `clean_hdr_dict` empty
-and produces a WCS with no axes. Only the legacy quadrant format is exercised by
-the current test fixture.
+`np.str` was removed in numpy 1.24, so the type check raised `AttributeError`, which the surrounding
+bare `except:` swallowed. Every string and boolean keyword fell through to the fallback,
+`clean_hdr_dict` stayed empty, and the cube came back with an axis-less WCS — losing astrometry on
+every cutout and saved map.
 
 ---
 

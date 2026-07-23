@@ -624,8 +624,11 @@ class Luci():
                     header = self.header_binned
                 else:
                     header = self.header
-                header.set('NAXIS1', 2064)  # Need this for astropy
-                header.set('NAXIS2', 2048)
+                # Taken from the cube rather than hardcoded to the standard
+                # SITELLE detector size (bug B10): NAXIS1 is the y extent and
+                # NAXIS2 the x extent of this cube.
+                header.set('NAXIS1', self.cube_final.shape[1])  # Need this for astropy
+                header.set('NAXIS2', self.cube_final.shape[0])
                 mask = reg_to_mask(region, header)
             elif '.npy' in region:  # If passed numpy file
                 mask = np.load(region)
@@ -925,8 +928,9 @@ class Luci():
         #    print("Terminating Program!")
         if '.reg' in region:  # If passed a .reg file
             header = self.header
-            header.set('NAXIS1', 2064)  # Need this for astropy
-            header.set('NAXIS2', 2048)
+            # From the cube, not the standard detector size (bug B10).
+            header.set('NAXIS1', self.cube_final.shape[1])  # Need this for astropy
+            header.set('NAXIS2', self.cube_final.shape[0])
             mask = reg_to_mask(region, header)
         elif '.npy' in region:  # If passed numpy file
             mask = np.load(region)
@@ -993,8 +997,9 @@ class Luci():
         mask = None  # Initialize
         if '.reg' in region:  # If passed a .reg file
             header = self.header
-            header.set('NAXIS1', 2064)  # Need this for astropy
-            header.set('NAXIS2', 2048)
+            # From the cube, not the standard detector size (bug B10).
+            header.set('NAXIS1', self.cube_final.shape[1])  # Need this for astropy
+            header.set('NAXIS2', self.cube_final.shape[0])
             mask = reg_to_mask(region, header)
         elif '.npy' in region:  # If passed numpy file
             mask = np.load(region)
@@ -1054,7 +1059,7 @@ class Luci():
         fit_dict = fit.fit()
         return axis, sky, fit_dict
 
-    def create_snr_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, method=1,
+    def create_snr_map(self, x_min=0, x_max=None, y_min=0, y_max=None, method=1,
                         n_threads=2, lines=[None], binning=1, bkgType=None,
                           pca_coefficient_array=None, pca_vectors=None, pca_mean=None
                           ):
@@ -1064,9 +1069,9 @@ class Luci():
 
         Args:
             x_min: Minimal X value (default 0)
-            x_max: Maximal X value (default 2048)
+            x_max: Maximal X value (default None -> this cube's x extent)
             y_min: Minimal Y value (default 0)
-            y_max: Maximal Y value (default 2064)
+            y_max: Maximal Y value (default None -> this cube's y extent)
             method: Method used to calculate SNR (default 1; options 1 or 2)
             n_threads: Number of threads to use
             lines: Lines to focus on (default None: For SN2 you can choose OIII)
@@ -1076,6 +1081,12 @@ class Luci():
             snr_map: Signal-to-Noise ratio map
 
         """
+        # Default to this cube's extent instead of the standard detector size,
+        # which silently mis-indexed any non-standard cube (bug B10).
+        if x_max is None:
+            x_max = self.cube_final.shape[0]
+        if y_max is None:
+            y_max = self.cube_final.shape[1]
         cube_to_use = self.cube_final
         if binning > 1:
             self.bin_cube(self.cube_final, self.header, binning, x_min, x_max, y_min, y_max)
@@ -1299,8 +1310,14 @@ class Luci():
         fits.writeto(self.output_dir + '/velocity_correction.fits', vel_grid, self.header, overwrite=True)
         return velocity, fit_vector, sky, vel_grid, vel_uncertainty_grid, self.spectrum_axis
 
-    def calculate_component_map(self, x_min=0, x_max=2048, y_min=0, y_max=2064, bkg=None, n_threads=2, region=None):
+    def calculate_component_map(self, x_min=0, x_max=None, y_min=0, y_max=None, bkg=None, n_threads=2, region=None):
         # TODO: ADD Documentation and example
+        # Bounds default to this cube's extent rather than the standard detector
+        # size (bug B10).
+        if x_max is None:
+            x_max = self.cube_final.shape[0]
+        if y_max is None:
+            y_max = self.cube_final.shape[1]
         return create_component_map_function(self.header, self.hdr_dict, self.Luci_path, self.resolution, self.filter,
                                              self.cube_final, self.spectrum_axis,
                                              self.wavenumbers_syn_full, self.output_dir, self.object_name, x_min, x_max,
@@ -1390,7 +1407,7 @@ class Luci():
             for f in files:
                 os.remove(f)
         for bin_num in list(range(len(Final_Bins))):
-            bool_bin_map = np.zeros((2048, 2064), dtype=bool)
+            bool_bin_map = np.zeros(self.cube_final.shape[:2], dtype=bool)
             for a, b in zip(np.where(bin_map == bin_num)[0][:], np.where(bin_map == bin_num)[1][:]):
                 bool_bin_map[x_min_init + a, y_min_init + b] = True
             np.save(self.output_dir + '/Numpy_Voronoi_Bins/bool_bin_map_%i' % j, bool_bin_map)
@@ -1965,8 +1982,9 @@ class Luci():
             history = model2D.fit(X_train, y_train, epochs=max_epochs, batch_size=batch_size, validation_data=(X_valid, y_valid), callbacks=[reduce_lr, early_stopping])
             # Predict using model
             interpolatedSourcePixels = model2D.predict(np.column_stack((src_x, src_y)))
-        # Construct final coefficient array
-        coefficient_array = np.zeros((2048, 2064, n_components_keep))
+        # Construct final coefficient array, sized from the cube rather than the
+        # standard detector dimensions (bug B10).
+        coefficient_array = np.zeros((*self.cube_final.shape[:2], n_components_keep))
         #coefficient_array[:] = np.nan
         for pixel_ct, pixel in enumerate(bkg_pixels):
             coefficient_array[pixel[0], pixel[1]] = BkgTransformedPCA[pixel_ct]

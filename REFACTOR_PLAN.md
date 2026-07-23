@@ -14,16 +14,37 @@
 | 2 — Repo weight (~344 MB untracked) | ✅ done |
 | 3 — Filter registry, numba removal, FitResult, `fitting/` package | ✅ done |
 | 4 — ONNX migration | ✅ core done (TF-drop from core deps remains) |
-| 5 — `SitelleCube` / `FitRunner` split + remaining bug fixes | ⬜ not started |
+| 5 — remaining bug fixes ✅ / `SitelleCube` split ⬜ | 🟡 bugs all fixed; structural split outstanding |
 | 6 — Compat shim & API surface | ⬜ not started |
 | 7 — Docs & examples | ⬜ not started |
 
-**Bugs fixed so far:** B1 (ML-off fabricated zero kinematics), B4 (C3 noise global leak), B11 (wouldn't
-import on modern numba), B12 (`plt.clf()` per spectrum), B13 (ML model reloaded per pixel), B14
-(sinc-Gauss σ=0 NaN), B17 (MDN sigmas needed softplus).
-**Still open:** B2, B3, B5–B10, B15, B16 — mostly Phase 5. See the register.
+**Every bug in the register is now fixed** — B1–B17. See [REFACTOR_BUGS.md](REFACTOR_BUGS.md) for each
+one, the test that pins it, and (where I got something wrong along the way) what the mistake was.
 
-**Verification state:** 105 fast tests + 12 golden baselines green; ruff and `uv lock --check` clean.
+**Verification state:** 121 fast tests + 12 golden baselines green; ruff and `uv lock --check` clean.
+No `xfail` markers remain: every one flipped to a real passing test as its bug was fixed.
+
+### Phase 5 outcome (bug cluster)
+Ten bugs fixed with **zero change to fit results** (12/12 goldens byte-identical):
+
+| Bug | Was |
+|---|---|
+| B2 | `extract_spectrum(mean=True)` was a silent no-op — backgrounds came back N× too large |
+| B3 | `fit_region` forwarded `bkg` but not `bkgType`, so the background was ignored entirely |
+| B5 | unbinned PCA in `fit_pixel` referenced undefined `x_pix`/`y_pix` → `NameError` |
+| B6 | `fit_pixel`'s own defaults (`binning=None`) → `TypeError` |
+| B7 | `create_deep_image` blanked the last rows of any cube whose height wasn't a multiple of 10 |
+| B8 | `bin_mask` divided a boolean mask by `binning²`, returning 0.25 instead of True |
+| B9 | `fit_region` didn't forward `fit_function`, so its outputs were named unlike `fit_cube`'s |
+| B10 | `2048`/`2064` hardcoded in defaults and array shapes |
+| B15 | `np.str` (removed in numpy 1.24) inside a bare `except` → new-format cubes had an axis-less WCS |
+| B16 | multi-component fits overwrote each other's maps; only the last survived |
+
+Also deduplicated: the PCA scaling window (copy-pasted three times, each calling `quit()` from library
+code) now lives in the filter registry as `pca_scale_indices`.
+
+New coverage: `tests/test_new_format_cube.py` exercises the new HDF5 layout, which had **none** — that
+absence is precisely how B15 survived.
 
 ### Phase 4 outcome
 **All 39 models converted to ONNX and validated — 39/39, worst deviation 6.7e-4 (float32 precision).**

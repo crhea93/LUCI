@@ -415,6 +415,113 @@ def write_cube(
     }
 
 
+def write_new_format_cube(
+    path: str, filter_name: str = "SN3", dimx: int = 20, dimy: int = 20, calib_nm: float = 543.5
+) -> dict:
+    """
+    Write a cube in the *new* SITELLE HDF5 layout.
+
+    The two formats differ structurally, and ``read_in_cube`` / ``update_header``
+    branch on the presence of a ``quad_nb`` attribute:
+
+      * **legacy** -- header in a ``/header`` compound dataset, data split across
+        ``/quad00N/data`` groups (what :func:`write_cube` produces);
+      * **new** -- header keys as HDF5 *attributes* on the root group, data in a
+        single ``/data`` dataset.
+
+    The new-format path had no test coverage, which is how B15 survived: it type
+    checked with ``header_type is np.str``, removed in numpy 1.24, and the
+    resulting ``AttributeError`` was swallowed by a bare ``except`` -- leaving the
+    WCS dictionary empty and producing a cube with no axes.
+
+    Kept deliberately small: this exists to exercise the header/type branch, not
+    to fit anything.
+    """
+    profile = PROFILES[filter_name]
+    if not path.endswith(".hdf5"):
+        path = path + ".hdf5"
+
+    axis = np.linspace(profile.axis_min, profile.axis_min + profile.step_nb * profile.cdelt3, profile.step_nb)
+    rng = np.random.default_rng(7)
+    cube = np.empty((dimx, dimy, profile.step_nb), dtype=np.float64)
+    sinc_width = profile.cdelt3
+    for i in range(dimx):
+        for j in range(dimy):
+            cube[i, j, :] = make_spectrum(
+                axis,
+                profile,
+                profile.default_lines,
+                100.0,
+                30.0,
+                1.0e-16,
+                1.0e-17,
+                sinc_width,
+                noise_sigma=1.0e-18,
+                rng=rng,
+            )
+
+    yy, xx = np.meshgrid(np.arange(dimy), np.arange(dimx))
+    radius = np.hypot(xx - dimx / 2.0, yy - dimy / 2.0)
+    theta = np.deg2rad(12.0 * radius / max(radius.max(), 1.0))
+
+    # Deliberately mixed dtypes, since the type dispatch is what is under test:
+    # floats, ints, strings and a bool must each land in the right branch.  Strings
+    # are plain `str` because h5py cannot store numpy unicode ('<U8') attributes --
+    # which is also what real ORBS-written cubes contain.
+    attrs: dict[str, object] = {
+        "NAXIS": np.int64(3),
+        "NAXIS1": np.int64(dimx),
+        "NAXIS2": np.int64(dimy),
+        "NAXIS3": np.int64(profile.step_nb),
+        "CTYPE1": "RA---TAN",
+        "CTYPE2": "DEC--TAN",
+        "CRVAL1": np.float64(24.174),
+        "CRVAL2": np.float64(15.783),
+        "CRPIX1": np.float64(dimx / 2.0),
+        "CRPIX2": np.float64(dimy / 2.0),
+        "CDELT1": np.float64(-8.1e-05),
+        "CDELT2": np.float64(8.1e-05),
+        "CUNIT1": "deg",
+        "CUNIT2": "deg",
+        "PC1_1": np.float64(0.9998),
+        "PC1_2": np.float64(-0.0199),
+        "PC2_1": np.float64(0.0199),
+        "PC2_2": np.float64(0.9998),
+        "CRVAL3": np.float64(profile.axis_min),
+        "CDELT3": np.float64(profile.cdelt3),
+        "STEP": np.float64(profile.step),
+        "STEPNB": np.int64(profile.step_nb),
+        "ZPDINDEX": np.int64(profile.zpd_index),
+        "ORDER": np.int64(8),
+        "FILTER": filter_name,
+        "CALIBNM": np.float64(calib_nm),
+        "DATE-OBS": "2019-10-01",
+        "EXPTIME": np.float64(13.3),
+        "WAVTYPE": "WAVENUMBER",
+        "APODIZE": np.bool_(False),
+    }
+
+    with h5py.File(path, "w") as f:
+        for key, value in attrs.items():
+            f.attrs[key] = value
+        f.create_dataset("data", data=cube)
+        f.create_dataset("calib_map", data=(calib_nm / np.cos(theta)).astype(np.float64))
+
+    return {
+        "path": path,
+        "filter": filter_name,
+        "dimx": dimx,
+        "dimy": dimy,
+        "dimz": profile.step_nb,
+        "velocity_kms": 100.0,
+        "broadening_kms": 30.0,
+        "step_nb": profile.step_nb,
+        "zpd_index": profile.zpd_index,
+        "axis_min": profile.axis_min,
+        "attrs": attrs,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", required=True, help="output path (.hdf5 appended if absent)")

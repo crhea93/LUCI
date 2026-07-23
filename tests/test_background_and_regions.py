@@ -132,6 +132,50 @@ def test_pca_scale_indices_bracket_the_expected_wavelengths(sn3_cube_noml):
     assert lower < upper
 
 
+# --------------------------------------------------------------------------
+# B10 -- cube dimensions must come from the cube
+# --------------------------------------------------------------------------
+
+
+def test_snr_map_defaults_to_this_cubes_extent(sn3_cube_noml, sn3_truth):
+    """
+    B10: ``create_snr_map`` defaulted to x_max=2048, y_max=2064 -- the standard
+    SITELLE detector size -- so on any other cube (a trimmed one, a test fixture,
+    a future detector) the defaults indexed far past the data.
+    """
+    from astropy.io import fits
+
+    # Calling with default bounds is the whole test: before the fix this walked
+    # off the end of a 20x20 cube.
+    sn3_cube_noml.create_snr_map(method=1, n_threads=1)
+
+    snr_dir = os.path.join(sn3_cube_noml.output_dir, "SNR")
+    written = [f for f in os.listdir(snr_dir) if f.endswith(".fits")]
+    assert written, "no SNR map written"
+    snr = fits.open(os.path.join(snr_dir, written[0]))[0].data
+    # SNR maps are stored transposed relative to the cube.
+    assert snr.shape == (sn3_truth["dimy"], sn3_truth["dimx"])
+    assert np.all(np.isfinite(snr))
+
+
+def test_no_hardcoded_detector_dimensions_remain():
+    """
+    Guards against the pattern coming back.
+
+    2048x2064 is the standard SITELLE detector; baking it into defaults or array
+    shapes is what B10 was. Comments may still mention it.
+    """
+    import re
+
+    source = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "LuciBase.py")).read()
+    offenders = [
+        line.strip()
+        for line in source.splitlines()
+        if re.search(r"\b(2048|2064)\b", line) and not line.strip().startswith("#")
+    ]
+    assert not offenders, f"hardcoded detector dimensions reintroduced: {offenders}"
+
+
 def test_pca_scale_indices_raises_for_an_uncharacterised_filter(sn3_cube_noml):
     """
     C-filters have no PCA background window. The three original copies of this
