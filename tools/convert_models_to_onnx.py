@@ -142,8 +142,30 @@ def mdn_split(raw: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return raw[:, :2], raw[:, 2:]
 
 
+def _standard_reference(name: str):
+    """
+    Return ``(predict_fn, input_len)`` for a standard SavedModel.
+
+    Prefers the low-level ``tf.saved_model.load`` serving signature over
+    ``keras.models.load_model``: the latter chokes on models saved by a newer
+    Keras (e.g. the SN4 predictor raises "Unrecognized keyword arguments:
+    ['optional']"), while the serving signature is exactly what tf2onnx consumes,
+    so it is both more robust and the more faithful reference.
+    """
+    loaded = tf.saved_model.load(os.path.join(ML_DIR, name))
+    infer = loaded.signatures["serving_default"]
+    input_spec = list(infer.structured_input_signature[1].values())[0]
+    input_len = int(input_spec.shape[1])
+    output_key = list(infer.structured_outputs.keys())[0]
+
+    def predict_fn(x: np.ndarray) -> np.ndarray:
+        result = infer(tf.convert_to_tensor(x))
+        return result[output_key].numpy()
+
+    return predict_fn, input_len
+
+
 def validate(name: str, out_path: str) -> tuple[bool, float]:
-    import keras
     import onnxruntime as ort
 
     mdn = is_mdn(name)
@@ -154,8 +176,7 @@ def validate(name: str, out_path: str) -> tuple[bool, float]:
         model = create_MDN_model(input_len, negative_loglikelihood)
         model.load_weights(os.path.join(ML_DIR, name, name))
     else:
-        model = keras.models.load_model(os.path.join(ML_DIR, name))
-        input_len = model.input_shape[1]
+        predict_fn, input_len = _standard_reference(name)
 
     X = np.random.default_rng(0).random((N_VALIDATION_SPECTRA, input_len, 1)).astype(np.float32)
     sess = ort.InferenceSession(out_path)
@@ -170,9 +191,9 @@ def validate(name: str, out_path: str) -> tuple[bool, float]:
         ok = np.allclose(keras_out, onnx_cat, rtol=RTOL, atol=ATOL)
         return ok, float(np.max(np.abs(keras_out - onnx_cat)))
 
-    keras_out = model.predict(X, verbose=0)
-    ok = np.allclose(keras_out, onnx_out, rtol=RTOL, atol=ATOL)
-    return ok, float(np.max(np.abs(keras_out - onnx_out)))
+    ref_out = predict_fn(X)
+    ok = np.allclose(ref_out, onnx_out, rtol=RTOL, atol=ATOL)
+    return ok, float(np.max(np.abs(ref_out - onnx_out)))
 
 
 def discover() -> list[str]:
