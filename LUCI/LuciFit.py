@@ -15,7 +15,7 @@ from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_b
     calculate_flux, calculate_flux_err
 from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
 from LUCI.LuciUtility import hessianComp
-from numba import jit
+from LUCI.instrument.filters import get_filter
 import matplotlib.pyplot as plt
 import os
 import logging
@@ -197,7 +197,6 @@ class Fit:
         else:
             pass  # No ML model
 
-    @jit(fastmath=True)
     def apply_transmission(self):
         """
         Apply transmission curve on the spectra according to un-redshifted axis.
@@ -209,7 +208,6 @@ class Fit:
         self.spectrum = [self.spectrum[i] / self.trans_filter[i] if self.trans_filter[i] > 0.5 else self.spectrum[i] for
                          i in range(len(self.spectrum))]
 
-    @jit(fastmath=True)
     def calculate_correction(self):
         """
         Calculate correction factor based of interferometric angle. This is used to correct the broadening
@@ -217,7 +215,6 @@ class Fit:
         self.correction_factor = 1 / self.cos_theta
         self.axis_step = self.correction_factor / (2 * self.delta_x * (self.n_steps - self.zpd_index)) * 1e7
 
-    @jit(fastmath=True)
     def calc_sinc_width(self, ):
         """
         Calculate sinc width of the sincgauss function
@@ -229,54 +226,15 @@ class Fit:
         """
         Restrict the wavelength range of the fit so that the fit only occurs over the central regions of the spectra.
         We do this so that the continuum is properly calculated.
+
+        The per-filter windows now live in the filter registry
+        (LUCI.instrument.filters) instead of an if/elif chain duplicated across
+        the codebase.
         """
-        # Determine filter
         if self.spec_min is None or self.spec_max is None:  # If the user has not entered explicit bounds
-            global bound_lower, bound_upper
-            if self.filter == 'SN3':
-                bound_lower = 14750
-                bound_upper = 15400
-            elif self.filter == 'SN2':
-                bound_lower = 19500
-                bound_upper = 20750
-            elif self.filter == 'SN1':
-                bound_lower = 26000
-                bound_upper = 28000
-            elif self.filter == 'SN4':
-                ## Narrow Halpha filter -- the pass band is only 652-665 nm
-                bound_lower = 15040
-                bound_upper = 15330
-            elif self.filter == 'C3':
-                if 'OII3726' in self.lines:
-                    ## This is true for objects with a redshift around 0.465
-                    # We pretend we are looking at SN1
-                    bound_lower = 26000
-                    bound_upper = 29000
-                else:
-                    ## Normal C3
-                    bound_lower = 18100  # Needs to be in cm-1
-                    bound_upper = 19500  # Needs to be in cm-1
-            elif self.filter == 'C4':
-                ## This is true for objects at redshift ~0.25
-                bound_lower = 12150* self.obj_redshift_corr
-                bound_upper = 12550* self.obj_redshift_corr
-                #bound_lower = 14750
-                #bound_upper = 15400
-            elif self.filter == 'C2':
-                ## This is true for objects at redshift ~0.25
-                bound_lower = 15990* self.obj_redshift_corr
-                bound_upper = 17880* self.obj_redshift_corr
-            elif self.filter == 'C1':
-                ## This is true for objects at redshift ~0.25
-                bound_lower = 20408* self.obj_redshift_corr  # 20665 #
-                bound_upper = 25974* self.obj_redshift_corr  # 25700
-            else:
-                print(
-                    'The filter of your datacube is not supported by LUCI. We only support C1, C2, C3, C4, SN1, SN2, SN3, and SN4 at the moment.')
-            self.spec_min = bound_lower
-            self.spec_max = bound_upper
-        else:
-            pass
+            self.spec_min, self.spec_max = get_filter(self.filter).fit_bounds(
+                self.lines, self.obj_redshift_corr
+            )
         min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
         max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
         self.spectrum_restricted = np.real(self.spectrum_normalized[min_:max_])
@@ -293,48 +251,13 @@ class Fit:
         the standard deviation in that region. We use the normalized spectrum since that
         is what is passed to the fit function.
         """
-        # Determine filter
-        global bound_lower, bound_upper
-        if self.filter == 'SN3':
-            bound_lower = 15600#16000
-            bound_upper = 15800#16400
-        elif self.filter == 'SN2':
-            bound_lower = 18600
-            bound_upper = 19000
-        elif self.filter == 'SN1':
-            bound_lower = 26000
-            bound_upper = 26200
-        elif self.filter == 'SN4':
-            ## The free spectral range of order 15 is much wider than the 652-665 nm pass band,
-            ## so we can take the noise from a region of the axis that the filter blocks entirely
-            bound_lower = 14600
-            bound_upper = 14900
-        elif self.filter == 'C3':
-            if 'OII3726' in self.lines:
-                ## This is true for objects at redshift ~0.465
-                # In this case we pretend we are in SN1
-                bound_lower = 26000
-                bound_upper = 26200
-            else:
-                ## Normal C3
-                bound_lower = 20000
-                buond_upper = 20250
-        elif self.filter == 'C4' and 'Halpha' in self.lines:
-            ## This is true for objects at redshift ~0.25
-            # In this case we pretend we are in SN3
-            bound_lower = 11800* self.obj_redshift_corr  # 14600  # LYA mods, originally the same as SN3
-            bound_upper = 12150* self.obj_redshift_corr  # 14950
-        elif self.filter == 'C2':
-            ## This is true for objects at redshift ~0.25
-            bound_lower = 15500* self.obj_redshift_corr
-            bound_upper = 15990* self.obj_redshift_corr
-        elif self.filter == 'C1':
-            ## This is true for objects at redshift ~0.25
-            bound_lower = 18000* self.obj_redshift_corr
-            bound_upper = 20665* self.obj_redshift_corr
-        else:
-            print(
-                'The filter of your datacube is not supported by LUCI. We only support C1, C2, C3, C4, SN1, SN2, SN3, and SN4 at the moment.')
+        # Per-filter noise windows live in the filter registry.  This also
+        # fixes B4: the old normal-C3 branch misspelt bound_upper as
+        # buond_upper, so C3 silently inherited whichever window the previous
+        # fit left in the module globals.
+        bound_lower, bound_upper = get_filter(self.filter).noise_bounds(
+            self.lines, self.obj_redshift_corr
+        )
         # Calculate standard deviation
         min_ = np.argmin(np.abs(np.array(self.axis) - bound_lower))
         max_ = np.argmin(np.abs(np.array(self.axis) - bound_upper))
@@ -373,7 +296,6 @@ class Fit:
             self.broad_ml_sigma = 0
         return None
 
-    @jit(fastmath=True)
     def interpolate_spectrum(self):
         """
         Interpolate Spectrum given the wavelength axis of reference spectrum.
@@ -441,7 +363,6 @@ class Fit:
             self.sigma_max = (line_pos_est * self.broad_ml) / SPEED_OF_LIGHT + 3 * (line_pos_est * self.broad_ml_sigma) / SPEED_OF_LIGHT
         return line_amp_est, line_pos_est, line_broad_est
 
-    @jit(fastmath=True)
     def cont_estimate(self, sigma_level=3):
         """
         TODO: Test
@@ -501,7 +422,6 @@ class Fit:
         #cont_val = np.nanmedian(self.spectrum_normalized[min_:max_])
         return cont_val
 
-    @jit(fastmath=True)
     def log_likelihood(self, theta):
         """
         Calculate log likelihood function evaluated given parameters on spectral axis

@@ -5,7 +5,7 @@ from astropy.wcs import WCS
 from astropy.io import fits
 from scipy import interpolate
 import scipy as sp
-from numba import jit
+from LUCI.instrument.filters import get_filter
 
 def check_luci_path(Luci_path):
     """
@@ -273,34 +273,11 @@ def read_in_reference_spectrum(ref_spec, hdr_dict):
     for chan in ref_spec:  # Only want SN3 region
         channel.append(chan[0])
         counts.append(np.real(chan[1]))
-    if hdr_dict['FILTER'] == 'SN3':
-        min_ = np.argmin(np.abs(np.array(channel) - 14700))
-        max_ = np.argmin(np.abs(np.array(channel) - 15600))
-    elif hdr_dict['FILTER'] == 'SN2':
-        min_ = np.argmin(np.abs(np.array(channel) - 19000))
-        max_ = np.argmin(np.abs(np.array(channel) - 21000))
-    elif hdr_dict['FILTER'] == 'SN1':
-        min_ = np.argmin(np.abs(np.array(channel) - 25500))
-        max_ = np.argmin(np.abs(np.array(channel) - 27500))
-    elif hdr_dict['FILTER'] == 'SN4':  # Narrow Halpha filter -- 652-665 nm
-        min_ = np.argmin(np.abs(np.array(channel) - 15000))
-        max_ = np.argmin(np.abs(np.array(channel) - 15350))
-    elif hdr_dict['FILTER'] == 'C3':
-        min_ = np.argmin(np.abs(np.array(channel) - 17500))
-        max_ = np.argmin(np.abs(np.array(channel) - 19500))
-    elif hdr_dict['FILTER'] == 'C4':
-        min_ = np.argmin(np.abs(np.array(channel) - 12100)) #LYA mod originally 14700
-        max_ = np.argmin(np.abs(np.array(channel) - 12600)) #LYA mod originally 15600
-    elif hdr_dict['FILTER'] == 'C2':
-        min_ = np.argmin(np.abs(np.array(channel) - 15987))#15500)) #LYA mod originally 14700
-        max_ = np.argmin(np.abs(np.array(channel) - 17880)) #LYA mod originally 15600
-    elif hdr_dict['FILTER'] == 'C1':
-        min_ = np.argmin(np.abs(np.array(channel) - 20408)) #LYA mod originally 14700
-        max_ = np.argmin(np.abs(np.array(channel) - 25974)) #LYA mod originally 15600
-    else:
-        print('We do not support this filter.')
-        print('Terminating program!')
-        exit()
+    # Clip window comes from the filter registry instead of an if/elif chain
+    # that used to call exit() from library code on an unknown filter.
+    ref_lower, ref_upper = get_filter(hdr_dict['FILTER']).reference_bounds()
+    min_ = np.argmin(np.abs(np.array(channel) - ref_lower))
+    max_ = np.argmin(np.abs(np.array(channel) - ref_upper))
     wavenumbers_syn = np.array(channel[min_:max_], dtype=np.float32)
     wavenumbers_syn_full = np.array(channel, dtype=np.float32)
     return wavenumbers_syn, wavenumbers_syn_full
@@ -409,7 +386,6 @@ def hessian(x):
             hessian[k, l, :, :] = grad_kl
     return hessian
 
-@jit(fastmath=True)
 def hessianComp(func,initial,delta=1e-1):
   """
   Calculate the hessian using finite differences. The function was taken from https://rh8liuqy.github.io/Finite_Difference.html.

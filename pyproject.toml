@@ -23,12 +23,13 @@ classifiers = [
 requires-python = ">=3.10,<3.11"
 
 # These are the versions the golden baselines in tests/golden/ were recorded
-# against.  Two pins are load-bearing (see REFACTOR_BUGS.md):
-#   * numba==0.58.1 -- last release with object-mode @jit fallback; on newer
-#     numba the bare @jit decorators make the code fail to import (B11).
-#     Removed by Phase 3, which deletes the decorators.
+# against.  One pin is still load-bearing (see REFACTOR_BUGS.md):
 #   * numpy<2 -- the new-format HDF5 header path uses np.str/np.bool_, removed
-#     in numpy 1.24+ (B15).
+#     in numpy 1.24+ (B15).  Lifted when that path is fixed.
+#
+# numba was removed entirely in Phase 3b: every @jit decorator was a bare
+# object-mode no-op (B11), so deleting them changed no numerics and dropped
+# both the dependency and its 0.58.1 pin.
 #
 # tensorflow / tensorflow-probability are core *for now*.  Phase 4 moves them
 # to an optional [ml-legacy] extra once ONNX inference replaces them.
@@ -51,7 +52,6 @@ dependencies = [
     "corner",
     "photutils",
     "six",
-    "numba==0.58.1",
     "tensorflow==2.11",
     "tensorflow-probability==0.19",
 ]
@@ -110,8 +110,10 @@ extend-exclude = [
     "ML",
     "Data",
     "*.ipynb",
-    # Legacy modules, linted as their refactor phase rewrites them:
-    "LUCI",
+    # Legacy modules, linted as their refactor phase rewrites them.  The glob
+    # excludes LUCI/LuciFit.py, LuciFunctions.py, etc. but NOT new subpackages
+    # like LUCI/instrument/, so freshly written code is held to the rules.
+    "LUCI/Luci*.py",
     "LuciBase.py",
     "LuciAbsorp.py",
     "luci_absorption_fit_outline.py",

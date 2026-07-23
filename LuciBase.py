@@ -31,12 +31,9 @@ from tensorflow.keras.optimizers.legacy import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras.regularizers import l2
 from sklearn.ensemble import IsolationForest
-from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
 import warnings
 import matplotlib.pyplot as plt
 
-warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
-warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
