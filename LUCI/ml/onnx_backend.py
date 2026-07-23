@@ -59,7 +59,17 @@ class OnnxPredictor:
 
 
 class OnnxMDNPredictor:
-    """MDN predictor: Dense(4) output split into mean and stddev."""
+    """
+    MDN predictor: the Dense(4) output is ``[loc_v, loc_b, scale_v, scale_b]``.
+
+    The mean is the loc half verbatim; the standard deviation is **softplus** of
+    the scale half, which is the positivity transform ``IndependentNormal``
+    applies.  ``np.logaddexp(0, x)`` is a numerically stable softplus.
+
+    Getting this wrong is subtle: for predictors whose raw scales are all large
+    and positive, ``softplus(x) == x`` in float32 and identity looks right.  The
+    SN2 MDNs emit negative raw scales, where identity is off by up to 35 km/s.
+    """
 
     def __init__(self, path: str) -> None:
         self.path = path
@@ -69,6 +79,6 @@ class OnnxMDNPredictor:
         return PriorEstimate(
             velocity=float(out[0]),
             broadening=float(out[1]),
-            velocity_sigma=float(out[2]),
-            broadening_sigma=float(out[3]),
+            velocity_sigma=float(np.logaddexp(0.0, out[2])),
+            broadening_sigma=float(np.logaddexp(0.0, out[3])),
         )

@@ -29,10 +29,15 @@ Two model families need different handling:
   checkpoints whose head is a ``tfp.layers.IndependentNormal(2)`` on top of a
   ``Dense(4)``.  TFP distribution layers have no ONNX equivalent, so we rebuild
   the architecture, load the weights, and export the model **truncated at the
-  Dense(4)** layer.  That layer's four outputs are exactly
-  ``[loc_v, loc_b, scale_v, scale_b]``; empirically (verified by --validate)
-  ``mean == loc`` and ``stddev == scale`` with no further transform, so the
-  runtime reproduces the distribution by simply splitting the vector in half.
+  Dense(4)** layer.  That layer's four outputs are
+  ``[loc_v, loc_b, scale_v, scale_b]``; the runtime recovers the distribution as
+  ``mean = loc`` and ``stddev = softplus(scale)`` (see ``mdn_split``).
+
+  The softplus is easy to miss: predictors whose raw scales are all large and
+  positive satisfy ``softplus(x) == x`` in float32, so identity looks correct on
+  them.  The SN2 MDNs emit *negative* raw scales, where identity yields a
+  negative standard deviation and is off by up to 35 km/s.  ``--validate``
+  caught exactly that.
 
 ``--validate`` feeds random spectra through both the Keras and ONNX paths and
 fails loudly, per model, if they disagree beyond tolerance.  Nothing is shipped
@@ -114,8 +119,7 @@ def convert_standard(name: str, out_path: str) -> None:
 
     src = os.path.join(ML_DIR, name)
     rc = os.system(
-        f"{sys.executable} -m tf2onnx.convert --saved-model {src} "
-        f"--output {out_path} --opset 17 >/dev/null 2>&1"
+        f"{sys.executable} -m tf2onnx.convert --saved-model {src} " f"--output {out_path} --opset 17 >/dev/null 2>&1"
     )
     if rc != 0 or not os.path.exists(out_path):
         raise RuntimeError(f"tf2onnx failed for {name}")
@@ -138,8 +142,20 @@ def convert_mdn(name: str, out_path: str) -> None:
 
 
 def mdn_split(raw: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Reproduce IndependentNormal(2) from the Dense(4) output: mean | stddev."""
-    return raw[:, :2], raw[:, 2:]
+    """
+    Reproduce ``IndependentNormal(2)`` from the Dense(4) output.
+
+    ``mean`` is the first half verbatim; ``stddev`` is **softplus** of the second
+    half -- the layer's positivity transform.  ``np.logaddexp(0, x)`` is a
+    numerically stable softplus (no exp overflow for large x).
+
+    This is worth spelling out because it is easy to get wrong: for predictors
+    whose raw scale outputs are all large and positive (e.g. R5000-MDN-SN3,
+    range ~[77, 430]) ``softplus(x) == x`` exactly in float32, so identity looks
+    correct.  It is not -- the SN2 MDNs emit negative raw scales, where identity
+    is off by up to 35 km/s.  --validate catches this.
+    """
+    return raw[:, :2], np.logaddexp(0.0, raw[:, 2:])
 
 
 def _standard_reference(name: str):
