@@ -187,8 +187,7 @@ class PCABackgroundUnsupportedError(ValueError):
     def __init__(self, filter_name: object) -> None:
         supported = ", ".join(sorted(n for n, f in FILTERS.items() if f.pca_scale))
         super().__init__(
-            f"PCA background subtraction is not implemented for filter {filter_name!r}. "
-            f"Supported: {supported}."
+            f"PCA background subtraction is not implemented for filter {filter_name!r}. " f"Supported: {supported}."
         )
         self.filter_name = filter_name
 

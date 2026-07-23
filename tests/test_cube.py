@@ -122,9 +122,7 @@ def test_deep_image_equals_the_spectral_sum(sn3_cube_noml):
 
 
 @pytest.mark.parametrize("dimx", [24, 25, 33])
-def test_deep_image_covers_cubes_whose_height_is_not_a_multiple_of_ten(
-    luci_factory, cube_truth_factory, dimx
-):
+def test_deep_image_covers_cubes_whose_height_is_not_a_multiple_of_ten(luci_factory, cube_truth_factory, dimx):
     """
     B7: create_deep_image summed the cube in exactly ten slabs of
     int(shape[0] / 10) rows, silently leaving the remainder as zeros whenever

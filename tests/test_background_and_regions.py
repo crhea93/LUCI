@@ -39,45 +39,39 @@ def _small_mask(truth: dict) -> np.ndarray:
 # B3 -- fit_region must actually subtract the background
 # --------------------------------------------------------------------------
 
+
 @pytest.mark.slow
 def test_fit_region_subtracts_the_background(sn3_cube_noml, sn3_truth):
     """
     Fitting with a background must not give the same answer as fitting without.
 
-    Before the fix, ``bkgType`` never reached the fit, so passing ``bkg`` changed
-    nothing at all -- the two fits below were bit-identical.
+    Before the fix ``bkgType`` never reached the fit, so passing ``bkg`` changed
+    nothing at all and the two fits below were bit-identical.
+
+    Compared on the *returned* arrays rather than the written FITS files: both
+    calls write to the same output directory, and ``fits.open`` memmaps by
+    default, so a previously "read" map silently reflects the later write.
     """
     mask = _small_mask(sn3_truth)
+    # Every spaxel in the fixture carries the same lines, so this "background"
+    # contains real signal -- subtracting it must visibly change the fit.
     _, background = sn3_cube_noml.extract_spectrum(2, 6, 2, 6, mean=True)
 
-    _, _, _, _, _ = sn3_cube_noml.fit_region(
-        SN3_LINES, "sincgauss", [1] * 5, [1] * 5, mask, n_threads=1
-    )
-    plain_continuum = _read_map(sn3_cube_noml, "continuum")
+    _, _, plain_flux, _, _ = sn3_cube_noml.fit_region(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, mask, n_threads=1)
+    plain_flux = np.array(plain_flux, copy=True)
 
-    _, _, _, _, _ = sn3_cube_noml.fit_region(
+    _, _, subtracted_flux, _, _ = sn3_cube_noml.fit_region(
         SN3_LINES, "sincgauss", [1] * 5, [1] * 5, mask, bkg=background, n_threads=1
     )
-    subtracted_continuum = _read_map(sn3_cube_noml, "continuum")
 
-    fitted = mask[9:11, 9:11]
-    assert fitted.all()
-    # The background carries continuum, so removing it must lower the fitted
-    # continuum somewhere in the fitted patch.
-    assert not np.allclose(plain_continuum, subtracted_continuum), (
-        "passing bkg made no difference -- background was ignored (B3)"
-    )
-
-
-def _read_map(cube, kind: str) -> np.ndarray:
-    from astropy.io import fits
-
-    matches = [
-        f for f in os.listdir(cube.output_dir)
-        if f.endswith(".fits") and kind in f and "error" not in f
-    ]
-    assert matches, f"no {kind} map written"
-    return fits.open(os.path.join(cube.output_dir, sorted(matches)[0]))[0].data
+    # atol=0 matters: fluxes are ~1e-16, so numpy's default atol=1e-8 would call
+    # any two of these arrays "close" and the assertion would never fire.
+    assert not np.allclose(
+        plain_flux, subtracted_flux, rtol=1e-6, atol=0.0
+    ), "passing bkg made no difference -- background was ignored (B3)"
+    # Concretely: subtracting a background that contains the lines themselves
+    # must strip most of the fitted flux at a fitted pixel.
+    assert subtracted_flux[9, 9, 0] < 0.5 * plain_flux[9, 9, 0]
 
 
 @pytest.mark.slow
@@ -86,14 +80,15 @@ def test_fit_region_names_outputs_like_fit_cube(sn3_cube_noml, sn3_truth):
     mask = _small_mask(sn3_truth)
     sn3_cube_noml.fit_region(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, mask, n_threads=1)
     written = os.listdir(os.path.join(sn3_cube_noml.output_dir, "Velocity"))
-    assert any("sincgauss" in name for name in written), (
-        f"fit_function missing from fit_region output names: {written[:5]}"
-    )
+    assert any(
+        "sincgauss" in name for name in written
+    ), f"fit_function missing from fit_region output names: {written[:5]}"
 
 
 # --------------------------------------------------------------------------
 # B5 / B6 -- fit_pixel's own defaults must work
 # --------------------------------------------------------------------------
+
 
 @pytest.mark.slow
 def test_fit_pixel_works_with_default_arguments(sn3_cube_noml, sn3_truth):
@@ -112,23 +107,20 @@ def test_fit_pixel_subtracts_a_standard_background(sn3_cube_noml, sn3_truth):
     """With a background supplied, the fitted continuum should drop."""
     _, background = sn3_cube_noml.extract_spectrum(2, 6, 2, 6, mean=True)
     _, _, plain = sn3_cube_noml.fit_pixel(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, 10, 10)
-    _, _, subtracted = sn3_cube_noml.fit_pixel(
-        SN3_LINES, "sincgauss", [1] * 5, [1] * 5, 10, 10, bkg=background
-    )
+    _, _, subtracted = sn3_cube_noml.fit_pixel(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, 10, 10, bkg=background)
     assert subtracted["continuum"] < plain["continuum"]
 
 
 def test_fit_pixel_rejects_an_unknown_background_type(sn3_cube_noml):
     """An unrecognised bkgType must raise rather than silently do nothing."""
     with pytest.raises(ValueError, match="bkgType"):
-        sn3_cube_noml.fit_pixel(
-            ["Halpha"], "sincgauss", [1], [1], 10, 10, bkgType="nonsense"
-        )
+        sn3_cube_noml.fit_pixel(["Halpha"], "sincgauss", [1], [1], 10, 10, bkgType="nonsense")
 
 
 # --------------------------------------------------------------------------
 # The PCA scaling window, now shared instead of copy-pasted three times
 # --------------------------------------------------------------------------
+
 
 def test_pca_scale_indices_bracket_the_expected_wavelengths(sn3_cube_noml):
     """SN3's PCA scaling window is 670-675 nm; the indices must bracket it."""
