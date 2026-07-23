@@ -16,25 +16,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 
-# Pinned to 3.10 for now: the fitting code hard-imports keras/tensorflow at
-# module load (LuciFit, LuciNetwork, LuciBase, LuciComponentCalculations), and
-# tensorflow==2.11 ships no wheels for 3.11+.  Phase 4 (ONNX migration) removes
-# the hard TF dependency and this ceiling widens to >=3.10.
-requires-python = ">=3.10,<3.11"
+# Inference runs on ONNX Runtime; only the optional [ml-legacy] extra caps at 3.10.
+requires-python = ">=3.10"
 
-# These are the versions the golden baselines in tests/golden/ were recorded
-# against.  One pin is still load-bearing (see REFACTOR_BUGS.md):
-#   * numpy<2 -- the new-format HDF5 header path uses np.str/np.bool_, removed
-#     in numpy 1.24+ (B15).  Lifted when that path is fixed.
-#
-# numba was removed entirely in Phase 3b: every @jit decorator was a bare
-# object-mode no-op (B11), so deleting them changed no numerics and dropped
-# both the dependency and its 0.58.1 pin.
-#
-# tensorflow / tensorflow-probability are core *for now*.  Phase 4 moves them
-# to an optional [ml-legacy] extra once ONNX inference replaces them.
 dependencies = [
-    "numpy>=1.23,<2",
+    # <2 on 3.10 only, for the [ml-legacy] extra and the recorded goldens.
+    "numpy>=1.23,<2; python_version < '3.11'",
+    "numpy>=1.26; python_version >= '3.11'",
     "scipy",
     "astropy",
     "h5py",
@@ -53,8 +41,14 @@ dependencies = [
     "photutils",
     "six",
     "onnxruntime",
-    "tensorflow==2.11",
-    "tensorflow-probability==0.19",
+]
+
+[project.optional-dependencies]
+# Only needed to train the PCA background interpolator (interpolation='nn') and
+# to count spectral components. Both import it lazily.
+ml-legacy = [
+    "tensorflow==2.11; python_version < '3.11'",
+    "tensorflow-probability==0.19; python_version < '3.11'",
 ]
 
 [project.urls]
@@ -77,7 +71,11 @@ dev = [
 # package from the later refactor phases will replace this once it exists.
 [tool.hatch.build.targets.wheel]
 packages = ["LUCI"]
+# Puts the project root on sys.path for editable installs, so the top-level
+# modules resolve live rather than from the copy force-include leaves behind (B18).
+dev-mode-dirs = ["."]
 
+# Needed so a built wheel ships the top-level modules.
 [tool.hatch.build.targets.wheel.force-include]
 "LuciBase.py" = "LuciBase.py"
 "LuciAbsorp.py" = "LuciAbsorp.py"

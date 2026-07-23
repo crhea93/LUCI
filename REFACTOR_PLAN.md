@@ -14,14 +14,15 @@
 | 2 — Repo weight (~344 MB untracked) | ✅ done |
 | 3 — Filter registry, numba removal, FitResult, `fitting/` package | ✅ done |
 | 4 — ONNX migration | ✅ core done (TF-drop from core deps remains) |
-| 5 — remaining bug fixes ✅ / `SitelleCube` split ⬜ | 🟡 bugs all fixed; structural split outstanding |
+| 5 — bug fixes ✅ + TF made optional ✅ / `SitelleCube` split ⬜ | 🟡 structural split outstanding |
 | 6 — Compat shim & API surface | ⬜ not started |
 | 7 — Docs & examples | ⬜ not started |
 
-**Every bug in the register is now fixed** — B1–B17. See [REFACTOR_BUGS.md](REFACTOR_BUGS.md) for each
-one, the test that pins it, and (where I got something wrong along the way) what the mistake was.
+**Every bug in the register is fixed or mitigated** — B1–B18. See [REFACTOR_BUGS.md](REFACTOR_BUGS.md)
+for each one, the test that pins it, and (where I got something wrong along the way) what the mistake
+was.
 
-**Verification state:** 121 fast tests + 12 golden baselines green; ruff and `uv lock --check` clean.
+**Verification state:** 123 fast tests + 12 golden baselines green; ruff and `uv lock --check` clean.
 No `xfail` markers remain: every one flipped to a real passing test as its bug was fixed.
 
 ### Phase 5 outcome (bug cluster)
@@ -46,6 +47,20 @@ code) now lives in the filter registry as `pca_scale_indices`.
 New coverage: `tests/test_new_format_cube.py` exercises the new HDF5 layout, which had **none** — that
 absence is precisely how B15 survived.
 
+### Phase 5f outcome — TensorFlow is now optional
+`import LuciBase` no longer loads TensorFlow at all. The two remaining consumers import it lazily and
+raise a message pointing at the extra: the PCA background interpolator (`interpolation='nn'`) and
+component counting. `LuciNetwork` is untouched — it is only used by the offline conversion tool.
+
+- `requires-python` is now **>=3.10** (was `>=3.10,<3.11`); CI runs **3.10, 3.11, 3.12, 3.13**.
+- Verified: full core install on **Python 3.13 with numpy 2.5.1**, 123 tests passing, zero TF.
+- numpy is capped `<2` only on 3.10, where the `[ml-legacy]` extra needs it.
+- Two `tests/test_packaging.py` guards keep it that way: a subprocess check that importing LuciBase
+  loads no TF, and a static check for module-level TF imports.
+- The nightly golden job pins 3.10, since the baselines were recorded there and numpy-2 bit-equality
+  is unverified.
+- **B18** found and mitigated along the way — see the register.
+
 ### Phase 4 outcome
 **All 39 models converted to ONNX and validated — 39/39, worst deviation 6.7e-4 (float32 precision).**
 `LUCI/ml/` (predictor protocol, ONNX backend with cached sessions, registry) is wired into `Fit`,
@@ -64,21 +79,12 @@ which now contains **no TensorFlow references at all**.
 - **ML goldens re-recorded** against ONNX; re-recording produced a **zero diff**, confirming the ONNX
   path is deterministic and the committed baselines were already ONNX.
 
-**Remaining for a follow-up:** TF is still a core dependency because `LuciBase`, `LuciNetwork`, and
-`LuciComponentCalculations` import it for the background-NN interpolator and MDN *construction*
-(inference no longer needs it). Making those lazy is what unlocks moving TF to an `[ml-legacy]` extra,
-lifting `requires-python` past 3.10, and expanding the CI matrix to 3.11–3.13. That work pairs
-naturally with Phase 5, which restructures `LuciBase` anyway.
+**Done in Phase 5f:** TensorFlow is now an optional `[ml-legacy]` extra. See below.
 
 > **Known fixture-quality issue (not an ONNX regression):** the synthetic SN2/SN1 cubes don't resemble
 > real SITELLE data closely enough for the R1000 predictors, so their priors are poor (broad ≈ 226 vs
 > truth 30) and those fits don't recover truth — the pre-ONNX Keras goldens showed the same. Those
 > baselines pin *reproducibility*, not physics. SN3 is the meaningful ML golden (recovers 99.5/30.2).
-
-> **Known fixture-quality issue (not an ONNX regression):** the synthetic SN2/SN1 cubes don't resemble
-> real SITELLE data closely enough for the R1000 predictors, so their priors are poor (broad ≈ 226 vs
-> truth 30) and those fits don't recover truth. The pre-ONNX Keras goldens show the same thing. Those
-> baselines pin *reproducibility*, not physics. SN3 is the meaningful ML golden.
 
 ## Context
 

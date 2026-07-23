@@ -1,12 +1,10 @@
 # CI for LUCI.
 #
-# Replaces the old miniconda + luci.yml setup with uv.  The whole environment
-# is described by pyproject.toml + uv.lock; `uv sync --locked` reproduces it
-# exactly and fails if the lock has drifted.
+# The environment is described by pyproject.toml + uv.lock; `uv sync --locked`
+# reproduces it exactly and fails if the lock has drifted.
 #
-# Only Python 3.10 runs the test suite for now: the fitting code hard-imports
-# tensorflow==2.11 (no wheels for 3.11+).  Phase 4 of the refactor drops that
-# dependency, at which point this matrix expands to 3.11 / 3.12 / 3.13.
+# Inference runs on ONNX Runtime, so the suite runs on 3.10-3.13. Only the
+# optional [ml-legacy] extra still needs TensorFlow, and only on 3.10.
 
 name: CI
 
@@ -41,14 +39,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
       - name: Install (locked)
-        run: uv sync --locked --dev
+        run: uv sync --locked --dev --python ${{ matrix.python-version }}
       - name: Verify the lock is in sync with pyproject
         run: uv lock --check
       - name: Run tests
@@ -68,8 +66,10 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+      # Pinned to 3.10: the baselines in tests/golden/ were recorded there, and
+      # bit-level equality across numpy majors has not been verified.
       - name: Install (locked)
-        run: uv sync --locked --dev
+        run: uv sync --locked --dev --python 3.10
       - name: Run the full characterization suite
         env:
           MPLBACKEND: Agg

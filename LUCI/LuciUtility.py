@@ -62,11 +62,8 @@ def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors
         output_name += "_" + fit_function
     lines_fit = []  # Line names already written, so repeats can be disambiguated
     for ct, line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-        # A multi-component fit passes the same line name more than once, so the
-        # second and later components are written as <line>_2, <line>_3, ...
-        # The original never appended to lines_fit, so .count() was always 0 and
-        # this branch was dead code: every component wrote the SAME filename and
-        # silently overwrote the previous one, leaving only the last (bug B16).
+        # Repeat line names (multi-component fits) become <line>_2, <line>_3...
+        # lines_fit was never appended to, so every component overwrote the last (B16).
         seen = lines_fit.count(line_)
         lines_fit.append(line_)
         if seen >= 1:
@@ -369,12 +366,8 @@ def bin_mask(mask, binning, x_min, x_max, y_min, y_max):
     """
     x_shape_new = int((x_max - x_min) / binning)
     y_shape_new = int((y_max - y_min) / binning)
-    # A mask is boolean: a bin is selected if any pixel in it is selected.  The
-    # original also divided the result by binning**2 -- a line copy-pasted from
-    # the flux-averaging path in bin_cube_function -- which turned True into
-    # 0.25 and made the return a float array (bug B8).  It only ever "worked"
-    # because the one consumer tests `if mask[x, y]:` and 0.25 is truthy; any
-    # caller summing the mask or using it for boolean indexing got wrong answers.
+    # Boolean: a bin is selected if any pixel in it is. The old code also divided
+    # by binning**2, turning True into 0.25 and the result into floats (B8).
     binned_mask = np.zeros((x_shape_new, y_shape_new), dtype=bool)
     for i in range(x_shape_new):
         for j in range(y_shape_new):

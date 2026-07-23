@@ -2,10 +2,21 @@ import numpy as np
 from astropy.io import fits
 from joblib import Parallel, delayed
 from scipy import interpolate
-from tensorflow import keras
 from tqdm import tqdm
 
 from LUCI.LuciConvenience import reg_to_mask
+
+
+def _load_components_model(path):
+    """Load the component-counting network (TF imported lazily; fitting uses ONNX)."""
+    try:
+        from tensorflow import keras
+    except ImportError as exc:  # pragma: no cover - depends on optional extra
+        raise ImportError(
+            "Counting spectral components requires TensorFlow, which is an "
+            "optional dependency. Install it with:  pip install 'luci-sitelle[ml-legacy]'"
+        ) from exc
+    return keras.models.load_model(path)
 
 
 def create_component_map_function(header, hdr_dict, Luci_path, resolution, filter_, cube_final, spectrum_axis, wavenumbers_syn_full,
@@ -42,11 +53,12 @@ def create_component_map_function(header, hdr_dict, Luci_path, resolution, filte
             print("At the moment, we only support '.reg' and '.npy' files for masks.")
             print("Terminating Program!")
     # Step through spectra
-    Comps = np.zeros((2048, 2064), dtype=np.float32).T
-    Preds = np.zeros((2048, 2064), dtype=np.float32).T
+    # Sized from the cube rather than the standard detector dimensions (B10).
+    Comps = np.zeros(cube_final.shape[:2], dtype=np.float32).T
+    Preds = np.zeros(cube_final.shape[:2], dtype=np.float32).T
     if hdr_dict['FILTER'] == 'SN3':
         # Read in machine learning algorithm
-        comps_model = keras.models.load_model(
+        comps_model = _load_components_model(
             Luci_path + 'ML/R%i-COMPONENTS-%s.h5' % (resolution, filter_))
     else:
         print('Component Calculation has only been implemented in SN3!')
@@ -120,7 +132,7 @@ def calculate_components_in_region_function(header, hdr_dict, Luci_path, resolut
         print("Terminating Program!")
     if hdr_dict['FILTER'] == 'SN3':
         # Read in machine learning algorithm
-        comps_model = keras.models.load_model(
+        comps_model = _load_components_model(
             Luci_path + 'ML/R%i-COMPONENTS-%s.h5' % (resolution, filter_))
     else:
         print('Component Calculation has only been implemented in SN3!')

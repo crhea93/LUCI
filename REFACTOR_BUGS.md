@@ -169,6 +169,23 @@ quietly return.
 Defaults and array shapes assumed the standard SITELLE detector, so anything else — a trimmed cube, a
 test fixture, a future detector — silently mis-indexed or truncated.
 
+### B18. Editable installs serve a stale copy of the top-level modules — MITIGATED (Phase 5f)
+**Where:** `[tool.hatch.build.targets.wheel.force-include]` in `pyproject.toml`
+**Test:** `tests/test_packaging.py::test_installed_top_level_module_is_not_stale`
+
+Introduced by my own Phase 1 packaging. `LUCI/` is linked editable and picks up edits, but
+`LuciBase.py` / `LuciAbsorp.py` are **copied** into site-packages by `force-include`, and site-packages
+shadows the project root — so an editable install serves a frozen snapshot of them. The rest of the
+suite could not see this, because `conftest` puts the repo root first on `sys.path`.
+
+Found while tracing why `import LuciBase` still pulled in TensorFlow after the lazy-import work: the
+import was resolving from a months-old copy, not the file I had just edited.
+
+`dev-mode-dirs = ["."]` now puts the project root on `sys.path`, and the documented workflow
+(`uv run pytest`, which syncs first) refreshes the copy, so the failure mode only appears if you
+bypass sync with `--no-sync`. The test catches it either way. The real fix lands in Phase 6, when
+`LuciBase.py` becomes a thin compat shim that essentially never changes.
+
 ---
 
 ## S3 — Environment and robustness

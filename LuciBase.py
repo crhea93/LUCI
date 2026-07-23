@@ -26,11 +26,6 @@ from sklearn import decomposition
 from sklearn.model_selection import train_test_split
 import os
 import logging
-from keras.models import Sequential
-from keras.layers import Dense, InputLayer, Dropout
-from tensorflow.keras.optimizers.legacy import Adam
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from keras.regularizers import l2
 from sklearn.ensemble import IsolationForest
 import warnings
 import matplotlib.pyplot as plt
@@ -168,12 +163,8 @@ class Luci():
             print('New deep frame created from data.')
             self.deep_image = np.zeros(
                 (self.cube_final.shape[0], self.cube_final.shape[1]))
-            # Summed in slabs purely to drive a progress bar.  The original used
-            # exactly ten slabs of int(shape[0] / 10) rows, which silently left
-            # the remainder as zeros whenever shape[0] was not divisible by 10 --
-            # for a standard 2048-row cube, the last 8 rows of every deep image
-            # were blank (bug B7).  Deriving the slab count from the step size
-            # covers the whole cube regardless of shape.
+            # Slabs drive the progress bar. Deriving the count from the step size
+            # covers the whole cube; ten fixed slabs dropped the remainder (B7).
             n_rows = self.cube_final.shape[0]
             step_size = max(1, int(n_rows / 10))
             for start in tqdm(range(0, n_rows, step_size)):
@@ -328,10 +319,8 @@ class Luci():
             sky = np.copy(cube_slice[x_pix, :])  # cube_binned[x_pix, y_pix, :]
             if bkgType is not None:  # If there is a background variable subtract the bkg spectrum
                 if bkgType == 'standard':
-                    # Only the 'standard' path needs a caller-supplied spectrum;
-                    # 'pca' synthesises its own below.  Guarding on `bkg` lets
-                    # callers pass bkgType unconditionally without tripping over
-                    # `sky -= None` when no background was given.
+                    # 'pca' synthesises its own bkg below; guard so callers can
+                    # pass bkgType unconditionally (B3).
                     if bkg is not None:
                         if binning:  # If binning, take into account how many pixels are in each bin
                             sky -= bkg * binning ** 2  # Subtract background spectrum
@@ -892,13 +881,8 @@ class Luci():
                 integrated_spectrum += sky[~np.isnan(sky)]
                 if axis is None:
                     axis = self.spectrum_axis[~np.isnan(sky)]
-                # Counted for every contributing spaxel.  The original only ever
-                # incremented this inside the `if spec_ct == 0` axis-initialisation
-                # guard, so it stayed at 1 and `mean=True` divided by one --
-                # making the option a silent no-op (bug B2).  Since this method
-                # exists mainly to extract *background* spectra, a background
-                # averaged over N pixels came back N times too large, and feeding
-                # it to fit_cube(bkg=...) over-subtracted by a factor of N.
+                # Counted per spaxel; previously only incremented inside the
+                # axis-init guard, making mean=True a no-op (B2).
                 spec_ct += 1
         if mean and spec_ct > 0:
             integrated_spectrum /= spec_ct
@@ -1937,6 +1921,20 @@ class Luci():
                 method=interpolation
             )
         else:   # Use neural network
+            # Imported lazily so `import LuciBase` does not pull in TensorFlow.
+            try:
+                from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+                from keras.layers import Dense, Dropout, InputLayer
+                from keras.models import Sequential
+                from keras.regularizers import l2
+                from tensorflow.keras.optimizers.legacy import Adam
+            except ImportError as exc:
+                raise ImportError(
+                    "interpolation='nn' trains a Keras model and requires TensorFlow, "
+                    "which is an optional dependency. Either install it with "
+                    "pip install 'luci-sitelle[ml-legacy]', or use "
+                    "interpolation='linear' / 'nearest', which need only scipy."
+                ) from exc
             # Construct Neural Network
             X_train, X_valid, y_train, y_valid = train_test_split(np.column_stack((bkg_x, bkg_y)), BkgTransformedPCA[:], test_size=0.05)
             ### Model creation: adding layers and compilation
