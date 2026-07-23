@@ -1,0 +1,43 @@
+# Frozen environment used to run the current (pre-refactor) code and to record
+# the golden baselines in tests/golden/.
+#
+# This is the "as it ran ~5 years ago" stack, reconstructed on 2026-07.  It is
+# NOT the target environment -- Phase 1 replaces it with pyproject.toml + uv.lock
+# on modern Python.  It exists only so anyone can reproduce the golden values and
+# re-run the characterization suite against the legacy code during the refactor.
+#
+# Reproduce with:
+#     uv venv --python 3.10 .venv-legacy
+#     uv pip install --python .venv-legacy -r tests/requirements-legacy.txt
+#     MPLBACKEND=Agg .venv-legacy/bin/python -m pytest tests/
+#
+# Two pins carry load-bearing history (see REFACTOR_BUGS.md):
+#   * numba==0.58.1 -- the last era with object-mode @jit fallback.  On newer
+#     numba the bare @jit decorators make the code fail to import at all (B11).
+#   * numpy<2       -- the new-format HDF5 header path uses np.str/np.bool_,
+#     removed in numpy 1.24+ (B15); the legacy quadrant format is unaffected.
+#
+# Requires Python 3.10 (tensorflow==2.11 has no wheels for 3.12+).
+
+astropy==6.1.7
+corner==2.3.0
+dynesty==3.1.0
+emcee==3.1.6
+h5py==3.16.0
+joblib==1.5.3
+keras==2.11.0
+llvmlite==0.41.1
+matplotlib==3.10.9
+numba==0.58.1
+numpy==1.26.4
+pandas==2.3.3
+photutils==2.0.2
+pyregion==2.3.0
+pytest==9.1.1
+scikit-learn==1.7.2
+scipy==1.15.3
+seaborn==0.13.2
+six==1.17.0
+tensorflow==2.11.0
+tensorflow-probability==0.19.0
+tqdm==4.69.0
