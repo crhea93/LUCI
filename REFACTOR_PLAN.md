@@ -13,32 +13,46 @@
 | 1 — Packaging & tooling (conda → uv, installable, CI) | ✅ done |
 | 2 — Repo weight (~344 MB untracked) | ✅ done |
 | 3 — Filter registry, numba removal, FitResult, `fitting/` package | ✅ done |
-| 4 — ONNX migration | 🟡 in progress |
+| 4 — ONNX migration | ✅ core done (TF-drop from core deps remains) |
 | 5 — `SitelleCube` / `FitRunner` split + remaining bug fixes | ⬜ not started |
 | 6 — Compat shim & API surface | ⬜ not started |
 | 7 — Docs & examples | ⬜ not started |
 
 **Bugs fixed so far:** B1 (ML-off fabricated zero kinematics), B4 (C3 noise global leak), B11 (wouldn't
-import on modern numba), B13 (ML model reloaded per pixel), B14 (sinc-Gauss σ=0 NaN).
-**Still open:** B2, B3, B5–B10, B12, B15, B16 — mostly Phase 5. See the register.
+import on modern numba), B12 (`plt.clf()` per spectrum), B13 (ML model reloaded per pixel), B14
+(sinc-Gauss σ=0 NaN), B17 (MDN sigmas needed softplus).
+**Still open:** B2, B3, B5–B10, B15, B16 — mostly Phase 5. See the register.
 
-**Verification state:** 93 fast tests + 12 golden baselines green; ruff and `uv lock --check` clean.
+**Verification state:** 105 fast tests + 12 golden baselines green; ruff and `uv lock --check` clean.
 
-### Where Phase 4 stopped
-37 models converted to ONNX and committed; `LUCI/ml/` (predictor protocol, ONNX backend with cached
-sessions, registry) wired into `Fit`, which **no longer imports TensorFlow**. Outstanding:
+### Phase 4 outcome
+**All 39 models converted to ONNX and validated — 39/39, worst deviation 6.7e-4 (float32 precision).**
+`LUCI/ml/` (predictor protocol, ONNX backend with cached sessions, registry) is wired into `Fit`,
+which now contains **no TensorFlow references at all**.
 
-1. **SN4 validation** — both SN4 ONNX models converted fine, but validation used
-   `keras.models.load_model`, which can't read the SN4 SavedModel (saved with a newer Keras:
-   `Unrecognized keyword arguments: ['optional']`). Fix is in `tools/convert_models_to_onnx.py`
-   (`_standard_reference` now uses `tf.saved_model.load` + serving signature) — **re-validation not yet run**.
-2. **2 SN2 MDN models** failed the numeric gate (~30 km/s divergence) and were deliberately not shipped.
-3. **ML goldens not yet re-recorded** against the ONNX backend. ONNX is predictor-identical to Keras
-   (verified: SN2 vel=43.16/broad=226.71 from both), but the ill-conditioned SN2/SN1 *fixtures* amplify
-   the ~1e-4 backend difference. SN3 recovers correctly (99.45/30.21) either way.
-4. **TF not yet dropped from core deps** — `LuciBase`, `LuciNetwork`, `LuciComponentCalculations` still
-   import it for the background NN and MDN construction. Until those are lazy, `requires-python` stays
-   capped at 3.10 and the CI matrix can't expand.
+- **B13 fixed:** predictors and ONNX sessions are cached per process, so a model loads once instead of
+  once per pixel. 5.7 s/pixel → 3.0 s/pixel; the residual is the actual SLSQP fit.
+- **B12 fixed:** the per-spectrum `plt.clf()` is gone.
+- **SN4 works** (both standard and MDN). Its conversion was always fine; only the *validator* was
+  broken — `keras.models.load_model` can't read that SavedModel (newer Keras: `Unrecognized keyword
+  arguments: ['optional']`). Validation now uses `tf.saved_model.load` + serving signature, which is
+  what tf2onnx itself consumes.
+- **B17 found and fixed:** MDN `stddev` needs `softplus(scale)`, not identity. Identity happened to be
+  exact for R5000-MDN-SN3 (all large positive scales) but produced *negative* sigmas for the SN2 MDNs.
+  The `--validate` gate caught it and refused to ship the two failing models.
+- **ML goldens re-recorded** against ONNX; re-recording produced a **zero diff**, confirming the ONNX
+  path is deterministic and the committed baselines were already ONNX.
+
+**Remaining for a follow-up:** TF is still a core dependency because `LuciBase`, `LuciNetwork`, and
+`LuciComponentCalculations` import it for the background-NN interpolator and MDN *construction*
+(inference no longer needs it). Making those lazy is what unlocks moving TF to an `[ml-legacy]` extra,
+lifting `requires-python` past 3.10, and expanding the CI matrix to 3.11–3.13. That work pairs
+naturally with Phase 5, which restructures `LuciBase` anyway.
+
+> **Known fixture-quality issue (not an ONNX regression):** the synthetic SN2/SN1 cubes don't resemble
+> real SITELLE data closely enough for the R1000 predictors, so their priors are poor (broad ≈ 226 vs
+> truth 30) and those fits don't recover truth — the pre-ONNX Keras goldens showed the same. Those
+> baselines pin *reproducibility*, not physics. SN3 is the meaningful ML golden (recovers 99.5/30.2).
 
 > **Known fixture-quality issue (not an ONNX regression):** the synthetic SN2/SN1 cubes don't resemble
 > real SITELLE data closely enough for the R1000 predictors, so their priors are poor (broad ≈ 226 vs

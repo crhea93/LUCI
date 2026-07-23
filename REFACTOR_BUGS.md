@@ -167,24 +167,51 @@ of Python lists, `scipy` calls and `self` access, always falling back to object 
 `fastmath` did nothing and the deprecation warnings fired). Removing them changed no numerics and lifted
 the `numba==0.58.1` pin.
 
-### B12. `plt.clf()` runs on every spectrum
-**Where:** [LUCI/LuciFit.py:358](LUCI/LuciFit.py#L358)
+### B13. The ML model is reloaded from disk for every pixel — FIXED (Phase 4)
+**Where (was):** `get_ML_model()` called from `Fit.__init__`
+**Fixed by:** [LUCI/ml/registry.py](LUCI/ml/registry.py) caches predictors per
+`(resolution, filter, mdn)` and [LUCI/ml/onnx_backend.py](LUCI/ml/onnx_backend.py) caches ONNX
+sessions per path, both at module scope — so each process loads a model at most once instead of once
+per spectrum.
+**Measured:** 5.7 s/pixel → **3.0 s/pixel** on the fixture; the ~2.7 s/pixel of pure model loading is
+gone and the remainder is the actual SLSQP optimisation.
+**Test:** `tests/test_ml_predictors.py::test_registry_resolves_and_caches_a_predictor`.
 
-A stray debug leftover at the top of `estimate_priors_ML`. It instantiates a Tk
-window, so any headless run (CI, HPC batch job) dies with
-`TclError: no display name and no $DISPLAY` unless `MPLBACKEND=Agg` is set. It
-also costs a matplotlib figure teardown per pixel.
+Every `Fit` instance used to call `keras.models.load_model(...)`, so a full 2048×2064 cube was
+dominated by model loading rather than fitting.
 
-### B13. The ML model is reloaded from disk for every pixel
-**Where:** [LUCI/LuciFit.py:176](LUCI/LuciFit.py#L176) — `get_ML_model()` called from `Fit.__init__`
+### B12. `plt.clf()` runs on every spectrum — FIXED (Phase 4)
+**Where (was):** top of `estimate_priors_ML`
+**Fixed by:** removed when `estimate_priors_ML` was rewired to the injected predictor. It was a debug
+leftover that instantiated a Tk window per spectrum, breaking headless runs (`TclError: no display
+name`) unless `MPLBACKEND=Agg` was set, and costing a matplotlib figure teardown per pixel.
 
-Every `Fit` instance calls `keras.models.load_model(...)`. Measured on the test
-fixture: **16 pixels took 92 s with ML enabled versus 5.7 s with it disabled** —
-roughly 5.7 s per pixel of pure model loading. A full 2048×2064 cube is dominated
-by this.
+`LuciFit` now contains **no TensorFlow references at all** — no `import keras`, no
+`TF_CPP_MIN_LOG_LEVEL`, no `logging.getLogger('tensorflow')`.
 
-Fixing it is a Phase 4 side effect: the `ParameterPredictor` is constructed once
-and injected, not loaded per spectrum.
+### B17. MDN sigmas needed softplus, not identity — FIXED during Phase 4 (introduced and caught here)
+**Where:** `mdn_split` in [tools/convert_models_to_onnx.py](tools/convert_models_to_onnx.py) and
+`OnnxMDNPredictor.predict` in [LUCI/ml/onnx_backend.py](LUCI/ml/onnx_backend.py)
+**Tests:** `tests/test_ml_predictors.py::test_mdn_sigmas_are_strictly_positive`,
+`::test_mdn_applies_softplus_to_the_scale_half`,
+`::test_mdn_softplus_differs_from_identity_where_raw_scale_is_negative`
+
+The MDN head is `IndependentNormal(2)` over a `Dense(4)` emitting
+`[loc_v, loc_b, scale_v, scale_b]`. Reproducing it in numpy, I concluded from the first model
+inspected (R5000-MDN-SN3) that `stddev == scale` with no transform — the empirical match was exactly
+0.0, which looked conclusive.
+
+It was wrong. That model's raw scales are all large and positive (range ~[77, 430]), and
+`softplus(x) == x` in float32 for such values. The SN2 MDNs emit **negative** raw scales, where
+identity produces a **negative standard deviation** — nonsense, and off by up to 35 km/s. The correct
+transform is `stddev = softplus(scale)`, implemented as the numerically stable `np.logaddexp(0, x)`.
+
+Worth recording as a process point: the per-model `--validate` gate is what caught this. Two SN2 MDNs
+failed with ~26 and ~42 km/s divergence and were **not shipped**; the gate turned a silently-wrong
+generalisation into a loud, localised failure. After the fix, **39/39 models validate** (worst
+deviation 6.7e-4, i.e. float32 precision). The regression test asserts the *invariant* — a standard
+deviation must be positive — rather than just the formula, and deliberately exercises a model with
+negative raw scales, since a test using only SN3 would pass under either transform.
 
 ### B14. `sincgauss` returns NaN at σ exactly 0 — FIXED (Phase 3c), and re-scoped
 **Where (was):** `SincGauss.function` in [LUCI/LuciFunctions.py](LUCI/LuciFunctions.py)
