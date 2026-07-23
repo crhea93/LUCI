@@ -13,7 +13,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from LUCI.LuciFit import Fit
+from LUCI.LuciFit import DEFAULT_BROADENING_KMS, Fit
 
 
 def _make_fit(cube, model="sincgauss", lines=("Halpha",), ml_bool=True, pixel=(9, 9), **kwargs):
@@ -41,84 +41,58 @@ def _make_fit(cube, model="sincgauss", lines=("Halpha",), ml_bool=True, pixel=(9
 
 
 # --------------------------------------------------------------------------
-# The defect
+# The non-ML data-driven fallback (B1 fix)
 # --------------------------------------------------------------------------
+#
+# History: ML_bool=False used to leave vel_ml/broad_ml at their 0.0
+# initialisers, so line_vals_estimate handed the optimiser an initial sigma of
+# exactly zero -- a singular point of the Gaussian and sinc-Gauss models -- and
+# SLSQP returned its starting vector unchanged.  Every velocity and broadening
+# came back as exactly 0.0 while the amplitude/continuum still fit, so the
+# output looked plausible.  estimate_priors_data() now seeds the optimiser from
+# the data instead.  The tests below assert the fix.
 
 
-def test_ml_disabled_leaves_the_prior_estimates_at_zero(sn3_cube_noml):
+def test_ml_disabled_seeds_priors_from_the_data_during_fit(sn3_cube_noml):
     """
-    Fit.__init__ initialises vel_ml = 0.0 and broad_ml = 0.0, and nothing ever
-    updates them when ML_bool is False.
-    """
-    fit = _make_fit(sn3_cube_noml, ml_bool=False)
-    assert fit.vel_ml == 0.0
-    assert fit.broad_ml == 0.0
-
-
-def test_ml_disabled_yields_a_zero_initial_broadening(sn3_cube_noml):
-    """
-    line_vals_estimate computes line_broad_est = line_pos * broad_ml / c.
-
-    With broad_ml == 0 that is exactly zero, which is a singular point of both
-    the Gaussian and the sinc-Gauss line models.
+    The priors start at their 0.0 initialisers and fit() replaces them, via
+    estimate_priors_data(), with a data-driven velocity and a non-singular
+    default broadening.
     """
     fit = _make_fit(sn3_cube_noml, ml_bool=False)
-    _, _, sigma_est = fit.line_vals_estimate("Halpha")
-    assert sigma_est == 0.0
+    assert fit.vel_ml == 0.0 and fit.broad_ml == 0.0  # before fit()
+    fit.fit()
+    assert fit.broad_ml == pytest.approx(DEFAULT_BROADENING_KMS)  # no longer singular
+    assert fit.vel_ml != 0.0  # estimated from the brightest peak
 
 
 @pytest.mark.parametrize("model", ["sincgauss", "gaussian"])
-def test_ml_disabled_returns_exactly_zero_kinematics(sn3_cube_noml, model):
+def test_ml_disabled_now_recovers_kinematics(sn3_cube_noml, sn3_truth, model):
     """
-    CURRENT behaviour, pinned: the optimiser cannot move off a singular start,
-    so it returns its initial vector and every velocity and broadening is
-    exactly 0.0 -- regardless of what is actually in the spectrum.
-
-    The amplitude and continuum *are* fitted, so the flux maps look entirely
-    reasonable.  That is what makes this dangerous: nothing about the output
-    announces that the kinematics are fabricated.
+    The core of the B1 fix: what used to return exactly (0.0, 0.0) now recovers
+    both the injected velocity and broadening for the two models that were
+    silently broken.
     """
     fit = _make_fit(sn3_cube_noml, model=model, ml_bool=False)
     result = fit.fit()
-    assert result["velocities"] == [0.0]
-    assert result["sigmas"] == [0.0]
-    # ... while the amplitude is a genuine, plausible-looking number.
+    assert result["velocities"][0] == pytest.approx(sn3_truth["velocity_kms"], abs=15.0)
+    assert result["sigmas"][0] == pytest.approx(sn3_truth["broadening_kms"], abs=10.0)
     assert result["amplitudes"][0] > 0.0
     assert np.isfinite(result["continuum"])
 
 
-def test_ml_disabled_still_recovers_velocity_for_the_sinc_model(sn3_cube_noml, sn3_truth):
+def test_ml_disabled_recovers_velocity_for_the_sinc_model(sn3_cube_noml, sn3_truth):
     """
-    The defect is model-dependent, which is worth stating explicitly.
-
-    A pure sinc has no sigma in its profile -- its width is the fixed
-    instrumental sinc_width -- so a zero initial sigma is not a singular point
-    and the optimiser can still move the line position.  Velocity comes back
-    correct; the broadening is still stuck at zero because nothing constrains it.
-
-    So of the three fit functions, ML_bool=False silently breaks two.
+    A pure sinc has no sigma in its profile (its width is the fixed instrumental
+    sinc_width), so the fitted 'broadening' is unconstrained and simply stays
+    near the seed value -- but the velocity is recovered, as it always was for
+    this model.  Documented separately so the sinc broadening's meaninglessness
+    is explicit rather than surprising.
     """
     fit = _make_fit(sn3_cube_noml, model="sinc", ml_bool=False)
     result = fit.fit()
     assert result["velocities"][0] == pytest.approx(sn3_truth["velocity_kms"], abs=15.0)
-    assert result["sigmas"][0] == 0.0
-
-
-@pytest.mark.xfail(strict=True, reason="ML_bool=False has no working prior fallback; fix in Phase 3")
-def test_ml_disabled_should_still_recover_the_injected_velocity(sn3_cube_noml, sn3_truth):
-    """
-    The intended contract.
-
-    Disabling the ML priors should fall back to estimating the line position
-    from the data (or to a documented default broadening), not to a guess that
-    is guaranteed to be singular.  The docs actively steer users here: LuciFit
-    prints "Please set ML_bool=False" for any filter without a trained
-    predictor.
-    """
-    fit = _make_fit(sn3_cube_noml, ml_bool=False)
-    result = fit.fit()
-    assert result["velocities"][0] == pytest.approx(sn3_truth["velocity_kms"], abs=15.0)
-    assert result["sigmas"][0] == pytest.approx(sn3_truth["broadening_kms"], abs=10.0)
+    assert result["sigmas"][0] == pytest.approx(DEFAULT_BROADENING_KMS, abs=15.0)
 
 
 # --------------------------------------------------------------------------

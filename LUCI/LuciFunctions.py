@@ -8,6 +8,13 @@ FWHM_COEFF = 2.*math.sqrt(2. * math.log(2.))
 
 FWHM_SINC_COEFF = 1.20671
 
+# Sigma value substituted when a sinc-Gauss is evaluated at sigma == 0 exactly.
+# The profile divides by sigma, so sigma == 0 is a 0/0 singularity that returns
+# NaN everywhere; any non-zero sigma is finite.  This floor keeps the model
+# well defined at the degenerate point without perturbing ordinary fits (see the
+# guard in SincGauss.function and bug B14).
+SINCGAUSS_SIGMA_FLOOR = 1e-8
+
 
 def frozen_values(line_name, initial_values):
     """
@@ -214,6 +221,14 @@ class SincGauss:
         p1 = params[1]
         p2 = sinc_width/(np.pi*FWHM_SINC_COEFF)
         p3 = params[2]
+        # The Dawson form below divides by p3 (sigma).  At sigma == 0 exactly it
+        # is a 0/0 singularity and returns NaN for every channel; for any
+        # non-zero sigma the profile is finite and well behaved.  Guard only the
+        # exact-zero / non-finite case so ordinary evaluations stay bit-for-bit
+        # unchanged.  sigma == 0 arises only from a degenerate initial guess
+        # (the symptom behind B1); a converged fit never lands there.
+        if p3 == 0 or not np.isfinite(p3):
+            p3 = np.float64(SINCGAUSS_SIGMA_FLOOR)
         a = p3/(np.sqrt(2)*p2)
         a = a.astype(float)
         b = (channel-p1)/(np.sqrt(2)*p3)

@@ -61,16 +61,11 @@ SN3_LINES = ["Halpha", "NII6548", "NII6583", "SII6716", "SII6731"]
 SN2_LINES = ["Hbeta", "OIII4959", "OIII5007"]
 SN1_LINES = ["OII3726", "OII3729"]
 
-# The matrix is deliberately ML-*on* dominant.
-#
-# ML_bool=False does not merely skip the priors -- it leaves vel_ml and broad_ml
-# at their 0.0 initialisers, so line_vals_estimate() hands the optimiser an
-# initial sigma of exactly zero, the line model is singular there, and SLSQP
-# returns the starting vector untouched.  Every velocity and broadening comes
-# back as exactly 0.0.  Baselines recorded down that path would pin a column of
-# zeros and prove nothing about the fitting maths, so ML-off appears here only
-# as explicit documentation of the defect (see the *_broken_zeros entries and
-# tests/test_ml_priors.py).
+# The matrix is ML-*on* dominant because that is the path most users take, but
+# ML-off is now a real, working path too.  Before the B1 fix, ML_bool=False left
+# vel_ml/broad_ml at their 0.0 initialisers, so every velocity and broadening
+# came back as exactly 0.0; estimate_priors_data() now seeds the optimiser from
+# the data, and the sn3_*_noml baselines below pin the recovered values.
 CONFIGS = [
     # SN3: every model.  This is the path the overwhelming majority of users take.
     Config("sn3_sincgauss_ml", "SN3", "sincgauss", True, SN3_LINES),
@@ -87,10 +82,10 @@ CONFIGS = [
     # Other filters pick up different wavelength bounds and reference spectra.
     Config("sn2_sincgauss_ml", "SN2", "sincgauss", True, SN2_LINES),
     Config("sn1_sincgauss_ml", "SN1", "sincgauss", True, SN1_LINES),
-    # Documents the ML-off defect. When it is fixed these baselines MUST change;
-    # re-record them in the same commit as the fix.
-    Config("sn3_sincgauss_noml_broken_zeros", "SN3", "sincgauss", False, SN3_LINES),
-    Config("sn3_gaussian_noml_broken_zeros", "SN3", "gaussian", False, SN3_LINES),
+    # ML-off, now working via the data-driven prior fallback (B1 fix).  These
+    # replaced the former *_broken_zeros baselines that pinned all-zero output.
+    Config("sn3_sincgauss_noml", "SN3", "sincgauss", False, SN3_LINES),
+    Config("sn3_gaussian_noml", "SN3", "gaussian", False, SN3_LINES),
 ]
 
 

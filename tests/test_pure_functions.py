@@ -184,23 +184,35 @@ def test_sincgauss_is_symmetric_about_the_line_centre():
     np.testing.assert_allclose(left, right, rtol=1e-8, atol=1e-12)
 
 
-def test_sincgauss_is_numerically_unstable_at_very_small_sigma():
+def test_sincgauss_is_finite_and_bounded_for_small_nonzero_sigma():
     """
-    Documents a sharp edge rather than asserting correctness.
+    Corrects an earlier mischaracterisation (see B14 in REFACTOR_BUGS.md).
 
-    As sigma -> 0 the sinc-Gauss should tend to a pure sinc, but the Dawson-
-    function formulation in LuciFunctions.SincGauss.function evaluates
-    dawsn((channel - p1) / (sqrt(2) * sigma)), whose argument blows up as sigma
-    shrinks.  The result stops resembling a sinc entirely.  Anyone fitting with
-    a near-zero broadening is in this regime; the refactor should either
-    guard it or switch to a stable formulation.
+    The sinc-Gauss was thought to be numerically unstable as sigma -> 0.  It is
+    not: for any *non-zero* sigma, down to 1e-8, the profile stays finite and
+    bounded by its amplitude.  (The earlier test compared it against LUCI's
+    separate Sinc model, which uses a different width convention, so a constant
+    ~0.2 offset was misread as instability.)
     """
     axis = np.linspace(15200.0, 15270.0, 2001)
     sinc_width = 2.5
-    sg = SincGauss().evaluate(axis, [1.0, 15232.0, 1e-3], 1, sinc_width)
-    s = Sinc().evaluate(axis, [1.0, 15232.0, 1e-3], 1, sinc_width)
-    # Far from agreeing, they are essentially uncorrelated.
-    assert np.max(np.abs(sg - s)) > 0.1
+    for sigma in (1.0, 0.1, 1e-3, 1e-5, 1e-8):
+        v = np.asarray(SincGauss().function(axis, [1.0, 15232.0, sigma], sinc_width))
+        assert np.all(np.isfinite(v)), f"non-finite at sigma={sigma}"
+        assert np.nanmax(np.abs(v)) <= 1.0 + 1e-9
+
+
+def test_sincgauss_at_exactly_zero_sigma_is_guarded():
+    """
+    The one genuinely singular input: sigma == 0 makes the Dawson form divide by
+    zero and return NaN for every channel.  The guard in SincGauss.function
+    (B14) substitutes a tiny floor so the result stays finite.  This is the
+    degenerate initial guess behind B1; a converged fit never reaches it.
+    """
+    axis = np.linspace(15200.0, 15270.0, 51)
+    v = np.asarray(SincGauss().function(axis, [1.0, 15232.0, 0.0], 2.5))
+    assert np.all(np.isfinite(v))
+    assert np.nanmax(np.abs(v)) <= 1.0 + 1e-9
 
 
 # --------------------------------------------------------------------------

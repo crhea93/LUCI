@@ -16,6 +16,7 @@ from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_b
 from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
 from LUCI.LuciUtility import hessianComp
 from LUCI.instrument.filters import get_filter
+from LUCI.fitting.result import FitResult
 import matplotlib.pyplot as plt
 import os
 import logging
@@ -27,6 +28,12 @@ warnings.filterwarnings("ignore")
 
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
+
+# Default broadening (km/s) used to seed the optimiser when no ML model is
+# available and no frozen priors were supplied.  Its only job is to keep the
+# initial sigma away from the singular zero point (see estimate_priors_data /
+# bug B1); the fit itself refines the value.
+DEFAULT_BROADENING_KMS = 50.0
 
 
 class Fit:
@@ -294,6 +301,38 @@ class Fit:
             self.vel_ml_sigma = 0
             self.broad_ml = float(predictions[0][1])
             self.broad_ml_sigma = 0
+        return None
+
+    def estimate_priors_data(self):
+        """
+        Estimate priors directly from the spectrum when no ML model is available.
+
+        This fixes bug B1.  Without it, disabling the ML model (ML_bool=False)
+        leaves vel_ml and broad_ml at their 0.0 initialisers; line_vals_estimate
+        then hands the optimiser an initial sigma of exactly zero, which is a
+        singular point of both the Gaussian and sinc-Gauss models, so SLSQP
+        cannot move and every velocity and broadening comes back as exactly 0.0
+        -- while the amplitude and continuum still fit, so the output looks
+        plausible.  The code actively steers users here (it prints "Please set
+        ML_bool=False" for filters without a trained predictor), which made the
+        silent failure especially dangerous.
+
+        We locate the brightest emission peak in the fit window, interpret it as
+        the first requested line, and derive a coarse velocity from its
+        position; the broadening defaults to DEFAULT_BROADENING_KMS.  These only
+        need to place the optimiser in the right basin -- the fit refines them.
+        This mirrors what the frozen-initial-values path already does, which is
+        the one non-ML route that worked.
+        """
+        self.vel_ml = 0.0
+        self.vel_ml_sigma = 0.0
+        self.broad_ml = DEFAULT_BROADENING_KMS
+        self.broad_ml_sigma = 0.0
+        if self.axis_restricted is not None and len(self.axis_restricted) > 0:
+            peak_pos = self.axis_restricted[int(np.argmax(self.spectrum_restricted_norm))]  # cm^-1
+            line_theo = self.line_dict[self.lines[0]]  # nm
+            # Inverse of line_pos_est: pos = 1e7 / (line_theo * (1 + v/c)).
+            self.vel_ml = SPEED_OF_LIGHT * (1e7 / (peak_pos * line_theo) - 1.0)
         return None
 
     def interpolate_spectrum(self):
@@ -720,6 +759,10 @@ class Fit:
                 self.estimate_priors_ML()
             else:
                 self.spectrum_scale = np.max(self.spectrum)
+                if self.freeze is False:
+                    # ML disabled and no frozen priors: estimate from the data
+                    # so the optimiser does not start from a singular sigma (B1).
+                    self.estimate_priors_data()
             # Apply Fit
             # if self.initial_conditions is False:
             self.calculate_params()
@@ -760,19 +803,21 @@ class Fit:
                 sigmas_errors.append(calculate_broad_err(line_ct, self.fit_sol, self.axis_step, self.uncertainties))
                 flux_errors.append(
                     calculate_flux_err(line_ct, self.fit_sol, self.uncertainties, self.model_type, self.sinc_width))
-            # Collect parameters to return in a dictionary
-            fit_dict = {'fit_sol': self.fit_sol, 'fit_uncertainties': self.uncertainties,
-                        'amplitudes': ampls, 'fluxes': fluxes, 'flux_errors': flux_errors, 'chi2': red_chi_sqr,
-                        'velocities': vels, 'sigmas': sigmas,
-                        'vels_errors': vels_errors, 'sigmas_errors': sigmas_errors,
-                        'axis_step': self.axis_step, 'corr': self.correction_factor,
-                        'continuum': self.fit_sol[-1], 'continuum_error': self.uncertainties[-1],
-                        'scale': self.spectrum_scale, 'flat_samples': self.flat_samples,
-                        'vel_ml': self.vel_ml, 'vel_ml_sigma': self.vel_ml_sigma,
-                        'broad_ml': self.broad_ml, 'broad_ml_sigma': self.broad_ml_sigma,
-                        'fit_vector': self.fit_vector, 'fit_axis': self.axis,
-                        }
-            return fit_dict
+            # Collect parameters into a FitResult.  It behaves like the legacy
+            # dict for read access (fit_dict['velocities'] etc.), so callers and
+            # notebooks are unaffected, while new code gets typed attributes.
+            return FitResult(
+                fit_sol=self.fit_sol, fit_uncertainties=self.uncertainties,
+                amplitudes=ampls, fluxes=fluxes, flux_errors=flux_errors, chi2=red_chi_sqr,
+                velocities=vels, sigmas=sigmas,
+                vels_errors=vels_errors, sigmas_errors=sigmas_errors,
+                axis_step=self.axis_step, corr=self.correction_factor,
+                continuum=self.fit_sol[-1], continuum_error=self.uncertainties[-1],
+                scale=self.spectrum_scale, flat_samples=self.flat_samples,
+                vel_ml=self.vel_ml, vel_ml_sigma=self.vel_ml_sigma,
+                broad_ml=self.broad_ml, broad_ml_sigma=self.broad_ml_sigma,
+                fit_vector=self.fit_vector, fit_axis=self.axis,
+            )
 
         else:  # Fit sky line
             self.spectrum_scale = np.max(self.spectrum)
