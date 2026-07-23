@@ -282,6 +282,9 @@ def read_in_reference_spectrum(ref_spec, hdr_dict):
     elif hdr_dict['FILTER'] == 'SN1':
         min_ = np.argmin(np.abs(np.array(channel) - 25500))
         max_ = np.argmin(np.abs(np.array(channel) - 27500))
+    elif hdr_dict['FILTER'] == 'SN4':  # Narrow Halpha filter -- 652-665 nm
+        min_ = np.argmin(np.abs(np.array(channel) - 15000))
+        max_ = np.argmin(np.abs(np.array(channel) - 15350))
     elif hdr_dict['FILTER'] == 'C3':
         min_ = np.argmin(np.abs(np.array(channel) - 17500))
         max_ = np.argmin(np.abs(np.array(channel) - 19500))

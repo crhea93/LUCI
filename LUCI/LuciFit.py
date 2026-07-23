@@ -180,14 +180,14 @@ class Fit:
     def get_ML_model(self):
         if self.ML_bool is True:
             if not self.mdn:
-                if self.filter in ['SN1', 'SN2', 'SN3', 'C4', 'C2', 'C3', 'C1']:
+                if self.filter in ['SN1', 'SN2', 'SN3', 'SN4', 'C4', 'C2', 'C3', 'C1']:
                     self.ML_model = keras.models.load_model(
                         self.Luci_path + 'ML/R%i-PREDICTOR-I-%s' % (self.resolution, self.filter))
                 else:
                     print(
                         'LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
             else:  # mdn == True
-                if self.filter in ['SN3', 'SN2']:
+                if self.filter in ['SN3', 'SN2', 'SN4']:
                     self.ML_model = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
                     self.ML_model.load_weights(self.Luci_path + 'ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s' % (
                         self.resolution, self.filter, self.resolution, self.filter))
@@ -242,6 +242,10 @@ class Fit:
             elif self.filter == 'SN1':
                 bound_lower = 26000
                 bound_upper = 28000
+            elif self.filter == 'SN4':
+                ## Narrow Halpha filter -- the pass band is only 652-665 nm
+                bound_lower = 15040
+                bound_upper = 15330
             elif self.filter == 'C3':
                 if 'OII3726' in self.lines:
                     ## This is true for objects with a redshift around 0.465
@@ -268,7 +272,7 @@ class Fit:
                 bound_upper = 25974* self.obj_redshift_corr  # 25700
             else:
                 print(
-                    'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
+                    'The filter of your datacube is not supported by LUCI. We only support C1, C2, C3, C4, SN1, SN2, SN3, and SN4 at the moment.')
             self.spec_min = bound_lower
             self.spec_max = bound_upper
         else:
@@ -300,6 +304,11 @@ class Fit:
         elif self.filter == 'SN1':
             bound_lower = 26000
             bound_upper = 26200
+        elif self.filter == 'SN4':
+            ## The free spectral range of order 15 is much wider than the 652-665 nm pass band,
+            ## so we can take the noise from a region of the axis that the filter blocks entirely
+            bound_lower = 14600
+            bound_upper = 14900
         elif self.filter == 'C3':
             if 'OII3726' in self.lines:
                 ## This is true for objects at redshift ~0.465
@@ -325,7 +334,7 @@ class Fit:
             bound_upper = 20665* self.obj_redshift_corr
         else:
             print(
-                'The filter of your datacube is not supported by LUCI. We only support C3, C4, SN1, SN2, and SN3 at the moment.')
+                'The filter of your datacube is not supported by LUCI. We only support C1, C2, C3, C4, SN1, SN2, SN3, and SN4 at the moment.')
         # Calculate standard deviation
         min_ = np.argmin(np.abs(np.array(self.axis) - bound_lower))
         max_ = np.argmin(np.abs(np.array(self.axis) - bound_upper))
@@ -461,6 +470,10 @@ class Fit:
         elif self.filter == 'SN1':
             min_ = 26000
             max_ = 26250
+        elif self.filter == 'SN4':
+            ## In band (652-665 nm) but redward of NII6583 so it is free of emission lines
+            min_ = 15060
+            max_ = 15150
         elif self.filter == 'C4':
             min_ = 12180
             max_ = 12550

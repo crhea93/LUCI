@@ -84,6 +84,13 @@ values between 10 and 200 km/s. You can find more information on this at
 We estimate the amplitude by taking the maximum value of spectrum corresponding to the
 estimated position plus or minus 2 channels.
 
+The networks are specific to a filter *and* a resolution -- they live in the ``ML`` folder as
+``R<resolution>-PREDICTOR-I-<FILTER>``, paired with a reference spectrum
+``Reference-Spectrum-R<resolution>-<FILTER>.fits`` that defines the axis every spectrum gets
+interpolated onto. If you need one for a filter or resolution that LUCI does not ship, see
+:ref:`newFilter` -- ``ML/TrainPredictor.py`` will build the reference spectrum, generate the
+synthetic training set, and train the network for you.
+
 Since we understand that machine learning is not everyone's cup of tea, we have
 an alternative method to calculate the initial guesses.
 
@@ -148,7 +155,7 @@ we strongly suggest you use the *sincgauss* function :)
 
 Transmission
 ^^^^^^^^^^^^
-We take into account the transmission of the SITTELLE filters (SN1, SN2, and SN3).
+We take into account the transmission of the SITTELLE filters (SN1, SN2, SN3, SN4, C3, and C4).
 We take the true transmission as the mean of the transmission at different filter angles;
 the raw data can be found [here](https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php).
 The transmission is then applied to the spectrum in the following manner:

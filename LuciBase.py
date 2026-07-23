@@ -335,9 +335,12 @@ class Luci():
                     elif hdr_dict['FILTER'] == 'SN2':
                         min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 505 for wavelength in spectrum_axis]))
                         max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 480 for wavelength in spectrum_axis]))
+                    elif hdr_dict['FILTER'] == 'SN4':
+                        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 664.5 for wavelength in spectrum_axis]))
+                        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 661 for wavelength in spectrum_axis]))
                     else:
                         print(
-                            'We have yet to implement this algorithm for this filter. So far we have implemented it for SN3 and SN2.')
+                            'We have yet to implement this algorithm for this filter. So far we have implemented it for SN4, SN3 and SN2.')
                         print('Terminating Program')
                         quit()
                     if binning:  # If we are binning we have to group the coefficients
@@ -781,8 +784,11 @@ class Luci():
             elif self.hdr_dict['FILTER'] == 'SN2':
                 min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 505 for wavelength in self.spectrum_axis]))
                 max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 480 for wavelength in self.spectrum_axis]))
+            elif self.hdr_dict['FILTER'] == 'SN4':
+                min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 664.5 for wavelength in self.spectrum_axis]))
+                max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 661 for wavelength in self.spectrum_axis]))
             else:
-                print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3 and SN2.')
+                print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN4, SN3 and SN2.')
                 print('Terminating Program')
                 quit()
             if binning:  # If we are binning we have to group the coefficients
@@ -1099,6 +1105,13 @@ class Luci():
             flux_max = 27550
             noise_min = 25700
             noise_max = 26300
+        elif self.hdr_dict['FILTER'] == 'SN4':  # Halpha complex in the narrow Halpha filter
+            flux_min = 15150
+            flux_max = 15300
+            # The order 15 free spectral range extends well past the 652-665 nm pass band,
+            # so the noise can be taken from a completely blocked portion of the axis
+            noise_min = 14600
+            noise_max = 14900
         elif self.hdr_dict['FILTER'] == 'C3':  # Only for MACSJ1621
             flux_min = 18500
             flux_max = 20500
@@ -1691,6 +1704,7 @@ class Luci():
 
         filter_line = {'SN1': ['OII3726', 'OII3729'], 'SN2': ['Hbeta', 'OIII4959', 'OIII5007'],
                        'SN3': ['Halpha', 'NII6583', 'NII6548', 'SII6716', 'SII6731'],
+                       'SN4': ['Halpha', 'NII6583', 'NII6548'],
                        'C3': ['FeXIV5303', 'NI5200', 'FeVII5158', 'HeII5411', 'FeXI6624', 'NiXV6703']
                        }
 
@@ -1799,8 +1813,11 @@ class Luci():
         elif self.filter == 'SN1':
             max_spectral = len(self.spectrum_axis)  #np.argmin(np.abs([1e7 / wavelength - 360 for wavelength in self.spectrum_axis]))
             min_spectral = 0  # np.argmin(np.abs([1e7 / wavelength - 380 for wavelength in self.spectrum_axis]))
+        elif self.filter == 'SN4':
+            max_spectral = len(self.spectrum_axis)
+            min_spectral = 0
         else:
-            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3, SN2, and SN1')
+            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN4, SN3, SN2, and SN1')
             print('Terminating Program')
             quit()
         # Check if there are not enough components
@@ -1819,8 +1836,12 @@ class Luci():
         elif self.filter == 'SN1':
             min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 365 for wavelength in self.spectrum_axis[min_spectral: max_spectral]]))
             max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 360 for wavelength in self.spectrum_axis[min_spectral: max_spectral]]))
+        elif self.filter == 'SN4':
+            # The SN4 pass band is only 652-665 nm, so we scale on the line free red end of it
+            min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 664.5 for wavelength in self.spectrum_axis[min_spectral: max_spectral]]))
+            max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 661 for wavelength in self.spectrum_axis[min_spectral: max_spectral]]))
         else:
-            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN3, SN2, and SN1')
+            print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN4, SN3, SN2, and SN1')
             print('Terminating Program')
             quit()
         bkg_spectra = [bkg_spectrum / np.nanmax(bkg_spectrum[min_spectral_scale:max_spectral_scale]) for bkg_spectrum in

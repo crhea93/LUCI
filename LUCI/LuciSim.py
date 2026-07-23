@@ -59,6 +59,9 @@ class Spectrum:
         elif self.filter == 'SN1':
             self.delta_x = 1647
             self.order = 8
+        elif self.filter == 'SN4':  # Narrow Halpha filter (652 - 665 nm)
+            self.delta_x = 5304.168
+            self.order = 15
         elif self.filter == 'C1':
             self.delta_x = 570
             self.order = 2
@@ -72,7 +75,7 @@ class Spectrum:
             self.delta_x = 5272
             self.order = 12
         else:
-            print('We only support C1, C2, C3, C4, SN1, SN2, and SN3 at this time.')
+            print('We only support C1, C2, C3, C4, SN1, SN2, SN3, and SN4 at this time.')
             print('Terminating the program')
             exit()
         self.resolution = resolution
