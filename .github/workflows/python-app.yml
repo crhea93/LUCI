@@ -1,35 +1,76 @@
-# This workflow will install Python dependencies, run tests with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# CI for LUCI.
+#
+# Replaces the old miniconda + luci.yml setup with uv.  The whole environment
+# is described by pyproject.toml + uv.lock; `uv sync --locked` reproduces it
+# exactly and fails if the lock has drifted.
+#
+# Only Python 3.10 runs the test suite for now: the fitting code hard-imports
+# tensorflow==2.11 (no wheels for 3.11+).  Phase 4 of the refactor drops that
+# dependency, at which point this matrix expands to 3.11 / 3.12 / 3.13.
 
-name: Python application
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, refactor]
   pull_request:
-    branches: [ main ]
+    branches: [main, refactor]
+  schedule:
+    # 07:00 UTC daily -- runs the slow golden fits that the PR job skips.
+    - cron: "0 7 * * *"
 
 jobs:
-  miniconda:
-    name: Miniconda ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-        matrix:
-            os: ["ubuntu-latest"]
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
         with:
-          activate-environment: luci
-          environment-file: luci.yml
-          python-version: 3.9.5
-          auto-activate-base: false
-      - shell: bash -l {0}
-        run: |
-          conda info
-          conda list
-      - name: Run pytest
-        shell: bash -l {0}
-        run: |
-            conda install pytest
-            pytest
+          enable-cache: true
+      # ruff is pure-Python and needs none of the heavy scientific stack, so
+      # run it with uvx in an ephemeral env -- no tensorflow install required.
+      - name: ruff check
+        run: uvx ruff@0.6.9 check .
+      - name: ruff format --check
+        run: uvx ruff@0.6.9 format --check .
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install (locked)
+        run: uv sync --locked --dev
+      - name: Verify the lock is in sync with pyproject
+        run: uv lock --check
+      - name: Run tests
+        # -m "not slow" skips the multi-minute per-pixel golden fits; those run
+        # in the nightly job below.  MPLBACKEND=Agg dodges the plt.clf() in the
+        # per-spectrum path (B12) that otherwise needs a display.
+        env:
+          MPLBACKEND: Agg
+        run: uv run --no-sync pytest -m "not slow" -q
+
+  golden:
+    name: Golden fits (nightly)
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install (locked)
+        run: uv sync --locked --dev
+      - name: Run the full characterization suite
+        env:
+          MPLBACKEND: Agg
+        run: uv run --no-sync pytest -q
