@@ -5,6 +5,7 @@
 # Environment variables and checkpoints
 venv/*
 .venv/*
+.venv-legacy/
 **/__pycache__/
 .idea/*
 **/.ipynb_checkpoints/
