@@ -128,7 +128,7 @@ On the other hand, the Bayesian approach seems to always achieve the correct val
 Note that you no longer hand ``Fit`` a loaded network. Give it ``ML_bool=True`` plus the
 ``filter``, ``resolution`` and ``Luci_path`` it needs, and LUCI resolves the matching ONNX predictor
 from ``ML/onnx/`` itself -- loading it once per process rather than once per spectrum. See
-:ref:`howLuciWorks` for details.
+:ref:`howluciworks` for details.
 
 And let's visualize that fit..
 
