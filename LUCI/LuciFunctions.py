@@ -218,7 +218,7 @@ class SincGauss:
         self.initial_values = initial_values
         pass
 
-    @jit(fastmath=True)
+    #@jit(fastmath=True)
     def function(self, channel, params, sinc_width):
         p0 = params[0]
         p1 = params[1]
@@ -233,7 +233,7 @@ class SincGauss:
         dawson3 = 2. * sps.dawsn(1j * a)
         return np.real(p0*(dawson1 + dawson2)/dawson3)
 
-    @jit(fastmath=True)
+    #@jit(fastmath=True)
     def evaluate(self, channel, theta, line_num, sinc_width, line_names=None):
         """
         Function to initiate the correct number of models to fit

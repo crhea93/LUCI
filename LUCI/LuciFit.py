@@ -1,5 +1,5 @@
 import numpy as np
-from joblib.testing import param
+#from joblib.testing import param
 from scipy.optimize import minimize
 from scipy import interpolate
 import emcee

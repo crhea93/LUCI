@@ -118,7 +118,7 @@ def visualize(deep_image, spectrum_axis, cube_final, header):
     scaled_deep_image = np.nan_to_num(np.log10(deep_image), 0)
     plt.imshow(scaled_deep_image, origin='lower', vmin=np.percentile(scaled_deep_image, 5), vmax=np.percentile(scaled_deep_image, 99))
     rs = RectangleSelector(axes[0], line_select_callback,
-                           drawtype='box', useblit=False, button=[1],
+                           #drawtype='box', useblit=False, button=[1],
                            minspanx=2, minspany=2, spancoords='pixels',
                            interactive=False)
     plt.show()
