@@ -185,24 +185,29 @@ class Fit:
 
 
     def get_ML_model(self):
+        """
+        Resolve the ML parameter predictor for this cube's resolution / filter.
+
+        Predictions now run on ONNX Runtime through LUCI.ml, not TensorFlow, and
+        the predictor is cached per (resolution, filter, mdn) so it is loaded at
+        most once per process -- the old code called keras.models.load_model
+        inside every Fit, i.e. once per pixel (bug B13).
+
+        ``self.predictor`` is the resolved predictor (or None); ``self.ML_model``
+        is kept as an alias so the existing ``self.ML_model is None`` checks in
+        line_vals_estimate continue to work.  A missing model yields None, and
+        the caller falls back to the data-driven priors (estimate_priors_data).
+        """
+        self.predictor = None
         if self.ML_bool is True:
-            if not self.mdn:
-                if self.filter in ['SN1', 'SN2', 'SN3', 'SN4', 'C4', 'C2', 'C3', 'C1']:
-                    self.ML_model = keras.models.load_model(
-                        self.Luci_path + 'ML/R%i-PREDICTOR-I-%s' % (self.resolution, self.filter))
-                else:
-                    print(
-                        'LUCI does not support machine learning parameter estimates for the filter you entered. Please set ML_bool=False.')
-            else:  # mdn == True
-                if self.filter in ['SN3', 'SN2', 'SN4']:
-                    self.ML_model = create_MDN_model(len(self.wavenumbers_syn), negative_loglikelihood)
-                    self.ML_model.load_weights(self.Luci_path + 'ML/R%i-PREDICTOR-I-MDN-%s/R%i-PREDICTOR-I-MDN-%s' % (
-                        self.resolution, self.filter, self.resolution, self.filter))
-                else:
-                    print(
-                        'LUCI does not support machine learning parameter estimates using a MDN for the filter you entered. Please set ML_bool=False or mdn=False.')
-        else:
-            pass  # No ML model
+            self.predictor = get_predictor(self.resolution, self.filter, self.mdn, self.Luci_path)
+            if self.predictor is None:
+                kind = 'MDN ' if self.mdn else ''
+                print(
+                    'LUCI has no %sONNX predictor for R%i-%s. '
+                    'Falling back to data-driven initial estimates (set ML_bool=False to silence this).'
+                    % (kind, self.resolution, self.filter))
+        self.ML_model = self.predictor  # backward-compatible alias for None checks
 
     def apply_transmission(self):
         """
@@ -285,22 +290,11 @@ class Fit:
         Return:
             Updates self.vel_ml
         """
-        plt.clf()
-        Spectrum = self.spectrum_interp_norm.reshape(1, self.spectrum_interp_norm.shape[0], 1)
-        if self.mdn:
-            prediction_distribution = self.ML_model(Spectrum, training=False)
-            prediction_mean = prediction_distribution.mean().numpy().tolist()
-            prediction_stdv = prediction_distribution.stddev().numpy().tolist()
-            self.vel_ml = [pred[0] for pred in prediction_mean][0]
-            self.vel_ml_sigma = [pred[0] for pred in prediction_stdv][0]
-            self.broad_ml = [pred[1] for pred in prediction_mean][0]
-            self.broad_ml_sigma = [pred[1] for pred in prediction_stdv][0]
-        elif self.mdn == False:
-            predictions = self.ML_model(Spectrum , training=False)
-            self.vel_ml = float(predictions[0][0])
-            self.vel_ml_sigma = 0
-            self.broad_ml = float(predictions[0][1])
-            self.broad_ml_sigma = 0
+        estimate = self.predictor.predict(self.spectrum_interp_norm)
+        self.vel_ml = estimate.velocity
+        self.broad_ml = estimate.broadening
+        self.vel_ml_sigma = estimate.velocity_sigma
+        self.broad_ml_sigma = estimate.broadening_sigma
         return None
 
     def estimate_priors_data(self):
