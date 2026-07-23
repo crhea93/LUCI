@@ -114,6 +114,7 @@ Prerequisites
        uncertainties
        fit_options
        wavelength_corrections
+       newFilter
        license
 
 Examples
