@@ -17,13 +17,8 @@ from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_b
 from LUCI.LuciUtility import hessianComp
 from LUCI.instrument.filters import get_filter
 from LUCI.fitting.result import FitResult
+from LUCI.ml import get_predictor
 import matplotlib.pyplot as plt
-import os
-import logging
-import keras
-from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-logging.getLogger('tensorflow').setLevel(logging.FATAL)
 warnings.filterwarnings("ignore")
 
 # Define Constants #
@@ -746,16 +741,17 @@ class Fit:
             "broadening": Velocity Dispersion of the line in km/s (float)}
         """
         if sky_line != True:
-            if self.ML_bool is not False and self.freeze is False:
+            if self.predictor is not None and self.freeze is False:
                 # Interpolate Spectrum
                 self.interpolate_spectrum()
-                # Estimate the priors using machine learning algorithm
+                # Estimate the priors using the ONNX predictor
                 self.estimate_priors_ML()
             else:
                 self.spectrum_scale = np.max(self.spectrum)
                 if self.freeze is False:
-                    # ML disabled and no frozen priors: estimate from the data
-                    # so the optimiser does not start from a singular sigma (B1).
+                    # No ML predictor (disabled or unavailable) and no frozen
+                    # priors: estimate from the data so the optimiser does not
+                    # start from a singular sigma (B1).
                     self.estimate_priors_data()
             # Apply Fit
             # if self.initial_conditions is False:

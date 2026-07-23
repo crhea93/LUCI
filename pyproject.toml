@@ -52,6 +52,7 @@ dependencies = [
     "corner",
     "photutils",
     "six",
+    "onnxruntime",
     "tensorflow==2.11",
     "tensorflow-probability==0.19",
 ]
