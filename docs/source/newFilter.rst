@@ -206,11 +206,27 @@ That does three things:
    spectra get.
 3. **Trains and saves the network**, reporting the residual scatter on a held-out test set. With
    ``--mdn`` it also trains the mixture density network (``LUCI/LuciNetwork.py``) used when
-   ``mdn=True``, saving weights under the doubled-up path convention ``get_ML_model`` expects.
+   ``mdn=True``, saving weights under the doubled-up path convention the loader expects.
+
+.. important::
+   **Convert the trained network to ONNX before LUCI will use it.** Fitting loads predictors from
+   ``ML/onnx/``, not the Keras artifacts, so a freshly trained network is invisible until you run::
+
+       uv run tools/convert_models_to_onnx.py --models R5000-PREDICTOR-I-SN4 --validate
+
+   (or ``--all`` to redo everything). ``--validate`` checks the converted model against its Keras
+   original on 200 spectra and refuses to publish it if they disagree beyond float32 tolerance, so a
+   silently broken conversion cannot reach your fits. The script pins its own legacy-TensorFlow
+   environment through a PEP 723 header, so ``uv run`` builds what it needs and discards it
+   afterwards.
+
+   If you skip this step LUCI does not crash -- it reports that no predictor was found for that
+   filter/resolution and falls back to data-driven initial guesses.
 
 To support a genuinely new filter you need to add it to ``FILTER_LINES`` and
 ``sample_amplitudes`` at the top of ``ML/TrainPredictor.py``, which say which lines fall in the
-filter and how to sample their relative amplitudes.
+filter and how to sample their relative amplitudes, and add a ``FilterSpec`` entry in
+``LUCI/instrument/filters.py`` giving the fit, noise and reference windows.
 
 .. warning::
    **Pick ``--n-steps`` from your cube's header.** ``LuciSim.Spectrum`` derives the number of

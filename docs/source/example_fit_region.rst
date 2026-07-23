@@ -28,7 +28,6 @@ Finally, we use the LuciFit Fit object to fit the region.
     import LUCI.LuciFit as lfit
     from astropy.io import fits
     import numpy as np
-    import keras
 
 We now will set the required parameters. We are also going to be using our machine learning algorithm to get the initial guesses.
 
