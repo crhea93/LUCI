@@ -27,6 +27,10 @@ def add_lines(header, integrated_spectrum):
         plt.vlines(654.8, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='forestgreen', linewidths=(2,), label='NII6548')
         plt.vlines(673.1, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='lightpink', linewidths=(2,), label='NII6583')
         plt.vlines(671.6, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='plum', linewidths=(2,), label='NII6548')
+    if filter == 'SN4':
+        plt.vlines(656.3, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='coral', linewidths=(2,), label=r'H$\alpha$')
+        plt.vlines(658.3, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='seagreen', linewidths=(2,), label='NII6583')
+        plt.vlines(654.8, 0.8*min_y, 1.2*max_y, linestyles='dashed', colors='forestgreen', linewidths=(2,), label='NII6548')
     return None
 
 def visualize(deep_image, spectrum_axis, cube_final, header):
