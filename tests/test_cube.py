@@ -115,31 +115,29 @@ def test_create_deep_image_writes_a_2d_fits_file(sn3_cube_noml):
 
 
 def test_deep_image_equals_the_spectral_sum(sn3_cube_noml):
-    """
-    Only holds because the fixture's x-dimension is a multiple of 10.
-
-    create_deep_image sums the cube in exactly ten slabs of
-    int(shape[0] / 10) rows.  When shape[0] is not divisible by 10 the trailing
-    rows are silently left as zeros -- for a real 2048-row cube that is the last
-    8 rows.  See test_deep_image_drops_trailing_rows.
-    """
+    """The deep image is the cube summed over the spectral axis."""
     sn3_cube_noml.create_deep_image()
     expected = np.nansum(sn3_cube_noml.cube_final, axis=2).T
     np.testing.assert_allclose(sn3_cube_noml.deep_image, expected, rtol=1e-6)
 
 
-@pytest.mark.xfail(strict=True, reason="create_deep_image drops rows when dimx % 10 != 0; fix in Phase 5")
-def test_deep_image_drops_trailing_rows(luci_factory, cube_truth_factory):
+@pytest.mark.parametrize("dimx", [24, 25, 33])
+def test_deep_image_covers_cubes_whose_height_is_not_a_multiple_of_ten(
+    luci_factory, cube_truth_factory, dimx
+):
     """
-    The intended contract, on a cube whose x-dimension is not a multiple of 10.
-
-    Flips to passing once the ten-slab loop is replaced by a full sum.
+    B7: create_deep_image summed the cube in exactly ten slabs of
+    int(shape[0] / 10) rows, silently leaving the remainder as zeros whenever
+    shape[0] was not divisible by 10.  On a standard 2048-row cube that blanked
+    the last 8 rows of every deep image.
     """
-    truth = cube_truth_factory("SN3", dimx=24, dimy=20)
+    truth = cube_truth_factory("SN3", dimx=dimx, dimy=20)
     cube = luci_factory(truth, ML_bool=False)
     cube.create_deep_image()
     expected = np.nansum(cube.cube_final, axis=2).T
     np.testing.assert_allclose(cube.deep_image, expected, rtol=1e-6)
+    # Explicitly: no blank trailing rows.
+    assert np.all(cube.deep_image[:, -1] > 0)
 
 
 # --------------------------------------------------------------------------
@@ -174,37 +172,40 @@ def test_extract_spectrum_sums_the_requested_box(sn3_cube_noml):
     np.testing.assert_allclose(spectrum, expected, rtol=1e-6)
 
 
-def test_extract_spectrum_mean_is_currently_a_no_op(sn3_cube_noml):
+def test_extract_spectrum_mean_divides_by_pixel_count(sn3_cube_noml):
     """
-    Pins CURRENT behaviour: `mean=True` does nothing in extract_spectrum.
+    B2: `mean=True` used to be a silent no-op.
 
-    The pixel counter is only ever incremented inside its own initialisation
+    The pixel counter was only ever incremented inside its own initialisation
     guard::
 
         if spec_ct == 0:
             axis = self.spectrum_axis[~np.isnan(sky)]
             spec_ct += 1
 
-    so spec_ct is 1 for the whole loop and `integrated_spectrum /= spec_ct`
-    divides by one.  The sibling extract_spectrum_region() increments outside
-    the guard and *is* correct, so the two functions disagree.
-
-    This matters: the docstring says the method is "primarily used to extract
-    background regions", and a background averaged over N pixels comes back N
-    times too large.  Feeding that into fit_cube(bkg=...) over-subtracts by a
-    factor of N.
+    so it stayed at 1 and `integrated_spectrum /= spec_ct` divided by one.  Since
+    this method exists mainly to extract *background* spectra, a background
+    averaged over N pixels came back N times too large, and feeding it to
+    fit_cube(bkg=...) over-subtracted by a factor of N.
     """
     _, summed = sn3_cube_noml.extract_spectrum(4, 8, 4, 8)
     _, averaged = sn3_cube_noml.extract_spectrum(4, 8, 4, 8, mean=True)
-    np.testing.assert_allclose(averaged, summed, rtol=1e-9)
-
-
-@pytest.mark.xfail(strict=True, reason="extract_spectrum never increments spec_ct; fix in Phase 5")
-def test_extract_spectrum_mean_should_divide_by_pixel_count(sn3_cube_noml):
-    """The intended contract, matching extract_spectrum_region's behaviour."""
-    _, summed = sn3_cube_noml.extract_spectrum(4, 8, 4, 8)
-    _, averaged = sn3_cube_noml.extract_spectrum(4, 8, 4, 8, mean=True)
     np.testing.assert_allclose(averaged, summed / 16.0, rtol=1e-6)
+
+
+def test_extract_spectrum_and_region_agree_on_the_mean(sn3_cube_noml, sn3_truth):
+    """
+    The two extractors must not disagree.
+
+    extract_spectrum_region always incremented its counter correctly, so before
+    the B2 fix these two returned means differing by a factor of 16 for the same
+    region.
+    """
+    mask = np.zeros((sn3_truth["dimx"], sn3_truth["dimy"]), dtype=bool)
+    mask[4:8, 4:8] = True
+    _, box_mean = sn3_cube_noml.extract_spectrum(4, 8, 4, 8, mean=True)
+    _, region_mean = sn3_cube_noml.extract_spectrum_region(mask, mean=True)
+    np.testing.assert_allclose(box_mean, region_mean, rtol=1e-6)
 
 
 def test_extract_spectrum_region_mean_does_divide_by_pixel_count(sn3_cube_noml, sn3_truth):

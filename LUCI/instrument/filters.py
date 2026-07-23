@@ -91,6 +91,12 @@ class FilterSpec:
     fit: BoundRule
     noise: BoundRule
     reference: BoundRule
+    # Line-free window, in **nanometres**, used to scale a PCA background
+    # eigenspectrum onto an observed spectrum.  Given as
+    # (longer_wavelength, shorter_wavelength) because the code converts to
+    # wavenumber (1e7 / nm), which reverses the ordering.  None where the PCA
+    # background has not been characterised for that filter.
+    pca_scale: tuple[float, float] | None = None
 
     def fit_bounds(self, lines: object = (), redshift_corr: float = 1.0) -> tuple[float, float]:
         """Window over which the fit is performed (``restrict_wavelength``)."""
@@ -114,18 +120,21 @@ FILTERS: dict[str, FilterSpec] = {
         fit=BoundRule(14750, 15400),
         noise=BoundRule(15600, 15800),
         reference=BoundRule(14700, 15600),
+        pca_scale=(675.0, 670.0),
     ),
     "SN2": FilterSpec(
         "SN2",
         fit=BoundRule(19500, 20750),
         noise=BoundRule(18600, 19000),
         reference=BoundRule(19000, 21000),
+        pca_scale=(505.0, 480.0),
     ),
     "SN1": FilterSpec(
         "SN1",
         fit=BoundRule(26000, 28000),
         noise=BoundRule(26000, 26200),
         reference=BoundRule(25500, 27500),
+        pca_scale=(365.0, 360.0),
     ),
     "SN4": FilterSpec(
         "SN4",
@@ -135,6 +144,7 @@ FILTERS: dict[str, FilterSpec] = {
         fit=BoundRule(15040, 15330),
         noise=BoundRule(14600, 14900),
         reference=BoundRule(15000, 15350),
+        pca_scale=(664.5, 661.0),
     ),
     "C3": FilterSpec(
         "C3",
@@ -169,6 +179,42 @@ FILTERS: dict[str, FilterSpec] = {
 
 # Ordered for stable, readable error messages.
 SUPPORTED_FILTERS: tuple[str, ...] = ("SN1", "SN2", "SN3", "SN4", "C1", "C2", "C3", "C4")
+
+
+class PCABackgroundUnsupportedError(ValueError):
+    """Raised when a filter has no characterised PCA background-scaling window."""
+
+    def __init__(self, filter_name: object) -> None:
+        supported = ", ".join(sorted(n for n, f in FILTERS.items() if f.pca_scale))
+        super().__init__(
+            f"PCA background subtraction is not implemented for filter {filter_name!r}. "
+            f"Supported: {supported}."
+        )
+        self.filter_name = filter_name
+
+
+def pca_scale_indices(filter_name: object, spectrum_axis) -> tuple[int, int]:
+    """
+    Index bounds of the line-free window used to scale a PCA background.
+
+    ``spectrum_axis`` is in wavenumber (cm^-1); the stored window is in
+    nanometres, so each edge is matched via ``1e7 / wavelength``.
+
+    This replaces the same if/elif chain that was copy-pasted three times in
+    ``LuciBase`` (``fit_calc``, ``fit_pixel``, ``create_background_subspace``),
+    each of which called ``quit()`` on an unsupported filter -- killing the
+    interpreter from library code.  This raises instead.
+    """
+    import numpy as _np
+
+    spec = get_filter(filter_name)
+    if spec.pca_scale is None:
+        raise PCABackgroundUnsupportedError(filter_name)
+    lower_nm, upper_nm = spec.pca_scale
+    axis = _np.asarray(spectrum_axis)
+    lower_idx = int(_np.argmin(_np.abs(1e7 / axis - lower_nm)))
+    upper_idx = int(_np.argmin(_np.abs(1e7 / axis - upper_nm)))
+    return lower_idx, upper_idx
 
 
 def get_filter(name: object) -> FilterSpec:

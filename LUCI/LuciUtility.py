@@ -60,12 +60,17 @@ def save_fits(output_dir, object_name, lines, ampls_fits, flux_fits, flux_errors
         output_name += "_" + str(binning)
     if fit_function is not None:
         output_name += "_" + fit_function
-    lines_fit = []  # List of lines which already have maps
+    lines_fit = []  # Line names already written, so repeats can be disambiguated
     for ct, line_ in enumerate(lines):  # Step through each line to save their individual amplitudes
-        if lines_fit.count(line_) >= 1:  # If the line is already present in the list of lines create
-            # This means multiple components were fit of this line so they need to be nammed appropriately
-            line_number = lines_fit.count(line_) + 1
-            line_ += '_' + str(line_number)
+        # A multi-component fit passes the same line name more than once, so the
+        # second and later components are written as <line>_2, <line>_3, ...
+        # The original never appended to lines_fit, so .count() was always 0 and
+        # this branch was dead code: every component wrote the SAME filename and
+        # silently overwrote the previous one, leaving only the last (bug B16).
+        seen = lines_fit.count(line_)
+        lines_fit.append(line_)
+        if seen >= 1:
+            line_ += '_' + str(seen + 1)
         fits.writeto(output_dir + '/Amplitudes/' + output_name + '_' + line_ + '_Amplitude.fits',
                      ampls_fits[:, :, ct], header, overwrite=True)
         fits.writeto(output_dir + '/Fluxes/' + output_name + '_' + line_ + '_Flux.fits', flux_fits[:, :, ct],
@@ -355,16 +360,18 @@ def bin_mask(mask, binning, x_min, x_max, y_min, y_max):
     """
     x_shape_new = int((x_max - x_min) / binning)
     y_shape_new = int((y_max - y_min) / binning)
-    binned_mask = np.zeros((x_shape_new, y_shape_new))
+    # A mask is boolean: a bin is selected if any pixel in it is selected.  The
+    # original also divided the result by binning**2 -- a line copy-pasted from
+    # the flux-averaging path in bin_cube_function -- which turned True into
+    # 0.25 and made the return a float array (bug B8).  It only ever "worked"
+    # because the one consumer tests `if mask[x, y]:` and 0.25 is truthy; any
+    # caller summing the mask or using it for boolean indexing got wrong answers.
+    binned_mask = np.zeros((x_shape_new, y_shape_new), dtype=bool)
     for i in range(x_shape_new):
         for j in range(y_shape_new):
-            summed_spec = mask[x_min + int(i * binning):x_min + int((i + 1) * binning),
-                          y_min + int(j * binning):y_min + int((j + 1) * binning)]
-            if summed_spec.any() == True or summed_spec.any() == 1:
-                binned_mask[i, j] = True
-            else:
-                binned_mask[i,j] = False
-    binned_mask = binned_mask / (binning ** 2)
+            block = mask[x_min + int(i * binning):x_min + int((i + 1) * binning),
+                         y_min + int(j * binning):y_min + int((j + 1) * binning)]
+            binned_mask[i, j] = bool(block.any())
     return binned_mask
 
 def hessian(x):

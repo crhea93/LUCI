@@ -249,36 +249,30 @@ def test_bin_cube_sums_flux_and_shrinks_shape():
 
 
 def test_bin_mask_marks_a_bin_containing_any_true_pixel():
-    """
-    Pins CURRENT behaviour, which is subtly wrong.
-
-    bin_mask correctly sets a bin True when any contributing pixel is True, and
-    then runs `binned_mask = binned_mask / (binning ** 2)` -- a line copy-pasted
-    from the flux-averaging path in bin_cube_function.  Dividing a boolean mask
-    by 4 turns True into 0.25.  The result is a float array, not a mask.
-
-    It survives only because the one consumer (Luci.fit_region) tests
-    `if mask[x, y]:`, and 0.25 is truthy.  Any caller that sums the mask,
-    counts non-zeros, or uses it for boolean indexing gets wrong answers.
-    See test_bin_mask_should_return_a_boolean_mask below.
-    """
+    """A bin is selected when any contributing pixel is selected (B8 fixed)."""
     mask = np.zeros((20, 20), dtype=bool)
     mask[3, 5] = True
     binned = bin_mask(mask, 2, 0, 20, 0, 20)
     assert binned.shape == (10, 10)
-    assert binned[1, 2]  # truthy, which is all the current caller needs
-    assert binned[1, 2] == 0.25  # ... but the value is 1/binning**2, not True
-    assert binned.sum() == 0.25
+    assert binned[1, 2]
+    assert binned.sum() == 1
 
 
-@pytest.mark.xfail(strict=True, reason="bin_mask divides the boolean mask by binning**2; fix in Phase 5")
-def test_bin_mask_should_return_a_boolean_mask():
-    """The intended contract. Flips to passing when the stray division is removed."""
+def test_bin_mask_returns_a_boolean_mask():
+    """
+    B8: bin_mask used to divide the finished boolean mask by binning**2 -- a
+    line copy-pasted from the flux-averaging path in bin_cube_function -- which
+    turned True into 0.25 and the result into a float array.  It survived only
+    because the one consumer tests `if mask[x, y]:` and 0.25 is truthy; anything
+    that summed the mask or used it for boolean indexing got wrong answers.
+    """
     mask = np.zeros((20, 20), dtype=bool)
     mask[3, 5] = True
     binned = bin_mask(mask, 2, 0, 20, 0, 20)
     assert binned.dtype == bool
     assert binned.sum() == 1
+    # Usable directly for boolean indexing, which the float version was not.
+    assert np.arange(100).reshape(10, 10)[binned].tolist() == [12]
 
 
 def test_bin_mask_of_all_false_is_all_false():

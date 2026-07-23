@@ -105,23 +105,14 @@ def test_output_filename_encodes_binning_and_fit_function(tmp_path):
     assert os.path.exists(os.path.join(out, "Amplitudes", "OBJ_wvt_3_gaussian_Halpha_Amplitude.fits"))
 
 
-def test_duplicate_line_names_currently_overwrite_each_other(tmp_path):
+def test_duplicate_line_names_get_a_component_suffix(tmp_path):
     """
-    Pins CURRENT (broken) behaviour -- see B16 in REFACTOR_BUGS.md.
+    B16: a multi-component fit passes the same line name more than once, and each
+    component must land in its own file (<line>, <line>_2, ...).
 
-    A two-component fit passes the same line name twice.  save_fits *intends* to
-    disambiguate the second component as <line>_2:
-
-        lines_fit = []
-        for ct, line_ in enumerate(lines):
-            if lines_fit.count(line_) >= 1:
-                line_ += '_' + str(lines_fit.count(line_) + 1)
-            fits.writeto(... line_ ...)
-
-    but `lines_fit` is never appended to, so `.count()` is always 0 and the
-    suffix branch is dead code.  Both components write the same filename and the
-    second silently overwrites the first.  Only one amplitude map survives, and
-    it holds channel 1, not channel 0.
+    save_fits *intended* this, but never appended to `lines_fit`, so `.count()`
+    was always 0 and the suffix branch was dead code -- every component wrote the
+    same filename and silently overwrote the previous one, leaving only the last.
     """
     out = str(tmp_path)
     lines = ["Halpha", "Halpha"]
@@ -130,26 +121,27 @@ def test_duplicate_line_names_currently_overwrite_each_other(tmp_path):
     header = fits.Header()
     save_fits(out, "OBJ", lines, a, a, a, a, a, a, a, m, m, m, header, binning=1, fit_function="sincgauss")
     amps = os.path.join(out, "Amplitudes")
-    survivor = os.path.join(amps, "OBJ_1_sincgauss_Halpha_Amplitude.fits")
-    assert os.path.exists(survivor)
-    # The _2 file that the code intends to write never appears.
-    assert not os.path.exists(os.path.join(amps, "OBJ_1_sincgauss_Halpha_2_Amplitude.fits"))
-    # The surviving map is the *second* component (channel 1), not the first.
-    np.testing.assert_array_equal(fits.open(survivor)[0].data, a[:, :, 1])
+    first = os.path.join(amps, "OBJ_1_sincgauss_Halpha_Amplitude.fits")
+    second = os.path.join(amps, "OBJ_1_sincgauss_Halpha_2_Amplitude.fits")
+    assert os.path.exists(first)
+    assert os.path.exists(second)
+    # Each file holds its own component, in order -- nothing was overwritten.
+    np.testing.assert_array_equal(fits.open(first)[0].data, a[:, :, 0])
+    np.testing.assert_array_equal(fits.open(second)[0].data, a[:, :, 1])
 
 
-@pytest.mark.xfail(strict=True, reason="save_fits never appends to lines_fit (B16); fix during Phase 1/5")
-def test_duplicate_line_names_should_get_a_component_suffix(tmp_path):
-    """Intended contract: the second component lands in a <line>_2 file."""
+def test_three_components_are_numbered_sequentially(tmp_path):
+    """Naming must generalise past two components."""
     out = str(tmp_path)
-    lines = ["Halpha", "Halpha"]
-    a = np.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2)
+    lines = ["Halpha", "Halpha", "Halpha"]
+    a = np.arange(2 * 2 * 3, dtype=np.float32).reshape(2, 2, 3)
     m = np.ones((2, 2), dtype=np.float32)
-    header = fits.Header()
-    save_fits(out, "OBJ", lines, a, a, a, a, a, a, a, m, m, m, header, binning=1, fit_function="sincgauss")
+    save_fits(out, "OBJ", lines, a, a, a, a, a, a, a, m, m, m, fits.Header(), binning=1, fit_function="sincgauss")
     amps = os.path.join(out, "Amplitudes")
-    assert os.path.exists(os.path.join(amps, "OBJ_1_sincgauss_Halpha_Amplitude.fits"))
-    assert os.path.exists(os.path.join(amps, "OBJ_1_sincgauss_Halpha_2_Amplitude.fits"))
+    for suffix, channel in (("", 0), ("_2", 1), ("_3", 2)):
+        path = os.path.join(amps, f"OBJ_1_sincgauss_Halpha{suffix}_Amplitude.fits")
+        assert os.path.exists(path), f"missing component {channel}"
+        np.testing.assert_array_equal(fits.open(path)[0].data, a[:, :, channel])
 
 
 def test_map_contents_and_wcs_survive_the_write(written_maps):

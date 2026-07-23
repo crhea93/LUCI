@@ -19,6 +19,7 @@ from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_an
 from LUCI.LuciWVT import *
 from LUCI.LuciVisualize import visualize as LUCIvisualize
 from LUCI.LuciBackground import find_background_pixels
+from LUCI.instrument.filters import pca_scale_indices
 import multiprocessing as mp
 import time
 from sklearn import decomposition
@@ -166,12 +167,18 @@ class Luci():
         else:  # Create new deep image
             print('New deep frame created from data.')
             self.deep_image = np.zeros(
-                (self.cube_final.shape[0], self.cube_final.shape[1]))  # np.sum(self.cube_final, axis=2).T
-            iterations_ = 10
-            step_size = int(self.cube_final.shape[0] / iterations_)
-            for i in tqdm(range(10)):
-                self.deep_image[step_size * i:step_size * (i + 1)] = np.nansum(
-                    self.cube_final[step_size * i:step_size * (i + 1)], axis=2)
+                (self.cube_final.shape[0], self.cube_final.shape[1]))
+            # Summed in slabs purely to drive a progress bar.  The original used
+            # exactly ten slabs of int(shape[0] / 10) rows, which silently left
+            # the remainder as zeros whenever shape[0] was not divisible by 10 --
+            # for a standard 2048-row cube, the last 8 rows of every deep image
+            # were blank (bug B7).  Deriving the slab count from the step size
+            # covers the whole cube regardless of shape.
+            n_rows = self.cube_final.shape[0]
+            step_size = max(1, int(n_rows / 10))
+            for start in tqdm(range(0, n_rows, step_size)):
+                stop = min(start + step_size, n_rows)
+                self.deep_image[start:stop] = np.nansum(self.cube_final[start:stop], axis=2)
         self.deep_image = self.deep_image.T
         header_to_use = self.header  # Set header to be used
         # Bin data
@@ -321,25 +328,18 @@ class Luci():
             sky = np.copy(cube_slice[x_pix, :])  # cube_binned[x_pix, y_pix, :]
             if bkgType is not None:  # If there is a background variable subtract the bkg spectrum
                 if bkgType == 'standard':
-                    if binning:  # If binning, then we have to take into account how many pixels are in each bin
-                        sky -= bkg * binning ** 2  # Subtract background spectrum
-                    else:  # No binning so just subtract the background directly
-                        sky -= bkg  # Subtract background spectrum
+                    # Only the 'standard' path needs a caller-supplied spectrum;
+                    # 'pca' synthesises its own below.  Guarding on `bkg` lets
+                    # callers pass bkgType unconditionally without tripping over
+                    # `sky -= None` when no background was given.
+                    if bkg is not None:
+                        if binning:  # If binning, take into account how many pixels are in each bin
+                            sky -= bkg * binning ** 2  # Subtract background spectrum
+                        else:  # No binning so just subtract the background directly
+                            sky -= bkg  # Subtract background spectrum
                 elif bkgType == 'pca':  # We will be using the pca version
-                    if hdr_dict['FILTER'] == 'SN3':
-                        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in spectrum_axis]))
-                        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in spectrum_axis]))
-                    elif hdr_dict['FILTER'] == 'SN2':
-                        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 505 for wavelength in spectrum_axis]))
-                        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 480 for wavelength in spectrum_axis]))
-                    elif hdr_dict['FILTER'] == 'SN4':
-                        min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 664.5 for wavelength in spectrum_axis]))
-                        max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 661 for wavelength in spectrum_axis]))
-                    else:
-                        print(
-                            'We have yet to implement this algorithm for this filter. So far we have implemented it for SN4, SN3 and SN2.')
-                        print('Terminating Program')
-                        quit()
+                    min_spectral_scale, max_spectral_scale = pca_scale_indices(
+                        hdr_dict['FILTER'], spectrum_axis)
                     if binning:  # If we are binning we have to group the coefficients
                         binnedCoefficientArray = pca_coefficient_array[x_min + int(j * binning):x_min + int((j + 1) * binning),
                                       y_min + int(i * binning):y_min + int((i + 1) * binning), :]
@@ -551,7 +551,7 @@ class Luci():
         return velocities_fits, broadenings_fits, flux_fits, ampls_fits
 
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
-                   bkg=None, binning=None, bayes_bool=False, bayes_method='emcee',
+                   bkg=None, bkgType='standard', binning=None, bayes_bool=False, bayes_method='emcee',
                    output_name=None, uncertainty_bool=False, n_threads=1, nii_cons=True,
                    spec_min=None, spec_max=None, obj_redshift=0.0, initial_values=[False], n_stoch=1,
                    pixel_list=False):
@@ -698,7 +698,8 @@ class Luci():
                                     mask=mask, ML_bool=self.ML_bool,
                                     bayes_bool=bayes_bool,
                                     bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
-                                    uncertainty_bool=uncertainty_bool, bkg=bkg, nii_cons=nii_cons,
+                                    uncertainty_bool=uncertainty_bool, bkg=bkg, bkgType=bkgType,
+                                    nii_cons=nii_cons,
                                     initial_values=[vel_init, broad_init],
                                     obj_redshift=obj_redshift, n_stoch=n_stoch, resolution=self.resolution,
                                     Luci_path=self.Luci_path)
@@ -715,10 +716,13 @@ class Luci():
             chi2_fits[i] = chi2_local
             continuum_fits[i] = continuum_local
             continuum_error_fits[i] = continuum_errs_local
+        # fit_function is forwarded so fit_region's products are named the same
+        # way fit_cube's are (bug B9); without it the two wrote different
+        # filenames for the same fit and downstream globs silently missed them.
         save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
                   broadenings_fits,
                   velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits,
-                  cutout.wcs.to_header(), binning)
+                  cutout.wcs.to_header(), binning, fit_function=fit_function)
         return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
 
     def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
@@ -770,36 +774,31 @@ class Luci():
 
         else:
             sky = self.cube_final[pixel_x, pixel_y, :]
-        if bkgType=='standard':
-            #sky -= bkg  # Subtract background spectrum
-            #if bkg is not None:
-            sky -= bkg * (binning) ** 2  # Subtract background times number of pixels
-        elif bkgType == 'pca':  # We will be using the pca versionelif bkgType == 'pca':
-            if self.hdr_dict['FILTER'] == 'SN3':
-                min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 675 for wavelength in self.spectrum_axis]))
-                max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 670 for wavelength in self.spectrum_axis]))
-            elif self.hdr_dict['FILTER'] == 'SN2':
-                min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 505 for wavelength in self.spectrum_axis]))
-                max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 480 for wavelength in self.spectrum_axis]))
-            elif self.hdr_dict['FILTER'] == 'SN4':
-                min_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 664.5 for wavelength in self.spectrum_axis]))
-                max_spectral_scale = np.argmin(np.abs([1e7 / wavelength - 661 for wavelength in self.spectrum_axis]))
-            else:
-                print('We have yet to implement this algorithm for this filter. So far we have implemented it for SN4, SN3 and SN2.')
-                print('Terminating Program')
-                quit()
+        if bkgType == 'standard':
+            if bkg is not None:
+                # `binning` is None by default, and None ** 2 raises TypeError --
+                # so the documented defaults could not be used together (bug B6).
+                # An unbinned pixel contributes one spaxel, hence a factor of 1.
+                n_pixels = (2 * binning) ** 2 if binning else 1
+                sky = sky - bkg * n_pixels  # Subtract background times number of pixels
+        elif bkgType == 'pca':  # We will be using the pca version
+            min_spectral_scale, max_spectral_scale = pca_scale_indices(
+                self.hdr_dict['FILTER'], self.spectrum_axis)
             if binning:  # If we are binning we have to group the coefficients
                 binnedCoefficientArray = pca_coefficient_array[pixel_x - binning:pixel_x + binning, pixel_y - binning:pixel_y + binning, :]
                 binnedCoefficientArray = np.nansum(binnedCoefficientArray, axis=0)
                 binnedCoefficientArray = np.nansum(binnedCoefficientArray, axis=0)
                 bkg = pca_mean + np.sum([binnedCoefficientArray[i] * pca_vectors[i] for i in range(len(binnedCoefficientArray))], axis=0)
-                print('binning pca')
             else:
-                bkg = pca_mean + np.sum([pca_coefficient_array[x_pix, y_pix][i] * pca_vectors[i] for i in range(len(pca_coefficient_array[x_pix, y_pix]))], axis=0)
+                # Referenced x_pix/y_pix, which do not exist in this scope, so an
+                # unbinned PCA subtraction always died with NameError (bug B5).
+                # The pixel of interest is pixel_x/pixel_y.
+                coefficients = pca_coefficient_array[pixel_x, pixel_y]
+                bkg = pca_mean + np.sum([coefficients[i] * pca_vectors[i] for i in range(len(coefficients))], axis=0)
             scale_spec = np.nanmax(sky[min_spectral_scale:max_spectral_scale])
-            sky -= scale_spec * bkg
-        else:
-            print('Please set bkgType to either standard or pca')
+            sky = sky - scale_spec * bkg
+        elif bkgType is not None:
+            raise ValueError("bkgType must be 'standard', 'pca', or None; got %r" % (bkgType,))
 
 
         if absorp is not None:
@@ -888,10 +887,17 @@ class Luci():
                     else:
                         sky -= bkg  # Subtract background spectrum
                 integrated_spectrum += sky[~np.isnan(sky)]
-                if spec_ct == 0:
+                if axis is None:
                     axis = self.spectrum_axis[~np.isnan(sky)]
-                    spec_ct += 1
-        if mean:
+                # Counted for every contributing spaxel.  The original only ever
+                # incremented this inside the `if spec_ct == 0` axis-initialisation
+                # guard, so it stayed at 1 and `mean=True` divided by one --
+                # making the option a silent no-op (bug B2).  Since this method
+                # exists mainly to extract *background* spectra, a background
+                # averaged over N pixels came back N times too large, and feeding
+                # it to fit_cube(bkg=...) over-subtracted by a factor of N.
+                spec_ct += 1
+        if mean and spec_ct > 0:
             integrated_spectrum /= spec_ct
         return axis, integrated_spectrum
 
