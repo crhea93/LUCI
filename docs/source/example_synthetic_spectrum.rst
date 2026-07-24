@@ -11,7 +11,7 @@ found as a jupyter notebook in "LUCI/Examples/Create-Mock-Spectrum.ipynb".
     # Imports
   import sys
   sys.path.insert(0, '/home/carterrhea/Documents/LUCI/')  # Location of Luci
-  from LUCI.LuciSim import Spectrum
+  from luci.simulation import Spectrum
   import matplotlib.pyplot as plt
 
 Inputs

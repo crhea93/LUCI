@@ -1,0 +1,28 @@
+# Pre-commit hooks for LUCI.
+#
+# Install once with:  uvx pre-commit install
+# Run on everything:  uvx pre-commit run --all-files
+#
+# The ruff scope matches CI (see [tool.ruff] in pyproject.toml): only the
+# refactored code is linted; the legacy modules are excluded until their phase
+# brings them up to standard.
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.(fits|dat|mplstyle)$'
+      - id: end-of-file-fixer
+        exclude: '\.(fits|dat|mplstyle|ipynb)$'
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=1024]

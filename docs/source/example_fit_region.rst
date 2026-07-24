@@ -22,13 +22,12 @@ Finally, we use the LuciFit Fit object to fit the region.
     # Imports
     import sys
     sys.path.insert(0, '/media/carterrhea/carterrhea/SIGNALS/LUCI/')  # Location of Luci
-    from LuciBase import Luci
-    import LUCI.LuciPlotting as lplt
+    from luci import SitelleCube
+    import luci.viz.plotting as lplt
     import matplotlib.pyplot as plt
     import LUCI.LuciFit as lfit
     from astropy.io import fits
     import numpy as np
-    import keras
 
 We now will set the required parameters. We are also going to be using our machine learning algorithm to get the initial guesses.
 
@@ -49,7 +48,7 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
+    cube = SitelleCube(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
 
 Let's extract and visualize a background region we defined in ds9:
 

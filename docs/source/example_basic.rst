@@ -29,10 +29,8 @@ We should start by import the appropriate modules.
 
 .. code-block:: python
 
-    import sys
-    sys.path.insert(0, '/the/path/to/LUCI/')
-    import LuciBase as Luci
-    import LUCI.LuciPlotting as lplt
+    from luci import SitelleCube
+    import luci.viz.plotting as lplt
 
 
 Remember that '/the/path/to/LUCI/' is the full path to the directory where you cloned
@@ -99,7 +97,7 @@ With these parameters set, we can invoke `LUCI` with the following command:
 
 .. code-block:: python
 
-    cube = Luci(luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
+    cube = SitelleCube(luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
 
 This reads the HDF5 file, transforms the data cube into a 3d numpy array, and updates the header to be of an appropriate form.
 It also reads in the machine learning reference spectrum (we need the x-axis for interpolation purposes) and
@@ -189,7 +187,7 @@ For clarity, we reproduce the commands required to obtain fits here:
     redshift = -0.0006  # Redshift of M33
     resolution = 5000
 
-    cube = Luci(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
+    cube = SitelleCube(cube_dir+'/'+cube_name, cube_dir, object_name, redshift, ML_ref, ML_model)
 
     cube.create_deep_image()
 

@@ -28,8 +28,8 @@ directory as the hdf5 file.
     # Imports
     import sys
     sys.path.insert(0, '/media/carterrhea/carterrhea/SIGNALS/LUCI/')  # Location of Luci
-    from LuciBase import Luci
-    import LUCI.LuciPlotting as lplt
+    from luci import SitelleCube
+    import luci.viz.plotting as lplt
 
 Set the required parameters. We will be using our machine learning algorithm to get the initial guesses - this happens under the hood in `LuciFit`, so that the user is not required to think about the initial guess
 
@@ -50,7 +50,7 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
+    cube = SitelleCube(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
 
 The output will look something like this:
 

@@ -9,12 +9,10 @@ One the new feature added to the fitting procedure of Luci is a weighted Vorono√
 .. code-block:: python
 
     # Imports
-    import sys
-    sys.path.insert(0, '/home/carterrhea/Documents/LUCI/')
-    from LuciBase import Luci
+    from luci import SitelleCube
     import matplotlib.pyplot as plt
     import numpy as np
-    import LUCI.LuciPlotting as lplt
+    import luci.viz.plotting as lplt
     from astropy.io import fits
     from astropy.wcs import WCS
     from matplotlib import cm
@@ -40,7 +38,7 @@ From there we will load the HDF5 cube following this command as usual.
 
 .. code-block:: python
 
-  cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
+  cube = SitelleCube(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
 
 
 And extract a background region.

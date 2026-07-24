@@ -23,29 +23,45 @@ We have tried to make the installation of `LUCI` as smooth and painless as possi
 
 Below are instructions for installing on a linux distribution (only tested on Ubuntu and Pop-OS!).
 
-1. **Clone** this repository. I suggest cloning it in Documents or Applications.
-    ```git clone https://github.com/crhea93/LUCI.git```
-2. **Enter repository** wherever you cloned it.
-    ```cd LUCI```
-3. **Create** luci environment using the following command: `conda env create -f luci.yml`. Now, whenever you wish to use `LUCI`, you can load the environment by simply typing the following into your terminal: `conda activate luci`.  
+`LUCI` uses [uv](https://docs.astral.sh/uv/) to manage its environment. The exact dependency set is
+pinned in `uv.lock`, so everyone gets an identical, reproducible install on every platform.
 
+1. **Install uv** (once, if you do not already have it):
+    ```
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+2. **Clone** this repository and enter it:
+    ```
+    git clone https://github.com/crhea93/LUCI.git
+    cd LUCI
+    ```
+3. **Create the environment** — this reads `uv.lock` and installs `LUCI` itself in editable mode:
+    ```
+    uv sync
+    ```
 
-If you are on a Mac, you will need to change step 3 slightly:
-3.  **Create** luci environment with `conda create -n luci` and then install the requirements with `pip install -r requirements.txt`.
-    
-    **OR**
-    
-    **Create** luci environment with `conda env create -f luci_macOS-11.6` which 
-    was kindly created by Johanna Hartke.
+That's it. There is no conda environment to activate: prefix commands with `uv run` and they use the
+project environment automatically.
 
-I've also created a `requirements_strict.txt` requirements file that has all the version specifications as well.
-
-Now you are all set to use Luci! To load the module into a python file or jupyter notebook, simply add the following lines:
 ```
-import sys
-sys.path.insert(0, '/the/path/to/LUCI/')
-import Luci
+uv run python my_script.py
+uv run jupyter lab          # for the notebooks in Examples/
+uv run pytest               # run the test suite
 ```
+
+`LUCI` is now a proper installed package, so **no `sys.path` juggling is required**. Load it with:
+
+```python
+from luci import SitelleCube
+```
+
+The older spellings all still work — `from LuciBase import Luci`, `from LUCI.LuciFit import Fit`,
+and so on — so existing notebooks and scripts run unchanged. See the
+[migration guide](docs/source/migration.rst) for the full old-to-new mapping, and for the list of
+bug fixes that **changed numerical results**.
+
+(Older documentation and notebooks may still show `sys.path.insert(0, '/the/path/to/LUCI/')` before
+the import. That line is no longer needed and can be deleted.)
 
 You can quickly test that everything is working for your system by entering the LUCI directory and running `pytest`. You may receive some warnings, but everything should pass! If not, please let me know :)
 

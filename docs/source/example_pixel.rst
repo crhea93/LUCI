@@ -19,8 +19,8 @@ We should start by import the appropriate modules.
     path = os.path.abspath(os.path.pardir)
     sys.path.insert(0, path)  # add LUCI to the available paths
 
-    from LuciBase import Luci
-    import LUCI.LuciPlotting as lplt
+    from luci import SitelleCube
+    import luci.viz.plotting as lplt
     %config Completer.use_jedi=False  # enable autocompletion when typing in Jupyter notebooks
 
 
@@ -47,7 +47,7 @@ With these parameters set, we can invoke `LUCI` with the following command:
 
 .. code-block:: python
 
-    cube = Luci(luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
+    cube = SitelleCube(luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
 
 Now we should get our background region.
 

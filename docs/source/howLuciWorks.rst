@@ -84,15 +84,50 @@ values between 10 and 200 km/s. You can find more information on this at
 We estimate the amplitude by taking the maximum value of spectrum corresponding to the
 estimated position plus or minus 2 channels.
 
-The networks are specific to a filter *and* a resolution -- they live in the ``ML`` folder as
-``R<resolution>-PREDICTOR-I-<FILTER>``, paired with a reference spectrum
+The networks are specific to a filter *and* a resolution, paired with a reference spectrum
 ``Reference-Spectrum-R<resolution>-<FILTER>.fits`` that defines the axis every spectrum gets
 interpolated onto. If you need one for a filter or resolution that LUCI does not ship, see
 :ref:`newFilter` -- ``ML/TrainPredictor.py`` will build the reference spectrum, generate the
 synthetic training set, and train the network for you.
 
-Since we understand that machine learning is not everyone's cup of tea, we have
-an alternative method to calculate the initial guesses.
+How inference runs
+""""""""""""""""""
+**Inference runs on ONNX Runtime, not TensorFlow.** The networks were trained in Keras, but LUCI
+ships them converted to ONNX in ``ML/onnx/`` as
+``R<resolution>-PREDICTOR-I-<FILTER>.onnx`` (and ``...-PREDICTOR-I-MDN-<FILTER>.onnx`` for the
+mixture-density variants). Fitting therefore does **not** import TensorFlow at all.
+
+Three things follow from this, all of which matter in practice:
+
+* **Speed.** The predictor and its ONNX session are loaded once per process and reused for every
+  spectrum. Previously the Keras model was re-read from disk for *each pixel*, which dominated the
+  runtime of a full cube (measured: 5.7 s/pixel before, 3.0 s/pixel after, the remainder being the
+  actual fit).
+* **Install weight.** ONNX artifacts are roughly a third the size of the Keras SavedModels, and
+  ``onnxruntime`` is a far lighter dependency than TensorFlow.
+* **Fidelity.** Every converted model is checked against its Keras original on 200 spectra before
+  being shipped; all 39 agree to float32 precision (worst deviation 6.7e-4 km/s). Any model that
+  fails that gate is reported and *not* published.
+
+If you retrain a network, convert it with::
+
+    uv run tools/convert_models_to_onnx.py --all --validate
+
+That script pins its own legacy-TensorFlow environment via a PEP 723 header, so it builds what it
+needs on the fly and your project environment never sees TensorFlow.
+
+Internally the predictors sit behind a small interface (``LUCI.ml.ParameterPredictor``), so the
+fitting code asks for a velocity/broadening estimate without knowing or caring which backend answers.
+
+If machine learning is not your cup of tea
+""""""""""""""""""""""""""""""""""""""""""
+Pass ``ML_bool=False`` and LUCI estimates the initial guesses directly from the data: it locates the
+brightest peak in the fit window to seed the velocity and uses a default broadening, so the optimiser
+always starts somewhere sensible. The same fallback kicks in automatically if no trained network
+exists for your filter/resolution combination -- LUCI tells you it is doing so rather than failing.
+
+You can also supply your own priors explicitly with ``initial_values=[velocity, broadening]``, which
+freezes those parameters instead of fitting them.
 
 Fitting Function
 ^^^^^^^^^^^^^^^^

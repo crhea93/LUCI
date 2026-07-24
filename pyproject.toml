@@ -1,0 +1,165 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "luci-sitelle"
+version = "1.2.0"
+description = "General-purpose emission-line fitting pipeline built for SITELLE IFU data cubes"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+authors = [{ name = "Carter Rhea", email = "carterrhea93@gmail.com" }]
+keywords = ["astronomy", "spectroscopy", "SITELLE", "IFU", "emission lines"]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "License :: OSI Approved :: MIT License",
+]
+
+# Inference runs on ONNX Runtime; only the optional [ml-legacy] extra caps at 3.10.
+requires-python = ">=3.10"
+
+dependencies = [
+    # <2 on 3.10 only, for the [ml-legacy] extra and the recorded goldens.
+    "numpy>=1.23,<2; python_version < '3.11'",
+    "numpy>=1.26; python_version >= '3.11'",
+    "scipy",
+    "astropy",
+    "h5py",
+    "joblib",
+    "tqdm",
+    "pandas",
+    "scikit-learn",
+    "scikit-image",
+    "pillow",
+    "emcee>=3,<4",
+    "dynesty",
+    "pyregion",
+    "matplotlib",
+    "seaborn",
+    "corner",
+    "photutils",
+    "six",
+    "onnxruntime",
+]
+
+[project.optional-dependencies]
+# Only needed to train the PCA background interpolator (interpolation='nn') and
+# to count spectral components. Both import it lazily.
+ml-legacy = [
+    "tensorflow==2.11; python_version < '3.11'",
+    "tensorflow-probability==0.19; python_version < '3.11'",
+]
+
+[project.urls]
+Homepage = "https://github.com/crhea93/LUCI"
+Documentation = "https://crhea93.github.io/LUCI/index.html"
+Repository = "https://github.com/crhea93/LUCI"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
+    "pytest>=7",
+    # Pinned to the exact version CI and .pre-commit-config.yaml use. ruff's lint
+    # and format output changes between releases, so an unpinned floor let the dev
+    # venv drift to a newer ruff that disagreed with CI's 0.6.9 -- green locally,
+    # red in CI. Keep these three in lockstep.
+    "ruff==0.6.9",
+]
+
+# ---------------------------------------------------------------------------
+# Packaging
+# ---------------------------------------------------------------------------
+# We ship the luci package plus the top-level LuciBase / LuciAbsorp
+# modules, which is what every notebook imports today.  The lowercase `luci`
+# package from the later refactor phases will replace this once it exists.
+[tool.hatch.build.targets.wheel]
+packages = ["luci"]
+# Puts the project root on sys.path for editable installs, so the top-level
+# modules resolve live rather than from the copy force-include leaves behind (B18).
+dev-mode-dirs = ["."]
+
+# Needed so a built wheel ships the top-level modules.
+[tool.hatch.build.targets.wheel.force-include]
+"LUCI.py" = "LUCI.py"
+"LuciBase.py" = "LuciBase.py"
+"LuciAbsorp.py" = "LuciAbsorp.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "luci/",
+    "LUCI.py",
+    "LuciBase.py",
+    "LuciAbsorp.py",
+    "Data/*.dat",
+    "README.md",
+    "LICENSE.txt",
+    "tests/",
+]
+
+# ---------------------------------------------------------------------------
+# Tooling
+# ---------------------------------------------------------------------------
+[tool.ruff]
+# Lint scope grows with the refactor.  Right now only the freshly written test
+# suite is held to the rules; the 5-year-old fitting modules are excluded so CI
+# is not a wall of 190 pre-existing findings.  Each later phase drops its
+# rewritten module from this exclude list, so lint coverage ratchets up as the
+# code is modernised rather than all at once.
+line-length = 120
+target-version = "py310"
+extend-exclude = [
+    "Examples",
+    "docs",
+    "ComputeCanada",
+    "ML",
+    "Data",
+    "*.ipynb",
+    # Legacy modules, linted as their refactor phase rewrites them.  The glob
+    # excludes luci/LuciFit.py, LuciFunctions.py, etc. but NOT new subpackages
+    # like luci/instrument/, so freshly written code is held to the rules.
+    "luci/Luci*.py",
+    "LuciAbsorp.py",
+    "luci_absorption_fit_outline.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+# Silence the noise the refactor will fix in later phases rather than now:
+ignore = [
+    "E501",  # line length -- handled by formatter, not worth churning history
+    "E741",  # ambiguous variable names (l, I) -- pervasive; Phase 3+ cleanup
+    "F403",  # `from module import *` (LuciWVT) -- removed in Phase 5
+    "F405",  # names possibly from star import -- same
+    "E402",  # module-level import not at top -- conftest needs it
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]
+# Relocated verbatim from the old flat modules. They are held to formatting and
+# import order, but not yet to the rules that would require editing logic --
+# that happens when each is actually rewritten.
+"luci/analysis/*.py" = ["F841", "E712", "E722", "E711", "F401"]
+"luci/cube.py" = ["F841", "E712", "E722", "E711", "F401", "F403", "F405"]
+"luci/background/pca.py" = ["F841", "E712", "E722", "F401"]
+"luci/viz/*.py" = ["F841", "E712", "E722", "F401"]
+"luci/background/*.py" = ["F841", "E712", "E722", "F401"]
+"luci/fitting/bayes.py" = ["F841", "E712", "E722", "F401"]
+"luci/fitting/spectrum_fitter.py" = ["F841", "E712", "E722", "E731"]
+"luci/fitting/uncertainties.py" = ["F841", "E712", "E722"]
+"luci/instrument/header.py" = ["F841", "E712", "E722"]
+"luci/io/*.py" = ["F841", "E712", "E722"]
+"luci/engine/binning.py" = ["F841", "E712", "E722"]
+"luci/simulation.py" = ["F841", "E712", "E722"]
+"luci/log.py" = ["F841", "E712", "E722"]
+"luci/ml/mdn_architecture.py" = ["F401"]
+"scripts/*.py" = ["F841", "E712", "E722", "F401", "E402"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-p no:cacheprovider"
+testpaths = ["tests"]
+markers = [
+    "slow: fitting tests that run the optimiser over pixels (minutes)",
+    "ml: requires the Keras/TensorFlow predictors",
+]

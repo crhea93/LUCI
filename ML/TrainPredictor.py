@@ -38,8 +38,8 @@ from tqdm import tqdm
 LUCI_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LUCI_PATH)
 
-from LUCI.LuciSim import Spectrum  # noqa: E402
-from LUCI.LuciUtility import read_in_reference_spectrum  # noqa: E402
+from luci.LuciSim import Spectrum  # noqa: E402
+from luci.LuciUtility import read_in_reference_spectrum  # noqa: E402
 
 # Emission lines that fall inside each filter. This mirrors the `filter_line` dictionary in
 # `LuciBase.Luci.create_slices`.
@@ -319,7 +319,7 @@ def main():
     print('  Saved %s' % cnn_path)
 
     if args.mdn:
-        from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
+        from luci.LuciNetwork import create_MDN_model, negative_loglikelihood
         print('# -- Training the MDN -- #')
         mdn_model = train(create_MDN_model(len(wavenumbers_syn), negative_loglikelihood),
                           counts, labels, args.epochs, args.batch_size)
