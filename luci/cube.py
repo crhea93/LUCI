@@ -268,6 +268,7 @@ class SitelleCube:
         vel_rel,
         sigma_rel,
         bkg=None,
+        bkgType=None,
         binning=None,
         bayes_bool=False,
         output_name=None,
@@ -296,7 +297,23 @@ class SitelleCube:
         x_max = self.cube_final.shape[0]
         y_min = 0
         y_max = self.cube_final.shape[1]
-        self.fit_cube(lines, fit_function, vel_rel, sigma_rel, x_min, x_max, y_min, y_max)
+        return self.fit_cube(
+            lines,
+            fit_function,
+            vel_rel,
+            sigma_rel,
+            x_min,
+            x_max,
+            y_min,
+            y_max,
+            bkg=bkg,
+            bkgType=bkgType,
+            binning=binning,
+            bayes_bool=bayes_bool,
+            output_name=output_name,
+            uncertainty_bool=uncertainty_bool,
+            n_threads=n_threads,
+        )
 
     # @jit(nopython=False, parallel=True, nogil=True)
     @staticmethod
@@ -371,6 +388,11 @@ class SitelleCube:
         Return:
             all fit parameters for y-slice
         """
+        # B26: a caller that passes bkg= but not bkgType= plainly means "subtract
+        # this background". The old code required both and silently ignored bkg
+        # otherwise -- which is what Examples/BasicExample.ipynb does.
+        if bkg is not None and bkgType is None:
+            bkgType = "standard"
         y_pix = y_min + i  # Step y coordinate
         # Set up all the local lists for the current y_pixel step
         ampls_local = []

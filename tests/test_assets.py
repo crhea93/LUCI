@@ -27,7 +27,7 @@ class TestResolution:
         assert default_luci_path().rstrip("/") == repo_root.rstrip("/")
 
     def test_result_always_ends_in_a_slash(self):
-        """Callers concatenate directly: Luci_path + "ML/...". """
+        """Callers concatenate directly: Luci_path + "ML/..."."""
         assert default_luci_path().endswith("/")
         assert resolve_luci_path("/tmp/x").endswith("/")
         assert resolve_luci_path("/tmp/x/").endswith("/")

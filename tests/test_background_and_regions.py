@@ -224,3 +224,47 @@ def test_resolve_mask_rejects_an_unknown_region_type():
         resolve_mask("region.txt", header=None, cube_shape=(4, 4))
     with pytest.raises(ValueError, match="No region given"):
         resolve_mask(None, header=None, cube_shape=(4, 4))
+
+
+def test_fit_cube_subtracts_a_background_given_without_bkgtype(sn3_cube_noml, sn3_truth):
+    """
+    B26: ``fit_cube(bkg=...)`` with no ``bkgType`` silently ignored the background.
+
+    This is the same defect as B3 but on the other entry point, and it is what
+    ``Examples/BasicExample.ipynb`` does -- it extracts a background, plots it,
+    then passes it to ``fit_cube`` with no ``bkgType``, so the flagship tutorial
+    never actually subtracted anything.
+    """
+    background = np.ones(sn3_cube_noml.cube_final.shape[2]) * 1e-17
+
+    plain = sn3_cube_noml.fit_cube(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, 5, 8, 5, 8, n_threads=1)
+    subtracted = sn3_cube_noml.fit_cube(
+        SN3_LINES, "sincgauss", [1] * 5, [1] * 5, 5, 8, 5, 8, bkg=background, n_threads=1
+    )
+    # flux maps are index 2 of the returned tuple
+    assert not np.allclose(plain[2], subtracted[2], rtol=1e-9, atol=0.0), (
+        "passing bkg to fit_cube made no difference -- background was ignored (B26)"
+    )
+
+
+def test_fit_entire_cube_forwards_its_arguments(sn3_cube_noml, monkeypatch):
+    """
+    B27: ``fit_entire_cube`` accepted bkg/binning/bayes_bool/output_name/
+    uncertainty_bool/n_threads and then called ``fit_cube`` with none of them.
+    Every one was silently discarded.
+    """
+    captured = {}
+
+    def fake_fit_cube(*args, **kwargs):
+        captured.update(kwargs)
+        return "sentinel"
+
+    monkeypatch.setattr(sn3_cube_noml, "fit_cube", fake_fit_cube)
+    background = np.ones(sn3_cube_noml.cube_final.shape[2]) * 1e-17
+    result = sn3_cube_noml.fit_entire_cube(
+        SN3_LINES, "sincgauss", [1] * 5, [1] * 5, bkg=background, binning=2, n_threads=7
+    )
+    assert result == "sentinel", "fit_entire_cube must return the fit result, not None"
+    assert captured.get("binning") == 2
+    assert captured.get("n_threads") == 7
+    assert captured.get("bkg") is background
