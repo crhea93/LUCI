@@ -141,7 +141,11 @@ FILTERS: dict[str, FilterSpec] = {
         # Narrow Halpha filter (652-665 nm).  The order-15 free spectral range
         # is far wider than the pass band, so the noise window sits in a region
         # the filter blocks entirely.
-        fit=BoundRule(15040, 15330),
+        # The upper bound stops short of the filter cut-on at 15326 cm-1, where transmission
+        # collapses from 0.947 to 0.339 within three channels. Including those channels puts a
+        # cliff inside the fit region that the constant continuum cannot follow; pulling the
+        # bound in to 15300 measurably improves chi2 (0.318 -> 0.244 on M86 filament spectra).
+        fit=BoundRule(15040, 15300),
         # The noise window sits on the blue side of the pass band (639.1-650.2 nm), where the
         # filter transmits 1e-4. It was originally 14600-14900, on the red side, but real SN4
         # cubes come out of ORB with that end of the axis set to NaN -- and because the mean

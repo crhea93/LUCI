@@ -311,8 +311,14 @@ class SpectrumFitter:
         (LUCI.instrument.filters) instead of an if/elif chain duplicated across
         the codebase.
         """
-        if self.spec_min is None or self.spec_max is None:  # If the user has not entered explicit bounds
-            self.spec_min, self.spec_max = get_filter(self.filter).fit_bounds(self.lines, self.obj_redshift_corr)
+        # Fill in only what the caller left unset. This used to be `or`, which meant passing just
+        # one bound silently threw it away and reverted both to the filter defaults -- the caller
+        # got no error and no indication their limit had been ignored.
+        default_min, default_max = get_filter(self.filter).fit_bounds(self.lines, self.obj_redshift_corr)
+        if self.spec_min is None:
+            self.spec_min = default_min
+        if self.spec_max is None:
+            self.spec_max = default_max
         min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
         max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
         self.spectrum_restricted = np.real(self.spectrum_normalized[min_:max_])

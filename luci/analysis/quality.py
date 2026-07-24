@@ -138,20 +138,30 @@ def fit_quality_report(log=True, **kwargs):
         (mask, report) where report maps a cut name to the fraction of pixels it alone rejects
     """
     combined = fit_quality_mask(**kwargs)
-    individual_cuts = {
-        "snr": ("snr_min",),
-        "flux": ("require_positive_flux",),
-        "flux_err": ("max_flux_err_ratio",),
-        "velocity": ("velocity_range",),
-        "broadening": ("broadening_max",),
-        "chi2": ("chi2_max",),
-    }
+    # (map argument, threshold arguments, whether the cut is on by default)
+    individual_cuts = (
+        ("snr", ("snr_min",), False),
+        # require_positive_flux defaults to True, so this cut is active unless switched off.
+        # Reporting it matters: on a partially fit field it is usually the dominant rejection,
+        # and omitting it makes the itemised percentages fail to explain the total.
+        ("flux", ("require_positive_flux",), True),
+        ("flux_err", ("max_flux_err_ratio",), False),
+        ("velocity", ("velocity_range",), False),
+        ("broadening", ("broadening_max",), False),
+        ("chi2", ("chi2_max",), False),
+    )
     report = {}
-    for name, keys in individual_cuts.items():
-        if kwargs.get(name) is None or all(kwargs.get(k) is None for k in keys):
+    for name, keys, on_by_default in individual_cuts:
+        if kwargs.get(name) is None:
+            continue
+        if not on_by_default and all(kwargs.get(k) is None for k in keys):
+            continue
+        if on_by_default and not all(kwargs.get(k, True) for k in keys):
             continue
         only = {k: v for k, v in kwargs.items() if k in (name, *keys)}
-        # A single-map call still needs its own map present
+        if name != "flux":
+            only["require_positive_flux"] = False  # isolate this cut from the flux check
+            only.setdefault("flux", kwargs.get("flux"))
         rejected = ~fit_quality_mask(**only)
         report[name] = float(np.mean(rejected))
     report["combined"] = float(np.mean(~combined))
