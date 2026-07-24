@@ -32,6 +32,7 @@ from luci.fitting.parameters import (
 from luci.fitting.result import FitResult
 from luci.fitting.uncertainties import hessianComp
 from luci.instrument.filters import get_filter
+from luci.io.assets import resolve_luci_path
 from luci.log import get_logger
 from luci.ml import get_predictor
 
@@ -258,7 +259,11 @@ class SpectrumFitter:
         """
         self.predictor = None
         if self.ML_bool is True:
-            self.predictor = get_predictor(self.resolution, self.filter, self.mdn, self.Luci_path)
+            # SitelleCube resolves this at construction, but a SpectrumFitter built directly --
+            # which is what every synthetic-spectrum example does -- may not have been given one.
+            # Resolve it the same way rather than handing None to os.path.join.
+            luci_path = self.Luci_path or resolve_luci_path(None)
+            self.predictor = get_predictor(self.resolution, self.filter, self.mdn, luci_path)
             if self.predictor is None:
                 kind = "MDN " if self.mdn else ""
                 logger.info(
