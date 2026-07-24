@@ -7,6 +7,10 @@ import numpy as np
 import seaborn as sns
 from astropy.wcs import WCS
 
+from luci.log import get_logger
+
+logger = get_logger(__name__)
+
 
 def set_style(dark):
     """
@@ -129,7 +133,7 @@ def plot_map(
         quantity_map[quantity_map < 1e-25] = 1e-25
         quantity_map = np.log10(quantity_map)  # NaNs to extremely small number
     else:
-        print("Please enter either flux, velocity, or broadening")
+        logger.info("Please enter either flux, velocity, or broadening")
     units = {"flux": r"log[ergs/s/cm$^2$/A]", "velocity": "km/s", "broadening": "km/s"}
     if clims is None:
         c_min = np.nanpercentile(quantity_map, 5)
@@ -200,7 +204,7 @@ def plot_map_no_coords(
     elif quantity_name == "flux":
         quantity_map = np.log10(quantity_map)  # NaNs to extremely small number
     else:
-        print("Please enter either flux, velocity, broadening, or zscore")
+        logger.info("Please enter either flux, velocity, broadening, or zscore")
     units = {"flux": r"log[ergs/s/cm$^2$/A]", "velocity": "km/s", "broadening": "km/s", "zscore": ""}
     if clims is None:
         c_min = np.nanpercentile(quantity_map, 5)

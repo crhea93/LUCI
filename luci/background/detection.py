@@ -14,6 +14,10 @@ from astropy.wcs import WCS
 from photutils.background import Background2D, MedianBackground
 from photutils.segmentation import detect_sources, make_2dgaussian_kernel
 
+from luci.log import get_logger
+
+logger = get_logger(__name__)
+
 
 def find_background_pixels(
     deep_image, outputDir="", sigma_threshold=0.1, plot_mask=True, npixels=10, bkg_algo="detect_source", filter_="SN3"
@@ -67,6 +71,5 @@ def find_background_pixels(
         idx_source = np.argwhere(deep_image > 200000)
 
     else:
-        print("You need to pass an appropriate method: detect_source or threshold")
-        quit()
+        raise ValueError(f"Unknown bkg_algo {bkg_algo!r}: expected 'detect_source' or 'threshold'.")
     return idx_bkg, idx_source

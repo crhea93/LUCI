@@ -230,7 +230,7 @@ class Pixel:
 
 def read_in(SNR_map):
     # Collect Pixel Data
-    print(os.getcwd())
+    logger.info(os.getcwd())
     hdu_list = fits.open(SNR_map, memmap=True)
     counts = hdu_list[0].data
     y_len = counts.shape[0]
@@ -247,7 +247,7 @@ def read_in(SNR_map):
             SNR = counts[row][col]
             Pixels.append(Pixel(pixel_count, x_min + col, y_min + row, SNR))  # Bottom Left Corner!
             pixel_count += 1
-    print("We have " + str(pixel_count) + " Pixels.")
+    logger.info("We have " + str(pixel_count) + " Pixels.")
     return Pixels, x_min, x_max, y_min, y_max
 
 
@@ -376,11 +376,14 @@ def assigned_missing_pixels(pixels):
                 unbinned_num += 1
             else:
                 pass  # Pixel already binned
-    print("We have " + str(len(Pixels_unbinned)) + " unbinned pixels")
+    logger.info("We have " + str(len(Pixels_unbinned)) + " unbinned pixels")
     return Pixels_unbinned
 
 
 def reassign_pixels(bin, bins_successful, sucessful_centroids):
+    if not sucessful_centroids:
+        logger.warning("reassign_pixels called with no successful bins; %d pixels left unassigned", len(bin.pixels))
+        return None
     for pixel in bin.pixels:
         pixel.clear_bin()
         potential_bins = bins_successful[:]
@@ -396,14 +399,18 @@ def reassign_pixels(bin, bins_successful, sucessful_centroids):
                 else:
                     pixel.add_to_bin(closest_bin)
                     closest_bin.add_pixel(pixel)
-            except:
-                pass  # print(potential_centroids)
+            except (IndexError, ValueError):
+                # No candidate bin left. `pass` here spun forever: the loop only
+                # exits once the pixel is assigned, so a raise every iteration
+                # meant an infinite loop rather than an error (B24).
+                logger.warning("no bin available for pixel (%s, %s)", pixel.pix_x, pixel.pix_y)
+                break
     return None
 
 
 def Bin_Acc(Pixels, pixel_length, StN_Target, roundness_crit):
     # step 1:setup list of bin objects
-    print("Starting Bin Accretion Algorithm")
+    logger.info("Starting Bin Accretion Algorithm")
     unassigned_pixels = Pixels[:]
     binCount = 0
     Bin_list = []
@@ -468,8 +475,8 @@ def Bin_Acc(Pixels, pixel_length, StN_Target, roundness_crit):
             bin.CalcScaleLength(StN_Target)
     for bin in bins_successful:
         bin.update_StN_prev()
-    print("Completed Bin Accretion Algorithm")
-    print("There are a total of " + str(len(bins_successful) + 1) + " bins!")
+    logger.info("Completed Bin Accretion Algorithm")
+    logger.info("There are a total of " + str(len(bins_successful) + 1) + " bins!")
     return bins_successful
 
 
@@ -516,14 +523,14 @@ def Rebin_Pixels(binList, pixel_list, pixel_length, StN_Target):
 
 
 def WVT(Bin_list_init, Pixel_Full, StN_Target, ToL, pixel_length, image_dir):
-    print("Beginning WVT")
+    logger.info("Beginning WVT")
     Bin_list_prev = Bin_list_init[:]
     converged = False
     its_to_conv = 0
     if not os.path.exists(image_dir + "/histograms/"):
         os.mkdir(image_dir + "/histograms/")
     while converged == False and its_to_conv < 5:
-        print("We are on step " + str(its_to_conv + 1))
+        logger.info("We are on step " + str(its_to_conv + 1))
         bins_with_SN = Rebin_Pixels(Bin_list_prev, Pixel_Full, pixel_length, StN_Target)[:]
         converged = converged_met(bins_with_SN, ToL)
         Bin_list_prev = bins_with_SN[:]
@@ -540,10 +547,10 @@ def WVT(Bin_list_init, Pixel_Full, StN_Target, ToL, pixel_length, image_dir):
         plt.savefig(image_dir + "/histograms/iteration_" + str(its_to_conv) + ".png")
         plt.clf()
     if its_to_conv < 5:
-        print("Completed WVT in " + str(its_to_conv) + " step(s)!")
+        logger.info("Completed WVT in " + str(its_to_conv) + " step(s)!")
     else:
-        print("Stopped WVT algorithm after 5 steps.")
-    print("There are a total of " + str(len(bins_with_SN) + 1) + " bins!")
+        logger.info("Stopped WVT algorithm after 5 steps.")
+    logger.info("There are a total of " + str(len(bins_with_SN) + 1) + " bins!")
     return bins_with_SN
 
 
@@ -560,6 +567,9 @@ from tqdm import tqdm  # noqa: E402
 
 from luci.engine.maps import FitMaps  # noqa: E402
 from luci.engine.runner import deep_image_cutout  # noqa: E402
+from luci.log import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_wvt(
@@ -585,11 +595,11 @@ def create_wvt(
 
 
     """
-    print("#----------------WVT Algorithm----------------#")
-    print("#----------------Creating SNR Map--------------#")
+    logger.info("#----------------WVT Algorithm----------------#")
+    logger.info("#----------------Creating SNR Map--------------#")
     Pixels = []
     cube.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=n_threads)
-    print("#----------------Algorithm Part 1----------------#")
+    logger.info("#----------------Algorithm Part 1----------------#")
     start = time.time()
     SNR_map = fits.open(cube.output_dir + "/SNR/" + cube.object_name + "_SNR.fits")[0].data
     SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
@@ -598,13 +608,13 @@ def create_wvt(
     Init_bins = Bin_Acc(Pixels, pixel_size, stn_target, roundness_crit)
     plot_Bins(Init_bins, x_min, x_max, y_min, y_max, stn_target, cube.output_dir, "bin_acc")
     total_time = time.gmtime(float(time.time() - start))
-    print("The first part of the algorithm took %s." % (time.strftime("%H:%M:%S", total_time)))
-    print("#----------------Algorithm Part 2----------------#")
+    logger.info("The first part of the algorithm took %s." % (time.strftime("%H:%M:%S", total_time)))
+    logger.info("#----------------Algorithm Part 2----------------#")
     Final_Bins = WVT(Init_bins, Pixels, stn_target, ToL, pixel_size, cube.output_dir)
-    print("#----------------Algorithm Complete--------------#")
+    logger.info("#----------------Algorithm Complete--------------#")
     plot_Bins(Final_Bins, x_min, x_max, y_min, y_max, stn_target, cube.output_dir, "final")
     Bin_data(Final_Bins, Pixels, x_min, y_min, cube.output_dir, "WVT_data")
-    print("#----------------Bin Mapping--------------#")
+    logger.info("#----------------Bin Mapping--------------#")
     pixel_x = []
     pixel_y = []
     bins = []
@@ -784,7 +794,7 @@ def wvt_fit_region(
     cube.create_wvt(
         x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL, n_threads
     )
-    print("#----------------WVT Fitting--------------#")
+    logger.info("#----------------WVT Fitting--------------#")
     # Fit the bins
     velocities_fits, broadenings_fits, flux_fits, chi2_fits, header = cube.fit_wvt(
         lines,

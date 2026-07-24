@@ -18,6 +18,10 @@ import math
 import numpy as np
 from scipy import special as sps
 
+from luci.log import get_logger
+
+logger = get_logger(__name__)
+
 # Define Constants #
 SPEED_OF_LIGHT = 299792  # km/s
 FWHM_COEFF = 2.0 * math.sqrt(2.0 * math.log(2.0))
@@ -150,7 +154,7 @@ def calculate_flux(line_amp, line_sigma, model_type, sinc_width):
             * ((np.sqrt(2 * np.pi) * line_sigma) / (sps.erf(line_sigma / (np.sqrt(2) * sinc_width))))
         )
     else:
-        print("ERROR: INCORRECT FIT FUNCTION")
+        logger.info("ERROR: INCORRECT FIT FUNCTION")
     return flux
 
 
@@ -192,8 +196,6 @@ def calculate_flux_err(ind, fit_sol, uncertainties, model_type, sinc_width):
         )
 
     else:
-        ("The fit function you have entered, %s, does not exist!" % model_type)
-        print("The program is terminating!")
-        exit()
+        raise ValueError(f"Unknown fit model {model_type!r}: expected one of gaussian, sinc, sincgauss.")
 
     return flux_err

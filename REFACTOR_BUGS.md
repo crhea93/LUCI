@@ -94,6 +94,36 @@ nothing: `pixel_list=True` fitted **every pixel in the cube** instead of the han
 and silently wrong rather than an error. `resolve_mask` now handles all four region forms in one
 place, and an unrecognised value raises instead of printing a message and continuing with no mask.
 
+### B24. `reassign_pixels` looped forever instead of failing — FIXED (Phase 6)
+**Where:** `reassign_pixels` in [luci/analysis/wvt.py](luci/analysis/wvt.py)
+**Test:** `tests/test_errors_and_logging.py::TestWvtReassignTerminates`
+
+```python
+while pixel.assigned_to_bin == False:
+    try:
+        dists = [dist(...) for (centx, centy) in potential_centroids]
+        closest_bin_index = dists.index(min(dists))
+        ...
+    except:
+        pass
+```
+
+The loop exits only once the pixel is assigned, and the bare `except: pass` swallowed the failure
+that prevented assignment. With no candidate bins, `min([])` raises `ValueError` on every pass, so
+the function span forever at 100% CPU rather than raising — the worst failure mode for a batch job.
+It also swallowed `KeyboardInterrupt`, so it could not be interrupted. Now guards the empty case,
+narrows to `(IndexError, ValueError)`, and breaks with a warning.
+
+### B25. `luci.simulation` was unimportable on a clean install — FIXED (Phase 6)
+**Where:** module-level `import ppxf.sps_util as lib` in [luci/simulation.py](luci/simulation.py)
+**Test:** `tests/test_errors_and_logging.py::TestRaisesInsteadOfExiting::test_unsupported_filter_in_simulation_raises`
+
+`ppxf` is not a declared dependency, but it was imported at module scope, so
+`from LUCI.LuciSim import Spectrum` — used by `Examples/Create-Mock-Spectrum.ipynb` and three doc
+pages — raised `ModuleNotFoundError` on any install that did not happen to have ppxf. Only
+`abs_template` actually uses it. The import is now lazy and raises a message naming the package,
+so `Spectrum` works without it.
+
 ### B2. `extract_spectrum(mean=True)` is a no-op — FIXED (Phase 5)
 **Where (was):** `Luci.extract_spectrum`
 **Fixed by:** counting every contributing spaxel instead of incrementing only inside the axis-init

@@ -134,6 +134,7 @@ Examples
        example_fit_snr
        example_pixel
        example_synthetic_spectrum
+       example_fit_synthetic
        example_double_fit
        example_visualize
        example_wvt

@@ -16,7 +16,10 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 from luci.fitting.spectrum_fitter import SpectrumFitter as Fit
-from luci.instrument.filters import pca_scale_indices
+from luci.instrument.filters import UnsupportedFilterError, pca_scale_indices
+from luci.log import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_snr_map(
@@ -103,7 +106,7 @@ def create_snr_map(
         noise_min = 20500
         noise_max = 21500
     else:
-        print("SNR Calculation for this filter has not been implemented")
+        raise UnsupportedFilterError(f"SNR calculation is not implemented for filter {cube.hdr_dict['FILTER']!r}.")
 
     def SNR_calc(i):
         y_pix = y_min + i

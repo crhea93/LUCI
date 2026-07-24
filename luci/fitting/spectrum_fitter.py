@@ -32,7 +32,10 @@ from luci.fitting.parameters import (
 from luci.fitting.result import FitResult
 from luci.fitting.uncertainties import hessianComp
 from luci.instrument.filters import get_filter
+from luci.log import get_logger
 from luci.ml import get_predictor
+
+logger = get_logger(__name__)
 
 warnings.filterwarnings("ignore")
 
@@ -258,7 +261,7 @@ class SpectrumFitter:
             self.predictor = get_predictor(self.resolution, self.filter, self.mdn, self.Luci_path)
             if self.predictor is None:
                 kind = "MDN " if self.mdn else ""
-                print(
+                logger.info(
                     "LUCI has no %sONNX predictor for R%i-%s. "
                     "Falling back to data-driven initial estimates (set ML_bool=False to silence this)."
                     % (kind, self.resolution, self.filter)
@@ -732,7 +735,7 @@ class SpectrumFitter:
                 SincGauss().plot(self.axis, parameters[:-1], self.line_num, self.sinc_width) + parameters[-1]
             )
         else:
-            print("Somehow all the checks missed the fact that you didn't enter a valid fit function...")
+            logger.info("Somehow all the checks missed the fact that you didn't enter a valid fit function...")
         """plt.plot(self.axis, self.fit_vector)
         plt.plot(self.axis, self.spectrum)
         plt.xlim(15100, 15300)
@@ -978,7 +981,7 @@ class SpectrumFitter:
         fit_init[-2] = self.fit_sol[2]  # Broadening from first line (WLOG)
         fit_init[-1] = self.fit_sol[-1]  # Continuum
         init_ = fit_init + random_
-        print(init_)
+        logger.info(init_)
         if self.bayes_method == "dynesty":
             # Run nested sampling
             dsampler = dynesty.NestedSampler(
@@ -1042,8 +1045,8 @@ class SpectrumFitter:
                 parameters_std.append(std)
 
         else:
-            print("The bayes_method parameter has been incorrectly set to '%s'" % self.bayes_method)
-            print("Please enter either 'emcee' or 'dynesty' instead.")
+            logger.info("The bayes_method parameter has been incorrectly set to '%s'" % self.bayes_method)
+            logger.info("Please enter either 'emcee' or 'dynesty' instead.")
         # Reshape output to match normal fit structure. We will also scale
         output_reshaped = np.zeros(3 * self.line_num + 1)
         uncertainties_reshaped = np.zeros(3 * self.line_num + 1)

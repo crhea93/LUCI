@@ -111,64 +111,86 @@ CFHT file has (7 for SN1/SN2/SN3, 2 for SN4).
 Step 3: Add the wavenumber windows
 ----------------------------------
 
-This is the part that is easy to forget. Several functions branch on the filter name and will
-either crash or silently print "not supported" if yours is missing. All of them want a window in
-**cm-1**:
+This used to be the step that was easy to get wrong: nine different functions branched on the
+filter name, and a filter missing from any one of them would either crash or silently print
+"not supported" and carry on with the *previous* spectrum's values.
+
+They now all read from a single registry, so adding a filter is **one dictionary entry** in
+`luci/instrument/filters.py <https://github.com/crhea93/LUCI/blob/main/luci/instrument/filters.py>`_:
+
+.. code-block:: python
+
+    FILTERS = {
+        ...
+        "SN4": FilterSpec(
+            "SN4",
+            # Narrow Halpha filter (652-665 nm). The order-15 free spectral range is far
+            # wider than the pass band, so the noise window sits in a region the filter
+            # blocks entirely.
+            fit=BoundRule(15040, 15330),
+            noise=BoundRule(14600, 14900),
+            reference=BoundRule(15000, 15350),
+            pca_scale=(664.5, 661.0),
+        ),
+    }
+
+All bounds are in **cm-1** except ``pca_scale``, which is in nanometres.
 
 .. list-table::
    :header-rows: 1
-   :widths: 30 45 25
+   :widths: 20 55 25
 
-   * - Function
+   * - Field
      - What the window is for
-     - SN4 value (cm-1)
-   * - ``LuciFit.Fit.restrict_wavelength``
+     - SN4 value
+   * - ``fit``
      - The region actually fit. Keep it inside the pass band so the continuum is sane.
-     - 15040 - 15330
-   * - ``LuciFit.Fit.calculate_noise``
+     - 15040 - 15330 cm-1
+   * - ``noise``
      - A line-free region used for the noise estimate. Best taken **outside** the pass band.
-     - 14600 - 14900
-   * - ``LuciFit.Fit.calculate_continuum``
-     - A line-free region **inside** the pass band.
-     - 15060 - 15150
-   * - ``LuciUtility.read_in_reference_spectrum``
-     - The clip applied to the reference axis. This sets the input length of the network, so it
-       must be a little wider than the fit region.
-     - 15000 - 15350
-   * - ``LuciBase.Luci.create_snr_map``
-     - The line region and a noise region.
-     - 15150 - 15300 / 14600 - 14900
-   * - ``LuciBase.Luci.slicing``
-     - ``filter_line``: which lines live in the filter.
-     - Halpha, NII6583, NII6548
-   * - ``LuciBase.Luci.create_background_subspace``, ``LuciBase.Luci.fit_calc``,
-       ``LuciBase.Luci.fit_pixel``
-     - PCA background: the spectral range plus a line-free region used to rescale the
-       eigenspectra. **All three must agree.**
-     - 664.5 / 661 nm
-   * - ``LuciFit.Fit.get_ML_model``
-     - Add the filter to the list of filters that have a trained network (and to the MDN list if
-       you train one).
-     - --
-   * - ``LuciVisualize.add_lines``
-     - Which lines to draw on the interactive plot.
-     - --
+     - 14600 - 14900 cm-1
+   * - ``reference``
+     - The clip applied to the reference axis. This sets the input length of the network, so
+       it must be a little wider than the fit region.
+     - 15000 - 15350 cm-1
+   * - ``pca_scale``
+     - Line-free window used to rescale the PCA background eigenspectra, in **nm**, ordered
+       (longer, shorter) because the code converts to wavenumber. Omit it if you are not using
+       the PCA background; the filter then raises ``PCABackgroundUnsupportedError`` rather than
+       producing a silently wrong background.
+     - (664.5, 661.0) nm
 
-For SN4 the lines sit at 15190 (NII6583), 15238 (Halpha) and 15272 cm-1 (NII6548), which is why
-the continuum window is placed just redward of them at 15060 - 15150 cm-1.
+Also add the filter name to ``SUPPORTED_FILTERS`` in the same module. An unrecognised filter now
+raises ``UnsupportedFilterError`` instead of calling ``exit()``.
+
+Two cases need more than plain bounds, and ``BoundRule`` handles both:
+
+``redshift_scaled=True``
+    The window is multiplied by ``(1 + z)``. C1, C2 and C4 do this.
+
+``trigger_line=...``
+    A different window applies when a particular line is being fit. C3 uses this: the presence of
+    ``OII3726`` implies an object near z ~ 0.465, for which C3 behaves like SN1.
+
+.. code-block:: python
+
+    fit=BoundRule(18100, 19500, trigger_line="OII3726", trigger_lower=26000, trigger_upper=29000)
 
 A quick way to sanity check your choices:
 
 .. code-block:: python
 
     import numpy as np
-    from LUCI.LuciUtility import read_in_transmission
+    from luci.io.reference import read_in_transmission
+    from luci.instrument.filters import FILTERS
+
+    spec = FILTERS["SN4"]
     axis = np.linspace(14454, 15417, 470)          # your filter's free spectral range
     t = read_in_transmission('.', {'FILTER': 'SN4'}, axis)
-    # The fit/continuum windows should sit where t is high, the noise window where t is ~0
-    for lo, hi in [(15040, 15330), (14600, 14900), (15060, 15150)]:
+    # The fit window should sit where t is high, the noise window where t is ~0
+    for label, (lo, hi) in [("fit", spec.fit_bounds()), ("noise", spec.noise_bounds())]:
         m = (axis >= lo) & (axis <= hi)
-        print(lo, hi, t[m].min(), t[m].max())
+        print(label, lo, hi, t[m].min(), t[m].max())
 
 
 Step 4: Build the reference spectrum and train the network

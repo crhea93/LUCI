@@ -6,6 +6,10 @@ import numpy as np
 from astropy.io import fits
 from tqdm import tqdm
 
+from luci.log import get_logger
+
+logger = get_logger(__name__)
+
 
 def slicing(cube, lines, bkg=None):
     """
@@ -122,20 +126,20 @@ def slicing(cube, lines, bkg=None):
                 hdu.writeto(directory + "/slice_{}.fits".format(j - (idx_axis[0] - 1)), overwrite=True)
             hdu = fits.PrimaryHDU(slice_sum, header=cube.header)
             hdu.writeto(directory + "/slice_sum.fits", overwrite=True)
-            print("")
-            print("#######################################################################")
-            print(
+            logger.info("")
+            logger.info("#######################################################################")
+            logger.info(
                 "Wavelength of the {} line in the redshifted frame: {} nm".format(
                     lines[i], np.round(wavelength_redshift[i], 2)
                 )
             )
-            print(
+            logger.info(
                 "Wavelength of the last slice: " + str(np.round(spectral_axis[idx_axis[1]], 2)) + " nm"
             )  # .format() was not giving the right number of decimals..
-            print(
+            logger.info(
                 "Wavelength of the first slice: " + str(np.round(spectral_axis[idx_axis[0]], 2)) + " nm"
             )  # so not the cleanest way to do it but still it works
-            print("")
+            logger.info("")
 
     else:
-        print("The specified lines are not in the wavelength range covered by the filter of this cube")
+        logger.info("The specified lines are not in the wavelength range covered by the filter of this cube")

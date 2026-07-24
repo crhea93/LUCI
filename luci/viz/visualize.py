@@ -7,6 +7,10 @@ import numpy as np
 import seaborn as sns
 from matplotlib.widgets import RectangleSelector, Slider
 
+from luci.log import get_logger
+
+logger = get_logger(__name__)
+
 
 def add_lines(header, integrated_spectrum):
     """
@@ -111,7 +115,7 @@ def visualize(deep_image, spectrum_axis, cube_final, header):
             point1 = []
             shift_ct = 0
         if shift_is_held is True:
-            print("SHIFT %i %i" % (event.xdata, event.ydata))
+            logger.info("SHIFT %i %i" % (event.xdata, event.ydata))
             # axes[0].plot(int(event.xdata), int(event.ydata), 'o', color='y')
             if shift_ct != 1:
                 point1 = [int(event.xdata), int(event.ydata)]

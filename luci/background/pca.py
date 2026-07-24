@@ -11,7 +11,10 @@ from sklearn import decomposition
 from sklearn.model_selection import train_test_split
 
 from luci.background.detection import find_background_pixels
-from luci.instrument.filters import pca_scale_indices
+from luci.instrument.filters import PCABackgroundUnsupportedError, pca_scale_indices
+from luci.log import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_background_subspace(
@@ -94,11 +97,7 @@ def create_background_subspace(
         max_spectral = len(cube.spectrum_axis)
         min_spectral = 0
     else:
-        print(
-            "We have yet to implement this algorithm for this filter. So far we have implemented it for SN4, SN3, SN2, and SN1"
-        )
-        print("Terminating Program")
-        quit()
+        raise PCABackgroundUnsupportedError(cube.filter)
     # Check if there are not enough components
     if len(cube.cube_final[100, 100, min_spectral:max_spectral]) < n_components:
         n_components = len(cube.cube_final[100, 100, min_spectral:max_spectral])
@@ -138,11 +137,7 @@ def create_background_subspace(
             np.abs([1e7 / wavelength - 661 for wavelength in cube.spectrum_axis[min_spectral:max_spectral]])
         )
     else:
-        print(
-            "We have yet to implement this algorithm for this filter. So far we have implemented it for SN4, SN3, SN2, and SN1"
-        )
-        print("Terminating Program")
-        quit()
+        raise PCABackgroundUnsupportedError(cube.filter)
     bkg_spectra = [
         bkg_spectrum / np.nanmax(bkg_spectrum[min_spectral_scale:max_spectral_scale]) for bkg_spectrum in bkg_spectra
     ]

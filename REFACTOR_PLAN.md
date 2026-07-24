@@ -588,6 +588,53 @@ The two model families need different treatment:
 - Replace the 10 bare `except:` clauses with specific exceptions.
 - Public API gets type hints and a documented `__all__`.
 
+### Phase 6 — package rename, compat alias, and API surface — DONE (2026-07-23)
+
+The package is now lowercase `luci/`. A shim *package* named `LUCI` is impossible — macOS and Windows
+cannot hold both spellings — so [LUCI.py](LUCI.py) registers the alias in `sys.modules` via a
+meta-path finder inserted at position 0, ahead of the path finder. That ordering matters: without it
+the path finder would import `luci/cube.py` a second time as `LUCI.cube`, giving two module objects
+with independent state. Tests assert `sys.modules["LUCI.cube"] is sys.modules["luci.cube"]` and that
+mutating one is visible through the other.
+
+`luci/__init__.py` gained a real public API (`SitelleCube`, `FitConfig`, `FitResult`, `FILTERS`, ...)
+resolved lazily through PEP 562 `__getattr__`, so `import luci` does not drag in scipy/onnxruntime.
+
+**61 `print()` calls became logger calls** through [luci/log.py](luci/log.py), converted with an AST
+script rather than regex so multi-line and multi-argument calls kept their meaning (`print(a, b)`
+became `logger.info("%s %s", a, b)`, not `logger.info(a, b)` — which would have treated `b` as a
+format argument). The logger attaches a handler on first use *unless* the application already
+configured logging, so interactive output still appears by default but never fights a host app.
+
+**All 8 remaining `exit()`/`quit()` calls in library code became exceptions.** Several of those sites
+were worse than uncatchable: `calculate_flux_err` evaluated its error message as a bare expression
+(never printed) before exiting, and three sites logged a message then *continued* with a variable
+left unbound, converting a clear input error into a confusing `NameError` further downstream.
+
+The last 5 bare `except:` clauses were narrowed. One of them was hiding **B24**, an infinite loop.
+**B25** (unimportable `luci.simulation`) surfaced while writing the tests.
+
+### Phase 7 — Docs and examples — DONE (2026-07-23)
+
+- **`Luci_path` is now optional.** [luci/io/assets.py](luci/io/assets.py) resolves it from
+  `$LUCI_DATA_DIR`, else from the installed package's own location. This was the single most
+  copy-pasted line in the project — every example opened by hardcoding an absolute path into
+  someone else's home directory. Passing it positionally still works, so nothing breaks.
+- **All 23 notebooks and 17 `.rst` pages updated**: `sys.path.insert` removed everywhere (it was in
+  every single notebook), `Luci` → `SitelleCube`, `LUCI.LuciFit` → `luci.fitting.spectrum_fitter`,
+  `LUCI.LuciSim` → `luci.simulation`. Every notebook re-verified as valid JSON with every code cell
+  parsing.
+- **[docs/source/migration.rst](docs/source/migration.rst)** — new: full old→new mapping plus a
+  "what changed in the results" section naming B21, B1, B3 and B23, since those move published
+  numbers.
+- **[newFilter.rst](docs/source/newFilter.rst) Step 3 rewritten** around the single `FILTERS` entry.
+  It previously listed **nine** functions that each had to be edited to add a filter, and warned
+  that missing any one of them caused a silent fallthrough. That table is now one dataclass.
+- Docs build verified with Sphinx; `migration` and `newFilter` build without warnings.
+
+**Not done:** the `nbval` CI smoke-run of two notebooks. It needs an example cube (~900 MB from
+CADC), which is the same prerequisite as the end-to-end validation below — worth doing once, together.
+
 ### Phase 7 — Docs and examples
 
 - Update the ~25 `docs/source/*.rst` files and 25 notebooks in [Examples/](Examples/) to

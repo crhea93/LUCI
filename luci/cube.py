@@ -37,10 +37,11 @@ from luci.background.subtraction import pca_background, subtract_pca, subtract_s
 from luci.engine import FitMaps, deep_image_cutout, resolve_initial_values, run_fit
 from luci.engine.selection import reg_to_mask, resolve_mask
 from luci.fitting.spectrum_fitter import SpectrumFitter as Fit
+from luci.io.assets import resolve_luci_path
+from luci.log import get_logger
 from luci.LuciUtility import (
     bin_cube_function,
     bin_mask,
-    check_luci_path,
     get_interferometer_angles,
     get_quadrant_dims,
     read_in_reference_spectrum,
@@ -50,6 +51,8 @@ from luci.LuciUtility import (
     update_header,
 )
 from luci.viz.visualize import visualize as LUCIvisualize
+
+logger = get_logger(__name__)
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 logging.getLogger("tensorflow").setLevel(logging.FATAL)
@@ -64,13 +67,24 @@ class SitelleCube:
     Fit class (Lucifit.py).
     """
 
-    def __init__(self, Luci_path, cube_path, output_dir, object_name, redshift, resolution, ML_bool=True, mdn=False):
+    def __init__(
+        self,
+        Luci_path=None,
+        cube_path=None,
+        output_dir=None,
+        object_name=None,
+        redshift=0.0,
+        resolution=5000,
+        ML_bool=True,
+        mdn=False,
+    ):
         """
         Initialize our Luci class -- this acts similar to the SpectralCube class
         of astropy or spectral-cube.
 
         Args:
-            Luci_path: Path to Luci (must include trailing "/")
+            Luci_path: Path to the LUCI checkout holding ML/ and Data/. Optional -- if omitted it
+                is taken from $LUCI_DATA_DIR, or from the installed package's location.
             cube_path: Full path to hdf5 cube with the hdf5 extension (e.x. '/user/home/M87.hdf5'; No trailing "/")
             output_dir: Full path to output directory
             object_name: Name of the object to fit. This is used for naming purposes. (e.x. 'M87')
@@ -80,7 +94,7 @@ class SitelleCube:
             mdn: Boolean for using the Mixed Density Network models; If true, then we use the posterior distributions calculated by our network as our priors for bayesian fits
         """
         self.header_binned = None
-        self.Luci_path = check_luci_path(Luci_path)  # Make sure the path is correctly written
+        self.Luci_path = resolve_luci_path(Luci_path)
         self.cube_path = cube_path
         self.output_dir = output_dir + "/Luci_outputs"
         if not os.path.exists(self.output_dir):
@@ -126,7 +140,7 @@ class SitelleCube:
         Note that the data are saved in several quadrants which is why we have to loop
         through them and place all the spectra in a single cube.
         """
-        print("Reading in data...")
+        logger.info("Reading in data...")
         file = h5py.File(self.cube_path + ".hdf5", "r")  # Read in file
         # file = ht.load(self.cube_path + '.hdf5')
         # print(file.keys())
@@ -178,12 +192,12 @@ class SitelleCube:
         hdf5_file = h5py.File(self.cube_path + ".hdf5", "r")  # Open and read hdf5 file
 
         if "deep_frame" in hdf5_file:  # A deep image already exists
-            print("Existing deep frame extracted from hdf5 file.")
+            logger.info("Existing deep frame extracted from hdf5 file.")
             self.deep_image = hdf5_file["deep_frame"][:]
             if self.dimz != 0:  # had to put this because of new version of cubes
                 self.deep_image *= self.dimz
         else:  # Create new deep image
-            print("New deep frame created from data.")
+            logger.info("New deep frame created from data.")
             self.deep_image = np.zeros((self.cube_final.shape[0], self.cube_final.shape[1]))
             # Slabs drive the progress bar. Deriving the count from the step size
             # covers the whole cube; ten fixed slabs dropped the remainder (B7).
@@ -240,7 +254,7 @@ class SitelleCube:
         if self.deep_image is None:
             try:
                 deep_image = fits.open("Luci_outputs/%s_deep.fits" % self.object_name)[0].data
-            except:
+            except (OSError, IndexError):
                 self.create_deep_image()
                 deep_image = fits.open("Luci_outputs/%s_deep.fits" % self.object_name)[0].data
         else:
@@ -963,7 +977,7 @@ class SitelleCube:
         elif region is not None:  # If passed numpy array
             mask = region
         else:  # Not passed a mask in any of the correct formats
-            print("Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray")
+            logger.info("Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray")
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -1045,7 +1059,7 @@ class SitelleCube:
         elif region is not None:  # If passed numpy array
             mask = region
         else:  # Not passed a mask in any of the correct formats
-            print("Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray")
+            logger.info("Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray")
         # Set spatial bounds for entire cube
         x_min = 0
         x_max = self.cube_final.shape[0]
@@ -1061,7 +1075,7 @@ class SitelleCube:
             try:  # Obtain initial condition maps from files
                 vel_init = fits.open(initial_values[0])[0].data
                 broad_init = fits.open(initial_values[1])[0].data
-            except:  # Initial conditions passed are arrays from a previous fit and not  fits files
+            except (OSError, TypeError, ValueError):  # arrays from a previous fit, not FITS paths
                 vel_init = initial_values[0]
                 broad_init = initial_values[1]
         for i in range(y_max - y_min):

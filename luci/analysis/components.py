@@ -4,7 +4,11 @@ from joblib import Parallel, delayed
 from scipy import interpolate
 from tqdm import tqdm
 
-from luci.engine.selection import reg_to_mask
+from luci.engine.selection import resolve_mask
+from luci.instrument.filters import UnsupportedFilterError
+from luci.log import get_logger
+
+logger = get_logger(__name__)
 
 
 def _load_components_model(path):
@@ -57,18 +61,7 @@ def create_component_map_function(
     # Calculate bounds for SNR calculation
     x_size = x_max - x_min
     y_size = y_max - y_min
-    mask = None
-    if region:
-        if ".reg" in region:
-            mask = reg_to_mask(region, header)
-            # shape = (2064, 2048)  # (self.header["NAXIS1"], self.header["NAXIS2"])  # Get the shape
-            # r = pyregion.open(region).as_imagecoord(self.header)  # Obtain pyregion region
-            # mask = r.get_mask(shape=shape).T  # Calculate mask from pyregion region
-        elif ".npy" in region:
-            mask = np.load(region)
-        else:
-            print("At the moment, we only support '.reg' and '.npy' files for masks.")
-            print("Terminating Program!")
+    mask = resolve_mask(region, header, cube_final.shape) if region is not None else None
     # Step through spectra
     # Sized from the cube rather than the standard detector dimensions (B10).
     Comps = np.zeros(cube_final.shape[:2], dtype=np.float32).T
@@ -77,9 +70,7 @@ def create_component_map_function(
         # Read in machine learning algorithm
         comps_model = _load_components_model(Luci_path + "ML/R%i-COMPONENTS-%s.h5" % (resolution, filter_))
     else:
-        print("Component Calculation has only been implemented in SN3!")
-        print("Terminating program!")
-        exit()
+        raise UnsupportedFilterError(f"Component calculation is only implemented for SN3, not {hdr_dict['FILTER']!r}.")
 
     def component_calc(i):
         y_pix = y_min + i
@@ -140,20 +131,12 @@ def calculate_components_in_region_function(
     """
     mask = None  # Initialize
     comps_model = None
-    if ".reg" in region:
-        mask = reg_to_mask(region, header)
-    elif ".npy" in region:
-        mask = np.load(region)
-    else:
-        print("At the moment, we only support '.reg' and '.npy' files for masks.")
-        print("Terminating Program!")
+    mask = resolve_mask(region, header, cube_final.shape)
     if hdr_dict["FILTER"] == "SN3":
         # Read in machine learning algorithm
         comps_model = _load_components_model(Luci_path + "ML/R%i-COMPONENTS-%s.h5" % (resolution, filter_))
     else:
-        print("Component Calculation has only been implemented in SN3!")
-        print("Terminating program!")
-        exit()
+        raise UnsupportedFilterError(f"Component calculation is only implemented for SN3, not {hdr_dict['FILTER']!r}.")
     # Set spatial bounds for entire cube
     x_min = 0
     x_max = cube_final.shape[0]

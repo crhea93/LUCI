@@ -42,8 +42,28 @@ top of every example is no longer needed** and should be deleted:
     # after
     from luci import SitelleCube
 
-``Luci_path`` is still accepted as the first argument, so existing calls keep
-working.
+``Luci_path`` is now optional
+-----------------------------
+
+``Luci_path`` — the absolute path to the checkout, with its mandatory trailing
+slash — is how LUCI found its ``ML/`` and ``Data/`` directories. It is why every
+example began by hardcoding a path into somebody else's home directory.
+
+It is now resolved automatically: from ``$LUCI_DATA_DIR`` if set, otherwise from
+the installed package's own location. Pass one only to override.
+
+.. code-block:: python
+
+    # before
+    Luci_path = '/home/carterrhea/Documents/LUCI/'
+    cube = Luci(Luci_path, cube_path, output_dir, name, redshift, resolution)
+
+    # after
+    cube = SitelleCube(cube_path=cube_path, output_dir=output_dir,
+                       object_name=name, redshift=redshift, resolution=resolution)
+
+Passing it positionally still works exactly as before, so no existing call needs
+to change.
 
 
 Package and class names
@@ -74,28 +94,28 @@ Module layout
 The flat ``LUCI/Luci*.py`` files were split by responsibility. Each old module
 still exists as a re-export shim, so old imports resolve.
 
-============================== ===============================================
-Old module                     New home
-============================== ===============================================
-``LUCI.LuciFit``               ``luci.fitting.spectrum_fitter``,
-                               ``luci.fitting.constraints``
-``LUCI.LuciFunctions``         ``luci.fitting.models``
-``LUCI.LuciFitParameters``     ``luci.fitting.parameters``
-``LUCI.LuciBayesian``          ``luci.fitting.bayes``
-``LUCI.LuciUtility``           ``luci.instrument.header``, ``luci.io.*``,
-                               ``luci.engine.binning``,
-                               ``luci.fitting.uncertainties``
-``LUCI.LuciWVT``               ``luci.analysis.wvt``
+================================== ===========================================
+Old module                         New home
+================================== ===========================================
+``LUCI.LuciFit``                   ``luci.fitting.spectrum_fitter``,
+                                   ``luci.fitting.constraints``
+``LUCI.LuciFunctions``             ``luci.fitting.models``
+``LUCI.LuciFitParameters``         ``luci.fitting.parameters``
+``LUCI.LuciBayesian``              ``luci.fitting.bayes``
+``LUCI.LuciUtility``               ``luci.instrument.header``, ``luci.io.*``,
+                                   ``luci.engine.binning``,
+                                   ``luci.fitting.uncertainties``
+``LUCI.LuciWVT``                   ``luci.analysis.wvt``
 ``LUCI.LuciComponentCalculations`` ``luci.analysis.components``
-``LUCI.LuciBackground``        ``luci.background.detection``
-``LUCI.LuciConvenience``       ``luci.engine.selection``,
-                               ``luci.fitting.components``
-``LUCI.LuciPlotting``          ``luci.viz.plotting``
-``LUCI.LuciVisualize``         ``luci.viz.visualize``
-``LUCI.LuciSim``               ``luci.simulation``
-``LUCI.LuciLog``               ``luci.log``
-``LuciBase``                   ``luci.cube``
-============================== ===============================================
+``LUCI.LuciBackground``            ``luci.background.detection``
+``LUCI.LuciConvenience``           ``luci.engine.selection``,
+                                   ``luci.fitting.components``
+``LUCI.LuciPlotting``              ``luci.viz.plotting``
+``LUCI.LuciVisualize``             ``luci.viz.visualize``
+``LUCI.LuciSim``                   ``luci.simulation``
+``LUCI.LuciLog``                   ``luci.log``
+``LuciBase``                       ``luci.cube``
+================================== ===========================================
 
 Two modules are new rather than moved:
 

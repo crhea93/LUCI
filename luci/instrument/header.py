@@ -18,7 +18,7 @@ def get_interferometer_angles(file, hdr_dict):
     calib_map = file["calib_map"][()].astype("float")
     try:
         calib_ref = hdr_dict["CALIBNM"]
-    except:
+    except KeyError:
         calib_ref = hdr_dict["nm_laser"]
     calib_ref = np.float32(calib_ref)
     interferometer_cos_theta = calib_ref / calib_map  # .T[::-1,::-1]
@@ -88,7 +88,7 @@ def update_header(file):
             else:
                 try:
                     hdr_dict[header_col] = float(header_val)
-                except:
+                except (TypeError, ValueError):
                     hdr_dict[header_col] = str(header_val)
         clean_hdr_dict = hdr_dict
     else:  # New HDF5

@@ -6,11 +6,12 @@ from os import path
 from urllib import request
 
 import numpy as np
-import ppxf.sps_util as lib
 
 from luci.fitting.models import Gaussian, Sinc, SincGauss
+from luci.instrument.filters import UnsupportedFilterError
+from luci.log import get_logger
 
-ppxf_dir = path.dirname(path.realpath(lib.__file__))
+logger = get_logger(__name__)
 
 
 class Spectrum:
@@ -86,9 +87,7 @@ class Spectrum:
             self.delta_x = 5272
             self.order = 12
         else:
-            print("We only support C1, C2, C3, C4, SN1, SN2, SN3, and SN4 at this time.")
-            print("Terminating the program")
-            exit()
+            raise UnsupportedFilterError(self.filter)
         self.resolution = resolution
         self.redshift = redshift
         # Calculate number of steps from resolution
@@ -211,7 +210,7 @@ class Spectrum:
                 self.calc_sinc_width()
                 spectrum += self.sincgauss_model(axis, amp_, line_pos, sigma)
             else:
-                print("An incorrect fit function was entered. Please use either gaussian, sinc, or sincgauss.")
+                logger.info("An incorrect fit function was entered. Please use either gaussian, sinc, or sincgauss.")
             # print(np.max(spectrum))
         # We now add noise with our predefined SNR
         spectrum += np.max(spectrum) * np.random.normal(0.0, 1 / self.snr, spectrum.shape)
@@ -241,7 +240,7 @@ class Spectrum:
         if self.fit_function in self.available_functions:
             pass
         else:
-            print(self.fit_function)
+            logger.info(self.fit_function)
             raise Exception(
                 "Please submit a fitting function name in the available list: \n {}".format(self.available_functions)
             )
@@ -274,6 +273,13 @@ def abs_template(resolution, filter, age=1, metal=-0.2):
     # Load in miles star templates
     # ppxf_dir = path.dirname(path.realpath(lib.__file__))
     # pathname = ppxf_dir + '/miles_models/Eun1.30*.fits'
+    try:
+        import ppxf.sps_util as lib
+    except ImportError as exc:  # optional: only abs_template needs the stellar templates
+        raise ImportError(
+            "abs_template() requires the optional 'ppxf' package. Install it with `pip install ppxf`."
+        ) from exc
+
     ppxf_dir = path.dirname(path.realpath(lib.__file__))
     sps_name = "emiles"
     basename = f"spectra_{sps_name}_9.0.npz"
