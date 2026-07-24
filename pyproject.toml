@@ -57,6 +57,13 @@ Documentation = "https://crhea93.github.io/LUCI/index.html"
 Repository = "https://github.com/crhea93/LUCI"
 
 [dependency-groups]
+# Pinned so a theme release cannot silently restyle the published site: the built
+# HTML is committed to docs/ and served by GitHub Pages, so a drifting theme shows
+# up as a large, confusing diff on an unrelated commit.
+docs = [
+    "sphinx>=7,<9",
+    "sphinx-rtd-theme>=2,<4",
+]
 dev = [
     "ipykernel>=7.3.0",
     "pytest>=7",
