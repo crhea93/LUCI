@@ -1,5 +1,7 @@
 """Sky-line based velocity calibration."""
 
+import os
+
 import numpy as np
 import pandas
 from astropy.io import fits
@@ -8,7 +10,7 @@ from tqdm import tqdm
 from luci.fitting.spectrum_fitter import SpectrumFitter as Fit
 
 
-def skyline_calibration(cube, Luci_path, n_grid, bin_size=30):
+def skyline_calibration(cube, Luci_path=None, n_grid=100, bin_size=30):
     """
     Compute skyline calibration by fitting the 6498.729 Angstrom line. Flexures
     of the telescope lead to minor offset that can be measured by high resolution
@@ -18,8 +20,9 @@ def skyline_calibration(cube, Luci_path, n_grid, bin_size=30):
     we fit with a simple sinc function.
 
     Args:
-        n_grid: NxN grid (int)
-        Luci_path: Full path to LUCI (str)
+        n_grid: NxN grid (int; default 100)
+        Luci_path: Full path to LUCI. Optional -- defaults to the cube's own resolved path,
+            which is what the rest of this function already uses.
         bin_size: Size of grouping used for each region (optional int; default=30)
 
     Return:
@@ -28,8 +31,12 @@ def skyline_calibration(cube, Luci_path, n_grid, bin_size=30):
     velocity = None
     fit_vector = None
     sky = None
+    # The cube already resolved this at construction (and line 89 below uses cube.Luci_path
+    # regardless), so an explicit argument is only ever an override.
+    if Luci_path is None:
+        Luci_path = cube.Luci_path
     # Read in sky lines
-    sky_lines_df = pandas.read_csv(Luci_path + "/Data/sky_lines.dat", skiprows=2)
+    sky_lines_df = pandas.read_csv(os.path.join(Luci_path, "Data", "sky_lines.dat"), skiprows=2)
     sky_lines = sky_lines_df["Wavelength"]  # Get wavelengths
     sky_lines = [sky_line / 10 for sky_line in sky_lines]  # Convert from angstroms to nanometers
     sky_lines_scale = [sky_line for sky_line in sky_lines_df["Strength"]]  # Get the relative strengths
