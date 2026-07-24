@@ -6,21 +6,21 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>How LUCI Works &mdash; LUCI v.1.0.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+  <title>How LUCI Works &mdash; LUCI 1.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+      <script src="_static/documentation_options.js?v=6efca38a"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Uncertainties" href="uncertainties.html" />
+    <link rel="next" title="Migration guide" href="migration.html" />
     <link rel="prev" title="Welcome to LUCI’s documentation!" href="index.html" /> 
 </head>
 
@@ -51,25 +51,27 @@
 <li class="toctree-l3"><a class="reference internal" href="#velocity">Velocity</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#velocity-dispersion">Velocity Dispersion</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#flux">Flux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flux-calibration">Flux calibration</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#how-we-calculate">How we calculate</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#initial-guess">Initial Guess</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#fitting-function">Fitting Function</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#available-models">Available Models</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#gaussian">Gaussian</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#sinc">Sinc</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#sincgauss">SincGauss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#initial-guess">Initial Guess</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#how-inference-runs">How inference runs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#if-machine-learning-is-not-your-cup-of-tea">If machine learning is not your cup of tea</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#fitting-function">Fitting Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#available-models">Available Models</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#transmission">Transmission</a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="newFilter.html">Adding a New Filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
@@ -84,6 +86,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_synthetic.html">Fit Mock Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
@@ -169,6 +172,38 @@ position is calculated in units of [cm-1], we translate it into nanometers since
 <p>Note that $text{coeff}=frac{1.20671}{pi*FWHM_COEFF}$ where the FWHM_COEFF equals $2sqrt{2log{2}}, the $pi$
 is there because of the sinc function’s definition, and the 1.20671 is the factor used to go between FWHM and sigma.</p>
 </section>
+<section id="flux-calibration">
+<h3>Flux calibration<a class="headerlink" href="#flux-calibration" title="Link to this heading"></a></h3>
+<p>Every expression above is an amplitude times a width, so <strong>the flux inherits whatever units the
+data cube is in</strong>. The <code class="docutils literal notranslate"><span class="pre">erg/s/cm^2/Ang</span></code> written above is only true if the cube itself is flux
+calibrated.</p>
+<p>That is not always the case. ORB’s newer <em>level 3</em> cubes are stored <strong>in counts</strong>, with the
+conversion held in the header rather than applied to the data. ORB documents the level scheme in
+<code class="docutils literal notranslate"><span class="pre">HDFCube.get_level</span></code>:</p>
+<p><cite>LUCI</cite> handles this for you. On reading a cube she checks the <code class="docutils literal notranslate"><span class="pre">flux_calibration</span></code> header keyword
+(or <code class="docutils literal notranslate"><span class="pre">BUNIT</span></code> on the older DR1-style headers) and, if the data are in counts, multiplies the cube
+by <code class="docutils literal notranslate"><span class="pre">flambda</span> <span class="pre">/</span> <span class="pre">step_nb</span> <span class="pre">/</span> <span class="pre">exposure_time</span></code> before anything else happens. The flux, amplitude and
+continuum maps are then genuinely in <code class="docutils literal notranslate"><span class="pre">erg/cm^2/s/Ang</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span> <span class="o">=</span> <span class="n">SitelleCube</span><span class="p">(</span><span class="n">cube_path</span><span class="o">=</span><span class="n">cube_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+                   <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">,</span> <span class="n">redshift</span><span class="o">=</span><span class="n">redshift</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">)</span>
+<span class="n">cube</span><span class="o">.</span><span class="n">flux_calibrated</span>   <span class="c1"># True once the conversion has been applied</span>
+</pre></div>
+</div>
+<p>If you would rather fit the raw counts, turn it off:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span> <span class="o">=</span> <span class="n">SitelleCube</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">flux_calibration</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><cite>LUCI</cite> then logs a warning so that the units of the resulting maps are not a surprise. She also
+warns if a cube says it is uncalibrated but carries no usable <code class="docutils literal notranslate"><span class="pre">flambda</span></code>, in which case the maps
+stay in counts and the axis labels are wrong.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>ORB is not self-consistent here: <code class="docutils literal notranslate"><span class="pre">HDFCube.to_fits</span></code> multiplies by <code class="docutils literal notranslate"><span class="pre">flambda</span></code> alone, leaving
+out the <code class="docutils literal notranslate"><span class="pre">/dimz/exposure_time</span></code>, which for a typical SN4 cube is a factor of 17822. <cite>LUCI</cite>
+follows the <code class="docutils literal notranslate"><span class="pre">get_level</span></code> docstring, which is the form that reproduces published surface
+brightnesses.</p>
+</div>
+</section>
 </section>
 <section id="how-we-calculate">
 <h2>How we calculate<a class="headerlink" href="#how-we-calculate" title="Link to this heading"></a></h2>
@@ -191,8 +226,47 @@ values between 10 and 200 km/s. You can find more information on this at
 <cite>https://sitelle-signals.github.io/Pamplemousse/index.html &lt;https://sitelle-signals.github.io/Pamplemousse/index.html&gt;</cite>.
 We estimate the amplitude by taking the maximum value of spectrum corresponding to the
 estimated position plus or minus 2 channels.</p>
-<p>Since we understand that machine learning is not everyone’s cup of tea, we have
-an alternative method to calculate the initial guesses.</p>
+<p>The networks are specific to a filter <em>and</em> a resolution, paired with a reference spectrum
+<code class="docutils literal notranslate"><span class="pre">Reference-Spectrum-R&lt;resolution&gt;-&lt;FILTER&gt;.fits</span></code> that defines the axis every spectrum gets
+interpolated onto. If you need one for a filter or resolution that LUCI does not ship, see
+<a class="reference internal" href="newFilter.html#newfilter"><span class="std std-ref">Adding a New Filter</span></a> – <code class="docutils literal notranslate"><span class="pre">ML/TrainPredictor.py</span></code> will build the reference spectrum, generate the
+synthetic training set, and train the network for you.</p>
+<section id="how-inference-runs">
+<h4>How inference runs<a class="headerlink" href="#how-inference-runs" title="Link to this heading"></a></h4>
+<p><strong>Inference runs on ONNX Runtime, not TensorFlow.</strong> The networks were trained in Keras, but LUCI
+ships them converted to ONNX in <code class="docutils literal notranslate"><span class="pre">ML/onnx/</span></code> as
+<code class="docutils literal notranslate"><span class="pre">R&lt;resolution&gt;-PREDICTOR-I-&lt;FILTER&gt;.onnx</span></code> (and <code class="docutils literal notranslate"><span class="pre">...-PREDICTOR-I-MDN-&lt;FILTER&gt;.onnx</span></code> for the
+mixture-density variants). Fitting therefore does <strong>not</strong> import TensorFlow at all.</p>
+<p>Three things follow from this, all of which matter in practice:</p>
+<ul class="simple">
+<li><p><strong>Speed.</strong> The predictor and its ONNX session are loaded once per process and reused for every
+spectrum. Previously the Keras model was re-read from disk for <em>each pixel</em>, which dominated the
+runtime of a full cube (measured: 5.7 s/pixel before, 3.0 s/pixel after, the remainder being the
+actual fit).</p></li>
+<li><p><strong>Install weight.</strong> ONNX artifacts are roughly a third the size of the Keras SavedModels, and
+<code class="docutils literal notranslate"><span class="pre">onnxruntime</span></code> is a far lighter dependency than TensorFlow.</p></li>
+<li><p><strong>Fidelity.</strong> Every converted model is checked against its Keras original on 200 spectra before
+being shipped; all 39 agree to float32 precision (worst deviation 6.7e-4 km/s). Any model that
+fails that gate is reported and <em>not</em> published.</p></li>
+</ul>
+<p>If you retrain a network, convert it with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uv</span> <span class="n">run</span> <span class="n">tools</span><span class="o">/</span><span class="n">convert_models_to_onnx</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="nb">all</span> <span class="o">--</span><span class="n">validate</span>
+</pre></div>
+</div>
+<p>That script pins its own legacy-TensorFlow environment via a PEP 723 header, so it builds what it
+needs on the fly and your project environment never sees TensorFlow.</p>
+<p>Internally the predictors sit behind a small interface (<code class="docutils literal notranslate"><span class="pre">LUCI.ml.ParameterPredictor</span></code>), so the
+fitting code asks for a velocity/broadening estimate without knowing or caring which backend answers.</p>
+</section>
+<section id="if-machine-learning-is-not-your-cup-of-tea">
+<h4>If machine learning is not your cup of tea<a class="headerlink" href="#if-machine-learning-is-not-your-cup-of-tea" title="Link to this heading"></a></h4>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">ML_bool=False</span></code> and LUCI estimates the initial guesses directly from the data: it locates the
+brightest peak in the fit window to seed the velocity and uses a default broadening, so the optimiser
+always starts somewhere sensible. The same fallback kicks in automatically if no trained network
+exists for your filter/resolution combination – LUCI tells you it is doing so rather than failing.</p>
+<p>You can also supply your own priors explicitly with <code class="docutils literal notranslate"><span class="pre">initial_values=[velocity,</span> <span class="pre">broadening]</span></code>, which
+freezes those parameters instead of fitting them.</p>
+</section>
 </section>
 <section id="fitting-function">
 <h3>Fitting Function<a class="headerlink" href="#fitting-function" title="Link to this heading"></a></h3>
@@ -208,22 +282,14 @@ can be coupled. Additionally, we automatically include the constraint on the NII
 <section id="available-models">
 <h3>Available Models<a class="headerlink" href="#available-models" title="Link to this heading"></a></h3>
 <p>We have implemented three functions: <cite>gaussian</cite>, <cite>sinc</cite>, and <cite>sincgauss</cite>.</p>
-<section id="gaussian">
-<h4>Gaussian<a class="headerlink" href="#gaussian" title="Link to this heading"></a></h4>
 <p>We assume a standard form of a Gaussian:
 <img class="math" src="_images/math/8ffc4c0cb7a274c543050a5710c4817ab3fb76ad.png" alt="p_0*exp{(-(x-p_1)**2)/(2*p_2**2)}"/></p>
 <p>We solve for p_0, p_1, and p_2 (x is the wavelength channel and is thus provided).
 <img class="math" src="_images/math/8968e4fd6ebe2d668010ed37e2172340daaefa2d.png" alt="p_0"/> is the amplitude, <img class="math" src="_images/math/48633556290f50fdc8d2ff3eb6ff99ad557327e5.png" alt="p_1"/> is the position of the line, and <img class="math" src="_images/math/0ba5a12df77ecc7e17158f419025b5acca993472.png" alt="p_2"/> is the broadening.</p>
-</section>
-<section id="sinc">
-<h4>Sinc<a class="headerlink" href="#sinc" title="Link to this heading"></a></h4>
 <p>We adopt the following form
 <img class="math" src="_images/math/c474dee175514a34c8e9cbd504a4c13434da9300.png" alt="u=(x-p_1)/p_2"/>
 <img class="math" src="_images/math/a20738bedc4a37bf151f44f516084dd98ffd7f15.png" alt="p_0*sinc(\pi*u)/(\pi*u)"/></p>
 <p>Note that <img class="math" src="_images/math/0ba5a12df77ecc7e17158f419025b5acca993472.png" alt="p_2"/> is <strong>FIXED</strong> for the sinc function as 1/(2*MPD) (where <strong>MPD</strong> is the maximum path difference).</p>
-</section>
-<section id="sincgauss">
-<h4>SincGauss<a class="headerlink" href="#sincgauss" title="Link to this heading"></a></h4>
 <p><img class="math" src="_images/math/8424329dfbcad8634b81da7d0f7ce2de477d441f.png" alt="p_0*exp(-b*^2)*((erf(a-i*b)+erf(a+i*b))/(2*erf(a)))"/></p>
 <p>where
 <img class="math" src="_images/math/a6aefce2dd21aeffb0728e759e2cc633eaeb2190.png" alt="a = p_2/(\sqrt{2}*\sigma)"/>
@@ -240,10 +306,9 @@ the measured calibration wavelength of a given pixel (thus <img class="math" src
 <p>If you are interested in the broadening,
 we strongly suggest you use the <em>sincgauss</em> function :)</p>
 </section>
-</section>
 <section id="transmission">
 <h3>Transmission<a class="headerlink" href="#transmission" title="Link to this heading"></a></h3>
-<p>We take into account the transmission of the SITTELLE filters (SN1, SN2, and SN3).
+<p>We take into account the transmission of the SITTELLE filters (SN1, SN2, SN3, SN4, C3, and C4).
 We take the true transmission as the mean of the transmission at different filter angles;
 the raw data can be found [here](<a class="reference external" href="https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php">https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php</a>).
 The transmission is then applied to the spectrum in the following manner:
@@ -258,7 +323,7 @@ Note that we calculate the noise <strong>before</strong> applying the transmissi
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="Welcome to LUCI’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="uncertainties.html" class="btn btn-neutral float-right" title="Uncertainties" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="migration.html" class="btn btn-neutral float-right" title="Migration guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

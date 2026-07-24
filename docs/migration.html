@@ -1,0 +1,401 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Migration guide &mdash; LUCI 1.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="_static/LuciLogo.png"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=6efca38a"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Uncertainties" href="uncertainties.html" />
+    <link rel="prev" title="How LUCI Works" href="howLuciWorks.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Migration guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#luci-path-is-now-optional"><code class="docutils literal notranslate"><span class="pre">Luci_path</span></code> is now optional</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#package-and-class-names">Package and class names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-layout">Module layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuring-a-fit">Configuring a fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#errors-instead-of-exit">Errors instead of <code class="docutils literal notranslate"><span class="pre">exit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#output-messages">Output messages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-changed-in-the-results">What changed in the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="newFilter.html">Adding a New Filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_synthetic.html">Fit Mock Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Migration guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/migration.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="migration-guide">
+<h1>Migration guide<a class="headerlink" href="#migration-guide" title="Link to this heading"></a></h1>
+<p>LUCI was restructured so it can be installed, tested, and modified safely. This
+page maps every old name to its replacement.</p>
+<p><strong>Nothing in this guide is urgent.</strong> Every old spelling still works — the old
+module names are re-export shims and the uppercase <code class="docutils literal notranslate"><span class="pre">LUCI</span></code> package name is
+aliased onto the new lowercase <code class="docutils literal notranslate"><span class="pre">luci</span></code>. Existing notebooks and scripts run
+unchanged. Migrate when convenient.</p>
+<p>The one thing that <em>did</em> change is numerical output, and only where a bug was
+fixed. See <a class="reference internal" href="#what-changed-in-the-results">What changed in the results</a> — read that section even if you never
+touch the new API.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>The conda environment is gone. LUCI is a normal Python package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># users</span>
+pip<span class="w"> </span>install<span class="w"> </span>luci-sitelle
+
+<span class="c1"># contributors</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/crhea93/LUCI<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>LUCI
+uv<span class="w"> </span>sync
+uv<span class="w"> </span>run<span class="w"> </span>pytest
+</pre></div>
+</div>
+<p>Because the package installs properly now, <strong>the ``sys.path.insert`` line at the
+top of every example is no longer needed</strong> and should be deleted:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># before</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">LuciBase</span><span class="w"> </span><span class="kn">import</span> <span class="n">Luci</span>
+
+<span class="c1"># after</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">luci</span><span class="w"> </span><span class="kn">import</span> <span class="n">SitelleCube</span>
+</pre></div>
+</div>
+</section>
+<section id="luci-path-is-now-optional">
+<h2><code class="docutils literal notranslate"><span class="pre">Luci_path</span></code> is now optional<a class="headerlink" href="#luci-path-is-now-optional" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Luci_path</span></code> — the absolute path to the checkout, with its mandatory trailing
+slash — is how LUCI found its <code class="docutils literal notranslate"><span class="pre">ML/</span></code> and <code class="docutils literal notranslate"><span class="pre">Data/</span></code> directories. It is why every
+example began by hardcoding a path into somebody else’s home directory.</p>
+<p>It is now resolved automatically: from <code class="docutils literal notranslate"><span class="pre">$LUCI_DATA_DIR</span></code> if set, otherwise from
+the installed package’s own location. Pass one only to override.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># before</span>
+<span class="n">Luci_path</span> <span class="o">=</span> <span class="s1">&#39;/home/carterrhea/Documents/LUCI/&#39;</span>
+<span class="n">cube</span> <span class="o">=</span> <span class="n">Luci</span><span class="p">(</span><span class="n">Luci_path</span><span class="p">,</span> <span class="n">cube_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">redshift</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+
+<span class="c1"># after</span>
+<span class="n">cube</span> <span class="o">=</span> <span class="n">SitelleCube</span><span class="p">(</span><span class="n">cube_path</span><span class="o">=</span><span class="n">cube_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+                   <span class="n">object_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">redshift</span><span class="o">=</span><span class="n">redshift</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Passing it positionally still works exactly as before, so no existing call needs
+to change.</p>
+</section>
+<section id="package-and-class-names">
+<h2>Package and class names<a class="headerlink" href="#package-and-class-names" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Old</p></th>
+<th class="head"><p>New</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI</span></code> (package)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci</span></code> — <code class="docutils literal notranslate"><span class="pre">LUCI</span></code> still resolves, see below</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">LuciBase</span> <span class="pre">import</span> <span class="pre">Luci</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">luci</span> <span class="pre">import</span> <span class="pre">SitelleCube</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Luci</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SitelleCube</span></code> (<code class="docutils literal notranslate"><span class="pre">Luci</span></code> remains an alias)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Fit</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SpectrumFitter</span></code> (<code class="docutils literal notranslate"><span class="pre">Fit</span></code> remains an alias)</p></td>
+</tr>
+<tr class="row-even"><td><p>the 22-key dict from <code class="docutils literal notranslate"><span class="pre">fit()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FitResult</span></code> — indexes exactly like the dict</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A lowercase <code class="docutils literal notranslate"><span class="pre">luci</span></code> package and an uppercase <code class="docutils literal notranslate"><span class="pre">LUCI</span></code> package cannot coexist
+on macOS or Windows, whose filesystems are case-insensitive. So <code class="docutils literal notranslate"><span class="pre">LUCI</span></code> is
+not a package but a module (<code class="docutils literal notranslate"><span class="pre">LUCI.py</span></code>) that registers the alias in
+<code class="docutils literal notranslate"><span class="pre">sys.modules</span></code>. <code class="docutils literal notranslate"><span class="pre">LUCI.cube</span></code> and <code class="docutils literal notranslate"><span class="pre">luci.cube</span></code> are therefore <em>the same
+module object</em>, not two copies — no duplicated state.</p>
+</div>
+</section>
+<section id="module-layout">
+<h2>Module layout<a class="headerlink" href="#module-layout" title="Link to this heading"></a></h2>
+<p>The flat <code class="docutils literal notranslate"><span class="pre">LUCI/Luci*.py</span></code> files were split by responsibility. Each old module
+still exists as a re-export shim, so old imports resolve.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Old module</p></th>
+<th class="head"><p>New home</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciFit</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.fitting.spectrum_fitter</span></code>,
+<code class="docutils literal notranslate"><span class="pre">luci.fitting.constraints</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciFunctions</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.fitting.models</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciFitParameters</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.fitting.parameters</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciBayesian</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.fitting.bayes</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciUtility</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.instrument.header</span></code>, <code class="docutils literal notranslate"><span class="pre">luci.io.*</span></code>,
+<code class="docutils literal notranslate"><span class="pre">luci.engine.binning</span></code>,
+<code class="docutils literal notranslate"><span class="pre">luci.fitting.uncertainties</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciWVT</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.analysis.wvt</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciComponentCalculations</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.analysis.components</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciBackground</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.background.detection</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciConvenience</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.engine.selection</span></code>,
+<code class="docutils literal notranslate"><span class="pre">luci.fitting.components</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciPlotting</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.viz.plotting</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciVisualize</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.viz.visualize</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciSim</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.simulation</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LUCI.LuciLog</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.log</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LuciBase</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">luci.cube</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>Two modules are new rather than moved:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">luci.instrument.filters</span></code></dt><dd><p>One <code class="docutils literal notranslate"><span class="pre">FilterSpec</span></code> per filter, holding every band-dependent number that used
+to be copy-pasted across five <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">filter</span> <span class="pre">==</span> <span class="pre">'SN3'</span></code> chains. Adding a filter
+is now one dict entry — see <a class="reference internal" href="newFilter.html"><span class="doc">Adding a New Filter</span></a>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">luci.engine.runner</span></code> and <code class="docutils literal notranslate"><span class="pre">luci.engine.selection</span></code></dt><dd><p>A single fit orchestrator and a single pixel-selection resolver, replacing
+four near-identical blocks in the old <code class="docutils literal notranslate"><span class="pre">Luci</span></code> class.</p>
+</dd>
+</dl>
+</section>
+<section id="configuring-a-fit">
+<h2>Configuring a fit<a class="headerlink" href="#configuring-a-fit" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">SpectrumFitter</span></code> still takes all of its original keyword arguments. They can
+now also be grouped into a <code class="docutils literal notranslate"><span class="pre">FitConfig</span></code>, which validates them in one place:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">luci</span><span class="w"> </span><span class="kn">import</span> <span class="n">FitConfig</span><span class="p">,</span> <span class="n">SpectrumFitter</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">FitConfig</span><span class="p">(</span>
+    <span class="n">lines</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Halpha&quot;</span><span class="p">,</span> <span class="s2">&quot;NII6583&quot;</span><span class="p">],</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;sincgauss&quot;</span><span class="p">,</span>
+    <span class="n">vel_rel</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">sigma_rel</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">fitter</span> <span class="o">=</span> <span class="n">SpectrumFitter</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">wavenumbers_syn</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Both spellings produce bit-identical fits; a test asserts it.</p>
+</section>
+<section id="errors-instead-of-exit">
+<h2>Errors instead of <code class="docutils literal notranslate"><span class="pre">exit()</span></code><a class="headerlink" href="#errors-instead-of-exit" title="Link to this heading"></a></h2>
+<p>Library code no longer calls <code class="docutils literal notranslate"><span class="pre">quit()</span></code>/<code class="docutils literal notranslate"><span class="pre">exit()</span></code> on bad input, which used to
+kill the host interpreter — including a Jupyter kernel — with no traceback.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Situation</p></th>
+<th class="head"><p>Now raises</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Unrecognised filter</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">UnsupportedFilterError</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>PCA background on an unsupported filter</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PCABackgroundUnsupportedError</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Invalid fit configuration</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">InvalidFitConfig</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Unrecognised region/mask argument</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ValueError</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="output-messages">
+<h2>Output messages<a class="headerlink" href="#output-messages" title="Link to this heading"></a></h2>
+<p>Progress and diagnostic messages go through the <code class="docutils literal notranslate"><span class="pre">luci</span></code> logger instead of
+<code class="docutils literal notranslate"><span class="pre">print()</span></code>, so they can be filtered or silenced:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;luci&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>   <span class="c1"># quieter</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">luci.log</span><span class="w"> </span><span class="kn">import</span> <span class="n">silence</span>
+<span class="n">silence</span><span class="p">()</span>                                             <span class="c1"># off entirely</span>
+</pre></div>
+</div>
+<p>Output is on by default at <code class="docutils literal notranslate"><span class="pre">INFO</span></code>, so nothing disappears unless you ask.</p>
+</section>
+<section id="what-changed-in-the-results">
+<h2>What changed in the results<a class="headerlink" href="#what-changed-in-the-results" title="Link to this heading"></a></h2>
+<p>Bug fixes changed numerical output. The full register is in
+<code class="docutils literal notranslate"><span class="pre">REFACTOR_BUGS.md</span></code>; these are the ones that move published numbers.</p>
+<p><strong>Line broadening was wrong for every line except the last</strong> (B21). The
+per-line σ bounds were built in a loop of <code class="docutils literal notranslate"><span class="pre">lambda</span></code> closures over the loop
+variable, so all of them read the <em>final</em> value — every line was constrained by
+the last line’s bounds. On the test cube, <code class="docutils literal notranslate"><span class="pre">NII6583</span></code> moved 164 → 101 km/s and
+<code class="docutils literal notranslate"><span class="pre">SII6731</span></code> 167 → 101 km/s, and the spread across velocity-tied lines dropped
+from 67.5 to 2.4 km/s.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If you published broadening or velocity maps from a multi-line fit, they were
+affected by B21. Re-running is the only way to know by how much.</p>
+</div>
+<p><strong>``ML_bool=False`` fabricated zero kinematics</strong> (B1). The non-ML path started
+the optimiser at σ = 0, a singular point of the sinc-Gauss, and returned
+velocity = broadening = 0 rather than failing. The documentation actively
+recommended <code class="docutils literal notranslate"><span class="pre">ML_bool=False</span></code> for unsupported filters. It now seeds from the
+brightest peak with a default broadening and recovers the injected physics.</p>
+<p><strong>``fit_region`` ignored the background</strong> (B3). It passed <code class="docutils literal notranslate"><span class="pre">bkg</span></code> but not
+<code class="docutils literal notranslate"><span class="pre">bkgType</span></code>, so subtraction was silently skipped — results were as if no
+background had been given.</p>
+<p><strong>``pixel_list=True`` fitted the whole cube</strong> (B23). The mask started as
+all-<code class="docutils literal notranslate"><span class="pre">True</span></code>, so the pixel list narrowed nothing.</p>
+<p>Smaller fixes — a deep image dropping its trailing rows (B7), multi-component
+fits overwriting each other’s output maps (B16), MDN broadening priors read
+without their softplus transform (B17) — are described in the register with the
+test that pins each one.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="howLuciWorks.html" class="btn btn-neutral float-left" title="How LUCI Works" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="uncertainties.html" class="btn btn-neutral float-right" title="Uncertainties" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Carter L. Rhea.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

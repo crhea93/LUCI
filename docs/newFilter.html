@@ -1,0 +1,448 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adding a New Filter &mdash; LUCI 1.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="_static/LuciLogo.png"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=6efca38a"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MIT License" href="license.html" />
+    <link rel="prev" title="Wavelength Correction" href="wavelength_corrections.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/LuciLogo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Filter</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#step-1-get-the-instrument-parameters">Step 1: Get the instrument parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-2-add-the-transmission-curve">Step 2: Add the transmission curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-3-add-the-wavenumber-windows">Step 3: Add the wavenumber windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-4-build-the-reference-spectrum-and-train-the-network">Step 4: Build the reference spectrum and train the network</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-5-fit-a-cube">Step 5: Fit a cube</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_sn1_sn2.html">Example SN1 &amp; SN2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_region.html">Fit Single Region</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_single_spectrum.html">Fit Single Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_mask.html">Example Mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_synthetic.html">Fit Mock Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_freeze.html">Example Freeze</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_slices.html">Extract Slices</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fits.html">Fitting Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="luci.html">Core Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameter Calculations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Ploting Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayes.html">Bayesian Methods</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">FAQ and Errors</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LUCI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Adding a New Filter</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/newFilter.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="adding-a-new-filter">
+<span id="newfilter"></span><h1>Adding a New Filter<a class="headerlink" href="#adding-a-new-filter" title="Link to this heading"></a></h1>
+<p>LUCI knows about a fixed set of SITELLE filters. Every one of them needs four things before a
+cube taken with it can be fit:</p>
+<ol class="arabic simple">
+<li><p><strong>Instrument parameters</strong> – the folding order and step size, which set the spectral axis.</p></li>
+<li><p><strong>A transmission curve</strong> – <code class="docutils literal notranslate"><span class="pre">Data/&lt;FILTER&gt;_filter.dat</span></code>.</p></li>
+<li><p><strong>A handful of hard-coded wavenumber windows</strong> – where to fit, where to measure the noise,
+where to measure the continuum.</p></li>
+<li><p><strong>A reference spectrum and a trained network</strong> – <code class="docutils literal notranslate"><span class="pre">ML/Reference-Spectrum-R&lt;res&gt;-&lt;FILTER&gt;.fits</span></code>
+and <code class="docutils literal notranslate"><span class="pre">ML/R&lt;res&gt;-PREDICTOR-I-&lt;FILTER&gt;/</span></code>, which supply the machine-learning initial guess.</p></li>
+</ol>
+<p>This page walks through all four using <strong>SN4</strong> (the narrow Halpha filter, offered since 24B) as
+the worked example. SN4 is already done – everything below is committed – so use it as the
+template for SN5, SN6, or anything else that comes along.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Steps 1-3 are enough to fit a cube with <code class="docutils literal notranslate"><span class="pre">ML_bool=False</span></code>. Step 4 is only needed for the
+machine-learning initial guess.</p>
+</div>
+<section id="step-1-get-the-instrument-parameters">
+<h2>Step 1: Get the instrument parameters<a class="headerlink" href="#step-1-get-the-instrument-parameters" title="Link to this heading"></a></h2>
+<p>The folding order and step size are not on the CFHT web pages, but they are stored in ORB’s
+filter files. Grab the one for your filter from
+<a class="reference external" href="https://github.com/thomasorb/orb/tree/master/orb/data">thomasorb/orb</a> and read its attributes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s1">&#39;filter_SN4.hdf5&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">attrs</span><span class="p">))</span>
+<span class="c1"># {&#39;filter&#39;: &#39;SN4&#39;, &#39;order&#39;: 15, &#39;step&#39;: 5304.168,</span>
+<span class="c1">#  &#39;bandpass_min_nm&#39;: 652.5, &#39;bandpass_max_nm&#39;: 664.0, ...}</span>
+</pre></div>
+</div>
+<p>The spectral axis of a cube spans the free spectral range of that order,</p>
+<div class="math">
+<p><span class="math">\sigma_{min} = \frac{\text{order}}{2\,\text{step}}\times 10^7 \times \frac{1}{\cos\theta}
+\qquad
+\sigma_{max} = \frac{\text{order}+1}{2\,\text{step}}\times 10^7 \times \frac{1}{\cos\theta}</span></p>
+</div><p>with <span class="math">\theta = 11.96^\circ</span> the interferometer angle. For SN4 that is
+<strong>14454 - 15417 cm-1 (648.6 - 691.9 nm)</strong>. Note how much wider this is than the 652 - 665 nm
+pass band – that turns out to be very convenient, because it means there is a large stretch of
+the axis that the filter blocks completely and where the noise can be measured cleanly.</p>
+<p>Add the order and step to <code class="docutils literal notranslate"><span class="pre">Spectrum.__init__</span></code> in <code class="docutils literal notranslate"><span class="pre">LUCI/LuciSim.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span> <span class="o">==</span> <span class="s1">&#39;SN4&#39;</span><span class="p">:</span>  <span class="c1"># Narrow Halpha filter (652 - 665 nm)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">delta_x</span> <span class="o">=</span> <span class="mf">5304.168</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="mi">15</span>
+</pre></div>
+</div>
+<p>Here are the values for every SITELLE filter, for reference:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Filter</p></th>
+<th class="head"><p>Order</p></th>
+<th class="head"><p>Step (nm)</p></th>
+<th class="head"><p>Band pass (nm)</p></th>
+<th class="head"><p>Free spec. range
+(cm-1)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>SN1</p></td>
+<td><p>8</p></td>
+<td><p>1647.0</p></td>
+<td><p>362.6 - 385.6</p></td>
+<td><p>24825 - 27929</p></td>
+</tr>
+<tr class="row-odd"><td><p>SN2</p></td>
+<td><p>6</p></td>
+<td><p>1680.0</p></td>
+<td><p>479.8 - 513.2</p></td>
+<td><p>18253 - 21296</p></td>
+</tr>
+<tr class="row-even"><td><p>SN3</p></td>
+<td><p>8</p></td>
+<td><p>2943.0</p></td>
+<td><p>647.7 - 685.0</p></td>
+<td><p>13893 - 15630</p></td>
+</tr>
+<tr class="row-odd"><td><p>SN4</p></td>
+<td><p>15</p></td>
+<td><p>5304.168</p></td>
+<td><p>652.5 - 664.0</p></td>
+<td><p>14454 - 15417</p></td>
+</tr>
+<tr class="row-even"><td><p>SN5</p></td>
+<td><p>13</p></td>
+<td><p>3510.309</p></td>
+<td><p>499.5 - 505.5</p></td>
+<td><p>18928 - 20384</p></td>
+</tr>
+<tr class="row-odd"><td><p>SN6</p></td>
+<td><p>8</p></td>
+<td><p>2258.922</p></td>
+<td><p>499.0 - 502.5</p></td>
+<td><p>18100 - 20363</p></td>
+</tr>
+<tr class="row-even"><td><p>C3</p></td>
+<td><p>6</p></td>
+<td><p>1785.0</p></td>
+<td><p>511.0 - 555.4</p></td>
+<td><p>17180 - 20043</p></td>
+</tr>
+<tr class="row-odd"><td><p>C4</p></td>
+<td><p>12</p></td>
+<td><p>5271.5</p></td>
+<td><p>798.5 - 823.4</p></td>
+<td><p>11635 - 12604</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="step-2-add-the-transmission-curve">
+<h2>Step 2: Add the transmission curve<a class="headerlink" href="#step-2-add-the-transmission-curve" title="Link to this heading"></a></h2>
+<p>LUCI divides each spectrum by the filter transmission before fitting
+(<code class="docutils literal notranslate"><span class="pre">LuciUtility.read_in_transmission</span></code>), which needs <code class="docutils literal notranslate"><span class="pre">Data/&lt;FILTER&gt;_filter.dat</span></code>: two columns,
+the axis in cm-1 and the transmission in <strong>percent</strong>.</p>
+<p>Download the raw curve from the
+<a class="reference external" href="https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php">SITELLE filters page</a>
+(SN4 is <code class="docutils literal notranslate"><span class="pre">cfh3602.dat</span></code>), save it as <code class="docutils literal notranslate"><span class="pre">Data/&lt;FILTER&gt;_Transmission.dat</span></code>, add the filter to the
+<code class="docutils literal notranslate"><span class="pre">FILTERS</span></code> list at the top of <code class="docutils literal notranslate"><span class="pre">Data/create_filters.py</span></code>, and run it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>-O<span class="w"> </span>Data/SN4_Transmission.dat<span class="w"> </span>http://www.cfht.hawaii.edu/Instruments/Filters/curves/cfh3602.dat
+<span class="nb">cd</span><span class="w"> </span>Data<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>python<span class="w"> </span>create_filters.py
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">create_filters.py</span></code> converts nm to cm-1 and averages over however many measurement columns the
+CFHT file has (7 for SN1/SN2/SN3, 2 for SN4).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">apply_transmission</span></code> only divides through where the transmission is above 50%, so a curve
+that does not cover the entire free spectral range is fine – the ends extrapolate to ~0 and
+are simply left alone.</p>
+</div>
+</section>
+<section id="step-3-add-the-wavenumber-windows">
+<h2>Step 3: Add the wavenumber windows<a class="headerlink" href="#step-3-add-the-wavenumber-windows" title="Link to this heading"></a></h2>
+<p>This used to be the step that was easy to get wrong: nine different functions branched on the
+filter name, and a filter missing from any one of them would either crash or silently print
+“not supported” and carry on with the <em>previous</em> spectrum’s values.</p>
+<p>They now all read from a single registry, so adding a filter is <strong>one dictionary entry</strong> in
+<a class="reference external" href="https://github.com/crhea93/LUCI/blob/main/luci/instrument/filters.py">luci/instrument/filters.py</a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">FILTERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;SN4&quot;</span><span class="p">:</span> <span class="n">FilterSpec</span><span class="p">(</span>
+        <span class="s2">&quot;SN4&quot;</span><span class="p">,</span>
+        <span class="c1"># Narrow Halpha filter (652-665 nm). The order-15 free spectral range is far</span>
+        <span class="c1"># wider than the pass band, so the noise window sits in a region the filter</span>
+        <span class="c1"># blocks entirely.</span>
+        <span class="n">fit</span><span class="o">=</span><span class="n">BoundRule</span><span class="p">(</span><span class="mi">15040</span><span class="p">,</span> <span class="mi">15330</span><span class="p">),</span>
+        <span class="n">noise</span><span class="o">=</span><span class="n">BoundRule</span><span class="p">(</span><span class="mi">14600</span><span class="p">,</span> <span class="mi">14900</span><span class="p">),</span>
+        <span class="n">reference</span><span class="o">=</span><span class="n">BoundRule</span><span class="p">(</span><span class="mi">15000</span><span class="p">,</span> <span class="mi">15350</span><span class="p">),</span>
+        <span class="n">pca_scale</span><span class="o">=</span><span class="p">(</span><span class="mf">664.5</span><span class="p">,</span> <span class="mf">661.0</span><span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>All bounds are in <strong>cm-1</strong> except <code class="docutils literal notranslate"><span class="pre">pca_scale</span></code>, which is in nanometres.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 55.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>What the window is for</p></th>
+<th class="head"><p>SN4 value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fit</span></code></p></td>
+<td><p>The region actually fit. Keep it inside the pass band so the continuum is sane.</p></td>
+<td><p>15040 - 15330 cm-1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">noise</span></code></p></td>
+<td><p>A line-free region used for the noise estimate. Best taken <strong>outside</strong> the pass band.</p></td>
+<td><p>14600 - 14900 cm-1</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">reference</span></code></p></td>
+<td><p>The clip applied to the reference axis. This sets the input length of the network, so
+it must be a little wider than the fit region.</p></td>
+<td><p>15000 - 15350 cm-1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pca_scale</span></code></p></td>
+<td><p>Line-free window used to rescale the PCA background eigenspectra, in <strong>nm</strong>, ordered
+(longer, shorter) because the code converts to wavenumber. Omit it if you are not using
+the PCA background; the filter then raises <code class="docutils literal notranslate"><span class="pre">PCABackgroundUnsupportedError</span></code> rather than
+producing a silently wrong background.</p></td>
+<td><p>(664.5, 661.0) nm</p></td>
+</tr>
+</tbody>
+</table>
+<p>Also add the filter name to <code class="docutils literal notranslate"><span class="pre">SUPPORTED_FILTERS</span></code> in the same module. An unrecognised filter now
+raises <code class="docutils literal notranslate"><span class="pre">UnsupportedFilterError</span></code> instead of calling <code class="docutils literal notranslate"><span class="pre">exit()</span></code>.</p>
+<p>Two cases need more than plain bounds, and <code class="docutils literal notranslate"><span class="pre">BoundRule</span></code> handles both:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">redshift_scaled=True</span></code></dt><dd><p>The window is multiplied by <code class="docutils literal notranslate"><span class="pre">(1</span> <span class="pre">+</span> <span class="pre">z)</span></code>. C1, C2 and C4 do this.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">trigger_line=...</span></code></dt><dd><p>A different window applies when a particular line is being fit. C3 uses this: the presence of
+<code class="docutils literal notranslate"><span class="pre">OII3726</span></code> implies an object near z ~ 0.465, for which C3 behaves like SN1.</p>
+</dd>
+</dl>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fit</span><span class="o">=</span><span class="n">BoundRule</span><span class="p">(</span><span class="mi">18100</span><span class="p">,</span> <span class="mi">19500</span><span class="p">,</span> <span class="n">trigger_line</span><span class="o">=</span><span class="s2">&quot;OII3726&quot;</span><span class="p">,</span> <span class="n">trigger_lower</span><span class="o">=</span><span class="mi">26000</span><span class="p">,</span> <span class="n">trigger_upper</span><span class="o">=</span><span class="mi">29000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A quick way to sanity check your choices:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">luci.io.reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_in_transmission</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">luci.instrument.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">FILTERS</span>
+
+<span class="n">spec</span> <span class="o">=</span> <span class="n">FILTERS</span><span class="p">[</span><span class="s2">&quot;SN4&quot;</span><span class="p">]</span>
+<span class="n">axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">14454</span><span class="p">,</span> <span class="mi">15417</span><span class="p">,</span> <span class="mi">470</span><span class="p">)</span>          <span class="c1"># your filter&#39;s free spectral range</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">read_in_transmission</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;FILTER&#39;</span><span class="p">:</span> <span class="s1">&#39;SN4&#39;</span><span class="p">},</span> <span class="n">axis</span><span class="p">)</span>
+<span class="c1"># The fit window should sit where t is high, the noise window where t is ~0</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;fit&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">fit_bounds</span><span class="p">()),</span> <span class="p">(</span><span class="s2">&quot;noise&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">noise_bounds</span><span class="p">())]:</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">axis</span> <span class="o">&gt;=</span> <span class="n">lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">axis</span> <span class="o">&lt;=</span> <span class="n">hi</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">t</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">t</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<section id="step-4-build-the-reference-spectrum-and-train-the-network">
+<h2>Step 4: Build the reference spectrum and train the network<a class="headerlink" href="#step-4-build-the-reference-spectrum-and-train-the-network" title="Link to this heading"></a></h2>
+<p>LUCI’s initial guess for the velocity and broadening comes from a convolutional neural network
+(<a class="reference external" href="https://arxiv.org/abs/2008.08093">Rhea et al. 2020a</a>). At fit time
+<code class="docutils literal notranslate"><span class="pre">LuciFit.Fit.interpolate_spectrum</span></code> interpolates the observed spectrum onto the axis of
+<code class="docutils literal notranslate"><span class="pre">ML/Reference-Spectrum-R&lt;res&gt;-&lt;FILTER&gt;.fits</span></code>, normalises it by its maximum, and hands it to
+<code class="docutils literal notranslate"><span class="pre">ML/R&lt;res&gt;-PREDICTOR-I-&lt;FILTER&gt;/</span></code>. So the reference spectrum and the network are a matched
+pair: <strong>the reference axis defines the input length of the network</strong>, and both are specific to a
+single resolution.</p>
+<p>The networks shipped with LUCI were built with the notebooks in
+<a class="reference external" href="https://github.com/sitelle-signals/Pamplemousse">sitelle-signals/Pamplemousse</a>, which needed
+ORBS to synthesise spectra and a connection to the 3MdB database for line ratios. That is no
+longer necessary: <code class="docutils literal notranslate"><span class="pre">LUCI.LuciSim.Spectrum</span></code> can generate the spectra itself, and
+<code class="docutils literal notranslate"><span class="pre">ML/TrainPredictor.py</span></code> wraps the whole recipe up:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>ML/TrainPredictor.py<span class="w"> </span>--filter<span class="w"> </span>SN4<span class="w"> </span>--resolution<span class="w"> </span><span class="m">5000</span><span class="w"> </span>--n-steps<span class="w"> </span><span class="m">470</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                            </span>--num-spectra<span class="w"> </span><span class="m">50000</span><span class="w"> </span>--epochs<span class="w"> </span><span class="m">10</span><span class="w"> </span>--mdn
+</pre></div>
+</div>
+<p>That does three things:</p>
+<ol class="arabic simple">
+<li><p><strong>Creates the reference spectrum.</strong> Only its <em>axis</em> matters; the fluxes are there so you can
+eyeball the file. It is written to <code class="docutils literal notranslate"><span class="pre">ML/Reference-Spectrum-R&lt;res&gt;-&lt;FILTER&gt;.fits</span></code> as a two
+column (<code class="docutils literal notranslate"><span class="pre">Wavenumber</span></code>, <code class="docutils literal notranslate"><span class="pre">Flux</span></code>) binary table, which is what
+<code class="docutils literal notranslate"><span class="pre">read_in_reference_spectrum</span></code> expects.</p></li>
+<li><p><strong>Generates the synthetic training set.</strong> Each spectrum gets a random velocity in
+[-500, 500] km/s, a random broadening in [10, 200] km/s (the range LUCI advertises for the
+network), random line ratios, a random SNR, and a slightly perturbed resolution. It is then
+interpolated onto the clipped reference axis and normalised – exactly the preprocessing real
+spectra get.</p></li>
+<li><p><strong>Trains and saves the network</strong>, reporting the residual scatter on a held-out test set. With
+<code class="docutils literal notranslate"><span class="pre">--mdn</span></code> it also trains the mixture density network (<code class="docutils literal notranslate"><span class="pre">LUCI/LuciNetwork.py</span></code>) used when
+<code class="docutils literal notranslate"><span class="pre">mdn=True</span></code>, saving weights under the doubled-up path convention the loader expects.</p></li>
+</ol>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Convert the trained network to ONNX before LUCI will use it.</strong> Fitting loads predictors from
+<code class="docutils literal notranslate"><span class="pre">ML/onnx/</span></code>, not the Keras artifacts, so a freshly trained network is invisible until you run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uv</span> <span class="n">run</span> <span class="n">tools</span><span class="o">/</span><span class="n">convert_models_to_onnx</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">models</span> <span class="n">R5000</span><span class="o">-</span><span class="n">PREDICTOR</span><span class="o">-</span><span class="n">I</span><span class="o">-</span><span class="n">SN4</span> <span class="o">--</span><span class="n">validate</span>
+</pre></div>
+</div>
+<p>(or <code class="docutils literal notranslate"><span class="pre">--all</span></code> to redo everything). <code class="docutils literal notranslate"><span class="pre">--validate</span></code> checks the converted model against its Keras
+original on 200 spectra and refuses to publish it if they disagree beyond float32 tolerance, so a
+silently broken conversion cannot reach your fits. The script pins its own legacy-TensorFlow
+environment through a PEP 723 header, so <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span></code> builds what it needs and discards it
+afterwards.</p>
+<p>If you skip this step LUCI does not crash – it reports that no predictor was found for that
+filter/resolution and falls back to data-driven initial guesses.</p>
+</div>
+<p>To support a genuinely new filter you need to add it to <code class="docutils literal notranslate"><span class="pre">FILTER_LINES</span></code> and
+<code class="docutils literal notranslate"><span class="pre">sample_amplitudes</span></code> at the top of <code class="docutils literal notranslate"><span class="pre">ML/TrainPredictor.py</span></code>, which say which lines fall in the
+filter and how to sample their relative amplitudes, and add a <code class="docutils literal notranslate"><span class="pre">FilterSpec</span></code> entry in
+<code class="docutils literal notranslate"><span class="pre">LUCI/instrument/filters.py</span></code> giving the fit, noise and reference windows.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Pick ``–n-steps`` from your cube’s header.</strong> <code class="docutils literal notranslate"><span class="pre">LuciSim.Spectrum</span></code> derives the number of
+steps from the resolution as <span class="math">1.20671\,R/(\text{order}+0.5)</span>. That is about 20% below
+both CFHT’s published relation for SITELLE (<span class="math">1.20671^2\,R/(\text{order}+0.5)</span>, which
+reproduces their quoted <span class="math">N_{steps} = 0.094R</span> for SN4, <span class="math">0.108R</span> for SN5 and
+<span class="math">0.173R</span> for SN6) and the channel counts of the reference spectra shipped with LUCI.
+Reading <code class="docutils literal notranslate"><span class="pre">STEPNB</span></code> out of the header of the cube you actually want to fit and passing it as
+<code class="docutils literal notranslate"><span class="pre">--n-steps</span></code> avoids the question altogether and guarantees your reference axis is sampled the
+same way your data are.</p>
+</div>
+<p>Train one network per resolution you care about. If you do not train one, everything still works
+with <code class="docutils literal notranslate"><span class="pre">ML_bool=False</span></code> – LUCI just falls back to its non-machine-learning initial guess.</p>
+</section>
+<section id="step-5-fit-a-cube">
+<h2>Step 5: Fit a cube<a class="headerlink" href="#step-5-fit-a-cube" title="Link to this heading"></a></h2>
+<p>Nothing filter-specific is needed at the call site; LUCI reads the filter out of the header.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span> <span class="o">=</span> <span class="n">SitelleCube</span><span class="p">(</span><span class="n">cube_path</span><span class="o">=</span><span class="n">cube_dir</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">cube_name</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">cube_dir</span><span class="p">,</span>
+                   <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">,</span> <span class="n">redshift</span><span class="o">=</span><span class="n">redshift</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+                   <span class="n">ML_bool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">cube</span><span class="o">.</span><span class="n">fit_cube</span><span class="p">([</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">],</span> <span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+              <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_min</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="wavelength_corrections.html" class="btn btn-neutral float-left" title="Wavelength Correction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="license.html" class="btn btn-neutral float-right" title="MIT License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Carter L. Rhea.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

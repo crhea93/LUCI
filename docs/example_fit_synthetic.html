@@ -6,20 +6,22 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>&lt;no title&gt; &mdash; LUCI v.1.0.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+  <title>Fit Mock Spectrum &mdash; LUCI 1.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+      <script src="_static/documentation_options.js?v=6efca38a"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Fitting Double Components" href="example_double_fit.html" />
+    <link rel="prev" title="Example Synthetic Spectrum" href="example_synthetic_spectrum.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,13 +47,15 @@
               <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="newFilter.html">Adding a New Filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="example_basic.html">Basic Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_basic_lite.html">Basic Example Lite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_fit_ngc6888.html">Example of fitting regions in NGC6888</a></li>
@@ -62,6 +66,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Fit Mock Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
@@ -95,7 +100,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">&lt;no title&gt;</li>
+      <li class="breadcrumb-item active">Fit Mock Spectrum</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/example_fit_synthetic.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -105,11 +110,131 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
+  <section id="fit-mock-spectrum">
+<span id="example-fit-synthetic"></span><h1>Fit Mock Spectrum<a class="headerlink" href="#fit-mock-spectrum" title="Link to this heading"></a></h1>
+<p>In this notebook, we will fit a mock spectrum using the standard fitting algorithm implemented in <cite>LUCI</cite>. The goal of this notebook is to showcase the fits and uncertainty calculations.</p>
+<p>Since we are fitting a mock spectrum and not one pulled from the cube, we will call the fitting function <cite>LuciFit</cite>. This requires us to pass some additional parameters that are normally handled internally in <cite>LUCI</cite>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">luci.io.assets</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_luci_path</span>
+<span class="n">Luci_path</span> <span class="o">=</span> <span class="n">default_luci_path</span><span class="p">()</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">luci.simulation</span><span class="w"> </span><span class="kn">import</span> <span class="n">Spectrum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">LUCI.LuciFit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">lfit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">LUCI.LuciUtility</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_in_reference_spectrum</span>
+</pre></div>
+</div>
+<p>We will now use <cite>Spectrum</cite> to create a mock spectrum. We have to put in the following details.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define variables</span>
+<span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">]</span>  <span class="c1"># Lines to model</span>
+<span class="n">fit_function</span> <span class="o">=</span> <span class="s1">&#39;sincgauss&#39;</span>  <span class="c1"># Function to model</span>
+<span class="n">ampls</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">]</span>  <span class="c1"># Just randomly choosing these amplitudes</span>
+<span class="n">velocity</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># km/s</span>
+<span class="n">broadening</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># km/s</span>
+<span class="n">filter_</span> <span class="o">=</span> <span class="s1">&#39;SN3&#39;</span>  <span class="c1"># Filter to model</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="mi">5000</span>  <span class="c1"># Resolution</span>
+<span class="n">snr</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># Signal to noise ratio</span>
+
+<span class="c1"># Create spectrum</span>
+<span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span> <span class="o">=</span> <span class="n">Spectrum</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">fit_function</span><span class="p">,</span> <span class="n">ampls</span><span class="p">,</span> <span class="n">velocity</span><span class="p">,</span> <span class="n">broadening</span><span class="p">,</span> <span class="n">filter_</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">snr</span><span class="p">)</span><span class="o">.</span><span class="n">create_spectrum</span><span class="p">()</span>
+<span class="n">spectrum</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># Add a continuum</span>
+
+<span class="c1"># Plot figure</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Spectrum&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">14750</span><span class="p">,</span> <span class="mi">15400</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (cm-1)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span> <span class="o">/</span> <span class="mf">656.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span> <span class="o">/</span> <span class="mf">658.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;teal&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span> <span class="o">/</span> <span class="mf">654.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6548&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span> <span class="o">/</span> <span class="mf">671.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6716&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;magenta&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e7</span> <span class="o">/</span> <span class="mf">673.1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NII6731&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;violet&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="Fit Synthetic Figure 1" src="FitSynthetic-fig1.png" />
+<p>Let’s go ahead and perform a fit using a Gaussian</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">wavenumbers_syn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_in_reference_spectrum</span><span class="p">(</span><span class="n">ref_spec</span><span class="o">=</span><span class="n">Luci_path</span> <span class="o">+</span> <span class="s1">&#39;ML/Reference-Spectrum-R</span><span class="si">%i</span><span class="s1">-</span><span class="si">%s</span><span class="s1">.fits&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">resolution</span><span class="p">,</span> <span class="n">filter_</span><span class="p">),</span><span class="n">hdr_dict</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;FILTER&quot;</span><span class="p">:</span><span class="n">filter_</span><span class="p">})</span>  <span class="c1"># Normally done internally by LUCI</span>
+<span class="n">fit</span> <span class="o">=</span> <span class="n">lfit</span><span class="o">.</span><span class="n">Fit</span><span class="p">(</span><span class="n">spectrum</span><span class="o">=</span><span class="n">spectrum</span><span class="p">,</span>
+               <span class="n">axis</span><span class="o">=</span><span class="n">spectrum_axis</span><span class="p">,</span>
+               <span class="n">wavenumbers_syn</span><span class="o">=</span><span class="n">wavenumbers_syn</span><span class="p">,</span>
+               <span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
+               <span class="n">lines</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span><span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span>
+               <span class="n">vel_rel</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+               <span class="n">sigma_rel</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+               <span class="nb">filter</span><span class="o">=</span><span class="n">filter_</span><span class="p">,</span>
+               <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+               <span class="n">bayes_bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bayes_method</span><span class="o">=</span><span class="s1">&#39;emcee&#39;</span><span class="p">,</span>
+               <span class="n">uncertainty_bool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fit_dict</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>  <span class="c1"># Run fit</span>
+
+<span class="c1"># Plot fit</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;spectrum&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">fit_dict</span><span class="p">[</span><span class="s1">&#39;fit_vector&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fit vector&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">14800</span><span class="p">,</span> <span class="mi">15300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="Gaussian Fit" src="FitSynthetic-fig2.png" />
+<p>Ok, that fit looks pretty great!</p>
+<p>We can calculate the uncertainty lower bound in km/s and compare it to our fit error. Let’s do this for H$alpha$. The wavenumber is 15244.4 cm$^{-1}$. The step resolution (which we can get from <cite>fit_dict[‘axis_step’]</cite> is 2.524 cm$^{-1}$. We can calculate the velocity resolution as:</p>
+<div class="math">
+<p><span class="math">\Delta v = c \cdot{} \frac{\Delta \nu}{\nu_0}  = 299,792 \text{km/s} * \Bigg(\frac{2.524 \text{cm^{-1}}}{15244.4\text{cm^{-1}}}\Bigg) \approx 49.6 \text{km/s}$$</span></p>
+</div><p>In the uncertainties documentation, we demonstrated that $$delta mu = frac{sqrt{2}cdot{}text{FWHM}}{text{SNR}cdot{} sqrt{N}}$$ for a single line. For multiple lines, we have</p>
+<div class="math">
+<p><span class="math">\delta \mu_{multi} \approx \delta \mu_{single} \cdot{} \frac{1}{\sqrt{M}}</span></p>
+</div><p>Again, following the calculations from the documentation, we know</p>
+<div class="math">
+<p><span class="math">\delta \mu = \frac{ \sqrt{2} \cdot{} 49.64 \text{km/s}^{-1} }{ 100 \cdot{} \sqrt{10} } \approx 0.222 \text{km/s}</span></p>
+</div><p>So</p>
+<div class="math">
+<p><span class="math">\delta \mu_{multi} \approx  0.1 \text{km/s}</span></p>
+</div><p>since we are fitting 5 lines simultaneously.</p>
+<p>Let’s extract the velocity error from our fit and compare it with the theoretical value.</p>
+<div class="line-block">
+<div class="line">The Halpha velocity error is 0.91 km/s.</div>
+</div>
+<p>Well they are pretty darn close!</p>
+<p>Now, this works for a Gaussian fit. For a sincgauss fit, the calculation becomes more complex because we have to use an effective SNR and the FWHM of the sincgauss function. For high resolution, the contribution of the sinc lobes is minimized, so the Gaussian dominates. Practically, this means that the estimate we have for the Gaussian is OK for the sincgauss in high resolution observations.</p>
+<p>Let’s see what we get for a sincgauss fit.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fit</span> <span class="o">=</span> <span class="n">lfit</span><span class="o">.</span><span class="n">Fit</span><span class="p">(</span><span class="n">spectrum</span><span class="o">=</span><span class="n">spectrum</span><span class="p">,</span>
+           <span class="n">axis</span><span class="o">=</span><span class="n">spectrum_axis</span><span class="p">,</span>
+           <span class="n">wavenumbers_syn</span><span class="o">=</span><span class="n">wavenumbers_syn</span><span class="p">,</span>
+           <span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;sincgauss&#39;</span><span class="p">,</span>
+           <span class="n">lines</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Halpha&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6583&#39;</span><span class="p">,</span> <span class="s1">&#39;NII6548&#39;</span><span class="p">,</span><span class="s1">&#39;SII6716&#39;</span><span class="p">,</span> <span class="s1">&#39;SII6731&#39;</span><span class="p">],</span>
+           <span class="n">vel_rel</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+           <span class="n">sigma_rel</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+           <span class="nb">filter</span><span class="o">=</span><span class="n">filter_</span><span class="p">,</span>
+           <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+           <span class="n">uncertainty_bool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fit_dict</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>  <span class="c1"># Run fit</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;spectrum&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spectrum_axis</span><span class="p">,</span> <span class="n">fit_dict</span><span class="p">[</span><span class="s1">&#39;fit_vector&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fit vector&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">14800</span><span class="p">,</span> <span class="mi">15300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">Halpha_vel_error</span> <span class="o">=</span> <span class="n">fit_dict</span><span class="p">[</span><span class="s1">&#39;vels_errors&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The Halpha velocity error is </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">Halpha_vel_error</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> km/s.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">The Halpha velocity error is 0.37 km/s.</div>
+</div>
+<img alt="Sincgauss Fit" src="FitSynthetic-fig3.png" />
+<p>In this case, the velocity error is slightly smaller. This is reasonable because the sincgauss is a better model for the underlying spectrum! This can also be the case since the effective FWHM can be more narrow (i.e. a smaller value) when taking into account the sinc function.</p>
+<p>I hope this has been instructive!</p>
+</section>
+
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="example_synthetic_spectrum.html" class="btn btn-neutral float-left" title="Example Synthetic Spectrum" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="example_double_fit.html" class="btn btn-neutral float-right" title="Fitting Double Components" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

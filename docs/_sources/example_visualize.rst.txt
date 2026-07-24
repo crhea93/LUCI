@@ -9,10 +9,8 @@ found as a python file in "LUCI/Examples/viewer.py".
 .. code-block:: python
 
     # Imports
-    import sys
     import numpy as np
-    sys.path.insert(0, '/home/carterrhea/Documents/LUCI/')  # Location of Luci
-    from LuciBase import Luci
+    from luci import SitelleCube
 
 
 Inputs
@@ -24,7 +22,6 @@ the name of the object, the resolution (which isn't actually used here), and the
 
 .. code-block:: python
 
-    Luci_path = '/home/carterrhea/Documents/LUCI/'
     cube_dir = '/home/carterrhea/Documents/Luci_test'  # Path to data cube
     cube_name = 'NGC6946_SN3'  # don't add .hdf5 extension
     object_name = 'NGC6946'
@@ -38,7 +35,8 @@ We can now read in the cube and visualize the cube!
 
 .. code-block:: python
 
-  cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, mdn=True)
+  cube = SitelleCube(cube_path=cube_dir+'/'+cube_name, output_dir=cube_dir,
+                     object_name=object_name, redshift=redshift, resolution=resolution, mdn=True)
   cube.visualize()
 
 

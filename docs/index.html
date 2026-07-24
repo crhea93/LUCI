@@ -6,15 +6,15 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to LUCI’s documentation! &mdash; LUCI v.1.0.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+  <title>Welcome to LUCI’s documentation! &mdash; LUCI 1.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="shortcut icon" href="_static/LuciLogo.png"/>
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=6c7b0eaa"></script>
+      <script src="_static/documentation_options.js?v=6efca38a"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -46,9 +46,11 @@
               <p class="caption" role="heading"><span class="caption-text">Prerequisites:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="howLuciWorks.html">How LUCI Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit_options.html">Fit Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="newFilter.html">Adding a New Filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Example Modules:</span></p>
@@ -63,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_fit_snr.html">Example SNR Calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_pixel.html">Fit Pixel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_synthetic_spectrum.html">Example Synthetic Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_synthetic.html">Fit Mock Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wvt.html">WVT Example</a></li>
@@ -209,6 +212,17 @@ Carter Rhea et al 2021 Res. Notes AAS 12 276</p>
 <li class="toctree-l2"><a class="reference internal" href="howLuciWorks.html#how-we-calculate">How we calculate</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#luci-path-is-now-optional"><code class="docutils literal notranslate"><span class="pre">Luci_path</span></code> is now optional</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#package-and-class-names">Package and class names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#module-layout">Module layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#configuring-a-fit">Configuring a fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#errors-instead-of-exit">Errors instead of <code class="docutils literal notranslate"><span class="pre">exit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#output-messages">Output messages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#what-changed-in-the-results">What changed in the results</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Uncertainties</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="uncertainties.html#likelihood-function">Likelihood Function</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncertainties.html#noise-calculation">Noise Calculation</a></li>
@@ -219,6 +233,14 @@ Carter Rhea et al 2021 Res. Notes AAS 12 276</p>
 <li class="toctree-l1"><a class="reference internal" href="wavelength_corrections.html">Wavelength Correction</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="wavelength_corrections.html#heliocentric-correction">Heliocentric Correction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="wavelength_corrections.html#skyline-correction">Skyline Correction</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="newFilter.html">Adding a New Filter</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="newFilter.html#step-1-get-the-instrument-parameters">Step 1: Get the instrument parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="newFilter.html#step-2-add-the-transmission-curve">Step 2: Add the transmission curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="newFilter.html#step-3-add-the-wavenumber-windows">Step 3: Add the wavenumber windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="newFilter.html#step-4-build-the-reference-spectrum-and-train-the-network">Step 4: Build the reference spectrum and train the network</a></li>
+<li class="toctree-l2"><a class="reference internal" href="newFilter.html#step-5-fit-a-cube">Step 5: Fit a cube</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">MIT License</a></li>
@@ -257,6 +279,7 @@ Carter Rhea et al 2021 Res. Notes AAS 12 276</p>
 <li class="toctree-l2"><a class="reference internal" href="example_synthetic_spectrum.html#create-spectrum">Create Spectrum</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="example_fit_synthetic.html">Fit Mock Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_double_fit.html">Fitting Double Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize.html">How to use LUCI Visualize</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="example_visualize.html#inputs">Inputs</a></li>

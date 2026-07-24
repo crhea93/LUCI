@@ -19,14 +19,11 @@ Let's start of with the usual slew of commands.
 .. code-block:: python
 
     # Imports
-    import sys
-    sys.path.insert(0, '/media/carterrhea/carterrhea/SIGNALS/LUCI/')  # Location of Luci
-    from LUCI.LuciSim import Spectrum
+    from luci.simulation import Spectrum
     import matplotlib.pyplot as plt
     from astropy.io import fits
     import numpy as np
     import LUCI.LuciFit as lfit
-    import keras
 
 
 
@@ -121,10 +118,15 @@ On the other hand, the Bayesian approach seems to always achieve the correct val
   fit = lfit.Fit(spectrum, spectrum_axis, wavenumbers_syn, 'sincgauss',
                  ['Halpha', 'NII6583', 'NII6548','SII6716', 'SII6731', 'Halpha'],
                  [1,1,1,1,1,2], [1,1,1,1,1,2],
-                 keras.models.load_model('/media/carterrhea/carterrhea/SIGNALS/LUCI/ML/R5000-PREDICTOR-I-SN3')
+                 ML_bool=True, filter='SN3', resolution=5000,
                  bayes_bool=True
                )
   fit_dict = fit.fit()
+
+Note that you no longer hand ``Fit`` a loaded network. Give it ``ML_bool=True`` plus the
+``filter`` and ``resolution`` it needs, and LUCI resolves the matching ONNX predictor
+from ``ML/onnx/`` itself -- loading it once per process rather than once per spectrum. See
+:ref:`howluciworks` for details.
 
 And let's visualize that fit..
 

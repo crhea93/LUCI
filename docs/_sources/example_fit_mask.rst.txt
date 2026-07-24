@@ -11,10 +11,8 @@ for M33_FIELD7 SN1.
 .. code-block:: python
 
     # Imports
-    import sys
-    sys.path.insert(0, '/media/carterrhea/carterrhea/SIGNALS/LUCI/')  # Location of Luci
-    from LuciBase import Luci
-    import LUCI.LuciPlotting as lplt
+    from luci import SitelleCube
+    import luci.viz.plotting as lplt
 
 We now will set the required parameters. We are also going to be using our machine learning algorithm to get the initial guesses.
 
@@ -22,7 +20,6 @@ We now will set the required parameters. We are also going to be using our machi
 
     #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
-    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
     cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN1.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7_SN1'
@@ -35,7 +32,8 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
+    cube = SitelleCube(cube_path=cube_dir+'/'+cube_name, output_dir=cube_dir,
+                       object_name=object_name, redshift=redshift, resolution=resolution)
 
 The output will look something like this:
 

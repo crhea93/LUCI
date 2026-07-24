@@ -61,6 +61,57 @@ Note that $\text{coeff}=\frac{1.20671}{\pi*FWHM\_COEFF}$ where the FWHM\_COEFF e
 is there because of the sinc function's definition, and the 1.20671 is the factor used to go between FWHM and sigma.
 
 
+Flux calibration
+^^^^^^^^^^^^^^^^
+
+Every expression above is an amplitude times a width, so **the flux inherits whatever units the
+data cube is in**. The ``erg/s/cm^2/Ang`` written above is only true if the cube itself is flux
+calibrated.
+
+That is not always the case. ORB's newer *level 3* cubes are stored **in counts**, with the
+conversion held in the header rather than applied to the data. ORB documents the level scheme in
+``HDFCube.get_level``:
+
++---------+------------------------------------------------------------------+
+| Level   | Units of the stored data                                         |
++=========+==================================================================+
+| 1, 2    | already ``erg/cm^2/s/Ang``                                       |
++---------+------------------------------------------------------------------+
+| 2.5     | already ``erg/cm^2/s/Ang`` (CFHT variant, calibration hard        |
+|         | written, vector kept as ``flambda2``)                            |
++---------+------------------------------------------------------------------+
+| 3       | **counts**; calibrate with                                       |
+|         | ``spectrum *= flambda / dimz / exposure_time``                    |
++---------+------------------------------------------------------------------+
+
+`LUCI` handles this for you. On reading a cube she checks the ``flux_calibration`` header keyword
+(or ``BUNIT`` on the older DR1-style headers) and, if the data are in counts, multiplies the cube
+by ``flambda / step_nb / exposure_time`` before anything else happens. The flux, amplitude and
+continuum maps are then genuinely in ``erg/cm^2/s/Ang``.
+
+.. code-block:: python
+
+    cube = SitelleCube(cube_path=cube_path, output_dir=output_dir,
+                       object_name=object_name, redshift=redshift, resolution=resolution)
+    cube.flux_calibrated   # True once the conversion has been applied
+
+If you would rather fit the raw counts, turn it off:
+
+.. code-block:: python
+
+    cube = SitelleCube(..., flux_calibration=False)
+
+`LUCI` then logs a warning so that the units of the resulting maps are not a surprise. She also
+warns if a cube says it is uncalibrated but carries no usable ``flambda``, in which case the maps
+stay in counts and the axis labels are wrong.
+
+.. note::
+   ORB is not self-consistent here: ``HDFCube.to_fits`` multiplies by ``flambda`` alone, leaving
+   out the ``/dimz/exposure_time``, which for a typical SN4 cube is a factor of 17822. `LUCI`
+   follows the ``get_level`` docstring, which is the form that reproduces published surface
+   brightnesses.
+
+
 How we calculate
 ----------------
 Once we have a spectrum, we do two things: we normalize the spectrum by the maximum amplitude
@@ -84,8 +135,50 @@ values between 10 and 200 km/s. You can find more information on this at
 We estimate the amplitude by taking the maximum value of spectrum corresponding to the
 estimated position plus or minus 2 channels.
 
-Since we understand that machine learning is not everyone's cup of tea, we have
-an alternative method to calculate the initial guesses.
+The networks are specific to a filter *and* a resolution, paired with a reference spectrum
+``Reference-Spectrum-R<resolution>-<FILTER>.fits`` that defines the axis every spectrum gets
+interpolated onto. If you need one for a filter or resolution that LUCI does not ship, see
+:ref:`newFilter` -- ``ML/TrainPredictor.py`` will build the reference spectrum, generate the
+synthetic training set, and train the network for you.
+
+How inference runs
+""""""""""""""""""
+**Inference runs on ONNX Runtime, not TensorFlow.** The networks were trained in Keras, but LUCI
+ships them converted to ONNX in ``ML/onnx/`` as
+``R<resolution>-PREDICTOR-I-<FILTER>.onnx`` (and ``...-PREDICTOR-I-MDN-<FILTER>.onnx`` for the
+mixture-density variants). Fitting therefore does **not** import TensorFlow at all.
+
+Three things follow from this, all of which matter in practice:
+
+* **Speed.** The predictor and its ONNX session are loaded once per process and reused for every
+  spectrum. Previously the Keras model was re-read from disk for *each pixel*, which dominated the
+  runtime of a full cube (measured: 5.7 s/pixel before, 3.0 s/pixel after, the remainder being the
+  actual fit).
+* **Install weight.** ONNX artifacts are roughly a third the size of the Keras SavedModels, and
+  ``onnxruntime`` is a far lighter dependency than TensorFlow.
+* **Fidelity.** Every converted model is checked against its Keras original on 200 spectra before
+  being shipped; all 39 agree to float32 precision (worst deviation 6.7e-4 km/s). Any model that
+  fails that gate is reported and *not* published.
+
+If you retrain a network, convert it with::
+
+    uv run tools/convert_models_to_onnx.py --all --validate
+
+That script pins its own legacy-TensorFlow environment via a PEP 723 header, so it builds what it
+needs on the fly and your project environment never sees TensorFlow.
+
+Internally the predictors sit behind a small interface (``LUCI.ml.ParameterPredictor``), so the
+fitting code asks for a velocity/broadening estimate without knowing or caring which backend answers.
+
+If machine learning is not your cup of tea
+""""""""""""""""""""""""""""""""""""""""""
+Pass ``ML_bool=False`` and LUCI estimates the initial guesses directly from the data: it locates the
+brightest peak in the fit window to seed the velocity and uses a default broadening, so the optimiser
+always starts somewhere sensible. The same fallback kicks in automatically if no trained network
+exists for your filter/resolution combination -- LUCI tells you it is doing so rather than failing.
+
+You can also supply your own priors explicitly with ``initial_values=[velocity, broadening]``, which
+freezes those parameters instead of fitting them.
 
 Fitting Function
 ^^^^^^^^^^^^^^^^
@@ -148,7 +241,7 @@ we strongly suggest you use the *sincgauss* function :)
 
 Transmission
 ^^^^^^^^^^^^
-We take into account the transmission of the SITTELLE filters (SN1, SN2, and SN3).
+We take into account the transmission of the SITTELLE filters (SN1, SN2, SN3, SN4, C3, and C4).
 We take the true transmission as the mean of the transmission at different filter angles;
 the raw data can be found [here](https://www.cfht.hawaii.edu/Instruments/Sitelle/SITELLE_filters.php).
 The transmission is then applied to the spectrum in the following manner:

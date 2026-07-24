@@ -36,8 +36,14 @@ If you want to obtain a broadening parameter we strongly suggest using the **sin
 
 Are other filters available?
 ############################
-YES! However, for the C1, C2, and C4 filters, we can only handle the case of redshift ~ 0.25 objects.
+YES! LUCI supports SN1, SN2, SN3, SN4, and C1 through C4. However, for the C1, C2, and C4 filters,
+we can only handle the case of redshift ~ 0.25 objects.
 Please note this is the intended science case for these filters.
+
+Note that SN4 is the narrow Halpha filter (652 - 665 nm), so only Halpha and the [NII] doublet
+fall inside it -- the [SII] doublet does not.
+
+If your filter is not in that list, see :ref:`newFilter` for how to add it.
 
 
 Common Errors
