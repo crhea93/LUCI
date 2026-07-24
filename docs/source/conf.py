@@ -27,8 +27,15 @@ html_theme_options = {
     'logo_only': True,
     'display_version': False,
 }
-# The full version, including alpha/beta/rc tags
-release = 'v.1.0.0'
+# The full version, including alpha/beta/rc tags. Read from the installed package so it
+# cannot drift from pyproject.toml the way the hard-coded 'v.1.0.0' did (the package was at
+# 1.2.0 by the time anyone noticed).
+try:
+    from importlib.metadata import version as _version
+
+    release = _version('luci-sitelle')
+except Exception:  # docs can still build from a source tree with nothing installed
+    release = 'unknown'
 
 
 # -- General configuration ---------------------------------------------------
