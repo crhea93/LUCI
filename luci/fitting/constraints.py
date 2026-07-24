@@ -109,7 +109,8 @@ def velocity_constraints(vel_rel, lines, line_dict, axis_step):
                             line_=ind_unique_line,
                             line0_=ind_0_line,
                             sign_=sign: (
-                                axis_step - sign_ * (relative_velocity(x, i_, line_) - relative_velocity(x, i0_, line0_))
+                                axis_step
+                                - sign_ * (relative_velocity(x, i_, line_) - relative_velocity(x, i0_, line0_))
                             ),
                         }
                     )

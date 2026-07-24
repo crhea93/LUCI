@@ -1,1 +1,15 @@
-"""Higher-level analyses built on a fitted cube: WVT binning, component maps."""
+"""Higher-level analyses built on a fitted cube: WVT binning, component maps, fit quality."""
+
+from luci.analysis.quality import (
+    apply_quality_mask,
+    broadening_bound_kms,
+    fit_quality_mask,
+    fit_quality_report,
+)
+
+__all__ = [
+    "apply_quality_mask",
+    "broadening_bound_kms",
+    "fit_quality_mask",
+    "fit_quality_report",
+]
