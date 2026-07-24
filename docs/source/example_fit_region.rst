@@ -20,8 +20,6 @@ Finally, we use the LuciFit Fit object to fit the region.
 .. code-block:: python
 
     # Imports
-    import sys
-    sys.path.insert(0, '/media/carterrhea/carterrhea/SIGNALS/LUCI/')  # Location of Luci
     from luci import SitelleCube
     import luci.viz.plotting as lplt
     import matplotlib.pyplot as plt
@@ -35,7 +33,6 @@ We now will set the required parameters. We are also going to be using our machi
 
     #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
-    Luci_path = '/home/carterrhea/Documents/LUCI/'
     cube_dir = '/home/carterrhea/Documents/LUCI_test'  # Path to data cube
     cube_name = 'NGC6946_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'NGC6946'
@@ -48,7 +45,8 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = SitelleCube(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
+    cube = SitelleCube(cube_path=cube_dir+'/'+cube_name, output_dir=cube_dir,
+                       object_name=object_name, redshift=redshift, resolution=resolution)
 
 Let's extract and visualize a background region we defined in ds9:
 

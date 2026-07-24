@@ -91,7 +91,8 @@ continuum maps are then genuinely in ``erg/cm^2/s/Ang``.
 
 .. code-block:: python
 
-    cube = SitelleCube(luci_path, cube_path, output_dir, object_name, redshift, resolution)
+    cube = SitelleCube(cube_path=cube_path, output_dir=output_dir,
+                       object_name=object_name, redshift=redshift, resolution=resolution)
     cube.flux_calibrated   # True once the conversion has been applied
 
 If you would rather fit the raw counts, turn it off:

@@ -9,8 +9,6 @@ found as a jupyter notebook in "LUCI/Examples/Create-Mock-Spectrum.ipynb".
 .. code-block:: python
 
     # Imports
-  import sys
-  sys.path.insert(0, '/home/carterrhea/Documents/LUCI/')  # Location of Luci
   from luci.simulation import Spectrum
   import matplotlib.pyplot as plt
 

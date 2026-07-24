@@ -26,7 +26,6 @@ The next step is to load/read the HDF5 data cube. To do this we invoke LUCI by i
 
   #Set Parameters
   # Using Machine Learning Algorithm for Initial Guess
-    Luci_path = '/home/carterrhea/Documents/LUCI/'
     cube_dir = '/mnt/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7'
@@ -38,7 +37,8 @@ From there we will load the HDF5 cube following this command as usual.
 
 .. code-block:: python
 
-  cube = SitelleCube(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
+  cube = SitelleCube(cube_path=cube_dir+'/'+cube_name, output_dir=cube_dir,
+                     object_name=object_name, redshift=redshift, resolution=resolution)
 
 
 And extract a background region.
@@ -46,7 +46,7 @@ And extract a background region.
 
 .. code-block:: python
 
- bkg_axis, bkg_sky = cube.extract_spectrum_region(Luci_path+'Examples/regions/bkg_M33.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
+ bkg_axis, bkg_sky = cube.extract_spectrum_region('regions/bkg_M33.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
 
 Now we can call the wvt_fit_region function that will create the weighted Voronoï region and fit the bins to produce the maps we need.
 

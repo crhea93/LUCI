@@ -17,9 +17,7 @@ This example can be found as a jupyter notebook in "LUCI/Examples/SN3_freeze.ipy
 .. code-block:: python
 
     # Imports
-    import sys
     import numpy as np
-    sys.path.insert(0, '/home/carterrhea/Documents/LUCI/')  # Location of Luci
     from luci import SitelleCube
 
 
@@ -32,7 +30,6 @@ the name of the object, the resolution (which isn't actually used here), and the
 
 .. code-block:: python
 
-    Luci_path = '/home/carterrhea/Documents/LUCI/'
     cube_dir = '/mnt/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7'

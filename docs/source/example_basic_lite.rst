@@ -26,8 +26,6 @@ directory as the hdf5 file.
 .. code-block:: python
 
     # Imports
-    import sys
-    sys.path.insert(0, '/media/carterrhea/carterrhea/SIGNALS/LUCI/')  # Location of Luci
     from luci import SitelleCube
     import luci.viz.plotting as lplt
 
@@ -36,7 +34,6 @@ Set the required parameters. We will be using our machine learning algorithm to 
 .. code-block:: python
 
     # Initialize paths and set parameters
-    Luci_path = '/home/carterrhea/Documents/LUCI/'
     cube_dir = '/export/home/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_SN3'  # don't add .hdf5 extension
     object_name = 'M33'
@@ -50,7 +47,8 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = SitelleCube(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
+    cube = SitelleCube(cube_path=cube_dir+'/'+cube_name, output_dir=cube_dir,
+                       object_name=object_name, redshift=redshift, resolution=resolution)
 
 The output will look something like this:
 
@@ -69,7 +67,7 @@ Let's extract a background region and take a look at it. The background region i
 
 .. code-block:: python
 
-  bkg_axis, bkg_sky = cube.extract_spectrum_region(Luci_path+'Examples/regions/bkg_M33.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
+  bkg_axis, bkg_sky = cube.extract_spectrum_region('regions/bkg_M33.reg', mean=True)  # We use mean=True to take the mean of the emission in the region instead of the sum
   lplt.plot_spectrum(bkg_axis, bkg_sky)
   
 .. image:: M33_BKG.png

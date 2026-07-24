@@ -19,8 +19,6 @@ Let's start of with the usual slew of commands.
 .. code-block:: python
 
     # Imports
-    import sys
-    sys.path.insert(0, '/media/carterrhea/carterrhea/SIGNALS/LUCI/')  # Location of Luci
     from luci.simulation import Spectrum
     import matplotlib.pyplot as plt
     from astropy.io import fits
@@ -120,13 +118,13 @@ On the other hand, the Bayesian approach seems to always achieve the correct val
   fit = lfit.Fit(spectrum, spectrum_axis, wavenumbers_syn, 'sincgauss',
                  ['Halpha', 'NII6583', 'NII6548','SII6716', 'SII6731', 'Halpha'],
                  [1,1,1,1,1,2], [1,1,1,1,1,2],
-                 ML_bool=True, filter='SN3', resolution=5000, Luci_path=Luci_path,
+                 ML_bool=True, filter='SN3', resolution=5000,
                  bayes_bool=True
                )
   fit_dict = fit.fit()
 
 Note that you no longer hand ``Fit`` a loaded network. Give it ``ML_bool=True`` plus the
-``filter``, ``resolution`` and ``Luci_path`` it needs, and LUCI resolves the matching ONNX predictor
+``filter`` and ``resolution`` it needs, and LUCI resolves the matching ONNX predictor
 from ``ML/onnx/`` itself -- loading it once per process rather than once per spectrum. See
 :ref:`howluciworks` for details.
 

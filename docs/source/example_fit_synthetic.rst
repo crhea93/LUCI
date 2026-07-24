@@ -9,9 +9,8 @@ Since we are fitting a mock spectrum and not one pulled from the cube, we will c
 
 .. code-block:: python
 
-    import sys
-    Luci_path = '/home/crhea/Documents/LUCI/'
-    sys.path.insert(0, Luci_path)  # Location of Luci
+    from luci.io.assets import default_luci_path
+    Luci_path = default_luci_path()
     from luci.simulation import Spectrum
     import matplotlib.pyplot as plt
     import numpy as np
@@ -70,7 +69,6 @@ Let's go ahead and perform a fit using a Gaussian
                    sigma_rel=[1,1,1,1,1],
                    filter=filter_,
                    resolution=resolution,
-                   Luci_path=Luci_path,
                    bayes_bool=False, bayes_method='emcee',
                    uncertainty_bool=True)
     fit_dict = fit.fit()  # Run fit
@@ -136,7 +134,6 @@ Let's see what we get for a sincgauss fit.
                sigma_rel=[1,1,1,1,1],
                filter=filter_,
                resolution=resolution,
-               Luci_path=Luci_path,
                uncertainty_bool=True)
     fit_dict = fit.fit()  # Run fit
 

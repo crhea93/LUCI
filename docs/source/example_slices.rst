@@ -53,15 +53,11 @@ We should start by import the appropriate modules.
 
     # Imports
     import os
-    import sys
     from astropy.io import fits
     import numpy as np
     import matplotlib.pyplot as plt
 
     # Get location of LUCI
-    path = os.path.abspath(os.path.pardir)
-    Luci_path = path + '/'
-    sys.path.insert(0, path)  # add LUCI to the available paths
 
     from luci import SitelleCube
     import luci.viz.plotting as lplt
@@ -91,7 +87,8 @@ With these parameters set, we can invoke `LUCI` with the following command:
 
 .. code-block:: python
 
-    cube = SitelleCube(luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
+    cube = SitelleCube(cube_path=cube_dir+'/'+cube_name, output_dir=cube_dir,
+                       object_name=object_name, redshift=redshift, resolution=resolution, ML_bool=ML_bool)
 
 To extract the slice, we simply need to call `cube.slicing()` and provide the appropriate lines. Let's just extract H$\alpha$. A special thanks to Louis-Simon Guité for this implementation.
 

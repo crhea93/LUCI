@@ -43,12 +43,11 @@ The next step is to load/read the HDF5 data cube. To do this we **invoke** LUCI
 by initiating an instance of her along with the proper parameters. First we
 define the correct parameters:
 
-1. luci_path = /the/path/to/LUCI/  # Path to Luci
-2. cube_dir = '/path/to/data/cube'  # Path to data cube
-3. cube_name = 'name_of_data_cube'  # don't add .hdf5 extension
-4. object_name = 'name_of_object'
-5. redshift = 0.01  # Redshift of object
-6. resolution = 5000  # Resolution of the ML reference spectrum
+1. cube_dir = '/path/to/data/cube'  # Path to data cube
+2. cube_name = 'name_of_data_cube'  # don't add .hdf5 extension
+3. object_name = 'name_of_object'
+4. redshift = 0.01  # Redshift of object
+5. resolution = 5000  # Resolution of the ML reference spectrum
 
 
 For example:
@@ -57,7 +56,6 @@ For example:
 
     #Set Parameters
     # Using Machine Learning Algorithm for Initial Guess
-    Luci_path = '/home/carterrhea/Documents/LUCI/'
     cube_dir = '/home/carterrhea/Documents/LUCI_test'  # Path to data cube
     cube_name = 'NGC6946_SN3'  # don't add .hdf5 extension
     object_name = 'NGC6946'
@@ -84,7 +82,6 @@ the velocity, broadening, and amplitude of the line, please simply include the a
 .. code-block:: python
 
     # Not Using Machine Learning Algorithm for Initial Guess
-    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'
     cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7'
@@ -97,7 +94,8 @@ With these parameters set, we can invoke `LUCI` with the following command:
 
 .. code-block:: python
 
-    cube = SitelleCube(luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
+    cube = SitelleCube(cube_path=cube_dir+'/'+cube_name, output_dir=cube_dir,
+                       object_name=object_name, redshift=redshift, resolution=resolution, ML_bool=ML_bool)
 
 This reads the HDF5 file, transforms the data cube into a 3d numpy array, and updates the header to be of an appropriate form.
 It also reads in the machine learning reference spectrum (we need the x-axis for interpolation purposes) and
@@ -180,7 +178,6 @@ For clarity, we reproduce the commands required to obtain fits here:
 
 .. code-block:: python
 
-    Luci_path = '/media/carterrhea/carterrhea/SIGNALS/LUCI/'  # Path to Luci
     cube_dir = '/media/carterrhea/carterrhea/M33'  # Path to data cube
     cube_name = 'M33_Field7_SN3.merged.cm1.1.0'  # don't add .hdf5 extension
     object_name = 'M33_Field7'
