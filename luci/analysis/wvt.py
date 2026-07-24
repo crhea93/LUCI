@@ -856,6 +856,7 @@ def create_wvt(
     n_threads,
     snr_floor=None,
     snr_method=1,
+    snr_percentile=None,
 ):
     """
     Written by Benjamin Vigneron.
@@ -881,6 +882,10 @@ def create_wvt(
             cm-1) spans Halpha and both NII lines, so this is a cut on the whole complex.
         snr_method: Which `create_snr_map` estimator to use (default 1, as before; 2 is
             flux-in-window over the noise standard deviation)
+        snr_percentile: Set `snr_floor` to this percentile of the S/N map instead of an absolute
+            value (default None). The useful cut depends on the estimator and the cube -- method 1
+            is not a calibrated S/N -- so asking for "the brightest 15% of the field"
+            (snr_percentile=85) is more portable than guessing a number.
 
     Return:
         The int32 bin label map, as written to disk
@@ -892,6 +897,14 @@ def create_wvt(
     logger.info("#----------------Algorithm Part 1----------------#")
     start = time.time()
     snr_path = cube.output_dir + "/SNR/" + cube.object_name + "_SNR.fits"
+    if snr_percentile is not None:
+        if snr_floor is not None:
+            raise ValueError("Give either snr_floor or snr_percentile, not both.")
+        snr_values = fits.open(snr_path)[0].data
+        snr_floor = float(np.nanpercentile(snr_values, snr_percentile))
+        logger.info(
+            "S/N percentile %.4g of the map is %.4g; binning the pixels above it.", snr_percentile, snr_floor
+        )
     Pixels, x_min, x_max, y_min, y_max = read_in(snr_path, snr_floor=snr_floor)
     Nearest_Neighbors(Pixels)
     Init_bins = Bin_Acc(Pixels, pixel_size, stn_target, roundness_crit)
@@ -1038,6 +1051,7 @@ def wvt_fit_region(
     initial_values=[False],
     snr_floor=None,
     snr_method=1,
+    snr_percentile=None,
 ):
     """
     Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
@@ -1066,6 +1080,8 @@ def wvt_fit_region(
             below it are left unfitted rather than cropped, so the maps stay full-field. For SN4 the
             S/N flux window spans Halpha and both NII lines, so this cuts on the whole complex.
         snr_method: Which `create_snr_map` estimator to use (default 1)
+        snr_percentile: Set the floor to this percentile of the S/N map rather than an absolute
+            value (default None), e.x. 85 to bin the brightest 15% of the field
 
     Return:
         Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).
@@ -1083,6 +1099,7 @@ def wvt_fit_region(
         n_threads,
         snr_floor=snr_floor,
         snr_method=snr_method,
+        snr_percentile=snr_percentile,
     )
     logger.info("#----------------WVT Fitting--------------#")
     # Fit the bins

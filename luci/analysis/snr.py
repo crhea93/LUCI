@@ -110,6 +110,16 @@ def create_snr_map(
     else:
         raise UnsupportedFilterError(f"SNR calculation is not implemented for filter {cube.hdr_dict['FILTER']!r}.")
 
+    # Channel bounds of the flux and noise windows. These depend only on the spectral axis, so they
+    # are the same for every pixel -- they used to be recomputed inside the loop, which rebuilt
+    # `np.array(cube.spectrum_axis)` and ran an argmin over it four times per pixel. On a full
+    # SITELLE field that is 17 million array constructions to arrive at four constants.
+    spectrum_axis = np.asarray(cube.spectrum_axis)
+    flux_lo = int(np.argmin(np.abs(spectrum_axis - flux_min)))
+    flux_hi = int(np.argmin(np.abs(spectrum_axis - flux_max)))
+    noise_lo = int(np.argmin(np.abs(spectrum_axis - noise_min)))
+    noise_hi = int(np.argmin(np.abs(spectrum_axis - noise_max)))
+
     def SNR_calc(i):
         y_pix = y_min + i
         snr_local = np.zeros(x_max - x_min)
@@ -143,21 +153,22 @@ def create_snr_map(
             else:
                 pass  # bkgType == None"""
 
-            min_ = np.argmin(np.abs(np.array(cube.spectrum_axis) - flux_min))
-            max_ = np.argmin(np.abs(np.array(cube.spectrum_axis) - flux_max))
-            flux_in_region = np.nansum(sky[min_:max_])
-            # Subtract off continuum estimate
-            clipped_spec = astrostats.sigma_clip(sky, sigma=1, masked=False, copy=False, maxiters=10)
-            # Now take the mean value to serve as the continuum value
-            try:
-                cont_val = np.nanmin(clipped_spec)
-            except ValueError:  # If the clipped spec doesn't contain any elements
-                cont_val = np.nanmin(sky)
-            flux_in_region -= cont_val * (max_ - min_)  # Need to scale by the number of steps along wavelength axis
-            min_noise = np.argmin(np.abs(np.array(cube.spectrum_axis) - noise_min))
-            max_noise = np.argmin(np.abs(np.array(cube.spectrum_axis) - noise_max))
-            out_region = sky[min_noise:max_noise]
-            std_out_region = np.nanstd(out_region)
+            out_region = sky[noise_lo:noise_hi]
+            if method != 1:
+                # Only method 2 uses the integrated flux, and the sigma clip that estimates its
+                # continuum runs up to ten passes over the spectrum. Doing it for method 1 as well
+                # cost more than everything method 1 actually needs, on every pixel of the field.
+                flux_in_region = np.nansum(sky[flux_lo:flux_hi])
+                # Subtract off continuum estimate
+                clipped_spec = astrostats.sigma_clip(sky, sigma=1, masked=False, copy=False, maxiters=10)
+                # Now take the mean value to serve as the continuum value
+                try:
+                    cont_val = np.nanmin(clipped_spec)
+                except ValueError:  # If the clipped spec doesn't contain any elements
+                    cont_val = np.nanmin(sky)
+                # Need to scale by the number of steps along wavelength axis
+                flux_in_region -= cont_val * (flux_hi - flux_lo)
+                std_out_region = np.nanstd(out_region)
             if method == 1:
                 signal = np.nanmax(sky) - np.nanmean(sky)
                 noise = np.abs(np.nanstd(out_region))
