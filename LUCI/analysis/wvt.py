@@ -545,3 +545,309 @@ def WVT(Bin_list_init, Pixel_Full, StN_Target, ToL, pixel_length, image_dir):
         print("Stopped WVT algorithm after 5 steps.")
     print("There are a total of " + str(len(bins_with_SN) + 1) + " bins!")
     return bins_with_SN
+
+
+# ---------------------------------------------------------------------------
+# Cube-level entry points, moved off the Luci god-class. Each takes the cube.
+# ---------------------------------------------------------------------------
+
+import glob  # noqa: E402
+import time  # noqa: E402
+
+from astropy.nddata import Cutout2D  # noqa: E402
+from astropy.wcs import WCS  # noqa: E402
+from tqdm import tqdm  # noqa: E402
+
+from LUCI.engine.maps import FitMaps  # noqa: E402
+from LUCI.engine.runner import deep_image_cutout  # noqa: E402
+
+
+def create_wvt(
+    cube, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL, n_threads
+):
+    """
+    Written by Benjamin Vigneron.
+
+    Functionality to create a weighted Voronoi tesselation map from a region and according to
+    arguments passed by the user. It creates a folder containing all the Voronoi bins that can
+    then be used for the fitting procedure.
+
+    Args:
+        x_min_init: Minimal X value
+        x_max_init: Maximal X value
+        y_min_init: Minimal Y value
+        y_max_init: Maximal Y value
+        pixel_size: Pixel size of the image. For SITELLE use pixel_size = 0.0000436.
+        stn_target: Signal-to-Noise target value for the Voronoi bins.
+        roundness_crit: Roundness criteria for the pixel accretion into bins
+        ToL: Convergence tolerance parameter for the SNR of the bins
+        n_threads: Number of threads to use
+
+
+    """
+    print("#----------------WVT Algorithm----------------#")
+    print("#----------------Creating SNR Map--------------#")
+    Pixels = []
+    cube.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=n_threads)
+    print("#----------------Algorithm Part 1----------------#")
+    start = time.time()
+    SNR_map = fits.open(cube.output_dir + "/SNR/" + cube.object_name + "_SNR.fits")[0].data
+    SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
+    Pixels, x_min, x_max, y_min, y_max = read_in(cube.output_dir + "/SNR/" + cube.object_name + "_SNR.fits")
+    Nearest_Neighbors(Pixels)
+    Init_bins = Bin_Acc(Pixels, pixel_size, stn_target, roundness_crit)
+    plot_Bins(Init_bins, x_min, x_max, y_min, y_max, stn_target, cube.output_dir, "bin_acc")
+    total_time = time.gmtime(float(time.time() - start))
+    print("The first part of the algorithm took %s." % (time.strftime("%H:%M:%S", total_time)))
+    print("#----------------Algorithm Part 2----------------#")
+    Final_Bins = WVT(Init_bins, Pixels, stn_target, ToL, pixel_size, cube.output_dir)
+    print("#----------------Algorithm Complete--------------#")
+    plot_Bins(Final_Bins, x_min, x_max, y_min, y_max, stn_target, cube.output_dir, "final")
+    Bin_data(Final_Bins, Pixels, x_min, y_min, cube.output_dir, "WVT_data")
+    print("#----------------Bin Mapping--------------#")
+    pixel_x = []
+    pixel_y = []
+    bins = []
+    bin_map = np.zeros((x_max - x_min, y_max - y_min))
+    j = 0
+    i = 0
+    with open(cube.output_dir + "/WVT_data.txt", "rt") as myfile:
+        myfile = myfile.readlines()[3:]
+        for myline in myfile:
+            myline = myline.strip(" \n")
+            data = [int(s) for s in myline.split() if s.isdigit()]
+            pixel_x.append(data[0])
+            pixel_y.append(data[1])
+            bins.append(data[2])
+    for pix_x, pix_y in zip(pixel_x, pixel_y):
+        bin_map[pix_x, pix_y] = int(bins[i])
+        i += 1
+    # bin_map = np.rot90(bin_map)
+    if not os.path.exists(cube.output_dir + "/Numpy_Voronoi_Bins"):
+        os.mkdir(cube.output_dir + "/Numpy_Voronoi_Bins")
+    if os.path.exists(cube.output_dir + "/Numpy_Voronoi_Bins"):
+        files = glob.glob(cube.output_dir + "/Numpy_Voronoi_Bins/*.npy")
+        for f in files:
+            os.remove(f)
+    for bin_num in list(range(len(Final_Bins))):
+        bool_bin_map = np.zeros(cube.cube_final.shape[:2], dtype=bool)
+        for a, b in zip(np.where(bin_map == bin_num)[0][:], np.where(bin_map == bin_num)[1][:]):
+            bool_bin_map[x_min_init + a, y_min_init + b] = True
+        np.save(cube.output_dir + "/Numpy_Voronoi_Bins/bool_bin_map_%i" % j, bool_bin_map)
+        j += 1
+
+
+def fit_wvt(
+    cube,
+    lines,
+    fit_function,
+    vel_rel,
+    sigma_rel,
+    bkg=None,
+    bayes_bool=False,
+    uncertainty_bool=False,
+    n_threads=1,
+    initial_values=[False],
+    n_stoch=1,
+    stn_target=10,
+):
+    """
+    Function that takes the wvt mapping created using `cube.create_wvt()` and fits the bins.
+    Written by Benjamin Vigneron
+
+    Args:
+        lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
+        fit_function: Fitting function to use (e.x. 'gaussian')
+        vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+        sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
+        bkg: Background Spectrum (1D numpy array; default None)
+        bayes_bool: Boolean to determine whether or not to run Bayesian analysis
+        uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+        n_threads: Number of threads to use
+        initial_values: Initial values of velocity and broadening for fitting specific lines (must be list)
+        n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+        stn_target: Target signal to noise ratio (default 10)
+
+    Return:
+        Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D) and header for saving
+        figure.
+    """
+    x_min = 0
+    x_max = cube.cube_final.shape[0]
+    y_min = 0
+    y_max = cube.cube_final.shape[1]
+    maps = FitMaps.allocate(x_max - x_min, y_max - y_min, len(lines))
+    if len(initial_values) == 2:
+        # Obtain initial condition maps from files
+        vel_init = fits.open(initial_values[0])[0].data
+        broad_init = fits.open(initial_values[1])[0].data
+    ct = 0
+    if not os.path.exists(cube.output_dir + "/" + cube.object_name + "_deep.fits"):
+        cube.create_deep_image()
+    wcs = WCS(cube.header, naxis=2)
+    cutout = Cutout2D(
+        fits.open(cube.output_dir + "/" + cube.object_name + "_deep.fits")[0].data,
+        position=((x_max + x_min) / 2, (y_max + y_min) / 2),
+        size=(x_max - x_min, y_max - y_min),
+        wcs=wcs,
+    )
+    for bin_num in tqdm(list(range(len(os.listdir(cube.output_dir + "/Numpy_Voronoi_Bins/"))))):
+        bool_bin_map = cube.output_dir + "/Numpy_Voronoi_Bins/bool_bin_map_%i.npy" % bin_num
+        index = np.where(np.load(bool_bin_map) == True)
+        initial_conditions = None
+        for a, b in zip(index[0], index[1]):
+            # TODO: PASS INITIAL CONDITIONS
+            if False not in initial_values:  # If initial conditions were passed
+                initial_conditions = [vel_init[a, b], broad_init[a, b]]
+            else:
+                initial_conditions = [False]
+        bin_axis, bin_sky, bin_fit_dict = cube.fit_spectrum_region(
+            lines,
+            fit_function,
+            vel_rel,
+            sigma_rel,
+            region=bool_bin_map,
+            initial_values=initial_conditions,
+            bkg=bkg,
+            bayes_bool=bayes_bool,
+            uncertainty_bool=uncertainty_bool,
+            n_stoch=n_stoch,
+        )
+        for a, b in zip(index[0], index[1]):
+            maps.amplitudes[a, b] = bin_fit_dict["amplitudes"]
+            maps.fluxes[a, b] = bin_fit_dict["fluxes"]
+            maps.flux_errors[a, b] = bin_fit_dict["flux_errors"]
+            maps.broadenings[a, b] = bin_fit_dict["sigmas"]
+            maps.broadenings_errors[a, b] = bin_fit_dict["sigmas_errors"]
+            maps.chi2[a, b] = bin_fit_dict["chi2"]
+            maps.continuum[a, b] = bin_fit_dict["continuum"]
+            # Wrote continuum_error into continuum_fits, so the continuum map
+            # held the error and the error map stayed zero (B19).
+            maps.continuum_error[a, b] = bin_fit_dict["continuum_error"]
+            maps.velocities[a, b] = bin_fit_dict["velocities"]
+            maps.velocities_errors[a, b] = bin_fit_dict["vels_errors"]
+    maps.save(
+        cube.output_dir, cube.object_name, lines, cutout.wcs.to_header(), binning=1, suffix="_wvt_%i" % stn_target
+    )
+    return maps.velocities, maps.broadenings, maps.fluxes, maps.chi2, cutout.wcs.to_header()
+
+
+def wvt_fit_region(
+    cube,
+    x_min_init,
+    x_max_init,
+    y_min_init,
+    y_max_init,
+    lines,
+    fit_function,
+    vel_rel,
+    sigma_rel,
+    stn_target,
+    pixel_size=0.436,
+    roundness_crit=0.3,
+    ToL=1e-2,
+    bkg=None,
+    bayes_bool=False,
+    uncertainty_bool=False,
+    n_threads=1,
+    n_stoch=1,
+    initial_values=[False],
+):
+    """
+    Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
+
+    Args:
+        x_min_init: Minimal X value
+        x_max_init: Maximal X value
+        y_min_init: Minimal Y value
+        y_max_init: Maximal Y value
+        lines: Lines to fit (e.x. ['Halpha', 'NII6583'])
+        fit_function: Fitting function to use (e.x. 'gaussian')
+        vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
+        sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
+        stn_target: Signal-to-Noise target value for the Voronoi bins.
+        pixel_size: Pixel size of the image. For SITELLE use pixel_size = 0.0000436.
+        roundness_crit: Roundness criteria for the pixel accretion into bins
+        ToL: Convergence tolerance parameter for the SNR of the bins
+        bkg: Background Spectrum (1D numpy array; default None)
+        bayes_bool: Boolean to determine whether or not to run Bayesian analysis
+        uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
+        n_threads: Number of threads to use
+        initial_values: Initial values of velocity and broadening for fitting specific lines (must be list;
+        e.x. [velocity, broadening]; default [False])
+        n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+
+    Return:
+        Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).
+    """
+    # Call create wvt function to create the WVT map and numpy files corresponding to each bin
+    cube.create_wvt(
+        x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL, n_threads
+    )
+    print("#----------------WVT Fitting--------------#")
+    # Fit the bins
+    velocities_fits, broadenings_fits, flux_fits, chi2_fits, header = cube.fit_wvt(
+        lines,
+        fit_function,
+        vel_rel,
+        sigma_rel,
+        bkg=bkg,
+        bayes_bool=bayes_bool,
+        uncertainty_bool=uncertainty_bool,
+        n_threads=n_threads,
+        initial_values=initial_values,
+        n_stoch=n_stoch,
+        stn_target=stn_target,
+    )
+    output_name = cube.object_name + "_wvt_%i_1" % stn_target  # Add stn target prefix
+    for line_ in lines:
+        amp = fits.open(cube.output_dir + "/Amplitudes/" + output_name + "_" + line_ + "_Amplitude.fits")[0].data.T
+        flux = fits.open(cube.output_dir + "/Fluxes/" + output_name + "_" + line_ + "_Flux.fits")[0].data.T
+        flux_err = fits.open(cube.output_dir + "/Fluxes/" + output_name + "_" + line_ + "_Flux_err.fits")[0].data.T
+        vel = fits.open(cube.output_dir + "/Velocity/" + output_name + "_" + line_ + "_velocity.fits")[0].data.T
+        broad = fits.open(cube.output_dir + "/Broadening/" + output_name + "_" + line_ + "_broadening.fits")[0].data.T
+        vel_err = fits.open(cube.output_dir + "/Velocity/" + output_name + "_" + line_ + "_velocity_err.fits")[0].data.T
+        broad_err = fits.open(cube.output_dir + "/Broadening/" + output_name + "_" + line_ + "_broadening_err.fits")[
+            0
+        ].data.T
+        chi2 = fits.open(cube.output_dir + "/" + output_name + "_Chi2.fits")[0].data.T
+        cont = fits.open(cube.output_dir + "/" + output_name + "_continuum.fits")[0].data.T
+        fits.writeto(
+            cube.output_dir + "/Amplitudes/" + output_name + "_" + line_ + "_Amplitude.fits",
+            amp,
+            header,
+            overwrite=True,
+        )
+        fits.writeto(
+            cube.output_dir + "/Fluxes/" + output_name + "_" + line_ + "_Flux.fits", flux, header, overwrite=True
+        )
+        fits.writeto(
+            cube.output_dir + "/Fluxes/" + output_name + "_" + line_ + "_Flux_err.fits",
+            flux_err,
+            header,
+            overwrite=True,
+        )
+        fits.writeto(
+            cube.output_dir + "/Velocity/" + output_name + "_" + line_ + "_velocity.fits", vel, header, overwrite=True
+        )
+        fits.writeto(
+            cube.output_dir + "/Broadening/" + output_name + "_" + line_ + "_broadening.fits",
+            broad,
+            header,
+            overwrite=True,
+        )
+        fits.writeto(
+            cube.output_dir + "/Velocity/" + output_name + "_" + line_ + "_velocity_err.fits",
+            vel_err,
+            header,
+            overwrite=True,
+        )
+        fits.writeto(
+            cube.output_dir + "/Broadening/" + output_name + "_" + line_ + "_broadening_err.fits",
+            broad_err,
+            header,
+            overwrite=True,
+        )
+        fits.writeto(cube.output_dir + "/" + output_name + "_Chi2.fits", chi2, header, overwrite=True)
+        fits.writeto(cube.output_dir + "/" + output_name + "_continuum.fits", cont, header, overwrite=True)
+    return None

@@ -78,6 +78,22 @@ The safety net missed it too: `test_golden_baselines_recover_the_injected_physic
 line index 0. It now checks every line, and a second guard asserts that velocity-tied lines actually
 agree. Goldens were re-recorded in the same change; all ten ML/no-ML baselines moved.
 
+### B23. `pixel_list=True` fitted the whole cube — FIXED (restructure)
+**Where (was):** the pixel-list branch of `Luci.fit_region`
+**Now:** `LUCI/engine/selection.py::mask_from_pixel_list`
+**Test:** `tests/test_background_and_regions.py::test_pixel_list_selects_only_the_listed_pixels`
+
+```python
+mask = np.ones((shape), dtype=bool)   # every pixel already selected
+for pair in region:
+    mask[pair] = True                 # ...then set the listed ones True again
+```
+
+Starting from `np.ones` means the mask was already all-True, so setting the requested pixels changed
+nothing: `pixel_list=True` fitted **every pixel in the cube** instead of the handful asked for. Slow
+and silently wrong rather than an error. `resolve_mask` now handles all four region forms in one
+place, and an unrecognised value raises instead of printing a message and continuing with no mask.
+
 ### B2. `extract_spectrum(mean=True)` is a no-op — FIXED (Phase 5)
 **Where (was):** `Luci.extract_spectrum`
 **Fixed by:** counting every contributing spaxel instead of incrementing only inside the axis-init
@@ -208,7 +224,7 @@ quietly return.
 Defaults and array shapes assumed the standard SITELLE detector, so anything else — a trimmed cube, a
 test fixture, a future detector — silently mis-indexed or truncated.
 
-### B18. Editable installs serve a stale copy of the top-level modules — MITIGATED (Phase 5f)
+### B18. Editable installs serve a stale copy of the top-level modules — FIXED (restructure)
 **Where:** `[tool.hatch.build.targets.wheel.force-include]` in `pyproject.toml`
 **Test:** `tests/test_packaging.py::test_installed_top_level_module_is_not_stale`
 
@@ -229,8 +245,9 @@ uv sync --reinstall-package luci-sitelle
 ```
 
 The test is the real protection: it fails whenever the copy drifts, so the staleness cannot be silent.
-The proper fix lands in Phase 6, when `LuciBase.py` becomes a thin re-export shim over code that lives
-inside the editable-linked `LUCI/` package — a shim that never changes cannot go stale.
+**Now fixed properly:** the cube class moved to `LUCI/cube.py` (inside the editable-linked package)
+and `LuciBase.py` is a 7-line re-export shim. A shim that never changes cannot go stale, so the copy
+in site-packages stays correct on its own.
 
 ### B19. WVT fits wrote the continuum error into the continuum map — FIXED (Phase 5e)
 **Where (was):** the per-pixel scatter loop in `Luci.fit_wvt`

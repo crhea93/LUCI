@@ -15,7 +15,7 @@
 | 3 — Filter registry, numba removal, FitResult, `fitting/` package | ✅ done |
 | 4 — ONNX migration | ✅ core done (TF-drop from core deps remains) |
 | 5 — bug fixes, TF optional, orchestration deduplicated | ✅ done |
-| 6 — Compat shim & API surface | ⬜ not started |
+| 6 — Compat shim & API surface | 🟡 shims in place; lowercase rename outstanding |
 | 7 — Docs & examples | ⬜ not started |
 
 **Every bug in the register is fixed or mitigated** — B1–B18. See [REFACTOR_BUGS.md](REFACTOR_BUGS.md)
@@ -46,6 +46,45 @@ code) now lives in the filter registry as `pca_scale_indices`.
 
 New coverage: `tests/test_new_format_cube.py` exercises the new HDF5 layout, which had **none** — that
 absence is precisely how B15 survived.
+
+### FitConfig and PixelSelection
+`LUCI/config.py` groups the fit *options* into one validated `FitConfig`; `SpectrumFitter` still takes
+every individual keyword, so nothing breaks, but they are collected into a config internally and
+validated in one place. The three ad-hoc `check_*` methods moved onto it, and `LINE_DICT` is now
+defined once rather than copied across three modules.
+
+`LUCI/engine/selection.py::resolve_mask` replaces the region/mask/pixel-list `if` chain that each fit
+entry point re-implemented. It surfaced **B23**: the pixel-list branch started from `np.ones`, so
+`pixel_list=True` fitted the entire cube.
+
+A test asserts the keyword path and the config path produce bit-identical fits.
+
+### The package restructure
+The flat `LUCI/Luci*.py` modules are gone — every one is now a 3–25 line re-export shim over a module
+with an actual home:
+
+```
+LUCI/
+  cube.py            SitelleCube (was Luci, in LuciBase.py)   1009 lines
+  simulation.py      log.py
+  instrument/        filters.py  header.py
+  io/                hdf5.py  reference.py  outputs.py  assets.py
+  fitting/           spectrum_fitter.py (was Fit)  constraints.py  models.py
+                     parameters.py  bayes.py  result.py  components.py  uncertainties.py
+  engine/            runner.py  maps.py  selection.py  binning.py
+  background/        detection.py  pca.py  subtraction.py
+  analysis/          wvt.py  snr.py  slicing.py  skylines.py  components.py
+  viz/               plotting.py  visualize.py
+  ml/                base.py  onnx_backend.py  registry.py  mdn_architecture.py
+```
+
+`LuciBase.py` went from **2008 lines to a 7-line shim**; `LuciFit.py` from 1092 to 8. Nothing
+downstream had to change — every historical import still resolves.
+
+Bugs this surfaced: **B21** (sigma bounds on only the last line — ~65 km/s error on 2 of 5 lines),
+**B22** (`fit_absorption` always raised NameError), **B20** (`LuciMask` ran a hardcoded-path script at
+import), and it closed **B18** properly. Three extraction slips of my own were caught by ruff's `F821`
+undefined-name check, which is the concrete argument for widening lint onto moved code.
 
 ### Phase 5e outcome — the duplicated orchestration is gone
 `fit_cube`, `fit_region` and `fit_wvt` no longer hand-roll the same twelve-array allocation, parallel

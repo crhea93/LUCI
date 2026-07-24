@@ -10,6 +10,7 @@ from scipy import interpolate
 # from joblib.testing import param
 from scipy.optimize import minimize
 
+from LUCI.config import AVAILABLE_MODELS, LINE_DICT, FitConfig
 from LUCI.fitting.bayes import log_likelihood_bayes, log_probability, prior_transform
 from LUCI.fitting.constraints import (
     amplitude_constraints,
@@ -95,6 +96,7 @@ class SpectrumFitter:
         n_stoch=1,
         resolution=1000,
         Luci_path=None,
+        config=None,
     ):
         """
         Args:
@@ -128,35 +130,41 @@ class SpectrumFitter:
             resolution: Nominal resolution of cube
             Luci_path: Path to LUCI repo
         """
-        self.line_dict = {
-            "Halpha": 656.280,
-            "NII6583": 658.341,
-            "NII6548": 654.803,
-            "SII6716": 671.647,
-            "SII6731": 673.085,
-            "OII3726": 372.603,
-            "OII3729": 372.882,
-            "OIII4959": 495.891,
-            "OIII5007": 500.684,
-            "Hbeta": 486.133,
-            "OH": 649.873,
-            "HalphaC4": 807.881,
-            "NII6583C4": 810.417,
-            "NII6548C4": 804.7,  # 806.062,
-            "OIII5007C2": 616.342,
-            "OIII4959C2": 610.441821,
-            "HbetaC2": 598.429723,
-            "OII3729C1": 459.017742,
-            "OII3726C1": 458.674293,
-            "OI6364": 636.3776,
-            "FeXIV5303": 530.286,
-            "NI5200": 520.026,
-            "FeVII5158": 515.89,
-            "HeII5411": 541.152,
-            "FeXI6624": 662.43,
-            "NiXV6703": 670.332,
-        }
-        self.available_functions = ["gaussian", "sinc", "sincgauss", "gauss"]
+        # Options are grouped in a FitConfig. Callers may pass one, or keep using
+        # the individual keywords -- they are collected into a config either way,
+        # so validation happens in exactly one place.
+        if config is None:
+            config = FitConfig(
+                lines=list(lines),
+                model_type=model_type,
+                vel_rel=list(vel_rel),
+                sigma_rel=list(sigma_rel),
+                nii_cons=nii_cons,
+                ML_bool=ML_bool,
+                mdn=mdn,
+                initial_values=initial_values,
+                spec_min=spec_min,
+                spec_max=spec_max,
+                obj_redshift=obj_redshift,
+                n_stoch=n_stoch,
+                uncertainty_bool=uncertainty_bool,
+                bayes_bool=bayes_bool,
+                bayes_method=bayes_method,
+            )
+        self.config = config
+        # Unpack onto self so the rest of the class (and its public attributes)
+        # keep working unchanged.
+        model_type = config.model_type
+        lines, vel_rel, sigma_rel = config.lines, config.vel_rel, config.sigma_rel
+        nii_cons, ML_bool, mdn = config.nii_cons, config.ML_bool, config.mdn
+        initial_values = config.initial_values
+        spec_min, spec_max = config.spec_min, config.spec_max
+        obj_redshift, n_stoch = config.obj_redshift, config.n_stoch
+        uncertainty_bool = config.uncertainty_bool
+        bayes_bool, bayes_method = config.bayes_bool, config.bayes_method
+
+        self.line_dict = dict(LINE_DICT)
+        self.available_functions = list(AVAILABLE_MODELS) + ["gauss"]
         self.sky_lines = sky_lines
         self.sky_lines_scale = sky_lines_scale
         self.obj_redshift_corr = 1 + obj_redshift
@@ -228,9 +236,7 @@ class SpectrumFitter:
         self.Luci_path = Luci_path
         # Check that lines inputted by user are in line_dict
         if sky_lines is None:
-            self.check_lines()
-        self.check_fitting_model()
-        self.check_lengths()
+            self.check_lines()  # sky-line fits bypass FitConfig validation
         self.get_ML_model()
 
     def get_ML_model(self):

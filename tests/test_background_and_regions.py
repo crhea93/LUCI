@@ -167,7 +167,10 @@ def test_no_hardcoded_detector_dimensions_remain():
     """
     import re
 
-    source = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "LuciBase.py")).read()
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Scans LUCI/cube.py: LuciBase.py is now only a re-export shim, so pointing
+    # this at it would pass vacuously.
+    source = open(os.path.join(root, "LUCI", "cube.py")).read()
     offenders = [
         line.strip()
         for line in source.splitlines()
@@ -183,3 +186,41 @@ def test_pca_scale_indices_raises_for_an_uncharacterised_filter(sn3_cube_noml):
     """
     with pytest.raises(PCABackgroundUnsupportedError):
         pca_scale_indices("C1", sn3_cube_noml.spectrum_axis)
+
+
+# --------------------------------------------------------------------------
+# B23 -- pixel-list selection
+# --------------------------------------------------------------------------
+
+
+def test_pixel_list_selects_only_the_listed_pixels():
+    """
+    B23: the pixel-list branch started from ``np.ones`` -- every pixel already
+    selected -- and then set the listed pixels True, so ``pixel_list=True``
+    silently fitted the entire cube instead of the handful of pixels asked for.
+    """
+    from LUCI.engine.selection import resolve_mask
+
+    mask = resolve_mask([(2, 3), (4, 5)], header=None, cube_shape=(10, 10), pixel_list=True)
+    assert mask.dtype == bool
+    assert mask.sum() == 2, "expected exactly the two listed pixels"
+    assert mask[2, 3] and mask[4, 5]
+
+
+def test_resolve_mask_passes_through_a_boolean_array():
+    from LUCI.engine.selection import resolve_mask
+
+    given = np.zeros((6, 6), dtype=bool)
+    given[1, 1] = True
+    out = resolve_mask(given, header=None, cube_shape=(6, 6))
+    np.testing.assert_array_equal(out, given)
+
+
+def test_resolve_mask_rejects_an_unknown_region_type():
+    """An unrecognised value used to print a message and carry on with no mask."""
+    from LUCI.engine.selection import resolve_mask
+
+    with pytest.raises(ValueError, match="Unrecognised region file"):
+        resolve_mask("region.txt", header=None, cube_shape=(4, 4))
+    with pytest.raises(ValueError, match="No region given"):
+        resolve_mask(None, header=None, cube_shape=(4, 4))

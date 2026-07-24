@@ -113,7 +113,6 @@ extend-exclude = [
     # excludes LUCI/LuciFit.py, LuciFunctions.py, etc. but NOT new subpackages
     # like LUCI/instrument/, so freshly written code is held to the rules.
     "LUCI/Luci*.py",
-    "LuciBase.py",
     "LuciAbsorp.py",
     "luci_absorption_fit_outline.py",
 ]
@@ -135,6 +134,7 @@ ignore = [
 # import order, but not yet to the rules that would require editing logic --
 # that happens when each is actually rewritten.
 "LUCI/analysis/*.py" = ["F841", "E712", "E722", "E711", "F401"]
+"LUCI/cube.py" = ["F841", "E712", "E722", "E711", "F401", "F403", "F405"]
 "LUCI/background/pca.py" = ["F841", "E712", "E722", "F401"]
 "LUCI/viz/*.py" = ["F841", "E712", "E722", "F401"]
 "LUCI/background/*.py" = ["F841", "E712", "E722", "F401"]
