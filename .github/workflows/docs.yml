@@ -1,0 +1,61 @@
+# Rebuild the documentation and commit the result.
+#
+# The published site is GitHub Pages serving the `docs/` folder of the default branch
+# (see `Documentation` in pyproject.toml), so the built HTML has to live in the repo.
+# This automates the build+commit that was previously done by hand, which is why
+# docs/source/howLuciWorks.rst and the HTML beside it kept drifting apart.
+#
+# No loop: the build only writes to docs/ *outside* docs/source/, and the trigger only
+# watches docs/source/. The pushed commit therefore cannot re-trigger this workflow.
+
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/source/**"
+      - "luci/**" # autodoc pulls docstrings out of the package
+      - "pyproject.toml"
+      - ".github/workflows/docs.yml"
+  # So the site can be regenerated without pushing a docs change
+  workflow_dispatch:
+
+# A second push while a build is in flight would race on the commit
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and commit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # autodoc imports the package, and conf.py reads the version from its metadata,
+      # so LUCI itself has to be installed, not just sphinx.
+      - name: Install (locked)
+        run: uv sync --locked --group docs --python 3.10
+
+      # Output is docs/, whose own source subdirectory sphinx leaves untouched.
+      - name: Build
+        run: uv run --no-sync sphinx-build -b html docs/source docs
+
+      - name: Commit if the build changed anything
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          if git diff --cached --quiet; then
+            echo "Docs are already up to date."
+            exit 0
+          fi
+          git commit -m "docs: rebuild from ${GITHUB_SHA::7} [skip ci]"
+          git push
