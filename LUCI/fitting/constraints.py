@@ -28,13 +28,15 @@ def sigma_group_constraints(sigma_rel):
         if len(inds_unique) > 1:
             ind_0_ = inds_unique[0]
             for ind_unique_ in inds_unique[1:]:
-                constraints.append({
-                    "type": "eq",
-                    "fun": lambda x, ind_unique=ind_unique_, ind_0=ind_0_: (
-                        (SPEED_OF_LIGHT * x[3 * ind_0 + 2]) / x[3 * ind_0 + 1]
-                        - (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]
-                    ),
-                })
+                constraints.append(
+                    {
+                        "type": "eq",
+                        "fun": lambda x, ind_unique=ind_unique_, ind_0=ind_0_: (
+                            (SPEED_OF_LIGHT * x[3 * ind_0 + 2]) / x[3 * ind_0 + 1]
+                            - (SPEED_OF_LIGHT * x[3 * ind_unique + 2]) / x[3 * ind_unique + 1]
+                        ),
+                    }
+                )
     return constraints
 
 
@@ -81,17 +83,25 @@ def velocity_constraints(vel_rel, lines, line_dict, axis_step):
             ind_0_line = lines[ind_0]
             for ind_unique in inds_unique[1:]:
                 ind_unique_line = lines[ind_unique]
-                constraints.append({
-                    "type": "ineq",
-                    "fun": lambda x, ind_unique_=ind_unique, ind_0_=ind_0,
-                    ind_unique_line_=ind_unique_line, ind_0_line_=ind_0_line: (
-                        SPEED_OF_LIGHT
-                        * ((1e7 / x[3 * ind_unique_ + 1] - line_dict[ind_unique_line_]) / line_dict[ind_unique_line_])
-                        - SPEED_OF_LIGHT
-                        * ((1e7 / x[3 * ind_0_ + 1] - line_dict[ind_0_line_]) / line_dict[ind_0_line_])
-                        - axis_step
-                    ),
-                })
+                constraints.append(
+                    {
+                        "type": "ineq",
+                        "fun": lambda x,
+                        ind_unique_=ind_unique,
+                        ind_0_=ind_0,
+                        ind_unique_line_=ind_unique_line,
+                        ind_0_line_=ind_0_line: (
+                            SPEED_OF_LIGHT
+                            * (
+                                (1e7 / x[3 * ind_unique_ + 1] - line_dict[ind_unique_line_])
+                                / line_dict[ind_unique_line_]
+                            )
+                            - SPEED_OF_LIGHT
+                            * ((1e7 / x[3 * ind_0_ + 1] - line_dict[ind_0_line_]) / line_dict[ind_0_line_])
+                            - axis_step
+                        ),
+                    }
+                )
     return constraints
 
 
@@ -101,14 +111,16 @@ def nii_doublet_constraint(lines, model_type, sinc_width):
     nii_6583 = np.argwhere(np.array(lines) == "NII6583")[0][0]
 
     if model_type == "sincgauss":
+
         def func_(x):
             def flux(index):
                 return x[3 * index] * (
-                    (np.sqrt(2 * np.pi) * x[3 * index + 2])
-                    / sps.erf(x[3 * index + 2] / (np.sqrt(2) * sinc_width))
+                    (np.sqrt(2 * np.pi) * x[3 * index + 2]) / sps.erf(x[3 * index + 2] / (np.sqrt(2) * sinc_width))
                 )
+
             return (1 / 3) * flux(nii_6583) - flux(nii_6548)
     else:  # 'gaussian' and 'sinc' share the simple amplitude*sigma form
+
         def func_(x):
             return (1 / 3) * (x[3 * nii_6583] * x[3 * nii_6583 + 2]) - x[3 * nii_6548] * x[3 * nii_6548 + 2]
 
@@ -121,10 +133,12 @@ def distinct_position_constraints(lines):
     inds = list(range(len(lines)))
     ind_0 = inds[0]
     for ind_unique in inds[1:]:
-        constraints.append({
-            "type": "ineq",
-            "fun": lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] + x[3 * ind_0 + 1] + 1,
-        })
+        constraints.append(
+            {
+                "type": "ineq",
+                "fun": lambda x, ind_unique=ind_unique, ind_0=ind_0: x[3 * ind_unique + 1] + x[3 * ind_0 + 1] + 1,
+            }
+        )
     return constraints
 
 
@@ -132,14 +146,18 @@ def amplitude_constraints(lines):
     """Keep line amplitudes and the continuum inside the normalised range."""
     constraints = []
     for ind_unique in range(len(lines)):
-        constraints.append({
-            "type": "ineq",
-            "fun": lambda x, ind_unique=ind_unique: -x[3 * ind_unique] + 1.1,
-        })
-        constraints.append({
-            "type": "ineq",
-            "fun": lambda x, ind_unique=ind_unique: x[3 * ind_unique] + 1e-8,
-        })
+        constraints.append(
+            {
+                "type": "ineq",
+                "fun": lambda x, ind_unique=ind_unique: -x[3 * ind_unique] + 1.1,
+            }
+        )
+        constraints.append(
+            {
+                "type": "ineq",
+                "fun": lambda x, ind_unique=ind_unique: x[3 * ind_unique] + 1e-8,
+            }
+        )
     constraints.append({"type": "ineq", "fun": lambda x: -x[-1] + 0.99})
     constraints.append({"type": "ineq", "fun": lambda x: x[-1] + 1e-8})
     return constraints

@@ -36,6 +36,7 @@ def _solution(sigmas):
 # B21
 # --------------------------------------------------------------------------
 
+
 def test_sigma_bounds_constrain_every_line():
     """One positivity bound and one upper bound per line, each on its own sigma."""
     bounds = sigma_bounds([1, 1, 1], _preserve_late_binding_bug=False)
@@ -60,9 +61,7 @@ def test_late_binding_bug_left_all_but_the_last_line_unconstrained():
     """
     buggy = sigma_bounds([1, 1, 1], _preserve_late_binding_bug=True)
     x = _solution([-5.0, -5.0, 3.0])  # only the last line is sane
-    assert all(c["fun"](x) >= 0 for c in buggy), (
-        "expected the buggy bounds to miss the first two lines entirely"
-    )
+    assert all(c["fun"](x) >= 0 for c in buggy), "expected the buggy bounds to miss the first two lines entirely"
     # The fixed version catches it.
     fixed = sigma_bounds([1, 1, 1], _preserve_late_binding_bug=False)
     assert any(c["fun"](x) < 0 for c in fixed)
@@ -77,6 +76,7 @@ def test_sigma_upper_bound_is_ten():
 # --------------------------------------------------------------------------
 # The other builders
 # --------------------------------------------------------------------------
+
 
 def test_sigma_group_ties_are_satisfied_by_equal_dispersions():
     """Lines in one group must share a velocity dispersion, not a raw sigma."""

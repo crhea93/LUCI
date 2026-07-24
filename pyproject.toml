@@ -134,10 +134,12 @@ ignore = [
 # Relocated verbatim from the old flat modules. They are held to formatting and
 # import order, but not yet to the rules that would require editing logic --
 # that happens when each is actually rewritten.
-"LUCI/analysis/*.py" = ["F841", "E712", "E722", "F401"]
+"LUCI/analysis/*.py" = ["F841", "E712", "E722", "E711", "F401"]
+"LUCI/background/pca.py" = ["F841", "E712", "E722", "F401"]
 "LUCI/viz/*.py" = ["F841", "E712", "E722", "F401"]
 "LUCI/background/*.py" = ["F841", "E712", "E722", "F401"]
 "LUCI/fitting/bayes.py" = ["F841", "E712", "E722", "F401"]
+"LUCI/fitting/spectrum_fitter.py" = ["F841", "E712", "E722", "E731"]
 "LUCI/fitting/uncertainties.py" = ["F841", "E712", "E722"]
 "LUCI/instrument/header.py" = ["F841", "E712", "E722"]
 "LUCI/io/*.py" = ["F841", "E712", "E722"]

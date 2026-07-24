@@ -189,12 +189,10 @@ def test_golden_baselines_recover_the_injected_physics(luci_factory, cube_truth_
     # Every line, not just Halpha.  Checking only index 0 is what let B21 hide:
     # NII6583 and SII6731 were ~65 km/s off while Halpha looked perfect.
     for index, line in enumerate(SN3_LINES):
-        assert vel[:, :, index].mean() == pytest.approx(truth["velocity_kms"], abs=10.0), (
-            f"{line} velocity is off"
-        )
-        assert broad[:, :, index].mean() == pytest.approx(truth["broadening_kms"], abs=10.0), (
-            f"{line} broadening is off"
-        )
+        assert vel[:, :, index].mean() == pytest.approx(truth["velocity_kms"], abs=10.0), f"{line} velocity is off"
+        assert broad[:, :, index].mean() == pytest.approx(
+            truth["broadening_kms"], abs=10.0
+        ), f"{line} broadening is off"
 
 
 @pytest.mark.slow

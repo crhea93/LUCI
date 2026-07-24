@@ -360,6 +360,18 @@ imported it, which is why it went unnoticed. Found while bisecting the TensorFlo
 Moved to `scripts/` rather than deleted: it records how the background masking was explored, and is
 honest about being a script now instead of shipping inside the package.
 
+### B22. `fit_absorption` raised `NameError` on every call — FIXED (restructure)
+**Where (was):** `Fit.fit_absorption`, now `LUCI/fitting/spectrum_fitter.py`
+
+It built four initial-guess scalars (`ampl_init`, `pos_init`, `pos_sigma`, `cont_init`), never
+assembled them, then called `minimize(nll, initial, ...)` with `initial` undefined — so the method
+raised `NameError` however it was invoked. It also assigned `parameters = soln.x` and returned
+nothing.
+
+Now assembles `initial = [ampl_init, pos_init, pos_sigma, cont_init]` and returns the solution.
+Nothing in the repo calls it, so this could not regress anything — but it also means the fix is
+**untested**: the method is now runnable rather than verified.
+
 ---
 
 ## Conventions worth a decision (not bugs)
