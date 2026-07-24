@@ -6,6 +6,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits
+from scipy.spatial import cKDTree
 from sklearn.neighbors import NearestNeighbors
 
 # --------------------------------------- WVT ALGORITHM ITSELF BELOW THIS ---------------------------------------#
@@ -236,7 +237,21 @@ class Pixel:
         self.assigned_bin = None
 
 
-def read_in(SNR_map):
+def read_in(SNR_map, snr_floor=None):
+    """
+    Build the pixel list from an S/N map, optionally skipping pixels with no signal.
+
+    Args:
+        SNR_map: Path to the S/N map FITS written by `create_snr_map`
+        snr_floor: Skip pixels at or below this S/N (default None, keep every pixel).
+            Most of a SITELLE field is blank sky. Binning it is not just wasted work -- accretion
+            and refinement both scale with the pixel count -- it is wasted on bins that never reach
+            the target and are dropped by the `0.5 * StN_Target` test anyway. Pixels left out keep
+            `BIN_MAP_UNASSIGNED` and are simply not fitted, so the maps stay full-field.
+
+    Return:
+        (Pixels, x_min, x_max, y_min, y_max), the bounds being the full extent of the map
+    """
     # Collect Pixel Data
     logger.info(os.getcwd())
     hdu_list = fits.open(SNR_map, memmap=True)
@@ -253,9 +268,21 @@ def read_in(SNR_map):
     for col in range(int(x_len)):
         for row in range(int(y_len)):
             SNR = counts[row][col]
+            if snr_floor is not None and not (SNR > snr_floor):  # `not >` also drops NaN
+                continue
             Pixels.append(Pixel(pixel_count, x_min + col, y_min + row, SNR))  # Bottom Left Corner!
             pixel_count += 1
-    logger.info("We have " + str(pixel_count) + " Pixels.")
+    if snr_floor is not None:
+        logger.info(
+            "We have %d Pixels above S/N %.3g (of %d in the map).", pixel_count, snr_floor, x_len * y_len
+        )
+        if pixel_count == 0:
+            raise ValueError(
+                "No pixel exceeds the S/N floor of %.3g, so there is nothing to bin. The S/N map "
+                "peaks at %.3g." % (snr_floor, np.nanmax(counts))
+            )
+    else:
+        logger.info("We have " + str(pixel_count) + " Pixels.")
     return Pixels, x_min, x_max, y_min, y_max
 
 
@@ -282,7 +309,10 @@ def Nearest_Neighbors(pixel_list):
 
 
 def dist(p1x, p1y, p2x, p2y):
-    return np.sqrt((p1x - p2x) ** 2 + (p1y - p2y) ** 2)
+    # math.sqrt rather than np.sqrt: both are correctly rounded so the value is identical, but this
+    # is called with scalars tens of millions of times per accretion run and np.sqrt pays for
+    # building a numpy scalar on every one of them.
+    return math.sqrt((p1x - p2x) ** 2 + (p1y - p2y) ** 2)
 
 
 def closest_node(Bin_current, unassigned_pixels):
@@ -298,9 +328,20 @@ def closest_node(Bin_current, unassigned_pixels):
                 closest_val = new_dist
                 closest_pixel = pix_neigh
     if closest_val == 1e16:
-        # None of the neighbors work so just pick a random unassigned pixel
-        dist_list = [dist(p1x, p1y, pixel.pix_x, pixel.pix_y) for pixel in unassigned_pixels]
-        closest_pixel = unassigned_pixels[dist_list.index(min(dist_list))]
+        # Every neighbour is taken, so fall back to the nearest unassigned pixel anywhere. This scan
+        # is O(unassigned) and happens roughly once per bin, so as a Python list comprehension it was
+        # half the cost of accretion. Done as array arithmetic it makes the same choice -- squaring is
+        # monotonic, and `np.argmin` and `list.index(min(...))` both take the first minimum -- for a
+        # fraction of the cost.
+        count = len(unassigned_pixels)
+        xs = np.fromiter((p.pix_x for p in unassigned_pixels), dtype=float, count=count)
+        ys = np.fromiter((p.pix_y for p in unassigned_pixels), dtype=float, count=count)
+        xs -= p1x
+        ys -= p1y
+        xs *= xs
+        ys *= ys
+        xs += ys
+        closest_pixel = unassigned_pixels[int(np.argmin(xs))]
     return closest_pixel
 
 
@@ -400,27 +441,32 @@ def reassign_pixels(bin, bins_successful, sucessful_centroids):
     if not sucessful_centroids:
         logger.warning("reassign_pixels called with no successful bins; %d pixels left unassigned", len(bin.pixels))
         return None
+    # Centroids as an array once, rather than a fresh Python list of distances per candidate per
+    # pixel. Rejected candidates are masked out instead of deleted, which keeps the tie-breaking:
+    # deleting preserved the relative order of what remained, so the first minimum was always the
+    # lowest surviving index, and that is what `np.argmin` over the masked distances returns.
+    centroids = np.asarray(sucessful_centroids, dtype=float)
     for pixel in bin.pixels:
         pixel.clear_bin()
-        potential_bins = bins_successful[:]
-        potential_centroids = sucessful_centroids[:]
+        alive = np.ones(len(bins_successful), dtype=bool)
         while pixel.assigned_to_bin == False:
-            try:
-                dists = [dist(pixel.pix_x, pixel.pix_y, centx, centy) for (centx, centy) in potential_centroids]
-                closest_bin_index = dists.index(min(dists))
-                closest_bin = potential_bins[closest_bin_index]
-                if closest_bin.availabilty == False and len(potential_centroids) > 1:
-                    del potential_centroids[closest_bin_index]
-                    potential_bins.remove(closest_bin)
-                else:
-                    pixel.add_to_bin(closest_bin)
-                    closest_bin.add_pixel(pixel)
-            except (IndexError, ValueError):
+            if not alive.any():
                 # No candidate bin left. `pass` here spun forever: the loop only
                 # exits once the pixel is assigned, so a raise every iteration
                 # meant an infinite loop rather than an error (B24).
                 logger.warning("no bin available for pixel (%s, %s)", pixel.pix_x, pixel.pix_y)
                 break
+            dx = centroids[:, 0] - pixel.pix_x
+            dy = centroids[:, 1] - pixel.pix_y
+            distances = dx * dx + dy * dy  # Squared: monotonic, so the minimiser is unchanged
+            distances[~alive] = np.inf
+            closest_bin_index = int(np.argmin(distances))
+            closest_bin = bins_successful[closest_bin_index]
+            if closest_bin.availabilty == False and alive.sum() > 1:
+                alive[closest_bin_index] = False
+            else:
+                pixel.add_to_bin(closest_bin)
+                closest_bin.add_pixel(pixel)
     return None
 
 
@@ -511,17 +557,144 @@ def converged_met(Bins, ToL):
         return False
 
 
+def _brute_force_nearest(pix_x, pix_y, cent_x, cent_y, scale_length, chunk_bytes=128 << 20):
+    """
+    Every pixel against every bin, in chunks bounded by `chunk_bytes`.
+
+    Distances are compared squared, against squared scale lengths: sqrt is monotonic so the
+    minimiser is unchanged, and ties go to the lowest bin index either way -- `np.argmin` and
+    `list.index(min(...))` both take the first minimum.
+    """
+    n_bins = int(cent_x.size)
+    best = np.empty(pix_x.size, dtype=np.intp)
+    scale_sq = scale_length**2
+    rows = max(1, int(chunk_bytes // (8 * n_bins)))
+    for start in range(0, pix_x.size, rows):
+        stop = min(start + rows, pix_x.size)
+        dx = pix_x[start:stop, None] - cent_x[None, :]
+        dy = pix_y[start:stop, None] - cent_y[None, :]
+        dx *= dx
+        dy *= dy
+        dx += dy
+        dx /= scale_sq[None, :]
+        best[start:stop] = np.argmin(dx, axis=1)
+    return best
+
+
+def _best_of_candidates(metric, indices):
+    """
+    Winning bin per pixel, resolving ties to the lowest bin index.
+
+    The candidate columns come back from the tree ordered by distance, not by bin number, so an
+    `argmin` over them would break ties by proximity. The brute-force original broke them by index,
+    and the tessellation depends on it, so pick the smallest bin number among the exact minima.
+    """
+    best_val = metric.min(axis=1, keepdims=True)
+    tied = np.where(metric == best_val, indices, np.iinfo(np.intp).max)
+    return tied.min(axis=1), best_val[:, 0]
+
+
+def nearest_weighted_bin(
+    pix_x, pix_y, cent_x, cent_y, scale_length, chunk_bytes=128 << 20, max_candidates=64
+):
+    """
+    For each pixel, the index of the bin minimising distance / scale_length.
+
+    This is the assignment step of the weighted Voronoi tessellation, and it is the single most
+    expensive thing in a WVT run. Comparing every pixel against every bin is O(N_pixels * N_bins):
+    for a full SITELLE field (4.2 million pixels, ~341,000 bins) that is 1.4e12 distance
+    evaluations per iteration and `WVT` runs up to five of them -- about 18 days as a Python list
+    comprehension, and still ~8 hours vectorised, because vectorising only buys a constant factor.
+
+    So the candidates are narrowed with a k-d tree first. A bin can only win if it is *spatially*
+    close, and the weights bound how far "close" reaches: having found some candidate scoring
+    `U = d/s`, any bin beating it needs `d_i < U * s_i <= U * max(s)`. So if the k-th nearest
+    centroid already lies beyond `U * max(s)`, no unqueried bin can win and the answer from those k
+    candidates is exact. Where that bound is not met the search widens, and any pixel still
+    unresolved at `max_candidates` falls back to brute force. The result is therefore identical to
+    comparing against every bin, not an approximation.
+
+    Args:
+        pix_x: Pixel x coordinates
+        pix_y: Pixel y coordinates
+        cent_x: Bin centroid x from the previous iteration
+        cent_y: Bin centroid y from the previous iteration
+        scale_length: Bin scale lengths from the previous iteration
+        chunk_bytes: Memory ceiling for one pixel-by-bin distance block (default 128 MB)
+        max_candidates: Widest tree query before falling back to brute force (default 64)
+
+    Return:
+        Array of bin indices, one per pixel
+    """
+    pix_x = np.asarray(pix_x, dtype=float)
+    pix_y = np.asarray(pix_y, dtype=float)
+    cent_x = np.asarray(cent_x, dtype=float)
+    cent_y = np.asarray(cent_y, dtype=float)
+    scale_length = np.asarray(scale_length, dtype=float)
+
+    n_bins = int(cent_x.size)
+    if n_bins == 0:
+        raise ValueError("Cannot assign pixels to bins: no bins were given.")
+    # Below this the tree costs more than it saves, and the bound needs a usable max scale length
+    scale_max = scale_length.max() if n_bins else 0.0
+    if n_bins <= 16 or pix_x.size <= 16 or not np.isfinite(scale_max) or scale_max <= 0:
+        return _brute_force_nearest(pix_x, pix_y, cent_x, cent_y, scale_length, chunk_bytes)
+
+    tree = cKDTree(np.column_stack((cent_x, cent_y)))
+    best = np.empty(pix_x.size, dtype=np.intp)
+    # One chunk of pixels holds (chunk x max_candidates) floats, so this is far smaller than the
+    # brute-force block; keep the same ceiling so the caller has one knob.
+    rows = max(1, int(chunk_bytes // (8 * min(max_candidates, n_bins))))
+    for start in range(0, pix_x.size, rows):
+        stop = min(start + rows, pix_x.size)
+        points = np.column_stack((pix_x[start:stop], pix_y[start:stop]))
+        pending = np.arange(stop - start)
+        k = min(8, n_bins)
+        while pending.size:
+            dists, indices = tree.query(points[pending], k=k)
+            dists = np.atleast_2d(dists)
+            indices = np.atleast_2d(indices)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                # A zero scale length scores inf and simply never wins, as in the original
+                metric = dists / scale_length[indices]
+            winner, best_val = _best_of_candidates(metric, indices)
+            best[start + pending] = winner
+            if k >= n_bins:
+                break  # Queried every bin, so this is already exact
+            # Exact wherever the k-th neighbour is already too far to be beaten
+            settled = best_val * scale_max <= dists[:, -1]
+            pending = pending[~settled]
+            if not pending.size:
+                break
+            if k >= max_candidates:
+                # Rare: widen no further, just do these few against every bin
+                idx = start + pending
+                best[idx] = _brute_force_nearest(
+                    pix_x[idx], pix_y[idx], cent_x, cent_y, scale_length, chunk_bytes
+                )
+                break
+            k = min(k * 4, n_bins)
+    return best
+
+
 def Rebin_Pixels(binList, pixel_list, pixel_length, StN_Target):
     for bin in binList:
         bin.clear_pixels()
     WVT_successful_bins = []
-    for pixel in pixel_list:
+    n_pix, n_bins = len(pixel_list), len(binList)
+    closest_indices = nearest_weighted_bin(
+        np.fromiter((p.pix_x for p in pixel_list), dtype=float, count=n_pix),
+        np.fromiter((p.pix_y for p in pixel_list), dtype=float, count=n_pix),
+        np.fromiter((b.centroidx_prev[0] for b in binList), dtype=float, count=n_bins),
+        np.fromiter((b.centroidy_prev[0] for b in binList), dtype=float, count=n_bins),
+        np.fromiter((b.scale_length_prev[0] for b in binList), dtype=float, count=n_bins),
+    )
+    # Computed in bulk, but applied in the original pixel order on purpose: the order in which bins
+    # first receive a pixel is what fixes the order of WVT_successful_bins, and `reassign_pixels`
+    # walks that list to rehome the pixels of bins that never took one.
+    for pixel, bin_index in zip(pixel_list, closest_indices):
         pixel.clear_bin()
-        distances_bins = [
-            dist(pixel.pix_x, pixel.pix_y, bin.centroidx_prev[0], bin.centroidy_prev[0]) / bin.scale_length_prev[0]
-            for bin in binList
-        ]
-        closest_bin = binList[distances_bins.index(min(distances_bins))]
+        closest_bin = binList[bin_index]
         pixel.add_to_bin(closest_bin)
         closest_bin.add_pixel(pixel)
         if closest_bin.StN[0] > 0 and closest_bin.WVT_successful == False:
@@ -588,8 +761,101 @@ from luci.log import get_logger
 logger = get_logger(__name__)
 
 
+#: Label used in the bin map for a pixel no bin claimed. It has to be distinguishable from a bin
+#: number: the map used to start at 0, which is a real bin, so every unassigned pixel was silently
+#: absorbed into bin 0 and fitted along with it.
+BIN_MAP_UNASSIGNED = -1
+
+#: Directory (under the cube's output dir) holding the bin map.
+BIN_DIR = "Numpy_Voronoi_Bins"
+BIN_MAP_NAME = "bin_map.npy"
+
+
+def save_bin_map(output_dir, bin_map):
+    """
+    Write the bin label map, replacing any per-bin masks from an older run.
+
+    One int32 label per pixel, rather than one full-field boolean mask per bin. The old scheme wrote
+    `cube.shape[:2]` booleans for every bin -- 4.2 MB on a SITELLE field, to record the dozen pixels
+    that bin actually holds -- so an 8,992-bin run cost 36 GB and a full-field run at ~341,000 bins
+    would have needed about 1.4 TB. The label map is 17 MB whatever the bin count.
+
+    Args:
+        output_dir: The cube's output directory
+        bin_map: int32 array of bin numbers, `BIN_MAP_UNASSIGNED` where no bin claimed the pixel
+
+    Return:
+        Path the map was written to
+    """
+    bin_dir = os.path.join(output_dir, BIN_DIR)
+    os.makedirs(bin_dir, exist_ok=True)
+    for stale in glob.glob(os.path.join(bin_dir, "bool_bin_map_*.npy")):
+        os.remove(stale)
+    path = os.path.join(bin_dir, BIN_MAP_NAME)
+    np.save(path, bin_map.astype(np.int32))
+    return path
+
+
+def load_bin_regions(output_dir, cube_shape=None):
+    """
+    Pixel indices of every bin, as a list of (xs, ys) index arrays.
+
+    Reads the label map written by `save_bin_map`. If a run predating the label map is found instead
+    -- a directory of `bool_bin_map_*.npy` full-field masks -- those are read in their original
+    numeric order so old output stays fittable.
+
+    Args:
+        output_dir: The cube's output directory
+        cube_shape: (dimx, dimy) used to check the map matches the cube (default None, no check)
+
+    Return:
+        List of (xs, ys) arrays, one per bin, indexed by bin number
+    """
+    bin_dir = os.path.join(output_dir, BIN_DIR)
+    path = os.path.join(bin_dir, BIN_MAP_NAME)
+    if not os.path.exists(path):
+        legacy = glob.glob(os.path.join(bin_dir, "bool_bin_map_*.npy"))
+        if not legacy:
+            raise FileNotFoundError(
+                "No bin map at %s and no legacy bool_bin_map_*.npy beside it. Run create_wvt first." % path
+            )
+        logger.info("Reading %d per-bin masks from a run predating the bin map", len(legacy))
+        legacy.sort(key=lambda p: int(os.path.basename(p).split("_")[-1].split(".")[0]))
+        return [tuple(np.where(np.load(p))) for p in legacy]
+
+    bin_map = np.load(path)
+    if cube_shape is not None and tuple(bin_map.shape) != tuple(cube_shape[:2]):
+        raise ValueError(
+            "Bin map is %s but the cube is %s. It belongs to a different cube or region -- rerun "
+            "create_wvt." % (bin_map.shape, tuple(cube_shape[:2]))
+        )
+    # Group the pixels by label in one pass rather than scanning the whole map once per bin, which
+    # is what made the old per-bin masks quadratic in the number of bins.
+    flat = bin_map.ravel()
+    positions = np.flatnonzero(flat >= 0)
+    labels = flat[positions]
+    order = np.argsort(labels, kind="stable")
+    positions, labels = positions[order], labels[order]
+    n_bins = int(labels[-1]) + 1 if labels.size else 0
+    edges = np.searchsorted(labels, np.arange(n_bins + 1))
+    return [
+        np.unravel_index(positions[edges[b] : edges[b + 1]], bin_map.shape) for b in range(n_bins)
+    ]
+
+
 def create_wvt(
-    cube, x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL, n_threads
+    cube,
+    x_min_init,
+    x_max_init,
+    y_min_init,
+    y_max_init,
+    pixel_size,
+    stn_target,
+    roundness_crit,
+    ToL,
+    n_threads,
+    snr_floor=None,
+    snr_method=1,
 ):
     """
     Written by Benjamin Vigneron.
@@ -608,18 +874,25 @@ def create_wvt(
         roundness_crit: Roundness criteria for the pixel accretion into bins
         ToL: Convergence tolerance parameter for the SNR of the bins
         n_threads: Number of threads to use
+        snr_floor: Only bin pixels above this S/N (default None, bin everything). Most of a SITELLE
+            field is blank sky whose bins never reach the target and get dropped anyway, and both
+            accretion and refinement scale with the pixel count, so a floor is the cheapest way to
+            make a full-field run tractable. Note that for SN4 the S/N flux window (15150-15300
+            cm-1) spans Halpha and both NII lines, so this is a cut on the whole complex.
+        snr_method: Which `create_snr_map` estimator to use (default 1, as before; 2 is
+            flux-in-window over the noise standard deviation)
 
-
+    Return:
+        The int32 bin label map, as written to disk
     """
     logger.info("#----------------WVT Algorithm----------------#")
     logger.info("#----------------Creating SNR Map--------------#")
     Pixels = []
-    cube.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=1, n_threads=n_threads)
+    cube.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=snr_method, n_threads=n_threads)
     logger.info("#----------------Algorithm Part 1----------------#")
     start = time.time()
-    SNR_map = fits.open(cube.output_dir + "/SNR/" + cube.object_name + "_SNR.fits")[0].data
-    SNR_map = SNR_map[y_min_init:y_max_init, x_min_init:x_max_init]
-    Pixels, x_min, x_max, y_min, y_max = read_in(cube.output_dir + "/SNR/" + cube.object_name + "_SNR.fits")
+    snr_path = cube.output_dir + "/SNR/" + cube.object_name + "_SNR.fits"
+    Pixels, x_min, x_max, y_min, y_max = read_in(snr_path, snr_floor=snr_floor)
     Nearest_Neighbors(Pixels)
     Init_bins = Bin_Acc(Pixels, pixel_size, stn_target, roundness_crit)
     plot_Bins(Init_bins, x_min, x_max, y_min, y_max, stn_target, cube.output_dir, "bin_acc")
@@ -631,36 +904,17 @@ def create_wvt(
     plot_Bins(Final_Bins, x_min, x_max, y_min, y_max, stn_target, cube.output_dir, "final")
     Bin_data(Final_Bins, Pixels, x_min, y_min, cube.output_dir, "WVT_data")
     logger.info("#----------------Bin Mapping--------------#")
-    pixel_x = []
-    pixel_y = []
-    bins = []
-    bin_map = np.zeros((x_max - x_min, y_max - y_min))
-    j = 0
-    i = 0
-    with open(cube.output_dir + "/WVT_data.txt", "rt") as myfile:
-        myfile = myfile.readlines()[3:]
-        for myline in myfile:
-            myline = myline.strip(" \n")
-            data = [int(s) for s in myline.split() if s.isdigit()]
-            pixel_x.append(data[0])
-            pixel_y.append(data[1])
-            bins.append(data[2])
-    for pix_x, pix_y in zip(pixel_x, pixel_y):
-        bin_map[pix_x, pix_y] = int(bins[i])
-        i += 1
-    # bin_map = np.rot90(bin_map)
-    if not os.path.exists(cube.output_dir + "/Numpy_Voronoi_Bins"):
-        os.mkdir(cube.output_dir + "/Numpy_Voronoi_Bins")
-    if os.path.exists(cube.output_dir + "/Numpy_Voronoi_Bins"):
-        files = glob.glob(cube.output_dir + "/Numpy_Voronoi_Bins/*.npy")
-        for f in files:
-            os.remove(f)
-    for bin_num in list(range(len(Final_Bins))):
-        bool_bin_map = np.zeros(cube.cube_final.shape[:2], dtype=bool)
-        for a, b in zip(np.where(bin_map == bin_num)[0][:], np.where(bin_map == bin_num)[1][:]):
-            bool_bin_map[x_min_init + a, y_min_init + b] = True
-        np.save(cube.output_dir + "/Numpy_Voronoi_Bins/bool_bin_map_%i" % j, bool_bin_map)
-        j += 1
+    # `Bin_data` above sorted Final_Bins by bin_number and labelled the pixels it wrote to
+    # WVT_data.txt by position in that sorted order, so enumerating it here gives the same labels
+    # without parsing millions of lines of text back in.
+    bin_map = np.full(cube.cube_final.shape[:2], BIN_MAP_UNASSIGNED, dtype=np.int32)
+    for bin_num, bin_ in enumerate(Final_Bins):
+        for pixel in bin_.pixels:
+            bin_map[x_min_init + pixel.pix_x, y_min_init + pixel.pix_y] = bin_num
+    save_bin_map(cube.output_dir, bin_map)
+    n_assigned = int((bin_map >= 0).sum())
+    logger.info("Mapped %d pixels into %d bins", n_assigned, len(Final_Bins))
+    return bin_map
 
 
 def fit_wvt(
@@ -717,41 +971,45 @@ def fit_wvt(
         size=(x_max - x_min, y_max - y_min),
         wcs=wcs,
     )
-    for bin_num in tqdm(list(range(len(os.listdir(cube.output_dir + "/Numpy_Voronoi_Bins/"))))):
-        bool_bin_map = cube.output_dir + "/Numpy_Voronoi_Bins/bool_bin_map_%i.npy" % bin_num
-        index = np.where(np.load(bool_bin_map) == True)
-        initial_conditions = None
-        for a, b in zip(index[0], index[1]):
-            # TODO: PASS INITIAL CONDITIONS
-            if False not in initial_values:  # If initial conditions were passed
-                initial_conditions = [vel_init[a, b], broad_init[a, b]]
-            else:
-                initial_conditions = [False]
+    regions = load_bin_regions(cube.output_dir, cube.cube_final.shape)
+    logger.info("Fitting %d bins", len(regions))
+    for xs, ys in tqdm(regions):
+        if xs.size == 0:
+            continue  # A bin that ended up with no pixels has nothing to fit
+        # TODO: PASS INITIAL CONDITIONS
+        if False not in initial_values:  # If initial conditions were passed
+            initial_conditions = [vel_init[xs[0], ys[0]], broad_init[xs[0], ys[0]]]
+        else:
+            initial_conditions = [False]
         bin_axis, bin_sky, bin_fit_dict = cube.fit_spectrum_region(
             lines,
             fit_function,
             vel_rel,
             sigma_rel,
-            region=bool_bin_map,
+            region=(xs, ys),
             initial_values=initial_conditions,
             bkg=bkg,
             bayes_bool=bayes_bool,
             uncertainty_bool=uncertainty_bool,
             n_stoch=n_stoch,
         )
-        for a, b in zip(index[0], index[1]):
-            maps.amplitudes[a, b] = bin_fit_dict["amplitudes"]
-            maps.fluxes[a, b] = bin_fit_dict["fluxes"]
-            maps.flux_errors[a, b] = bin_fit_dict["flux_errors"]
-            maps.broadenings[a, b] = bin_fit_dict["sigmas"]
-            maps.broadenings_errors[a, b] = bin_fit_dict["sigmas_errors"]
-            maps.chi2[a, b] = bin_fit_dict["chi2"]
-            maps.continuum[a, b] = bin_fit_dict["continuum"]
-            # Wrote continuum_error into continuum_fits, so the continuum map
-            # held the error and the error map stayed zero (B19).
-            maps.continuum_error[a, b] = bin_fit_dict["continuum_error"]
-            maps.velocities[a, b] = bin_fit_dict["velocities"]
-            maps.velocities_errors[a, b] = bin_fit_dict["vels_errors"]
+        # The maps are shaped (n_y, n_x) and indexed [y, x] -- that is what `FitMaps.scatter` does
+        # for the fit_cube path. This loop used to index them [x, y], which transposed every WVT map
+        # and, on a cube whose y extent exceeds its x extent (SITELLE is 2048 x 2064), raised
+        # IndexError as soon as a bin reached y >= 2048. Assigning by index array also replaces a
+        # per-pixel Python loop.
+        maps.amplitudes[ys, xs] = bin_fit_dict["amplitudes"]
+        maps.fluxes[ys, xs] = bin_fit_dict["fluxes"]
+        maps.flux_errors[ys, xs] = bin_fit_dict["flux_errors"]
+        maps.broadenings[ys, xs] = bin_fit_dict["sigmas"]
+        maps.broadenings_errors[ys, xs] = bin_fit_dict["sigmas_errors"]
+        maps.chi2[ys, xs] = bin_fit_dict["chi2"]
+        maps.continuum[ys, xs] = bin_fit_dict["continuum"]
+        # Wrote continuum_error into continuum_fits, so the continuum map
+        # held the error and the error map stayed zero (B19).
+        maps.continuum_error[ys, xs] = bin_fit_dict["continuum_error"]
+        maps.velocities[ys, xs] = bin_fit_dict["velocities"]
+        maps.velocities_errors[ys, xs] = bin_fit_dict["vels_errors"]
     maps.save(
         cube.output_dir, cube.object_name, lines, cutout.wcs.to_header(), binning=1, suffix="_wvt_%i" % stn_target
     )
@@ -778,6 +1036,8 @@ def wvt_fit_region(
     n_threads=1,
     n_stoch=1,
     initial_values=[False],
+    snr_floor=None,
+    snr_method=1,
 ):
     """
     Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
@@ -802,13 +1062,27 @@ def wvt_fit_region(
         initial_values: Initial values of velocity and broadening for fitting specific lines (must be list;
         e.x. [velocity, broadening]; default [False])
         n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
+        snr_floor: Only bin and fit pixels above this S/N (default None, bin everything). Pixels
+            below it are left unfitted rather than cropped, so the maps stay full-field. For SN4 the
+            S/N flux window spans Halpha and both NII lines, so this cuts on the whole complex.
+        snr_method: Which `create_snr_map` estimator to use (default 1)
 
     Return:
         Velocity, Broadening and Flux arrays (2d). Also return amplitudes array (3D).
     """
     # Call create wvt function to create the WVT map and numpy files corresponding to each bin
     cube.create_wvt(
-        x_min_init, x_max_init, y_min_init, y_max_init, pixel_size, stn_target, roundness_crit, ToL, n_threads
+        x_min_init,
+        x_max_init,
+        y_min_init,
+        y_max_init,
+        pixel_size,
+        stn_target,
+        roundness_crit,
+        ToL,
+        n_threads,
+        snr_floor=snr_floor,
+        snr_method=snr_method,
     )
     logger.info("#----------------WVT Fitting--------------#")
     # Fit the bins
@@ -825,55 +1099,12 @@ def wvt_fit_region(
         n_stoch=n_stoch,
         stn_target=stn_target,
     )
-    output_name = cube.object_name + "_wvt_%i_1" % stn_target  # Add stn target prefix
-    for line_ in lines:
-        amp = fits.open(cube.output_dir + "/Amplitudes/" + output_name + "_" + line_ + "_Amplitude.fits")[0].data.T
-        flux = fits.open(cube.output_dir + "/Fluxes/" + output_name + "_" + line_ + "_Flux.fits")[0].data.T
-        flux_err = fits.open(cube.output_dir + "/Fluxes/" + output_name + "_" + line_ + "_Flux_err.fits")[0].data.T
-        vel = fits.open(cube.output_dir + "/Velocity/" + output_name + "_" + line_ + "_velocity.fits")[0].data.T
-        broad = fits.open(cube.output_dir + "/Broadening/" + output_name + "_" + line_ + "_broadening.fits")[0].data.T
-        vel_err = fits.open(cube.output_dir + "/Velocity/" + output_name + "_" + line_ + "_velocity_err.fits")[0].data.T
-        broad_err = fits.open(cube.output_dir + "/Broadening/" + output_name + "_" + line_ + "_broadening_err.fits")[
-            0
-        ].data.T
-        chi2 = fits.open(cube.output_dir + "/" + output_name + "_Chi2.fits")[0].data.T
-        cont = fits.open(cube.output_dir + "/" + output_name + "_continuum.fits")[0].data.T
-        fits.writeto(
-            cube.output_dir + "/Amplitudes/" + output_name + "_" + line_ + "_Amplitude.fits",
-            amp,
-            header,
-            overwrite=True,
-        )
-        fits.writeto(
-            cube.output_dir + "/Fluxes/" + output_name + "_" + line_ + "_Flux.fits", flux, header, overwrite=True
-        )
-        fits.writeto(
-            cube.output_dir + "/Fluxes/" + output_name + "_" + line_ + "_Flux_err.fits",
-            flux_err,
-            header,
-            overwrite=True,
-        )
-        fits.writeto(
-            cube.output_dir + "/Velocity/" + output_name + "_" + line_ + "_velocity.fits", vel, header, overwrite=True
-        )
-        fits.writeto(
-            cube.output_dir + "/Broadening/" + output_name + "_" + line_ + "_broadening.fits",
-            broad,
-            header,
-            overwrite=True,
-        )
-        fits.writeto(
-            cube.output_dir + "/Velocity/" + output_name + "_" + line_ + "_velocity_err.fits",
-            vel_err,
-            header,
-            overwrite=True,
-        )
-        fits.writeto(
-            cube.output_dir + "/Broadening/" + output_name + "_" + line_ + "_broadening_err.fits",
-            broad_err,
-            header,
-            overwrite=True,
-        )
-        fits.writeto(cube.output_dir + "/" + output_name + "_Chi2.fits", chi2, header, overwrite=True)
-        fits.writeto(cube.output_dir + "/" + output_name + "_continuum.fits", cont, header, overwrite=True)
+    # The maps `fit_wvt` wrote are already final. There used to be a pass here that reopened all
+    # nine products per line, transposed each with `.T`, and rewrote them, which left the WVT maps in
+    # (n_x, n_y) while every fit_cube product is (n_y, n_x) -- the two orientations disagreed, and
+    # code that overlays them (`pick_bright_spots` in tools/reduce_M86_SN4.py tests for
+    # `(dimy, dimx)`) was right for fit_cube and wrong for WVT. The transpose was also compensating
+    # for the scatter in `fit_wvt` indexing [x, y] into a (n_y, n_x) array: the two cancelled on a
+    # square region and raised IndexError on anything else. With the scatter fixed the transpose is
+    # simply wrong, and the header written alongside was the same one either way.
     return None

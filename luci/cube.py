@@ -1057,17 +1057,14 @@ class SitelleCube:
         y_min = 0
         y_max = self.cube_final.shape[1]
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
-        spec_ct = 0
-        for i in tqdm(range(y_max - y_min)):
-            y_pix = y_min + i
-            for j in range(x_max - x_min):
-                x_pix = x_min + j
-                # Check if pixel is in the mask or not
-                if mask[x_pix, y_pix]:
-                    integrated_spectrum += self.cube_final[x_pix, y_pix, :]
-                    spec_ct += 1
-                else:
-                    pass
+        # Index the masked pixels rather than walking the whole cube in Python -- see the note in
+        # `fit_spectrum_region`. The mask is transposed so the pixels are visited in the same
+        # y-then-x order, and the float64 accumulator is kept.
+        mask = np.asarray(mask)
+        ys, xs = np.where(mask.T)
+        spec_ct = int(xs.size)
+        if spec_ct:
+            integrated_spectrum = self.cube_final[xs, ys, :].sum(axis=0, dtype=np.float64)
         if mean:
             integrated_spectrum /= spec_ct
         return self.spectrum_axis, integrated_spectrum
@@ -1120,26 +1117,35 @@ class SitelleCube:
 
         """
         # Create mask
-        mask = None  # Initialize
-        if ".reg" in region:  # If passed a .reg file
-            header = self.header
-            # From the cube, not the standard detector size (bug B10).
-            header.set("NAXIS1", self.cube_final.shape[1])  # Need this for astropy
-            header.set("NAXIS2", self.cube_final.shape[0])
-            mask = reg_to_mask(region, header)
-        elif ".npy" in region:  # If passed numpy file
-            mask = np.load(region)
-        elif region is not None:  # If passed numpy array
-            mask = region
-        else:  # Not passed a mask in any of the correct formats
-            logger.info("Mask was incorrectly passed. Please use either a .reg file or a .npy file or a numpy ndarray")
-        # Set spatial bounds for entire cube
-        x_min = 0
-        x_max = self.cube_final.shape[0]
-        y_min = 0
-        y_max = self.cube_final.shape[1]
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
-        spec_ct = 0
+        if isinstance(region, tuple) and len(region) == 2:
+            # An (xs, ys) index pair. A WVT bin is a dozen pixels out of four million, so handing the
+            # indices over directly avoids materialising -- and, in `fit_wvt`, storing -- a
+            # full-field mask per bin. See `luci.analysis.wvt.fit_wvt`.
+            xs = np.asarray(region[0], dtype=np.intp)
+            ys = np.asarray(region[1], dtype=np.intp)
+        else:
+            mask = None  # Initialize
+            if isinstance(region, str) and region.endswith(".reg"):  # If passed a .reg file
+                header = self.header
+                # From the cube, not the standard detector size (bug B10).
+                header.set("NAXIS1", self.cube_final.shape[1])  # Need this for astropy
+                header.set("NAXIS2", self.cube_final.shape[0])
+                mask = reg_to_mask(region, header)
+            elif isinstance(region, str) and region.endswith(".npy"):  # If passed numpy file
+                mask = np.load(region)
+            elif region is not None:  # If passed numpy array
+                mask = region
+            else:  # Not passed a mask in any of the correct formats
+                raise ValueError(
+                    "No region given. Pass a .reg path, a .npy path, a boolean array, or an (xs, ys) "
+                    "index pair. This used to log a message and carry on with mask unset, which then "
+                    "failed further down with an unrelated TypeError."
+                )
+            # Transposing makes `np.where` walk the pixels in the same y-then-x order the original
+            # double loop used, so the sum is accumulated in the same order.
+            ys, xs = np.where(np.asarray(mask).T)
+        spec_ct = int(xs.size)
         # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
         vel_init = False
         broad_init = False
@@ -1151,16 +1157,15 @@ class SitelleCube:
             except (OSError, TypeError, ValueError):  # arrays from a previous fit, not FITS paths
                 vel_init = initial_values[0]
                 broad_init = initial_values[1]
-        for i in range(y_max - y_min):
-            y_pix = y_min + i
-            for j in range(x_max - x_min):
-                x_pix = x_min + j
-                # Check if pixel is in the mask or not
-                if mask[x_pix, y_pix]:
-                    integrated_spectrum += self.cube_final[x_pix, y_pix, :]
-                    spec_ct += 1
-                else:
-                    pass
+        # Sum the selected pixels by indexing them directly. This used to be a Python double loop over
+        # every pixel of the cube, which costs the same 4.2 million iterations whether the selection
+        # holds one pixel or a million: ~0.2 s per call, and `fit_wvt` makes one call per bin, so a
+        # full-field WVT run spent ~18 hours here. The float64 accumulator is kept, so the only
+        # difference from the old sum is that numpy adds pairwise rather than sequentially -- a
+        # relative change of order 1e-16 -- and NaN propagation is unchanged (a NaN channel in any
+        # selected pixel still poisons that channel).
+        if spec_ct:
+            integrated_spectrum = self.cube_final[xs, ys, :].sum(axis=0, dtype=np.float64)
         if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
@@ -1171,6 +1176,14 @@ class SitelleCube:
         axis = self.spectrum_axis[good_sky_inds]
         # Masked in step with the spectrum -- see fit_calc.
         trans_filter = self.transmission_interpolated[good_sky_inds]
+        # Incidence angle of the region, which sets the wavelength correction factor. It has to come
+        # from the region itself: this read used to be `interferometer_theta[x_pix, y_pix]` after the
+        # summation loop, and since that loop always ran to completion over the whole cube those
+        # indices were always the far corner (dimx-1, dimy-1) -- the same irrelevant pixel for every
+        # region ever fit. `luci.analysis.skylines` already uses the region's centre, so a
+        # representative pixel is what was meant; the mean over the region is the right one for a
+        # spectrum that is itself a sum over those pixels.
+        theta = float(np.mean(self.interferometer_theta[xs, ys])) if spec_ct else 0.0
         # Call fit!
         fit = Fit(
             sky,
@@ -1181,7 +1194,7 @@ class SitelleCube:
             vel_rel,
             sigma_rel,
             trans_filter=trans_filter,
-            theta=self.interferometer_theta[x_pix, y_pix],
+            theta=theta,
             delta_x=self.hdr_dict["STEP"],
             n_steps=self.step_nb,
             zpd_index=self.zpd_index,
