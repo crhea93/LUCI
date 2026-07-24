@@ -79,9 +79,7 @@ def test_importing_luci_does_not_load_tensorflow():
         "print('TF_COUNT', len(tf))"
     )
     env = dict(os.environ, MPLBACKEND="Agg", TF_CPP_MIN_LOG_LEVEL="3")
-    result = subprocess.run(
-        [sys.executable, "-c", code], capture_output=True, text=True, cwd=REPO_ROOT, env=env
-    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=REPO_ROOT, env=env)
     assert result.returncode == 0, f"importing LuciBase failed:\n{result.stderr[-2000:]}"
     line = [ln for ln in result.stdout.splitlines() if ln.startswith("TF_COUNT")]
     assert line, f"no marker in output:\n{result.stdout[-2000:]}"
@@ -96,19 +94,23 @@ def test_no_module_level_tensorflow_imports_in_the_library():
     """
     Static counterpart to the test above, with a clearer failure message.
 
-    LuciNetwork is exempt: it only builds MDN architectures for the offline
+    mdn_architecture is exempt: it only builds MDN architectures for the offline
     conversion tool, is never imported by the runtime library, and runs in the
     throwaway TensorFlow environment that tool creates.
     """
     import re
 
     offenders = []
-    exempt = {"LuciNetwork.py"}
-    for directory in (REPO_ROOT, os.path.join(REPO_ROOT, "LUCI")):
-        for name in sorted(os.listdir(directory)):
-            if not name.endswith(".py") or name in exempt:
-                continue
-            path = os.path.join(directory, name)
+    exempt = {"mdn_architecture.py"}
+    package = os.path.join(REPO_ROOT, "LUCI")
+    paths = [os.path.join(REPO_ROOT, n) for n in os.listdir(REPO_ROOT) if n.endswith(".py")]
+    for root, _dirs, files in os.walk(package):
+        paths += [os.path.join(root, n) for n in files if n.endswith(".py")]
+    for path in sorted(paths):
+        name = os.path.basename(path)
+        if name in exempt:
+            continue
+        if True:
             for number, line in enumerate(open(path), start=1):
                 # Anchored at column 0 on purpose: an indented import is inside a
                 # function, which is exactly the lazy pattern we want.

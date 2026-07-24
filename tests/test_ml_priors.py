@@ -102,7 +102,6 @@ def test_ml_disabled_recovers_velocity_for_the_sinc_model(sn3_cube_noml, sn3_tru
 
 @pytest.mark.ml
 def test_ml_enabled_recovers_the_injected_velocity(sn3_cube, sn3_truth):
-    pytest.importorskip("keras")
     fit = _make_fit(sn3_cube, ml_bool=True)
     result = fit.fit()
     assert result["velocities"][0] == pytest.approx(sn3_truth["velocity_kms"], abs=15.0)
@@ -121,7 +120,6 @@ def test_ml_prior_lands_near_the_truth_before_fitting(sn3_cube, sn3_truth):
     and the full fit converges to ~99.5 km/s from there.  The test guards
     against the prior becoming garbage or NaN, not against it being imprecise.
     """
-    pytest.importorskip("keras")
     fit = _make_fit(sn3_cube, ml_bool=True)
     fit.interpolate_spectrum()
     fit.estimate_priors_ML()

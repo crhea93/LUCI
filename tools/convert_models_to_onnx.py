@@ -130,7 +130,7 @@ def convert_mdn(name: str, out_path: str) -> None:
     import tf2onnx
 
     sys.path.insert(0, REPO_ROOT)
-    from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
+    from LUCI.ml.mdn_architecture import create_MDN_model, negative_loglikelihood
 
     input_len = reference_input_length(_resolution_of(name), _filter_of(name))
     mdn = create_MDN_model(input_len, negative_loglikelihood)
@@ -186,7 +186,7 @@ def validate(name: str, out_path: str) -> tuple[bool, float]:
 
     mdn = is_mdn(name)
     if mdn:
-        from LUCI.LuciNetwork import create_MDN_model, negative_loglikelihood
+        from LUCI.ml.mdn_architecture import create_MDN_model, negative_loglikelihood
 
         input_len = reference_input_length(_resolution_of(name), _filter_of(name))
         model = create_MDN_model(input_len, negative_loglikelihood)

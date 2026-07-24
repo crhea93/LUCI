@@ -6,8 +6,8 @@ from astropy.wcs import WCS
 import astropy.units as u
 from tqdm import tqdm
 from joblib import Parallel, delayed
-from LUCI.LuciComponentCalculations import calculate_components_in_region_function, create_component_map_function
-from LUCI.LuciConvenience import reg_to_mask
+from LUCI.analysis.components import calculate_components_in_region_function, create_component_map_function
+from LUCI.engine.selection import reg_to_mask
 from LUCI.LuciFit import Fit
 from astropy.nddata import Cutout2D
 import astropy.stats as astrostats
@@ -16,10 +16,11 @@ import numpy.ma as ma
 from astropy.coordinates import SkyCoord, EarthLocation
 from LUCI.LuciUtility import save_fits, get_quadrant_dims, get_interferometer_angles, update_header, \
     read_in_reference_spectrum, read_in_transmission, check_luci_path, spectrum_axis_func, bin_cube_function, bin_mask
-from LUCI.LuciWVT import *
-from LUCI.LuciVisualize import visualize as LUCIvisualize
-from LUCI.LuciBackground import find_background_pixels
+from LUCI.analysis.wvt import *
+from LUCI.viz.visualize import visualize as LUCIvisualize
+from LUCI.background.detection import find_background_pixels
 from LUCI.instrument.filters import pca_scale_indices
+from LUCI.engine import FitMaps, deep_image_cutout, resolve_initial_values, run_fit
 import multiprocessing as mp
 import time
 from sklearn import decomposition
@@ -460,84 +461,23 @@ class Luci():
             y_min = 0
         elif binning == 1:
             pass  # Don't do anything if binning is set to 1
-        chi2_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        corr_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        step_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        # First two dimensions are the X and Y dimensions.
-        # The third dimension corresponds to the line in the order of the lines input parameter.
-        ampls_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        flux_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        flux_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        velocities_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        broadenings_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        velocities_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        continuum_error_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        cube_to_slice = self.cube_final  # Set cube for slicing
-        # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
-        vel_init = False
-        broad_init = False
+        cube_to_slice = self.cube_binned if (binning is not None and binning != 1) else self.cube_final
         # TODO: ALLOW BINNING OF INITIAL CONDITIONS
-        if len(initial_values) == 2:
-            try:  # Obtain initial condition maps from files
-                vel_init = fits.open(initial_values[0])[0].data
-                broad_init = fits.open(initial_values[1])[0].data
-            except:  # Initial conditions passed are arrays from a previous fit and not  fits files
-                vel_init = initial_values[0]
-                broad_init = initial_values[1]
-        if binning is not None and binning != 1:
-            # Check if deep image exists: if not, create it
-            if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
-                self.create_deep_image()
-            wcs = WCS(self.header_binned)
-            cube_to_slice = self.cube_binned
-        else:
-            # Check if deep image exists: if not, create it
-            if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
-                self.create_deep_image()
-            wcs = WCS(self.header, naxis=2)
-        cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
-                          position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
-                          wcs=wcs)
-        results = Parallel(n_jobs=n_threads) \
-            (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel,
-                                    cube_slice=cube_to_slice[:, y_min + sl, :],
-                                    spectrum_axis=self.spectrum_axis, wavenumbers_syn=self.wavenumbers_syn,
-                                    transmission_interpolated=self.transmission_interpolated,
-                                    interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict,
-                                    step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
-                                    ML_bool=self.ML_bool, bayes_bool=bayes_bool, absorp=absorp,
-                                    bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
-                                    uncertainty_bool=uncertainty_bool, bkg=bkg,
-                                    bkgType=bkgType, nii_cons=nii_cons,
-                                    initial_values=[vel_init, broad_init],
-                                    obj_redshift=obj_redshift, n_stoch=n_stoch, resolution=self.resolution,
-                                    Luci_path=self.Luci_path,
-                                    pca_coefficient_array=pca_coefficient_array, pca_vectors=pca_vectors, pca_mean=pca_mean
-                                    )
-             for sl in tqdm(range(y_max - y_min)))
-
-        for result in results:
-            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local, continuum_errs_local = result
-            ampls_fits[i] = ampls_local
-            flux_fits[i] = flux_local
-            flux_errors_fits[i] = flux_errs_local
-            velocities_fits[i] = vels_local
-            broadenings_fits[i] = broads_local
-            velocities_errors_fits[i] = vels_errs_local
-            broadenings_errors_fits[i] = broads_errs_local
-            chi2_fits[i] = chi2_local
-            corr_fits[i] = corr_local
-            step_fits[i] = step_local
-            continuum_fits[i] = continuum_local
-            continuum_error_fits[i] = continuum_errs_local
-        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
-                  broadenings_fits,
-                  velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits,
-                  cutout.wcs.to_header(), binning, fit_function=fit_function)
-
-        return velocities_fits, broadenings_fits, flux_fits, ampls_fits
+        vel_init, broad_init = resolve_initial_values(initial_values)
+        cutout = deep_image_cutout(self, x_min, x_max, y_min, y_max, binning)
+        maps = run_fit(
+            self, cube_to_slice, lines, fit_function, vel_rel, sigma_rel,
+            x_min, x_max, y_min, y_max, n_threads=n_threads,
+            bayes_bool=bayes_bool, absorp=absorp, bayes_method=bayes_method,
+            spec_min=spec_min, spec_max=spec_max, uncertainty_bool=uncertainty_bool,
+            bkg=bkg, bkgType=bkgType, nii_cons=nii_cons,
+            initial_values=[vel_init, broad_init],
+            obj_redshift=obj_redshift, n_stoch=n_stoch,
+            pca_coefficient_array=pca_coefficient_array, pca_vectors=pca_vectors, pca_mean=pca_mean,
+        )
+        maps.save(self.output_dir, self.object_name, lines, cutout.wcs.to_header(), binning,
+                  fit_function=fit_function)
+        return maps.velocities, maps.broadenings, maps.fluxes, maps.amplitudes
 
     def fit_region(self, lines, fit_function, vel_rel, sigma_rel, region,
                    bkg=None, bkgType='standard', binning=None, bayes_bool=False, bayes_method='emcee',
@@ -642,80 +582,21 @@ class Luci():
             if output_name is None:
                 output_name = self.output_dir + '/' + self.object_name + '_mask'
 
-        chi2_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        # First two dimensions are the X and Y dimensions.
-        # The third dimension corresponds to the line in the order of the lines input parameter.
-        ampls_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        flux_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        flux_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        velocities_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        broadenings_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        velocities_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
-                                                                                                                  2)
-        broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
-                                                                                                                   2)
-        continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        continuum_error_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
-        vel_init = False
-        broad_init = False
         # TODO: ALLOW BINNING OF INITIAL CONDITIONS
-        if len(initial_values) == 2:
-            try:  # Obtain initial condition maps from files
-                vel_init = fits.open(initial_values[0])[0].data
-                broad_init = fits.open(initial_values[1])[0].data
-            except:  # Initial conditions passed are arrays from a previous fit and not  fits files
-                vel_init = initial_values[0]
-                broad_init = initial_values[1]
-        if binning is not None and binning > 1:
-            # Check if deep image exists: if not, create it
-            if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
-                self.create_deep_image()
-            wcs = WCS(self.header_binned)
-        else:
-            # Check if deep image exists: if not, create it
-            if not os.path.exists(self.output_dir + '/' + self.object_name + '_deep.fits'):
-                self.create_deep_image()
-            wcs = WCS(self.header, naxis=2)
-        cutout = Cutout2D(fits.open(self.output_dir + '/' + self.object_name + '_deep.fits')[0].data,
-                          position=((x_max + x_min) / 2, (y_max + y_min) / 2), size=(x_max - x_min, y_max - y_min),
-                          wcs=wcs)
-        results = Parallel(n_jobs=n_threads) \
-            (delayed(self.fit_calc)(sl, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel,
-                                    cube_slice=cube_to_slice[:, y_min + sl, :],
-                                    spectrum_axis=self.spectrum_axis, wavenumbers_syn=self.wavenumbers_syn,
-                                    transmission_interpolated=self.transmission_interpolated,
-                                    interferometer_theta=self.interferometer_theta, hdr_dict=self.hdr_dict,
-                                    step_nb=self.step_nb, zpd_index=self.zpd_index, mdn=self.mdn,
-                                    mask=mask, ML_bool=self.ML_bool,
-                                    bayes_bool=bayes_bool,
-                                    bayes_method=bayes_method, spec_min=spec_min, spec_max=spec_max,
-                                    uncertainty_bool=uncertainty_bool, bkg=bkg, bkgType=bkgType,
-                                    nii_cons=nii_cons,
-                                    initial_values=[vel_init, broad_init],
-                                    obj_redshift=obj_redshift, n_stoch=n_stoch, resolution=self.resolution,
-                                    Luci_path=self.Luci_path)
-             for sl in tqdm(range(y_max - y_min)))
-        for result in results:
-            i, ampls_local, flux_local, flux_errs_local, vels_local, vels_errs_local, broads_local, broads_errs_local, chi2_local, corr_local, step_local, continuum_local, continuum_errs_local = result
-            ampls_fits[i] = ampls_local
-            flux_fits[i] = flux_local
-            flux_errors_fits[i] = flux_errs_local
-            velocities_fits[i] = vels_local
-            broadenings_fits[i] = broads_local
-            velocities_errors_fits[i] = vels_errs_local
-            broadenings_errors_fits[i] = broads_errs_local
-            chi2_fits[i] = chi2_local
-            continuum_fits[i] = continuum_local
-            continuum_error_fits[i] = continuum_errs_local
-        # fit_function is forwarded so fit_region's products are named the same
-        # way fit_cube's are (bug B9); without it the two wrote different
-        # filenames for the same fit and downstream globs silently missed them.
-        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
-                  broadenings_fits,
-                  velocities_errors_fits, broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits,
-                  cutout.wcs.to_header(), binning, fit_function=fit_function)
-        return velocities_fits, broadenings_fits, flux_fits, chi2_fits, mask
+        vel_init, broad_init = resolve_initial_values(initial_values)
+        cutout = deep_image_cutout(self, x_min, x_max, y_min, y_max, binning)
+        maps = run_fit(
+            self, cube_to_slice, lines, fit_function, vel_rel, sigma_rel,
+            x_min, x_max, y_min, y_max, n_threads=n_threads, mask=mask,
+            bayes_bool=bayes_bool, bayes_method=bayes_method,
+            spec_min=spec_min, spec_max=spec_max, uncertainty_bool=uncertainty_bool,
+            bkg=bkg, bkgType=bkgType, nii_cons=nii_cons,
+            initial_values=[vel_init, broad_init],
+            obj_redshift=obj_redshift, n_stoch=n_stoch,
+        )
+        maps.save(self.output_dir, self.object_name, lines, cutout.wcs.to_header(), binning,
+                  fit_function=fit_function)
+        return maps.velocities, maps.broadenings, maps.fluxes, maps.chi2, mask
 
     def fit_pixel(self, lines, fit_function, vel_rel, sigma_rel,
                   pixel_x, pixel_y, binning=None, bkg=None, absorp=None,
@@ -1424,20 +1305,7 @@ class Luci():
         x_max = self.cube_final.shape[0]
         y_min = 0
         y_max = self.cube_final.shape[1]
-        chi2_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        # First two dimensions are the X and Y dimensions.
-        # The third dimension corresponds to the line in the order of the lines input parameter.
-        ampls_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        flux_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        flux_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        velocities_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        broadenings_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0, 2)
-        velocities_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
-                                                                                                                  2)
-        broadenings_errors_fits = np.zeros((x_max - x_min, y_max - y_min, len(lines)), dtype=np.float32).transpose(1, 0,
-                                                                                                                   2)
-        continuum_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
-        continuum_error_fits = np.zeros((x_max - x_min, y_max - y_min), dtype=np.float32).T
+        maps = FitMaps.allocate(x_max - x_min, y_max - y_min, len(lines))
         if len(initial_values) == 2:
             # Obtain initial condition maps from files
             vel_init = fits.open(initial_values[0])[0].data
@@ -1467,21 +1335,21 @@ class Luci():
                                                                        uncertainty_bool=uncertainty_bool,
                                                                        n_stoch=n_stoch)
             for a, b in zip(index[0], index[1]):
-                ampls_fits[a, b] = bin_fit_dict['amplitudes']
-                flux_fits[a, b] = bin_fit_dict['fluxes']
-                flux_errors_fits[a, b] = bin_fit_dict['flux_errors']
-                broadenings_fits[a, b] = bin_fit_dict['sigmas']
-                broadenings_errors_fits[a, b] = bin_fit_dict['sigmas_errors']
-                chi2_fits[a, b] = bin_fit_dict['chi2']
-                continuum_fits[a, b] = bin_fit_dict['continuum']
-                continuum_fits[a, b] = bin_fit_dict['continuum_error']
-                velocities_fits[a, b] = bin_fit_dict['velocities']
-                velocities_errors_fits[a, b] = bin_fit_dict['vels_errors']
-        save_fits(self.output_dir, self.object_name, lines, ampls_fits, flux_fits, flux_errors_fits, velocities_fits,
-                  broadenings_fits, velocities_errors_fits,
-                  broadenings_errors_fits, chi2_fits, continuum_fits, continuum_error_fits, cutout.wcs.to_header(),
-                  binning=1, suffix='_wvt_%i'%stn_target)
-        return velocities_fits, broadenings_fits, flux_fits, chi2_fits, cutout.wcs.to_header()
+                maps.amplitudes[a, b] = bin_fit_dict['amplitudes']
+                maps.fluxes[a, b] = bin_fit_dict['fluxes']
+                maps.flux_errors[a, b] = bin_fit_dict['flux_errors']
+                maps.broadenings[a, b] = bin_fit_dict['sigmas']
+                maps.broadenings_errors[a, b] = bin_fit_dict['sigmas_errors']
+                maps.chi2[a, b] = bin_fit_dict['chi2']
+                maps.continuum[a, b] = bin_fit_dict['continuum']
+                # Wrote continuum_error into continuum_fits, so the continuum map
+                # held the error and the error map stayed zero (B19).
+                maps.continuum_error[a, b] = bin_fit_dict['continuum_error']
+                maps.velocities[a, b] = bin_fit_dict['velocities']
+                maps.velocities_errors[a, b] = bin_fit_dict['vels_errors']
+        maps.save(self.output_dir, self.object_name, lines, cutout.wcs.to_header(), binning=1,
+                  suffix='_wvt_%i' % stn_target)
+        return maps.velocities, maps.broadenings, maps.fluxes, maps.chi2, cutout.wcs.to_header()
 
     def wvt_fit_region(self, x_min_init, x_max_init, y_min_init, y_max_init, lines, fit_function, vel_rel, sigma_rel,
                        stn_target,

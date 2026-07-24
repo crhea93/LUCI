@@ -181,10 +181,32 @@ suite could not see this, because `conftest` puts the repo root first on `sys.pa
 Found while tracing why `import LuciBase` still pulled in TensorFlow after the lazy-import work: the
 import was resolving from a months-old copy, not the file I had just edited.
 
-`dev-mode-dirs = ["."]` now puts the project root on `sys.path`, and the documented workflow
-(`uv run pytest`, which syncs first) refreshes the copy, so the failure mode only appears if you
-bypass sync with `--no-sync`. The test catches it either way. The real fix lands in Phase 6, when
-`LuciBase.py` becomes a thin compat shim that essentially never changes.
+`dev-mode-dirs = ["."]` now puts the project root on `sys.path`, but the copy still shadows it, and
+plain `uv sync` does **not** refresh it — uv only reinstalls when package *metadata* changes, not when
+a `.py` file does. After editing a top-level module you need:
+
+```bash
+uv sync --reinstall-package luci-sitelle
+```
+
+The test is the real protection: it fails whenever the copy drifts, so the staleness cannot be silent.
+The proper fix lands in Phase 6, when `LuciBase.py` becomes a thin re-export shim over code that lives
+inside the editable-linked `LUCI/` package — a shim that never changes cannot go stale.
+
+### B19. WVT fits wrote the continuum error into the continuum map — FIXED (Phase 5e)
+**Where (was):** the per-pixel scatter loop in `Luci.fit_wvt`
+
+Two consecutive lines both assigned to `continuum_fits`:
+
+```python
+continuum_fits[a, b] = bin_fit_dict['continuum']
+continuum_fits[a, b] = bin_fit_dict['continuum_error']   # meant continuum_error_fits
+```
+
+So every Voronoi-binned fit produced a continuum map holding the *error*, and a continuum-error map
+that stayed all zeros. Found while collapsing this loop onto `FitMaps` — the kind of copy-paste slip
+that a hand-maintained twelve-array scatter invites, and that having one shared implementation
+prevents.
 
 ---
 

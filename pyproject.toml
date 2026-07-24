@@ -131,6 +131,21 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["E402"]
+# Relocated verbatim from the old flat modules. They are held to formatting and
+# import order, but not yet to the rules that would require editing logic --
+# that happens when each is actually rewritten.
+"LUCI/analysis/*.py" = ["F841", "E712", "E722", "F401"]
+"LUCI/viz/*.py" = ["F841", "E712", "E722", "F401"]
+"LUCI/background/*.py" = ["F841", "E712", "E722", "F401"]
+"LUCI/fitting/bayes.py" = ["F841", "E712", "E722", "F401"]
+"LUCI/fitting/uncertainties.py" = ["F841", "E712", "E722"]
+"LUCI/instrument/header.py" = ["F841", "E712", "E722"]
+"LUCI/io/*.py" = ["F841", "E712", "E722"]
+"LUCI/engine/binning.py" = ["F841", "E712", "E722"]
+"LUCI/simulation.py" = ["F841", "E712", "E722"]
+"LUCI/log.py" = ["F841", "E712", "E722"]
+"LUCI/ml/mdn_architecture.py" = ["F401"]
+"scripts/*.py" = ["F841", "E712", "E722", "F401", "E402"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

@@ -2,9 +2,11 @@
 File containing the definitions required to train our Bayesian CNN
 The functions are taken from https://keras.io/examples/keras_recipes/bayesian_neural_networks/#probabilistic-bayesian-neural-networks
 """
+
 import tensorflow.keras as keras
 import tensorflow_probability as tfp
 from tensorflow.keras.optimizers.legacy import Adam
+
 
 def create_MDN_model(input_length, loss):
     """
@@ -34,11 +36,13 @@ def create_MDN_model(input_length, loss):
     beta_2 = 0.999  # exponential decay rate  - 2nd
     optimizer_epsilon = 1e-08  # For the numerical stability
     # Define input which is a vector with 515 elements representing the spectra
-    inputs = keras.Input(shape=(input_length,1))
+    inputs = keras.Input(shape=(input_length, 1))
     features = keras.layers.BatchNormalization()(inputs)
     # Create hidden layers with weight uncertainty using the DenseVariational layer.
     for filter_, length_ in zip(num_filters, filter_length):
-        features = keras.layers.Conv1D(filters=filter_, kernel_size=length_, padding='same', activation='relu')(features)
+        features = keras.layers.Conv1D(filters=filter_, kernel_size=length_, padding="same", activation="relu")(
+            features
+        )
     features = keras.layers.MaxPooling1D(pool_size=2)(features)
     features = keras.layers.Flatten()(features)
     features = keras.layers.Dropout(0.2)(features)
@@ -48,7 +52,7 @@ def create_MDN_model(input_length, loss):
     outputs = tfp.layers.IndependentNormal(2)(distribution_params)
     model = keras.Model(inputs=inputs, outputs=outputs)
     model.compile(
-        optimizer=Adam(learning_rate=lr, beta_1=beta_1, beta_2=beta_2, epsilon=optimizer_epsilon),  #, decay=0.0),
+        optimizer=Adam(learning_rate=lr, beta_1=beta_1, beta_2=beta_2, epsilon=optimizer_epsilon),  # , decay=0.0),
         loss=loss,
         metrics=[keras.metrics.RootMeanSquaredError()],
     )

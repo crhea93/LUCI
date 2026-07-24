@@ -14,7 +14,7 @@
 | 2 — Repo weight (~344 MB untracked) | ✅ done |
 | 3 — Filter registry, numba removal, FitResult, `fitting/` package | ✅ done |
 | 4 — ONNX migration | ✅ core done (TF-drop from core deps remains) |
-| 5 — bug fixes ✅ + TF made optional ✅ / `SitelleCube` split ⬜ | 🟡 structural split outstanding |
+| 5 — bug fixes, TF optional, orchestration deduplicated | ✅ done |
 | 6 — Compat shim & API surface | ⬜ not started |
 | 7 — Docs & examples | ⬜ not started |
 
@@ -46,6 +46,25 @@ code) now lives in the filter registry as `pca_scale_indices`.
 
 New coverage: `tests/test_new_format_cube.py` exercises the new HDF5 layout, which had **none** — that
 absence is precisely how B15 survived.
+
+### Phase 5e outcome — the duplicated orchestration is gone
+`fit_cube`, `fit_region` and `fit_wvt` no longer hand-roll the same twelve-array allocation, parallel
+fan-out, thirteen-tuple unpack and `save_fits` call. That work lives in `LUCI/engine/`:
+
+- `FitMaps` — allocates the output maps, scatters a slice of results, and saves them.
+- `run_fit` — the parallel per-slice runner; `**fit_kwargs` pass straight through to `fit_calc`, so a
+  new fit option is threaded once rather than three times.
+- `resolve_initial_values`, `deep_image_cutout` — the other shared preamble.
+
+`LuciBase.py` 2008 → 1876 lines; duplicated allocation blocks 16 → 0. 12/12 goldens byte-identical.
+
+This is the root cause of the B3/B5/B6/B9 family finally removed: those bugs all existed because a fix
+or parameter added to one entry point never reached the others. **B19** was found while doing it — the
+WVT scatter wrote the continuum error into the continuum map.
+
+Still deferred: the full `SitelleCube` / `FitRunner` / `PixelSelection` class redesign. The duplication
+it was meant to eliminate is now gone, so what remains is naming and the god-class split — genuinely
+cosmetic, and best paired with Phase 6.
 
 ### Phase 5f outcome — TensorFlow is now optional
 `import LuciBase` no longer loads TensorFlow at all. The two remaining consumers import it lazily and

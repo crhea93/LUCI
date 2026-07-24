@@ -131,9 +131,6 @@ def _golden_path(config) -> str:
 @pytest.mark.slow
 @pytest.mark.parametrize("config", CONFIGS, ids=[c.id for c in CONFIGS])
 def test_golden_fit_values(config, luci_factory, cube_truth_factory, record_golden):
-    if config.ml:
-        pytest.importorskip("keras", reason="ML priors need the Keras predictors")
-
     result = _run_fit(config, luci_factory, cube_truth_factory)
     payload = _to_jsonable(result)
     path = _golden_path(config)
@@ -185,7 +182,6 @@ def test_golden_baselines_recover_the_injected_physics(luci_factory, cube_truth_
     still catch it: the recovered Halpha velocity and broadening must stay close
     to what was injected into the cube.
     """
-    pytest.importorskip("keras", reason="ML priors need the Keras predictors")
     truth = cube_truth_factory("SN3")
     cube = luci_factory(truth, ML_bool=True)
     vel, broad, _, _ = cube.fit_cube(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, 8, 12, 8, 12, n_threads=1)

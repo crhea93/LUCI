@@ -10,11 +10,11 @@ import dynesty
 from dynesty import utils as dyfunc
 from six import moves
 
-from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
-from LUCI.LuciFitParameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
+from LUCI.fitting.models import Gaussian, Sinc, SincGauss
+from LUCI.fitting.parameters import calculate_vel, calculate_vel_err, calculate_broad, calculate_broad_err, \
     calculate_flux, calculate_flux_err
-from LUCI.LuciBayesian import log_probability, prior_transform, log_likelihood_bayes
-from LUCI.LuciUtility import hessianComp
+from LUCI.fitting.bayes import log_probability, prior_transform, log_likelihood_bayes
+from LUCI.fitting.uncertainties import hessianComp
 from LUCI.instrument.filters import get_filter
 from LUCI.fitting.result import FitResult
 from LUCI.ml import get_predictor
