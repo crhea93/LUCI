@@ -10,9 +10,11 @@ from LUCI.fitting.parameters import (
     calculate_vel_err,
 )
 from LUCI.fitting.result import FitResult
+from LUCI.fitting.spectrum_fitter import SpectrumFitter
 
 __all__ = [
     "FitResult",
+    "SpectrumFitter",
     "Gaussian",
     "Sinc",
     "SincGauss",

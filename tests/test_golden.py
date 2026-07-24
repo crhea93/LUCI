@@ -185,5 +185,28 @@ def test_golden_baselines_recover_the_injected_physics(luci_factory, cube_truth_
     truth = cube_truth_factory("SN3")
     cube = luci_factory(truth, ML_bool=True)
     vel, broad, _, _ = cube.fit_cube(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, 8, 12, 8, 12, n_threads=1)
-    assert vel[:, :, 0].mean() == pytest.approx(truth["velocity_kms"], abs=5.0)
-    assert broad[:, :, 0].mean() == pytest.approx(truth["broadening_kms"], abs=5.0)
+
+    # Every line, not just Halpha.  Checking only index 0 is what let B21 hide:
+    # NII6583 and SII6731 were ~65 km/s off while Halpha looked perfect.
+    for index, line in enumerate(SN3_LINES):
+        assert vel[:, :, index].mean() == pytest.approx(truth["velocity_kms"], abs=10.0), (
+            f"{line} velocity is off"
+        )
+        assert broad[:, :, index].mean() == pytest.approx(truth["broadening_kms"], abs=10.0), (
+            f"{line} broadening is off"
+        )
+
+
+@pytest.mark.slow
+def test_velocity_tied_lines_agree_with_each_other(luci_factory, cube_truth_factory):
+    """
+    ``vel_rel=[1,1,1,1,1]`` ties all five velocities together, so the fitted
+    values must agree closely regardless of whether they match the truth.
+
+    Before B21 was fixed the spread across these tied lines was 67 km/s.
+    """
+    truth = cube_truth_factory("SN3")
+    cube = luci_factory(truth, ML_bool=True)
+    vel, _, _, _ = cube.fit_cube(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, 8, 12, 8, 12, n_threads=1)
+    per_line = [vel[:, :, i].mean() for i in range(len(SN3_LINES))]
+    assert np.ptp(per_line) < 10.0, f"tied velocities disagree: {dict(zip(SN3_LINES, per_line))}"

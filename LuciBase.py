@@ -8,7 +8,7 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 from LUCI.analysis.components import calculate_components_in_region_function, create_component_map_function
 from LUCI.engine.selection import reg_to_mask
-from LUCI.LuciFit import Fit
+from LUCI.fitting.spectrum_fitter import SpectrumFitter as Fit
 from astropy.nddata import Cutout2D
 import astropy.stats as astrostats
 from astropy.time import Time

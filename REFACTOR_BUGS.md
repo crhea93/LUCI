@@ -39,6 +39,45 @@ here (it printed *"Please set ML_bool=False"* for filters without a trained pred
 failure was easy to hit. `sinc` was unaffected for velocity (its width is the fixed instrumental
 `sinc_width`); the fix covers all three models.
 
+### B21. Sigma bounds applied to only the last line — FIXED (restructure)
+**Where (was):** `Fit.sigma_constraints`
+**Now:** `LUCI/fitting/constraints.py::sigma_bounds`
+**Tests:** `tests/test_constraints.py::test_late_binding_bug_left_all_but_the_last_line_unconstrained`
+and `::test_sigma_bounds_constrain_every_line`; plus a new golden guard,
+`test_velocity_tied_lines_agree_with_each_other`.
+
+The per-line sigma bounds were built like this:
+
+```python
+for i in range(len(self.sigma_rel)):
+    sigma_dict_list.append({'type': 'ineq', 'fun': lambda x: x[3*i+2]})
+    sigma_dict_list.append({'type': 'ineq', 'fun': lambda x: -x[3*i+2]+10})
+```
+
+Every *other* loop in that class binds its index through a default argument
+(`ind_unique=ind_unique`). This one does not, so each lambda reads `i` when SLSQP
+**calls** it — by which time the loop has ended and `i` is its final value. All 2N
+constraints therefore bounded the *last* line's sigma, N times over, and every other
+line's sigma was completely unconstrained.
+
+**This was silently wrong science.** On the SN3 fixture, with all five lines velocity-tied:
+
+| line | before | after | truth |
+|---|---|---|---|
+| Halpha | 99.61 | 99.53 | 100 |
+| NII6548 | 101.97 | 101.92 | 100 |
+| **NII6583** | **164.36** | **101.55** | 100 |
+| SII6716 | 101.63 | 101.55 | 100 |
+| **SII6731** | **167.10** | **101.55** | 100 |
+
+Two of five lines were ~65 km/s wrong, and the spread across lines that are *explicitly tied
+together* was 67.5 km/s (now 2.4). Halpha — the line anyone would eyeball — looked perfect
+throughout, which is why nothing caught it.
+
+The safety net missed it too: `test_golden_baselines_recover_the_injected_physics` only checked
+line index 0. It now checks every line, and a second guard asserts that velocity-tied lines actually
+agree. Goldens were re-recorded in the same change; all ten ML/no-ML baselines moved.
+
 ### B2. `extract_spectrum(mean=True)` is a no-op — FIXED (Phase 5)
 **Where (was):** `Luci.extract_spectrum`
 **Fixed by:** counting every contributing spaxel instead of incrementing only inside the axis-init
@@ -308,6 +347,18 @@ which is exactly how this survived.
 bare `except:` swallowed. Every string and boolean keyword fell through to the fallback,
 `clean_hdr_dict` stayed empty, and the cube came back with an axis-less WCS — losing astrometry on
 every cutout and saved map.
+
+### B20. `LUCI/LuciMask.py` ran an analysis script at import time — FIXED (restructure)
+**Where (was):** `LUCI/LuciMask.py`, module level
+**Now:** `scripts/mask_background_exploration.py`
+
+It was never an importable module. At module level it opened a hardcoded absolute path
+(`/mnt/carterrhea/.../NGC1275_lowres_deep.fits`), ran a background fit, and set analysis parameters —
+so `import LUCI.LuciMask` raised `FileNotFoundError` on every machine but its author's. Nothing
+imported it, which is why it went unnoticed. Found while bisecting the TensorFlow import chain.
+
+Moved to `scripts/` rather than deleted: it records how the background masking was explored, and is
+honest about being a script now instead of shipping inside the package.
 
 ---
 
