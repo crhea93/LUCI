@@ -486,6 +486,11 @@ class SitelleCube:
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
             axis = spectrum_axis[good_sky_inds]  # Clean up axis  accordingly
+            # ...and the transmission curve, which `Fit.apply_transmission` walks by position.
+            # Leaving it at full length divides each surviving channel by the transmission of a
+            # different wavelength -- for an SN4 cube that is a ~140 channel shift, which
+            # deforms the continuum and takes the fit with it.
+            trans_filter = transmission_interpolated[good_sky_inds] if transmission_interpolated is not None else None
             if initial_values[0] is not False:  # Frozen parameter
                 initial_values_to_pass = [initial_values[0][i][j], initial_values[1][i][j]]
             else:
@@ -500,7 +505,7 @@ class SitelleCube:
                     lines,
                     vel_rel,
                     sigma_rel,
-                    trans_filter=transmission_interpolated,
+                    trans_filter=trans_filter,
                     theta=interferometer_theta[x_pix, y_pix],
                     delta_x=hdr_dict["STEP"],
                     n_steps=step_nb,
@@ -907,6 +912,9 @@ class SitelleCube:
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
         sky = sky[good_sky_inds]  # Apply clean to sky
         axis = self.spectrum_axis[good_sky_inds]  # Apply clean to axis
+        # The transmission curve is indexed by position in `Fit.apply_transmission`, so it has
+        # to be masked in step with the spectrum (see fit_calc).
+        trans_filter = self.transmission_interpolated[good_sky_inds]
         # Call fit!
         fit = Fit(
             sky,
@@ -916,7 +924,7 @@ class SitelleCube:
             lines,
             vel_rel,
             sigma_rel,
-            trans_filter=self.transmission_interpolated,
+            trans_filter=trans_filter,
             theta=self.interferometer_theta[pixel_x, pixel_y],
             delta_x=self.hdr_dict["STEP"],
             n_steps=self.step_nb,
@@ -1161,6 +1169,8 @@ class SitelleCube:
 
         sky = integrated_spectrum[good_sky_inds]
         axis = self.spectrum_axis[good_sky_inds]
+        # Masked in step with the spectrum -- see fit_calc.
+        trans_filter = self.transmission_interpolated[good_sky_inds]
         # Call fit!
         fit = Fit(
             sky,
@@ -1170,7 +1180,7 @@ class SitelleCube:
             lines,
             vel_rel,
             sigma_rel,
-            trans_filter=self.transmission_interpolated,
+            trans_filter=trans_filter,
             theta=self.interferometer_theta[x_pix, y_pix],
             delta_x=self.hdr_dict["STEP"],
             n_steps=self.step_nb,
