@@ -61,6 +61,56 @@ Note that $\text{coeff}=\frac{1.20671}{\pi*FWHM\_COEFF}$ where the FWHM\_COEFF e
 is there because of the sinc function's definition, and the 1.20671 is the factor used to go between FWHM and sigma.
 
 
+Flux calibration
+^^^^^^^^^^^^^^^^
+
+Every expression above is an amplitude times a width, so **the flux inherits whatever units the
+data cube is in**. The ``erg/s/cm^2/Ang`` written above is only true if the cube itself is flux
+calibrated.
+
+That is not always the case. ORB's newer *level 3* cubes are stored **in counts**, with the
+conversion held in the header rather than applied to the data. ORB documents the level scheme in
+``HDFCube.get_level``:
+
++---------+------------------------------------------------------------------+
+| Level   | Units of the stored data                                         |
++=========+==================================================================+
+| 1, 2    | already ``erg/cm^2/s/Ang``                                       |
++---------+------------------------------------------------------------------+
+| 2.5     | already ``erg/cm^2/s/Ang`` (CFHT variant, calibration hard        |
+|         | written, vector kept as ``flambda2``)                            |
++---------+------------------------------------------------------------------+
+| 3       | **counts**; calibrate with                                       |
+|         | ``spectrum *= flambda / dimz / exposure_time``                    |
++---------+------------------------------------------------------------------+
+
+`LUCI` handles this for you. On reading a cube she checks the ``flux_calibration`` header keyword
+(or ``BUNIT`` on the older DR1-style headers) and, if the data are in counts, multiplies the cube
+by ``flambda / step_nb / exposure_time`` before anything else happens. The flux, amplitude and
+continuum maps are then genuinely in ``erg/cm^2/s/Ang``.
+
+.. code-block:: python
+
+    cube = SitelleCube(luci_path, cube_path, output_dir, object_name, redshift, resolution)
+    cube.flux_calibrated   # True once the conversion has been applied
+
+If you would rather fit the raw counts, turn it off:
+
+.. code-block:: python
+
+    cube = SitelleCube(..., flux_calibration=False)
+
+`LUCI` then logs a warning so that the units of the resulting maps are not a surprise. She also
+warns if a cube says it is uncalibrated but carries no usable ``flambda``, in which case the maps
+stay in counts and the axis labels are wrong.
+
+.. note::
+   ORB is not self-consistent here: ``HDFCube.to_fits`` multiplies by ``flambda`` alone, leaving
+   out the ``/dimz/exposure_time``, which for a typical SN4 cube is a factor of 17822. `LUCI`
+   follows the ``get_level`` docstring, which is the form that reproduces published surface
+   brightnesses.
+
+
 How we calculate
 ----------------
 Once we have a spectrum, we do two things: we normalize the spectrum by the maximum amplitude

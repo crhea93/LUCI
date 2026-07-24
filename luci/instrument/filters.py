@@ -142,7 +142,14 @@ FILTERS: dict[str, FilterSpec] = {
         # is far wider than the pass band, so the noise window sits in a region
         # the filter blocks entirely.
         fit=BoundRule(15040, 15330),
-        noise=BoundRule(14600, 14900),
+        # The noise window sits on the blue side of the pass band (639.1-650.2 nm), where the
+        # filter transmits 1e-4. It was originally 14600-14900, on the red side, but real SN4
+        # cubes come out of ORB with that end of the axis set to NaN -- and because the mean
+        # background spectrum inherits the union of the NaNs over its region, subtracting it
+        # emptied the window for *every* pixel, so `np.nanstd` returned NaN and the chi2 map
+        # came out entirely NaN. This side of the pass band is populated (median 127 channels
+        # per pixel) and is 1817 km/s away from NII6548, the nearest line.
+        noise=BoundRule(15380, 15650),
         reference=BoundRule(15000, 15350),
         pca_scale=(664.5, 661.0),
     ),

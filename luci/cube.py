@@ -10,6 +10,7 @@ import astropy.stats as astrostats
 import astropy.units as u
 import h5py
 import matplotlib.pyplot as plt
+import numpy as np
 import numpy.ma as ma
 import pandas
 from astropy.coordinates import EarthLocation, SkyCoord
@@ -37,6 +38,7 @@ from luci.background.subtraction import pca_background, subtract_pca, subtract_s
 from luci.engine import FitMaps, deep_image_cutout, resolve_initial_values, run_fit
 from luci.engine.selection import reg_to_mask, resolve_mask
 from luci.fitting.spectrum_fitter import SpectrumFitter as Fit
+from luci.instrument.flux import flux_calibration_vector, is_flux_calibrated
 from luci.io.assets import resolve_luci_path
 from luci.log import get_logger
 from luci.LuciUtility import (
@@ -77,6 +79,7 @@ class SitelleCube:
         resolution=5000,
         ML_bool=True,
         mdn=False,
+        flux_calibration=True,
     ):
         """
         Initialize our Luci class -- this acts similar to the SpectralCube class
@@ -92,6 +95,11 @@ class SitelleCube:
             resolution: Resolution requested of machine learning algorithm reference spectrum
             ML_bool: Boolean for applying machine learning; default=True
             mdn: Boolean for using the Mixed Density Network models; If true, then we use the posterior distributions calculated by our network as our priors for bayesian fits
+            flux_calibration: Convert the cube from counts to erg/cm2/s/A when its header says
+                it is not already calibrated (default True). ORB's level-3 cubes are stored in
+                counts with the calibration held in the `flambda` header vector; without this
+                every flux, amplitude and continuum map is in instrumental units despite being
+                labelled erg/cm2/s/A. Set False to fit the raw counts.
         """
         self.header_binned = None
         self.Luci_path = resolve_luci_path(Luci_path)
@@ -119,6 +127,14 @@ class SitelleCube:
         self.interferometer_theta = None
         self.transmission_interpolated = None
         self.read_in_cube()
+        self.flux_calibrated = False  # Whether cube_final is in erg/cm2/s/A
+        if flux_calibration:
+            self.apply_flux_calibration()
+        elif not is_flux_calibrated(self.hdr_dict):
+            logger.warning(
+                "Cube is not flux calibrated and flux_calibration=False, so every flux, "
+                "amplitude and continuum map will be in counts, not erg/cm2/s/A."
+            )
         self.step_nb = self.hdr_dict["STEPNB"]
         self.zpd_index = self.hdr_dict["ZPDINDEX"]
         self.filter = self.hdr_dict["FILTER"]
@@ -173,6 +189,33 @@ class SitelleCube:
         self.header, self.hdr_dict = update_header(file)
         self.interferometer_theta = get_interferometer_angles(file, self.hdr_dict)
         # file.close()
+
+    def apply_flux_calibration(self):
+        """
+        Scale the cube from counts to erg/cm2/s/A if its header says it is not already calibrated.
+
+        ORB level-3 cubes hold counts and carry the conversion in the `flambda` header vector
+        (see :mod:`luci.instrument.flux`). LUCI's flux formulas are amplitude x width, so they
+        inherit whatever units the cube is in -- calibrating once, here, is what makes the
+        erg/cm2/s/A on every downstream axis label true. Cubes ORBS already calibrated, and
+        cubes with no usable `flambda`, are left alone.
+
+        Sets `self.flux_calibrated` and returns it.
+        """
+        calibration = flux_calibration_vector(self.hdr_dict, self.cube_final.shape[-1])
+        if calibration is None:
+            self.flux_calibrated = is_flux_calibrated(self.hdr_dict)
+            return self.flux_calibrated
+        logger.info(
+            "Applying flux calibration: counts -> erg/cm2/s/A (median factor %.4g per count)",
+            np.median(calibration),
+        )
+        # A contiguous float32 copy: the cube may be a strided `np.real(...)` view of a complex
+        # dataset, which both doubles the memory and makes this multiply crawl.
+        self.cube_final = np.ascontiguousarray(self.cube_final, dtype=np.float32)
+        self.cube_final *= calibration.astype(np.float32)
+        self.flux_calibrated = True
+        return True
 
     def create_deep_image(self, output_name=None, binning=None):
         """

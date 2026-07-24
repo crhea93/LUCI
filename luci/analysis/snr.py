@@ -96,10 +96,12 @@ def create_snr_map(
     elif cube.hdr_dict["FILTER"] == "SN4":  # Halpha complex in the narrow Halpha filter
         flux_min = 15150
         flux_max = 15300
-        # The order 15 free spectral range extends well past the 652-665 nm pass band,
-        # so the noise can be taken from a completely blocked portion of the axis
-        noise_min = 14600
-        noise_max = 14900
+        # The order 15 free spectral range extends well past the 652-665 nm pass band, so the
+        # noise can be taken from a completely blocked portion of the axis. Use the blue side:
+        # ORB leaves the red end (14669-14905 cm-1) NaN in real SN4 cubes. Kept in step with
+        # the SN4 noise window in luci/instrument/filters.py.
+        noise_min = 15380
+        noise_max = 15650
     elif cube.hdr_dict["FILTER"] == "C3":  # Only for MACSJ1621
         flux_min = 18500
         flux_max = 20500

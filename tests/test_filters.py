@@ -21,7 +21,7 @@ from luci.instrument.filters import (
 # The numbers below are transcribed straight from the pre-refactor code so the
 # test is an independent record, not a mirror of the registry it checks.
 SN_FIT = {"SN3": (14750, 15400), "SN2": (19500, 20750), "SN1": (26000, 28000), "SN4": (15040, 15330)}
-SN_NOISE = {"SN3": (15600, 15800), "SN2": (18600, 19000), "SN1": (26000, 26200), "SN4": (14600, 14900)}
+SN_NOISE = {"SN3": (15600, 15800), "SN2": (18600, 19000), "SN1": (26000, 26200), "SN4": (15380, 15650)}
 SN_REF = {"SN3": (14700, 15600), "SN2": (19000, 21000), "SN1": (25500, 27500), "SN4": (15000, 15350)}
 
 
