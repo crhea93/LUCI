@@ -99,7 +99,7 @@ class FilterProfile:
         ):
             if not (lo <= wlo and whi <= hi):
                 raise ValueError(
-                    f"{self.name}: {label} window {(wlo, whi)} is not contained " f"in the spectral axis {(lo, hi)}"
+                    f"{self.name}: {label} window {(wlo, whi)} is not contained in the spectral axis {(lo, hi)}"
                 )
 
 

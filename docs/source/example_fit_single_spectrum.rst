@@ -12,8 +12,8 @@ This is a very basic example.
     # Imports
     import sys
     sys.path.insert(0, '/media/carterrhea/carterrhea/SIGNALS/LUCI/')  # Location of Luci
-    from LuciBase import Luci
-    import LUCI.LuciPlotting as lplt
+    from luci import SitelleCube
+    import luci.viz.plotting as lplt
 
 We now will set the required parameters. W
 
@@ -35,7 +35,7 @@ We intialize our LUCI object
 .. code-block:: python
 
     # Create Luci object
-    cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
+    cube = SitelleCube(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution)
 
 
 

@@ -111,6 +111,7 @@ Prerequisites
        :caption: Prerequisites:
 
        howLuciWorks
+       migration
        uncertainties
        fit_options
        wavelength_corrections

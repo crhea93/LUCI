@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from LUCI.instrument.filters import (
+from luci.instrument.filters import (
     FILTERS,
     SUPPORTED_FILTERS,
     UnsupportedFilterError,

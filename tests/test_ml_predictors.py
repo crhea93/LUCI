@@ -20,8 +20,8 @@ import os
 import numpy as np
 import pytest
 
-from LUCI.ml.onnx_backend import OnnxMDNPredictor, OnnxPredictor, _run
-from LUCI.ml.registry import get_predictor
+from luci.ml.onnx_backend import OnnxMDNPredictor, OnnxPredictor, _run
+from luci.ml.registry import get_predictor
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ONNX_DIR = os.path.join(REPO_ROOT, "ML", "onnx")

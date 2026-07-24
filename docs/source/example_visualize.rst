@@ -12,7 +12,7 @@ found as a python file in "LUCI/Examples/viewer.py".
     import sys
     import numpy as np
     sys.path.insert(0, '/home/carterrhea/Documents/LUCI/')  # Location of Luci
-    from LuciBase import Luci
+    from luci import SitelleCube
 
 
 Inputs
@@ -38,7 +38,7 @@ We can now read in the cube and visualize the cube!
 
 .. code-block:: python
 
-  cube = Luci(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, mdn=True)
+  cube = SitelleCube(Luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, mdn=True)
   cube.visualize()
 
 

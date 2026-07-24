@@ -24,7 +24,7 @@ import os
 import numpy as np
 import pytest
 
-from LUCI.instrument.filters import PCABackgroundUnsupportedError, pca_scale_indices
+from luci.instrument.filters import PCABackgroundUnsupportedError, pca_scale_indices
 
 SN3_LINES = ["Halpha", "NII6548", "NII6583", "SII6716", "SII6731"]
 
@@ -66,9 +66,9 @@ def test_fit_region_subtracts_the_background(sn3_cube_noml, sn3_truth):
 
     # atol=0 matters: fluxes are ~1e-16, so numpy's default atol=1e-8 would call
     # any two of these arrays "close" and the assertion would never fire.
-    assert not np.allclose(
-        plain_flux, subtracted_flux, rtol=1e-6, atol=0.0
-    ), "passing bkg made no difference -- background was ignored (B3)"
+    assert not np.allclose(plain_flux, subtracted_flux, rtol=1e-6, atol=0.0), (
+        "passing bkg made no difference -- background was ignored (B3)"
+    )
     # Concretely: subtracting a background that contains the lines themselves
     # must strip most of the fitted flux at a fitted pixel.
     assert subtracted_flux[9, 9, 0] < 0.5 * plain_flux[9, 9, 0]
@@ -80,9 +80,9 @@ def test_fit_region_names_outputs_like_fit_cube(sn3_cube_noml, sn3_truth):
     mask = _small_mask(sn3_truth)
     sn3_cube_noml.fit_region(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, mask, n_threads=1)
     written = os.listdir(os.path.join(sn3_cube_noml.output_dir, "Velocity"))
-    assert any(
-        "sincgauss" in name for name in written
-    ), f"fit_function missing from fit_region output names: {written[:5]}"
+    assert any("sincgauss" in name for name in written), (
+        f"fit_function missing from fit_region output names: {written[:5]}"
+    )
 
 
 # --------------------------------------------------------------------------
@@ -170,7 +170,7 @@ def test_no_hardcoded_detector_dimensions_remain():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     # Scans LUCI/cube.py: LuciBase.py is now only a re-export shim, so pointing
     # this at it would pass vacuously.
-    source = open(os.path.join(root, "LUCI", "cube.py")).read()
+    source = open(os.path.join(root, "luci", "cube.py")).read()
     offenders = [
         line.strip()
         for line in source.splitlines()
@@ -199,7 +199,7 @@ def test_pixel_list_selects_only_the_listed_pixels():
     selected -- and then set the listed pixels True, so ``pixel_list=True``
     silently fitted the entire cube instead of the handful of pixels asked for.
     """
-    from LUCI.engine.selection import resolve_mask
+    from luci.engine.selection import resolve_mask
 
     mask = resolve_mask([(2, 3), (4, 5)], header=None, cube_shape=(10, 10), pixel_list=True)
     assert mask.dtype == bool
@@ -208,7 +208,7 @@ def test_pixel_list_selects_only_the_listed_pixels():
 
 
 def test_resolve_mask_passes_through_a_boolean_array():
-    from LUCI.engine.selection import resolve_mask
+    from luci.engine.selection import resolve_mask
 
     given = np.zeros((6, 6), dtype=bool)
     given[1, 1] = True
@@ -218,7 +218,7 @@ def test_resolve_mask_passes_through_a_boolean_array():
 
 def test_resolve_mask_rejects_an_unknown_region_type():
     """An unrecognised value used to print a message and carry on with no mask."""
-    from LUCI.engine.selection import resolve_mask
+    from luci.engine.selection import resolve_mask
 
     with pytest.raises(ValueError, match="Unrecognised region file"):
         resolve_mask("region.txt", header=None, cube_shape=(4, 4))

@@ -48,23 +48,23 @@ New coverage: `tests/test_new_format_cube.py` exercises the new HDF5 layout, whi
 absence is precisely how B15 survived.
 
 ### FitConfig and PixelSelection
-`LUCI/config.py` groups the fit *options* into one validated `FitConfig`; `SpectrumFitter` still takes
+`luci/config.py` groups the fit *options* into one validated `FitConfig`; `SpectrumFitter` still takes
 every individual keyword, so nothing breaks, but they are collected into a config internally and
 validated in one place. The three ad-hoc `check_*` methods moved onto it, and `LINE_DICT` is now
 defined once rather than copied across three modules.
 
-`LUCI/engine/selection.py::resolve_mask` replaces the region/mask/pixel-list `if` chain that each fit
+`luci/engine/selection.py::resolve_mask` replaces the region/mask/pixel-list `if` chain that each fit
 entry point re-implemented. It surfaced **B23**: the pixel-list branch started from `np.ones`, so
 `pixel_list=True` fitted the entire cube.
 
 A test asserts the keyword path and the config path produce bit-identical fits.
 
 ### The package restructure
-The flat `LUCI/Luci*.py` modules are gone — every one is now a 3–25 line re-export shim over a module
+The flat `luci/Luci*.py` modules are gone — every one is now a 3–25 line re-export shim over a module
 with an actual home:
 
 ```
-LUCI/
+luci/
   cube.py            SitelleCube (was Luci, in LuciBase.py)   1009 lines
   simulation.py      log.py
   instrument/        filters.py  header.py
@@ -88,7 +88,7 @@ undefined-name check, which is the concrete argument for widening lint onto move
 
 ### Phase 5e outcome — the duplicated orchestration is gone
 `fit_cube`, `fit_region` and `fit_wvt` no longer hand-roll the same twelve-array allocation, parallel
-fan-out, thirteen-tuple unpack and `save_fits` call. That work lives in `LUCI/engine/`:
+fan-out, thirteen-tuple unpack and `save_fits` call. That work lives in `luci/engine/`:
 
 - `FitMaps` — allocates the output maps, scatters a slice of results, and saves them.
 - `run_fit` — the parallel per-slice runner; `**fit_kwargs` pass straight through to `fit_calc`, so a
@@ -121,7 +121,7 @@ component counting. `LuciNetwork` is untouched — it is only used by the offlin
 
 ### Phase 4 outcome
 **All 39 models converted to ONNX and validated — 39/39, worst deviation 6.7e-4 (float32 precision).**
-`LUCI/ml/` (predictor protocol, ONNX backend with cached sessions, registry) is wired into `Fit`,
+`luci/ml/` (predictor protocol, ONNX backend with cached sessions, registry) is wired into `Fit`,
 which now contains **no TensorFlow references at all**.
 
 - **B13 fixed:** predictors and ONNX sessions are cached per process, so a model loads once instead of
@@ -173,18 +173,18 @@ Decisions made with the user:
 | Problem | Where |
 |---|---|
 | `Luci` god-class: IO, deep images, binning, fit orchestration, SNR, WVT, PCA background, *and* inline Keras training | [LuciBase.py](LuciBase.py) — 1,989 lines |
-| `Fit` class: ~50 attributes assigned in `__init__`, ordering-dependent, mutated throughout | [LUCI/LuciFit.py:52-176](LUCI/LuciFit.py#L52-L176) |
+| `Fit` class: ~50 attributes assigned in `__init__`, ordering-dependent, mutated throughout | [luci/LuciFit.py:52-176](luci/LuciFit.py#L52-L176) |
 | Four near-identical orchestration blocks (allocate 12 arrays → `Parallel(fit_calc)` → unpack 13-tuple → `save_fits`) | `fit_cube` [L412](LuciBase.py#L412), `fit_region` [L556](LuciBase.py#L556), `create_snr_map` [L1054](LuciBase.py#L1054), `wvt_fit_region` [L1482](LuciBase.py#L1482) |
-| Filter→bounds `if/elif` chain duplicated 5× with divergent values | [LuciFit.py:236](LUCI/LuciFit.py#L236) (fit bounds), [LuciFit.py:298](LUCI/LuciFit.py#L298) (noise), [LuciUtility.py:275](LUCI/LuciUtility.py#L275) (ref-spectrum clip), [LuciBase.py:332](LuciBase.py#L332) + [L781](LuciBase.py#L781) + [L1809](LuciBase.py#L1809) (PCA scale) |
+| Filter→bounds `if/elif` chain duplicated 5× with divergent values | [LuciFit.py:236](luci/LuciFit.py#L236) (fit bounds), [LuciFit.py:298](luci/LuciFit.py#L298) (noise), [LuciUtility.py:275](luci/LuciUtility.py#L275) (ref-spectrum clip), [LuciBase.py:332](LuciBase.py#L332) + [L781](LuciBase.py#L781) + [L1809](LuciBase.py#L1809) (PCA scale) |
 | `fit_calc` takes 30 positional/keyword params and returns a 13-tuple | [LuciBase.py:259](LuciBase.py#L259) |
-| Fit results returned as an 18-key untyped dict | [LuciFit.py:844](LUCI/LuciFit.py#L844) |
+| Fit results returned as an 18-key untyped dict | [LuciFit.py:844](luci/LuciFit.py#L844) |
 | `from LUCI.LuciWVT import *` — star import pollutes `LuciBase` namespace (this is where `np` and `fits` actually come from) | [LuciBase.py:19](LuciBase.py#L19) |
-| `quit()` / `exit()` called from library code on unsupported filter | [LuciBase.py:345](LuciBase.py#L345), [L793](LuciBase.py#L793), [LuciUtility.py:303](LUCI/LuciUtility.py#L303) |
+| `quit()` / `exit()` called from library code on unsupported filter | [LuciBase.py:345](LuciBase.py#L345), [L793](LuciBase.py#L793), [LuciUtility.py:303](luci/LuciUtility.py#L303) |
 | 91 `print()` calls, 10 bare `except:`, 4 module-level `global` statements | throughout |
 
 ### Real bugs found while reading (fix during the refactor, each with a regression test)
 
-1. **`buond_upper` typo** — [LuciFit.py:321](LUCI/LuciFit.py#L321). For the normal-C3 branch of `calculate_noise`, `bound_upper` is never assigned. Because `bound_lower`/`bound_upper` are **module-level globals**, C3 silently inherits the noise window from whatever spectrum was fit previously — results depend on fit order. This is the single strongest argument for the filter registry.
+1. **`buond_upper` typo** — [LuciFit.py:321](luci/LuciFit.py#L321). For the normal-C3 branch of `calculate_noise`, `bound_upper` is never assigned. Because `bound_lower`/`bound_upper` are **module-level globals**, C3 silently inherits the noise window from whatever spectrum was fit previously — results depend on fit order. This is the single strongest argument for the filter registry.
 2. **`NameError` in `fit_pixel` PCA path** — [LuciBase.py:801](LuciBase.py#L801) references `x_pix`/`y_pix`, which don't exist in that scope. Unbinned PCA background subtraction on a single pixel always crashes.
 3. **`fit_region` never subtracts the background** — [LuciBase.py:694-707](LuciBase.py#L694-L707) passes `bkg=bkg` but not `bkgType`, so `fit_calc` sees `bkgType is None` and skips subtraction entirely. Silent wrong answer.
 4. **`fit_region` drops `corr`/`step`** and doesn't forward `fit_function` to `save_fits`, so its outputs are named differently from `fit_cube`'s — [LuciBase.py:709-724](LuciBase.py#L709-L724).
@@ -194,7 +194,7 @@ Decisions made with the user:
 ### Packaging / infrastructure
 
 - [setup.py](setup.py) declares `packages=['distutils', 'distutils.command']` — the package has never been installable. Every user and every example does `sys.path.insert(0, '/home/carterrhea/Documents/LUCI/')`.
-- `Luci_path` is threaded through **every** call as a string with a mandatory trailing `/` ([check_luci_path](LUCI/LuciUtility.py#L10) exists solely to paper over this) just to locate `ML/` and `Data/`.
+- `Luci_path` is threaded through **every** call as a string with a mandatory trailing `/` ([check_luci_path](luci/LuciUtility.py#L10) exists solely to paper over this) just to locate `ML/` and `Data/`.
 - CI pins Python 3.9.5 + `tensorflow==2.11` via a 700-line frozen conda `luci.yml` (plus a stale `luci_macOS-11.6.yml`) with hashed build strings like `libgcc-ng=13.2.0=h807b86a_3` — unreproducible across platforms and impossible to update incrementally. You are on Python 3.13. `requirements.txt` separately lists the long-dead `sklearn` package and contradicts `luci.yml`.
 - [tests/test_cube.py](tests/test_cube.py) hardcodes `/home/carterrhea/Documents/Luci_test/NGC6946_SN3.hdf5` and wraps fixtures in a `Test` class with an `__init__`, which pytest refuses to collect. CI has never actually exercised the code.
 - **300 MB of generated output is tracked**: `Data/ExampleData/Luci_outputs/` — nine 33 MB FITS files that are *products* of running the example, not inputs. Plus 171 MB of ML artifacts. `.git` is 470 MB.
@@ -323,7 +323,7 @@ Nothing here changes production code.
    old SITELLE quadrant format: `quad_nb`/`dimx`/`dimy`/`dimz` attrs, `quad00N/data` datasets, a
    `header` structured array, and a `calib_map`. Seed known Gaussian/sinc lines at known velocities
    and broadenings so tests assert on recoverable truth, not just "it ran". Required header keys,
-   from [update_header](LUCI/LuciUtility.py#L168) and [spectrum_axis_func](LUCI/LuciUtility.py#L143):
+   from [update_header](luci/LuciUtility.py#L168) and [spectrum_axis_func](luci/LuciUtility.py#L143):
    `STEPNB`, `ZPDINDEX`, `FILTER`, `STEP`, `ORDER`, `CRVAL3`, `CDELT3`, `CRVAL1`, `CRVAL2`,
    `DATE-OBS`, `CALIBNM`. Commit the generator, not the cube; build it in a session-scoped fixture.
 2. **Golden-value tests** — run the *current* code over the fixture for the cross product of
@@ -350,7 +350,7 @@ green under the uv-managed `.venv`, whose pins are byte-identical to the golden-
 goldens hold unchanged.
 
 Delivered: [pyproject.toml](pyproject.toml) (hatchling, packages `LUCI` + top-level `LuciBase`/
-`LuciAbsorp`), committed [uv.lock](uv.lock), new [LUCI/__init__.py](LUCI/__init__.py), rewritten
+`LuciAbsorp`), committed [uv.lock](uv.lock), new [luci/__init__.py](luci/__init__.py), rewritten
 [.github/workflows/python-app.yml](.github/workflows/python-app.yml), [.pre-commit-config.yaml](.pre-commit-config.yaml),
 ruff config. Deleted `setup.py`, `requirements.txt`, `luci.yml`, `luci_macOS-11.6.yml`, `pytest.ini`.
 
@@ -475,11 +475,11 @@ Original plan detail retained for reference:
 
 **Progress (2026-07-23): 3a and 3b DONE, golden-verified. 3c (Fit split + B1/B14) remains.**
 
-- **3a — FilterSpec registry — DONE.** [LUCI/instrument/filters.py](LUCI/instrument/filters.py) replaces
+- **3a — FilterSpec registry — DONE.** [luci/instrument/filters.py](luci/instrument/filters.py) replaces
   the five duplicated filter→bounds chains. `restrict_wavelength`, `calculate_noise`, and
   `read_in_reference_spectrum` route through it; all four `global bound_lower, bound_upper` statements
   deleted; `exit()`/`print()` on unknown filter replaced by `UnsupportedFilterError`. **Fixes B4.**
-  23 registry unit tests + 12/12 goldens byte-identical. (Staged under `LUCI/instrument/` not `luci/`
+  23 registry unit tests + 12/12 goldens byte-identical. (Staged under `luci/instrument/` not `luci/`
   to avoid the macOS `LUCI`-vs-`luci` case collision; the lowercase rename happens atomically at the end.)
 - **3b — numba removed — DONE.** All 25 bare `@jit(fastmath=True)` object-mode no-ops deleted; numba +
   llvmlite dropped from deps and lock. **Fixes B11.** 12/12 goldens byte-identical; fast suite ~2.5×
@@ -489,7 +489,7 @@ Original plan detail retained for reference:
   ML-off now recovers physics (sincgauss 99.5/30.2, gaussian 99.5/30.3, were 0/0). The two
   `*_broken_zeros` goldens were renamed `*_noml` and re-recorded to the recovered values; the 10 ML-on
   baselines stayed byte-identical (12/12). The B1 xfail flipped to a passing test.
-- **3c-ii — FitResult + B14 — DONE.** [LUCI/fitting/result.py](LUCI/fitting/result.py): `FitResult`
+- **3c-ii — FitResult + B14 — DONE.** [luci/fitting/result.py](luci/fitting/result.py): `FitResult`
   dataclass replaces the 22-key untyped dict `fit()` returned. It stays read-compatible
   (`result['velocities']` still works via `__getitem__`), so no caller changed; `fit()` returns it and
   12/12 goldens stayed byte-identical. **B14** turned out to be a Phase-0 mischaracterization —
@@ -497,9 +497,9 @@ Original plan detail retained for reference:
   B1). Guarded with `SINCGAUSS_SIGMA_FLOOR`; fires only at exact zero, goldens byte-identical. Register
   corrected.
 - **3c-iii — structural rename — PARTIALLY DONE (maintainability only).**
-  - **DONE:** Gaussian/Sinc/SincGauss → [LUCI/fitting/models.py](LUCI/fitting/models.py) and
-    calculate_* → [LUCI/fitting/parameters.py](LUCI/fitting/parameters.py), both with re-export shims
-    ([LuciFunctions.py](LUCI/LuciFunctions.py), [LuciFitParameters.py](LUCI/LuciFitParameters.py) now
+  - **DONE:** Gaussian/Sinc/SincGauss → [luci/fitting/models.py](luci/fitting/models.py) and
+    calculate_* → [luci/fitting/parameters.py](luci/fitting/parameters.py), both with re-export shims
+    ([LuciFunctions.py](luci/LuciFunctions.py), [LuciFitParameters.py](luci/LuciFitParameters.py) now
     3-line shims). Verified byte-identical (12 goldens + 31 pure-function tests). Both new modules are
     now lint-clean (bare `except:` → `except Exception:`, stray semicolon removed).
   - **DEFERRED (optional, low value):** extracting the constraint methods to `fitting/constraints.py`,
@@ -526,7 +526,7 @@ Original detail follows:
 - Fix B14 (guard or reformulate the sinc-Gauss at small σ) while the line models move to
   `fitting/models.py`; it compounds B1.
 - Introduce `FitResult` and return it from `fit()`. `FitResult.as_dict()` preserves the old 18-key
-  dict for the compat layer and for [LuciConvenience.get_individual_components](LUCI/LuciConvenience.py#L10).
+  dict for the compat layer and for [LuciConvenience.get_individual_components](luci/LuciConvenience.py#L10).
 - Remove the `@jit(fastmath=True)` decorators on `apply_transmission`, `calculate_correction`,
   `calc_sinc_width`, `interpolate_spectrum`. These are numba object-mode fallbacks on pure-Python
   list comprehensions and scipy calls — they add import cost and warnings and compile nothing useful.
@@ -541,12 +541,12 @@ The two model families need different treatment:
 - **MDN predictors** (`R*-PREDICTOR-I-MDN-*`) are **weights-only checkpoints**
   (`.index` + `.data-00000-of-00001`), not SavedModels, and their head is a
   `tfp.layers.IndependentNormal(2)` on top of `Dense(units=4)`
-  ([LuciNetwork.py:47-48](LUCI/LuciNetwork.py#L47-L48)). TFP distribution layers have no ONNX
+  ([LuciNetwork.py:47-48](luci/LuciNetwork.py#L47-L48)). TFP distribution layers have no ONNX
   equivalent. **The fix is straightforward**: rebuild the architecture via `create_MDN_model`, load
   the checkpoint, then export the model *truncated at the `Dense(4)` layer* — that layer's output is
   exactly `[loc_vel, loc_broad, scale_raw_vel, scale_raw_broad]`. Reproduce the distribution in numpy:
   `mean = loc`, `stddev = softplus(scale_raw) + 1e-5`, matching `IndependentNormal.new()`. The
-  `estimate_priors_ML` contract ([LuciFit.py:347](LUCI/LuciFit.py#L347)) needs only mean and stddev,
+  `estimate_priors_ML` contract ([LuciFit.py:347](luci/LuciFit.py#L347)) needs only mean and stddev,
   so nothing is lost.
 - Conversion lives in a **one-shot script** (`tools/convert_models_to_onnx.py`), never in the
   runtime. It carries a PEP 723 inline-dependency header pinning `python==3.10` + `tensorflow==2.11`
@@ -558,7 +558,7 @@ The two model families need different treatment:
 - `luci/ml/base.py` defines `ParameterPredictor`; `onnx_backend.py` is the default,
   `keras_backend.py` a lazy-imported fallback so old artifacts still work if someone has TF.
   `ML_bool=False` maps to a null predictor rather than the current `self.ML_model = ''` sentinel
-  ([LuciFit.py:811](LUCI/LuciFit.py#L811)).
+  ([LuciFit.py:811](luci/LuciFit.py#L811)).
 - Move `ML/TrainPredictor.py` to `tools/` — it's a training script, not library code.
 - **Only after the validation gate passes**, drop `tensorflow` / `tensorflow-probability` /
   `keras` from core dependencies into an optional `[ml-legacy]` extra.

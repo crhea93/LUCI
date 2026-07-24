@@ -52,8 +52,13 @@ uv run pytest               # run the test suite
 `LUCI` is now a proper installed package, so **no `sys.path` juggling is required**. Load it with:
 
 ```python
-from LuciBase import Luci
+from luci import SitelleCube
 ```
+
+The older spellings all still work — `from LuciBase import Luci`, `from LUCI.LuciFit import Fit`,
+and so on — so existing notebooks and scripts run unchanged. See the
+[migration guide](docs/source/migration.rst) for the full old-to-new mapping, and for the list of
+bug fixes that **changed numerical results**.
 
 (Older documentation and notebooks may still show `sys.path.insert(0, '/the/path/to/LUCI/')` before
 the import. That line is no longer needed and can be deleted.)

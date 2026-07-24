@@ -21,7 +21,7 @@ Let's start of with the usual slew of commands.
     # Imports
     import sys
     sys.path.insert(0, '/media/carterrhea/carterrhea/SIGNALS/LUCI/')  # Location of Luci
-    from LUCI.LuciSim import Spectrum
+    from luci.simulation import Spectrum
     import matplotlib.pyplot as plt
     from astropy.io import fits
     import numpy as np

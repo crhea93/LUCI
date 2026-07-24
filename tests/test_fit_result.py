@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from LUCI.fitting.result import FitResult
+from luci.fitting.result import FitResult
 
 # The exact key set the pre-refactor Fit.fit() returned.  If a refactor drops or
 # renames one of these, a caller indexing the old dict breaks -- so pin it.

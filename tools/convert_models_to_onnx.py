@@ -119,7 +119,7 @@ def convert_standard(name: str, out_path: str) -> None:
 
     src = os.path.join(ML_DIR, name)
     rc = os.system(
-        f"{sys.executable} -m tf2onnx.convert --saved-model {src} " f"--output {out_path} --opset 17 >/dev/null 2>&1"
+        f"{sys.executable} -m tf2onnx.convert --saved-model {src} --output {out_path} --opset 17 >/dev/null 2>&1"
     )
     if rc != 0 or not os.path.exists(out_path):
         raise RuntimeError(f"tf2onnx failed for {name}")
@@ -130,7 +130,7 @@ def convert_mdn(name: str, out_path: str) -> None:
     import tf2onnx
 
     sys.path.insert(0, REPO_ROOT)
-    from LUCI.ml.mdn_architecture import create_MDN_model, negative_loglikelihood
+    from luci.ml.mdn_architecture import create_MDN_model, negative_loglikelihood
 
     input_len = reference_input_length(_resolution_of(name), _filter_of(name))
     mdn = create_MDN_model(input_len, negative_loglikelihood)
@@ -186,7 +186,7 @@ def validate(name: str, out_path: str) -> tuple[bool, float]:
 
     mdn = is_mdn(name)
     if mdn:
-        from LUCI.ml.mdn_architecture import create_MDN_model, negative_loglikelihood
+        from luci.ml.mdn_architecture import create_MDN_model, negative_loglikelihood
 
         input_len = reference_input_length(_resolution_of(name), _filter_of(name))
         model = create_MDN_model(input_len, negative_loglikelihood)

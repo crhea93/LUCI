@@ -13,7 +13,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from LUCI.LuciFit import DEFAULT_BROADENING_KMS, Fit
+from luci.LuciFit import DEFAULT_BROADENING_KMS, Fit
 
 
 def _make_fit(cube, model="sincgauss", lines=("Halpha",), ml_bool=True, pixel=(9, 9), **kwargs):

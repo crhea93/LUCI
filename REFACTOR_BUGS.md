@@ -41,7 +41,7 @@ failure was easy to hit. `sinc` was unaffected for velocity (its width is the fi
 
 ### B21. Sigma bounds applied to only the last line — FIXED (restructure)
 **Where (was):** `Fit.sigma_constraints`
-**Now:** `LUCI/fitting/constraints.py::sigma_bounds`
+**Now:** `luci/fitting/constraints.py::sigma_bounds`
 **Tests:** `tests/test_constraints.py::test_late_binding_bug_left_all_but_the_last_line_unconstrained`
 and `::test_sigma_bounds_constrain_every_line`; plus a new golden guard,
 `test_velocity_tied_lines_agree_with_each_other`.
@@ -80,7 +80,7 @@ agree. Goldens were re-recorded in the same change; all ten ML/no-ML baselines m
 
 ### B23. `pixel_list=True` fitted the whole cube — FIXED (restructure)
 **Where (was):** the pixel-list branch of `Luci.fit_region`
-**Now:** `LUCI/engine/selection.py::mask_from_pixel_list`
+**Now:** `luci/engine/selection.py::mask_from_pixel_list`
 **Test:** `tests/test_background_and_regions.py::test_pixel_list_selects_only_the_listed_pixels`
 
 ```python
@@ -137,7 +137,7 @@ the fix takes the fitted Halpha flux from 1.14e-16 to 4.27e-18 when a background
 
 ### B4. C3 noise window leaks across fits via a module global — FIXED (Phase 3)
 **Where (was):** `LuciFit.calculate_noise` — `buond_upper` typo
-**Fixed by:** the filter registry [LUCI/instrument/filters.py](LUCI/instrument/filters.py). C3 normal
+**Fixed by:** the filter registry [luci/instrument/filters.py](luci/instrument/filters.py). C3 normal
 noise is now `(20000, 20250)`; all four `global bound_lower, bound_upper` statements are deleted and
 `restrict_wavelength` / `calculate_noise` / `read_in_reference_spectrum` route through the registry.
 **Tests:** `tests/test_filters.py::test_c3_normal_noise_upper_bound_is_now_defined` plus the SN
@@ -210,7 +210,7 @@ right file, not merely that the files exist).
 `.count()` was always 0 and the renaming branch was dead code. Every component wrote the same
 filename and the second silently overwrote the first, leaving only the last. This is the concrete
 failure behind the `# TODO: Only works for 2 components` note in
-[LuciConvenience.py:32](LUCI/LuciConvenience.py#L32).
+[LuciConvenience.py:32](luci/LuciConvenience.py#L32).
 
 ### B10. Hardcoded `2048` / `2064` cube dimensions — FIXED (Phase 5)
 **Where (was):** `create_snr_map` / `calculate_component_map` default arguments, three `header.set`
@@ -228,7 +228,7 @@ test fixture, a future detector — silently mis-indexed or truncated.
 **Where:** `[tool.hatch.build.targets.wheel.force-include]` in `pyproject.toml`
 **Test:** `tests/test_packaging.py::test_installed_top_level_module_is_not_stale`
 
-Introduced by my own Phase 1 packaging. `LUCI/` is linked editable and picks up edits, but
+Introduced by my own Phase 1 packaging. `luci/` is linked editable and picks up edits, but
 `LuciBase.py` / `LuciAbsorp.py` are **copied** into site-packages by `force-include`, and site-packages
 shadows the project root — so an editable install serves a frozen snapshot of them. The rest of the
 suite could not see this, because `conftest` puts the repo root first on `sys.path`.
@@ -245,7 +245,7 @@ uv sync --reinstall-package luci-sitelle
 ```
 
 The test is the real protection: it fails whenever the copy drifts, so the staleness cannot be silent.
-**Now fixed properly:** the cube class moved to `LUCI/cube.py` (inside the editable-linked package)
+**Now fixed properly:** the cube class moved to `luci/cube.py` (inside the editable-linked package)
 and `LuciBase.py` is a 7-line re-export shim. A shim that never changes cannot go stale, so the copy
 in site-packages stays correct on its own.
 
@@ -284,8 +284,8 @@ the `numba==0.58.1` pin.
 
 ### B13. The ML model is reloaded from disk for every pixel — FIXED (Phase 4)
 **Where (was):** `get_ML_model()` called from `Fit.__init__`
-**Fixed by:** [LUCI/ml/registry.py](LUCI/ml/registry.py) caches predictors per
-`(resolution, filter, mdn)` and [LUCI/ml/onnx_backend.py](LUCI/ml/onnx_backend.py) caches ONNX
+**Fixed by:** [luci/ml/registry.py](luci/ml/registry.py) caches predictors per
+`(resolution, filter, mdn)` and [luci/ml/onnx_backend.py](luci/ml/onnx_backend.py) caches ONNX
 sessions per path, both at module scope — so each process loads a model at most once instead of once
 per spectrum.
 **Measured:** 5.7 s/pixel → **3.0 s/pixel** on the fixture; the ~2.7 s/pixel of pure model loading is
@@ -306,7 +306,7 @@ name`) unless `MPLBACKEND=Agg` was set, and costing a matplotlib figure teardown
 
 ### B17. MDN sigmas needed softplus, not identity — FIXED during Phase 4 (introduced and caught here)
 **Where:** `mdn_split` in [tools/convert_models_to_onnx.py](tools/convert_models_to_onnx.py) and
-`OnnxMDNPredictor.predict` in [LUCI/ml/onnx_backend.py](LUCI/ml/onnx_backend.py)
+`OnnxMDNPredictor.predict` in [luci/ml/onnx_backend.py](luci/ml/onnx_backend.py)
 **Tests:** `tests/test_ml_predictors.py::test_mdn_sigmas_are_strictly_positive`,
 `::test_mdn_applies_softplus_to_the_scale_half`,
 `::test_mdn_softplus_differs_from_identity_where_raw_scale_is_negative`
@@ -329,7 +329,7 @@ deviation must be positive — rather than just the formula, and deliberately ex
 negative raw scales, since a test using only SN3 would pass under either transform.
 
 ### B14. `sincgauss` returns NaN at σ exactly 0 — FIXED (Phase 3c), and re-scoped
-**Where (was):** `SincGauss.function` in [LUCI/LuciFunctions.py](LUCI/LuciFunctions.py)
+**Where (was):** `SincGauss.function` in [luci/LuciFunctions.py](luci/LuciFunctions.py)
 **Fixed by:** a guard that substitutes `SINCGAUSS_SIGMA_FLOOR = 1e-8` when `sigma == 0` (or non-finite),
 so the profile is finite at the singular point. Fires only at exact zero; every ordinary evaluation is
 bit-for-bit unchanged (12/12 goldens byte-identical).
@@ -365,8 +365,8 @@ bare `except:` swallowed. Every string and boolean keyword fell through to the f
 `clean_hdr_dict` stayed empty, and the cube came back with an axis-less WCS — losing astrometry on
 every cutout and saved map.
 
-### B20. `LUCI/LuciMask.py` ran an analysis script at import time — FIXED (restructure)
-**Where (was):** `LUCI/LuciMask.py`, module level
+### B20. `luci/LuciMask.py` ran an analysis script at import time — FIXED (restructure)
+**Where (was):** `luci/LuciMask.py`, module level
 **Now:** `scripts/mask_background_exploration.py`
 
 It was never an importable module. At module level it opened a hardcoded absolute path
@@ -378,7 +378,7 @@ Moved to `scripts/` rather than deleted: it records how the background masking w
 honest about being a script now instead of shipping inside the package.
 
 ### B22. `fit_absorption` raised `NameError` on every call — FIXED (restructure)
-**Where (was):** `Fit.fit_absorption`, now `LUCI/fitting/spectrum_fitter.py`
+**Where (was):** `Fit.fit_absorption`, now `luci/fitting/spectrum_fitter.py`
 
 It built four initial-guess scalars (`ampl_init`, `pos_init`, `pos_sigma`, `cont_init`), never
 assembled them, then called `minimize(nll, initial, ...)` with `initial` undefined — so the method
@@ -394,7 +394,7 @@ Nothing in the repo calls it, so this could not regress anything — but it also
 ## Conventions worth a decision (not bugs)
 
 ### C1. Gaussian flux carries a sinc normalisation factor
-**Where:** [LUCI/LuciFitParameters.py:135](LUCI/LuciFitParameters.py#L135)
+**Where:** [luci/LuciFitParameters.py:135](luci/LuciFitParameters.py#L135)
 **Test:** `tests/test_pure_functions.py::test_gaussian_flux_uses_lucis_sinc_scaled_normalisation`
 
 `calculate_flux` for `model_type='gaussian'` returns
@@ -407,9 +407,9 @@ would shift every previously reported Gaussian flux by a factor of two. Flagging
 for a deliberate decision, not silently "fixing" it.
 
 ### C2. `line_dict` is duplicated three times, divergently
-- [LuciFit.py:93](LUCI/LuciFit.py#L93) — 26 lines including SN4 and C-filter entries
-- [LuciFunctions.py:30](LUCI/LuciFunctions.py#L30) — 10 lines, stale
-- [LuciSim.py:31](LUCI/LuciSim.py#L31) — third copy
+- [LuciFit.py:93](luci/LuciFit.py#L93) — 26 lines including SN4 and C-filter entries
+- [LuciFunctions.py:30](luci/LuciFunctions.py#L30) — 10 lines, stale
+- [LuciSim.py:31](luci/LuciSim.py#L31) — third copy
 
 `frozen_values()` uses the stale copy, so freezing a fit on any SN4 or C-filter
 line raises `KeyError`.
@@ -420,7 +420,7 @@ line raises `KeyError`.
 (×3), and `LuciSim.Spectrum`'s `delta_x`/`order` table. B4 is a direct consequence.
 
 ### C4. SN1's noise window sits inside its fit window
-[LuciFit.py:304-306](LUCI/LuciFit.py#L304-L306) puts the SN1 noise estimate at
+[LuciFit.py:304-306](luci/LuciFit.py#L304-L306) puts the SN1 noise estimate at
 26000–26200 cm⁻¹, which is inside the SN1 fit window of 26000–28000. Every other
 filter measures noise *outside* the fit range. Either intentional or a
 copy-paste slip; needs a decision when building the `FilterSpec` registry.

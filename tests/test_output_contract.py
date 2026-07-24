@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 from astropy.io import fits
 
-from LUCI.LuciUtility import save_fits
+from luci.LuciUtility import save_fits
 
 
 @pytest.fixture

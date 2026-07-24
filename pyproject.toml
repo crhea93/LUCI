@@ -66,23 +66,25 @@ dev = [
 # ---------------------------------------------------------------------------
 # Packaging
 # ---------------------------------------------------------------------------
-# We ship the existing LUCI package plus the top-level LuciBase / LuciAbsorp
+# We ship the luci package plus the top-level LuciBase / LuciAbsorp
 # modules, which is what every notebook imports today.  The lowercase `luci`
 # package from the later refactor phases will replace this once it exists.
 [tool.hatch.build.targets.wheel]
-packages = ["LUCI"]
+packages = ["luci"]
 # Puts the project root on sys.path for editable installs, so the top-level
 # modules resolve live rather than from the copy force-include leaves behind (B18).
 dev-mode-dirs = ["."]
 
 # Needed so a built wheel ships the top-level modules.
 [tool.hatch.build.targets.wheel.force-include]
+"LUCI.py" = "LUCI.py"
 "LuciBase.py" = "LuciBase.py"
 "LuciAbsorp.py" = "LuciAbsorp.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "LUCI/",
+    "luci/",
+    "LUCI.py",
     "LuciBase.py",
     "LuciAbsorp.py",
     "Data/*.dat",
@@ -110,9 +112,9 @@ extend-exclude = [
     "Data",
     "*.ipynb",
     # Legacy modules, linted as their refactor phase rewrites them.  The glob
-    # excludes LUCI/LuciFit.py, LuciFunctions.py, etc. but NOT new subpackages
-    # like LUCI/instrument/, so freshly written code is held to the rules.
-    "LUCI/Luci*.py",
+    # excludes luci/LuciFit.py, LuciFunctions.py, etc. but NOT new subpackages
+    # like luci/instrument/, so freshly written code is held to the rules.
+    "luci/Luci*.py",
     "LuciAbsorp.py",
     "luci_absorption_fit_outline.py",
 ]
@@ -133,20 +135,20 @@ ignore = [
 # Relocated verbatim from the old flat modules. They are held to formatting and
 # import order, but not yet to the rules that would require editing logic --
 # that happens when each is actually rewritten.
-"LUCI/analysis/*.py" = ["F841", "E712", "E722", "E711", "F401"]
-"LUCI/cube.py" = ["F841", "E712", "E722", "E711", "F401", "F403", "F405"]
-"LUCI/background/pca.py" = ["F841", "E712", "E722", "F401"]
-"LUCI/viz/*.py" = ["F841", "E712", "E722", "F401"]
-"LUCI/background/*.py" = ["F841", "E712", "E722", "F401"]
-"LUCI/fitting/bayes.py" = ["F841", "E712", "E722", "F401"]
-"LUCI/fitting/spectrum_fitter.py" = ["F841", "E712", "E722", "E731"]
-"LUCI/fitting/uncertainties.py" = ["F841", "E712", "E722"]
-"LUCI/instrument/header.py" = ["F841", "E712", "E722"]
-"LUCI/io/*.py" = ["F841", "E712", "E722"]
-"LUCI/engine/binning.py" = ["F841", "E712", "E722"]
-"LUCI/simulation.py" = ["F841", "E712", "E722"]
-"LUCI/log.py" = ["F841", "E712", "E722"]
-"LUCI/ml/mdn_architecture.py" = ["F401"]
+"luci/analysis/*.py" = ["F841", "E712", "E722", "E711", "F401"]
+"luci/cube.py" = ["F841", "E712", "E722", "E711", "F401", "F403", "F405"]
+"luci/background/pca.py" = ["F841", "E712", "E722", "F401"]
+"luci/viz/*.py" = ["F841", "E712", "E722", "F401"]
+"luci/background/*.py" = ["F841", "E712", "E722", "F401"]
+"luci/fitting/bayes.py" = ["F841", "E712", "E722", "F401"]
+"luci/fitting/spectrum_fitter.py" = ["F841", "E712", "E722", "E731"]
+"luci/fitting/uncertainties.py" = ["F841", "E712", "E722"]
+"luci/instrument/header.py" = ["F841", "E712", "E722"]
+"luci/io/*.py" = ["F841", "E712", "E722"]
+"luci/engine/binning.py" = ["F841", "E712", "E722"]
+"luci/simulation.py" = ["F841", "E712", "E722"]
+"luci/log.py" = ["F841", "E712", "E722"]
+"luci/ml/mdn_architecture.py" = ["F401"]
 "scripts/*.py" = ["F841", "E712", "E722", "F401", "E402"]
 
 [tool.pytest.ini_options]

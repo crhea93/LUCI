@@ -143,8 +143,7 @@ def test_golden_fit_values(config, luci_factory, cube_truth_factory, record_gold
 
     if not os.path.exists(path):
         pytest.fail(
-            f"no baseline at {os.path.relpath(path)}; "
-            f"run `pytest tests/test_golden.py --record` and review the result"
+            f"no baseline at {os.path.relpath(path)}; run `pytest tests/test_golden.py --record` and review the result"
         )
 
     with open(path) as handle:
@@ -154,7 +153,7 @@ def test_golden_fit_values(config, luci_factory, cube_truth_factory, record_gold
         got = np.asarray(payload[key]["values"], dtype=np.float64)
         want = np.asarray(expected[key]["values"], dtype=np.float64)
         assert payload[key]["shape"] == expected[key]["shape"], (
-            f"{config.id}: {key} changed shape " f"{expected[key]['shape']} -> {payload[key]['shape']}"
+            f"{config.id}: {key} changed shape {expected[key]['shape']} -> {payload[key]['shape']}"
         )
         np.testing.assert_allclose(
             got,
@@ -190,9 +189,9 @@ def test_golden_baselines_recover_the_injected_physics(luci_factory, cube_truth_
     # NII6583 and SII6731 were ~65 km/s off while Halpha looked perfect.
     for index, line in enumerate(SN3_LINES):
         assert vel[:, :, index].mean() == pytest.approx(truth["velocity_kms"], abs=10.0), f"{line} velocity is off"
-        assert broad[:, :, index].mean() == pytest.approx(
-            truth["broadening_kms"], abs=10.0
-        ), f"{line} broadening is off"
+        assert broad[:, :, index].mean() == pytest.approx(truth["broadening_kms"], abs=10.0), (
+            f"{line} broadening is off"
+        )
 
 
 @pytest.mark.slow

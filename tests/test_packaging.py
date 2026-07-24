@@ -102,7 +102,7 @@ def test_no_module_level_tensorflow_imports_in_the_library():
 
     offenders = []
     exempt = {"mdn_architecture.py"}
-    package = os.path.join(REPO_ROOT, "LUCI")
+    package = os.path.join(REPO_ROOT, "luci")
     paths = [os.path.join(REPO_ROOT, n) for n in os.listdir(REPO_ROOT) if n.endswith(".py")]
     for root, _dirs, files in os.walk(package):
         paths += [os.path.join(root, n) for n in files if n.endswith(".py")]

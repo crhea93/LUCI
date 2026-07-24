@@ -8,7 +8,7 @@
 import sys
 sys.path.insert(0, '/home/crhea/home/LUCI/')  # Location of Luci
 from LuciBase import Luci
-import LUCI.LuciPlotting as lplt
+import luci.LuciPlotting as lplt
 import matplotlib.pyplot as plt
 
 

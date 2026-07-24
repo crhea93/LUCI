@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from LUCI.fitting.constraints import (
+from luci.fitting.constraints import (
     amplitude_constraints,
     distinct_position_constraints,
     nii_doublet_constraint,

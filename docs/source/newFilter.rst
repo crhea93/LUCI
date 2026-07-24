@@ -249,7 +249,7 @@ Nothing filter-specific is needed at the call site; LUCI reads the filter out of
 
 .. code-block:: python
 
-    cube = Luci(luci_path, cube_dir + '/' + cube_name, cube_dir, object_name,
+    cube = SitelleCube(luci_path, cube_dir + '/' + cube_name, cube_dir, object_name,
                 redshift, resolution, ML_bool=True)
     cube.fit_cube(['Halpha', 'NII6583', 'NII6548'], 'sincgauss', [1, 1, 1], [1, 1, 1],
                   x_min, x_max, y_min, y_max)

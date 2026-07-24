@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from LUCI.config import AVAILABLE_MODELS, LINE_DICT, FitConfig, InvalidFitConfig
+from luci.config import AVAILABLE_MODELS, LINE_DICT, FitConfig, InvalidFitConfig
 
 SN3_LINES = ["Halpha", "NII6548", "NII6583"]
 
@@ -85,7 +85,7 @@ def test_every_advertised_model_is_accepted():
 
 def test_line_dict_is_the_single_source_of_truth(sn3_cube_noml):
     """The fitter must read its line list from the config module, not its own copy."""
-    from LUCI.fitting.spectrum_fitter import SpectrumFitter
+    from luci.fitting.spectrum_fitter import SpectrumFitter
 
     fitter = SpectrumFitter(
         np.copy(sn3_cube_noml.cube_final[9, 9, :]),
@@ -115,7 +115,7 @@ def test_keyword_and_config_paths_produce_the_same_fit(sn3_cube_noml, sn3_truth)
     This is what makes the object safe to introduce: existing callers are
     untouched, and new ones can build a config and reuse it.
     """
-    from LUCI.fitting.spectrum_fitter import SpectrumFitter
+    from luci.fitting.spectrum_fitter import SpectrumFitter
 
     sky = np.copy(sn3_cube_noml.cube_final[9, 9, :])
     common = dict(
@@ -156,7 +156,7 @@ def test_keyword_and_config_paths_produce_the_same_fit(sn3_cube_noml, sn3_truth)
 
 
 def test_fitter_exposes_its_config(sn3_cube_noml):
-    from LUCI.fitting.spectrum_fitter import SpectrumFitter
+    from luci.fitting.spectrum_fitter import SpectrumFitter
 
     fitter = SpectrumFitter(
         np.copy(sn3_cube_noml.cube_final[9, 9, :]),

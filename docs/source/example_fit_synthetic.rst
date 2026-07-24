@@ -12,7 +12,7 @@ Since we are fitting a mock spectrum and not one pulled from the cube, we will c
     import sys
     Luci_path = '/home/crhea/Documents/LUCI/'
     sys.path.insert(0, Luci_path)  # Location of Luci
-    from LUCI.LuciSim import Spectrum
+    from luci.simulation import Spectrum
     import matplotlib.pyplot as plt
     import numpy as np
     import LUCI.LuciFit as lfit

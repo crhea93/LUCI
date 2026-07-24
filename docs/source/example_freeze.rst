@@ -20,7 +20,7 @@ This example can be found as a jupyter notebook in "LUCI/Examples/SN3_freeze.ipy
     import sys
     import numpy as np
     sys.path.insert(0, '/home/carterrhea/Documents/LUCI/')  # Location of Luci
-    from LuciBase import Luci
+    from luci import SitelleCube
 
 
 Inputs

@@ -3,7 +3,7 @@ Exploratory background-masking script (NGC1275 / Perseus).
 
 Moved out of the ``LUCI`` package: this was never an importable module. It runs
 at import time and opens a hardcoded absolute path
-(``/mnt/carterrhea/.../NGC1275_lowres_deep.fits``), so ``import LUCI.LuciMask``
+(``/mnt/carterrhea/.../NGC1275_lowres_deep.fits``), so ``import luci.LuciMask``
 always raised FileNotFoundError on any machine but its author's. Kept here as a
 script rather than deleted, since it records how the background masking was
 explored. Edit the paths below before running.
@@ -28,7 +28,7 @@ from sklearn import decomposition
 path = os.path.abspath("/home/carterrhea/Documents/LUCI")
 sys.path.insert(0, path)  # add LUCI to the available paths
 
-import LUCI.LuciPlotting as lplt
+import luci.LuciPlotting as lplt
 from LuciBase import Luci
 
 

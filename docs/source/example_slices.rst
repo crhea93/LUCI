@@ -63,8 +63,8 @@ We should start by import the appropriate modules.
     Luci_path = path + '/'
     sys.path.insert(0, path)  # add LUCI to the available paths
 
-    from LuciBase import Luci
-    import LUCI.LuciPlotting as lplt
+    from luci import SitelleCube
+    import luci.viz.plotting as lplt
 
     %config Completer.use_jedi=False  # enable autocompletion when typing in Jupyter notebooks
 
@@ -91,7 +91,7 @@ With these parameters set, we can invoke `LUCI` with the following command:
 
 .. code-block:: python
 
-    cube = Luci(luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
+    cube = SitelleCube(luci_path, cube_dir+'/'+cube_name, cube_dir, object_name, redshift, resolution, ML_bool)
 
 To extract the slice, we simply need to call `cube.slicing()` and provide the appropriate lines. Let's just extract H$\alpha$. A special thanks to Louis-Simon Guité for this implementation.
 

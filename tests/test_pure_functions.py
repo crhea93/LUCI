@@ -13,7 +13,7 @@ import math
 import numpy as np
 import pytest
 
-from LUCI.LuciFitParameters import (
+from luci.LuciFitParameters import (
     calculate_broad,
     calculate_broad_err,
     calculate_flux,
@@ -21,8 +21,8 @@ from LUCI.LuciFitParameters import (
     calculate_vel,
     calculate_vel_err,
 )
-from LUCI.LuciFunctions import Gaussian, Sinc, SincGauss
-from LUCI.LuciUtility import bin_cube_function, bin_mask, get_quadrant_dims, hessianComp
+from luci.LuciFunctions import Gaussian, Sinc, SincGauss
+from luci.LuciUtility import bin_cube_function, bin_mask, get_quadrant_dims, hessianComp
 
 SPEED_OF_LIGHT = 299792.0
 LINE_DICT = {"Halpha": 656.280, "NII6583": 658.341, "NII6548": 654.803}
