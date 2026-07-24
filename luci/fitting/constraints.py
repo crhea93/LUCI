@@ -74,8 +74,23 @@ def sigma_bounds(sigma_rel, _preserve_late_binding_bug=False):
 
 
 def velocity_constraints(vel_rel, lines, line_dict, axis_step):
-    """Tie the velocities of lines that share a group in ``vel_rel``."""
+    """
+    Tie the velocities of lines that share a group in ``vel_rel``.
+
+    Grouped lines must agree to within one channel: ``|v_i - v_0| <= axis_step``. That is a
+    two-sided band, so it takes two inequalities per tied line.
+
+    It used to be the single inequality ``v_i - v_0 - axis_step >= 0``, which only bounds
+    ``v_i`` from *below* -- a grouped line could sit arbitrarily far to the red of the first one
+    and still satisfy it. Fitting the SN4 Halpha complex with ``vel_rel=[1, 1, 1]`` came out at
+    -806 / -576 / -221 km/s, three unrelated velocities, rather than one shared value.
+    """
     constraints = []
+
+    def relative_velocity(x, ind, line):
+        """Velocity of line `ind` in km/s, from its fitted position x[3*ind+1] in cm-1."""
+        return SPEED_OF_LIGHT * ((1e7 / x[3 * ind + 1] - line_dict[line]) / line_dict[line])
+
     for unique_ in np.unique(vel_rel):
         inds_unique = [i for i, e in enumerate(vel_rel) if e == unique_]
         if len(inds_unique) > 1:
@@ -83,21 +98,21 @@ def velocity_constraints(vel_rel, lines, line_dict, axis_step):
             ind_0_line = lines[ind_0]
             for ind_unique in inds_unique[1:]:
                 ind_unique_line = lines[ind_unique]
-                constraints.append(
-                    {
-                        "type": "ineq",
-                        "fun": lambda x, ind_unique_=ind_unique, ind_0_=ind_0, ind_unique_line_=ind_unique_line, ind_0_line_=ind_0_line: (
-                            SPEED_OF_LIGHT
-                            * (
-                                (1e7 / x[3 * ind_unique_ + 1] - line_dict[ind_unique_line_])
-                                / line_dict[ind_unique_line_]
-                            )
-                            - SPEED_OF_LIGHT
-                            * ((1e7 / x[3 * ind_0_ + 1] - line_dict[ind_0_line_]) / line_dict[ind_0_line_])
-                            - axis_step
-                        ),
-                    }
-                )
+                # axis_step - (v_i - v_0) >= 0  and  axis_step + (v_i - v_0) >= 0
+                for sign in (1.0, -1.0):
+                    constraints.append(
+                        {
+                            "type": "ineq",
+                            "fun": lambda x,
+                            i_=ind_unique,
+                            i0_=ind_0,
+                            line_=ind_unique_line,
+                            line0_=ind_0_line,
+                            sign_=sign: (
+                                axis_step - sign_ * (relative_velocity(x, i_, line_) - relative_velocity(x, i0_, line0_))
+                            ),
+                        }
+                    )
     return constraints
 
 

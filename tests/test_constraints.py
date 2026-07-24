@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 from luci.fitting.constraints import (
+    SPEED_OF_LIGHT,
     amplitude_constraints,
     distinct_position_constraints,
     nii_doublet_constraint,
@@ -91,9 +92,46 @@ def test_ungrouped_sigmas_are_not_tied():
 
 
 def test_velocity_constraints_tie_grouped_lines():
+    """Two inequalities per tied line: |v_i - v_0| <= axis_step is a two-sided band."""
     cons = velocity_constraints([1, 1, 1], LINES, LINE_DICT, axis_step=2.0)
-    assert len(cons) == 2
+    assert len(cons) == 4
     assert all(np.isfinite(c["fun"](_solution([2.0, 2.0, 2.0]))) for c in cons)
+
+
+def _at_velocities(velocities):
+    """Build a solution vector placing each of LINES at the given velocity in km/s."""
+    x = _solution([2.0] * len(LINES))
+    for i, (line, velocity) in enumerate(zip(LINES, velocities)):
+        rest = LINE_DICT[line]
+        x[3 * i + 1] = 1e7 / (rest * (1 + velocity / SPEED_OF_LIGHT))
+    return x
+
+
+def test_lines_at_a_common_velocity_satisfy_the_tie():
+    cons = velocity_constraints([1, 1, 1], LINES, LINE_DICT, axis_step=50.0)
+    x = _at_velocities([-250.0, -250.0, -250.0])
+    assert all(c["fun"](x) >= 0 for c in cons)
+
+
+def test_a_line_running_far_to_the_red_is_rejected():
+    """The regression: the old one-sided inequality accepted this."""
+    cons = velocity_constraints([1, 1, 1], LINES, LINE_DICT, axis_step=50.0)
+    x = _at_velocities([-800.0, -570.0, -220.0])
+    assert any(c["fun"](x) < 0 for c in cons)
+
+
+def test_a_line_running_far_to_the_blue_is_rejected():
+    cons = velocity_constraints([1, 1, 1], LINES, LINE_DICT, axis_step=50.0)
+    x = _at_velocities([-250.0, -250.0, -900.0])
+    assert any(c["fun"](x) < 0 for c in cons)
+
+
+def test_the_band_is_exactly_axis_step_wide():
+    cons = velocity_constraints([1, 2, 2], LINES, LINE_DICT, axis_step=50.0)
+    inside = _at_velocities([0.0, -250.0, -250.0 + 49.0])
+    outside = _at_velocities([0.0, -250.0, -250.0 + 51.0])
+    assert all(c["fun"](inside) >= 0 for c in cons)
+    assert any(c["fun"](outside) < 0 for c in cons)
 
 
 @pytest.mark.parametrize("model", ["gaussian", "sinc", "sincgauss"])
