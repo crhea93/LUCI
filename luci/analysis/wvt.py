@@ -315,7 +315,15 @@ def Roundness(current_bin, closest_pixel, pixel_length):
     for i in range(n - 1):
         dists.append(np.sqrt((xvals[i] - cen_x_new) ** 2 + (yvals[i] - cen_y_new) ** 2))
     dists.append(np.sqrt((closest_pixel.pix_x - cen_x_new) ** 2 + (closest_pixel.pix_y - cen_y_new) ** 2))
-    rad_max = max(dists)  # maximum distance between the centroid of the bin and any of the bin pixels
+    # maximum distance between the centroid of the bin and any of the bin pixels. pix_x/pix_y are
+    # pixel indices, so this is in pixels and has to be put on the same footing as rad_equiv,
+    # which carries a factor of pixel_length. Without this the comparison is dimensionally
+    # inconsistent and roundness scales as 1/pixel_length: at the default pixel_size=0.436 even
+    # two adjacent pixels score 0.437, above the 0.3 default criterion, so no bin could ever
+    # accrete a second pixel. That only went unnoticed because bin accretion stops early when a
+    # single pixel already exceeds 0.75 * the S/N target, which is the case for bright cubes.
+    # Scaling both sides makes roundness what it should be -- a scale-free shape measure.
+    rad_max = max(dists) * pixel_length
     roundness = rad_max / rad_equiv - 1.0
     return roundness
 
