@@ -122,6 +122,7 @@ class Bin:
         self.centroidy_prev = [0]
         self.StN = [0]
         self.StN_prev = [0]
+        self.StN_sum = 0.0  # Sum of the member pixels' S/N; self.StN is this over sqrt(N)
         # self.Signal = [0]
         # self.Noise = [0]
         self.Area = [0]
@@ -132,35 +133,42 @@ class Bin:
         self.WVT_successful = False
         self.avail_reassign = True  # Can a pixel be reassigned to you?
 
+    def _recalculate_StN(self):
+        """
+        S/N of the binned spectrum: sum of the member signals over the combined noise.
+
+        Summing N pixels sums their signal but only adds their noise in quadrature, so for
+        roughly uniform noise the bin's S/N goes as sum(S/N) / sqrt(N) -- i.e. sqrt(N) times a
+        single pixel, which is the whole point of binning (Cappellari & Copin 2003).
+
+        This used to be a plain running sum, sum(S/N), which overstates the bin by sqrt(N). Bin
+        accretion stops once the bin reaches 0.75 * the target, so bins were being declared
+        finished at sqrt(N) times too little signal: on an M86 SN4 cube, 3-4 pixel bins claimed
+        S/N 20 while actually carrying about 8.
+        """
+        n = len(self.pixels)
+        self.StN[0] = self.StN_sum / np.sqrt(n) if n else 0.0
+
     def add_pixel(self, Pixel):
-        # self.StN[0] = 0
         self.pixels.append(Pixel)
-        self.StN[0] += Pixel.StN
-        # print(self.StN[0])
-        # self.Signal[0] += Pixel.Signal
-        # self.Noise[0] += Pixel.Noise
-        # if self.Noise[0] != 0:
-        #    self.StN[0] = self.Signal[0]/(np.sqrt(self.Noise[0]))
+        self.StN_sum += Pixel.StN
+        self._recalculate_StN()
         for neigh in Pixel.neighbors:
             if neigh not in self.pixel_neighbors:
                 self.pixel_neighbors.append(neigh)
 
     def clear_pixels(self):
         self.pixels = []
+        self.StN_sum = 0.0
         self.StN[0] = 0
-        # self.Signal[0] = 0
-        # self.Noise[0] = 0
         self.successful = False
         self.WVT_successful = False
         self.avail_reassign = True
 
     def remove_pixel(self, Pixel):
         self.pixels.remove(Pixel)
-        self.StN[0] -= Pixel.StN
-        # self.Signal[0] -= Pixel.Signal
-        # self.Noise[0] -= Pixel.Noise
-        # if self.Noise[0] != 0:
-        #    self.StN[0] = self.Signal[0]/(np.sqrt(self.Noise[0]))
+        self.StN_sum -= Pixel.StN
+        self._recalculate_StN()
 
     def success(self):
         self.successful = True
