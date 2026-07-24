@@ -60,7 +60,11 @@ Repository = "https://github.com/crhea93/LUCI"
 dev = [
     "ipykernel>=7.3.0",
     "pytest>=7",
-    "ruff>=0.6",
+    # Pinned to the exact version CI and .pre-commit-config.yaml use. ruff's lint
+    # and format output changes between releases, so an unpinned floor let the dev
+    # venv drift to a newer ruff that disagreed with CI's 0.6.9 -- green locally,
+    # red in CI. Keep these three in lockstep.
+    "ruff==0.6.9",
 ]
 
 # ---------------------------------------------------------------------------
