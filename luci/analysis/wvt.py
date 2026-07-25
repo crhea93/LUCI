@@ -752,6 +752,7 @@ import time  # noqa: E402
 
 from astropy.nddata import Cutout2D  # noqa: E402
 from astropy.wcs import WCS  # noqa: E402
+from joblib import Parallel, delayed  # noqa: E402
 from tqdm import tqdm  # noqa: E402
 
 from luci.engine.maps import FitMaps  # noqa: E402
@@ -984,49 +985,83 @@ def fit_wvt(
         size=(x_max - x_min, y_max - y_min),
         wcs=wcs,
     )
-    regions = load_bin_regions(cube.output_dir, cube.cube_final.shape)
-    logger.info("Fitting %d bins", len(regions))
-    for xs, ys in tqdm(regions):
-        if xs.size == 0:
-            continue  # A bin that ended up with no pixels has nothing to fit
+    regions = [(xs, ys) for xs, ys in load_bin_regions(cube.output_dir, cube.cube_final.shape) if xs.size]
+    logger.info("Fitting %d bins on %d workers", len(regions), n_threads)
+    # The cube-level constants every fit needs. Hoisted so they are pickled once per task rather than
+    # read off `cube` inside the worker -- a worker that touched `cube` would be sent its ~8 GB of
+    # data, which is why `fit_extracted_spectrum` is a staticmethod over plain arrays.
+    fit_constants = dict(
+        wavenumbers_syn=cube.wavenumbers_syn,
+        delta_x=cube.hdr_dict["STEP"],
+        n_steps=cube.step_nb,
+        zpd_index=cube.zpd_index,
+        filter_name=cube.hdr_dict["FILTER"],
+        ML_bool=cube.ML_bool,
+        mdn=cube.mdn,
+        resolution=cube.resolution,
+        Luci_path=cube.Luci_path,
+        bayes_bool=bayes_bool,
+        uncertainty_bool=uncertainty_bool,
+        n_stoch=n_stoch,
+    )
+
+    def initial_conditions_for(xs, ys):
         # TODO: PASS INITIAL CONDITIONS
         if False not in initial_values:  # If initial conditions were passed
-            initial_conditions = [vel_init[xs[0], ys[0]], broad_init[xs[0], ys[0]]]
-        else:
-            initial_conditions = [False]
-        bin_axis, bin_sky, bin_fit_dict = cube.fit_spectrum_region(
-            lines,
-            fit_function,
-            vel_rel,
-            sigma_rel,
-            region=(xs, ys),
-            initial_values=initial_conditions,
-            bkg=bkg,
-            bayes_bool=bayes_bool,
-            uncertainty_bool=uncertainty_bool,
-            n_stoch=n_stoch,
-        )
-        # The maps are shaped (n_y, n_x) and indexed [y, x] -- that is what `FitMaps.scatter` does
-        # for the fit_cube path. This loop used to index them [x, y], which transposed every WVT map
-        # and, on a cube whose y extent exceeds its x extent (SITELLE is 2048 x 2064), raised
-        # IndexError as soon as a bin reached y >= 2048. Assigning by index array also replaces a
-        # per-pixel Python loop.
-        maps.amplitudes[ys, xs] = bin_fit_dict["amplitudes"]
-        maps.fluxes[ys, xs] = bin_fit_dict["fluxes"]
-        maps.flux_errors[ys, xs] = bin_fit_dict["flux_errors"]
-        maps.broadenings[ys, xs] = bin_fit_dict["sigmas"]
-        maps.broadenings_errors[ys, xs] = bin_fit_dict["sigmas_errors"]
-        maps.chi2[ys, xs] = bin_fit_dict["chi2"]
-        maps.continuum[ys, xs] = bin_fit_dict["continuum"]
-        # Wrote continuum_error into continuum_fits, so the continuum map
-        # held the error and the error map stayed zero (B19).
-        maps.continuum_error[ys, xs] = bin_fit_dict["continuum_error"]
-        maps.velocities[ys, xs] = bin_fit_dict["velocities"]
-        maps.velocities_errors[ys, xs] = bin_fit_dict["vels_errors"]
+            return [vel_init[xs[0], ys[0]], broad_init[xs[0], ys[0]]]
+        return [False]
+
+    # Extract in the parent, fit in the workers. Extraction needs the cube; fitting needs only a few
+    # kB per bin, so this is the split that lets the fit fan out at all. Chunked so the extracted
+    # spectra of a whole field (~81,000 bins x 469 channels x 3 arrays) never sit in memory at once,
+    # and wrapped in one `Parallel` context so the pool -- and each worker's cached ONNX predictor --
+    # is reused across chunks instead of respawning per chunk.
+    chunk_size = max(n_threads * 8, 64)
+    with Parallel(n_jobs=n_threads) as parallel:
+        for start in tqdm(range(0, len(regions), chunk_size)):
+            chunk = regions[start : start + chunk_size]
+            extracted = [cube.extract_region_for_fit(r, bkg=bkg) for r in chunk]
+            results = parallel(
+                delayed(cube.fit_extracted_spectrum)(
+                    sky,
+                    axis,
+                    trans_filter,
+                    theta,
+                    fit_function,
+                    lines,
+                    vel_rel,
+                    sigma_rel,
+                    initial_values=initial_conditions_for(xs, ys),
+                    **fit_constants,
+                )
+                for (xs, ys), (sky, axis, trans_filter, theta) in zip(chunk, extracted)
+            )
+            for (xs, ys), bin_fit_dict in zip(chunk, results):
+                # The maps are shaped (n_y, n_x) and indexed [y, x] -- that is what `FitMaps.scatter`
+                # does for the fit_cube path. This used to index them [x, y], which transposed every
+                # WVT map and, on a cube whose y extent exceeds its x extent (SITELLE is 2048 x
+                # 2064), raised IndexError as soon as a bin reached y >= 2048.
+                _scatter_bin(maps, xs, ys, bin_fit_dict)
     maps.save(
         cube.output_dir, cube.object_name, lines, cutout.wcs.to_header(), binning=1, suffix="_wvt_%i" % stn_target
     )
     return maps.velocities, maps.broadenings, maps.fluxes, maps.chi2, cutout.wcs.to_header()
+
+
+def _scatter_bin(maps, xs, ys, bin_fit_dict):
+    """Write one bin's fit into every map, at all of its pixels."""
+    maps.amplitudes[ys, xs] = bin_fit_dict["amplitudes"]
+    maps.fluxes[ys, xs] = bin_fit_dict["fluxes"]
+    maps.flux_errors[ys, xs] = bin_fit_dict["flux_errors"]
+    maps.broadenings[ys, xs] = bin_fit_dict["sigmas"]
+    maps.broadenings_errors[ys, xs] = bin_fit_dict["sigmas_errors"]
+    maps.chi2[ys, xs] = bin_fit_dict["chi2"]
+    maps.continuum[ys, xs] = bin_fit_dict["continuum"]
+    # Wrote continuum_error into continuum_fits, so the continuum map
+    # held the error and the error map stayed zero (B19).
+    maps.continuum_error[ys, xs] = bin_fit_dict["continuum_error"]
+    maps.velocities[ys, xs] = bin_fit_dict["velocities"]
+    maps.velocities_errors[ys, xs] = bin_fit_dict["vels_errors"]
 
 
 def wvt_fit_region(

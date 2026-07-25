@@ -1116,47 +1116,92 @@ class SitelleCube:
             X-axis and spectral axis of region.
 
         """
-        # Create mask
-        integrated_spectrum = np.zeros(self.cube_final.shape[2])
+        sky, axis, trans_filter, theta = self.extract_region_for_fit(region, bkg=bkg, mean=mean)
+        fit_dict = self.fit_extracted_spectrum(
+            sky,
+            axis,
+            trans_filter,
+            theta,
+            fit_function,
+            lines,
+            vel_rel,
+            sigma_rel,
+            wavenumbers_syn=self.wavenumbers_syn,
+            delta_x=self.hdr_dict["STEP"],
+            n_steps=self.step_nb,
+            zpd_index=self.zpd_index,
+            filter_name=self.hdr_dict["FILTER"],
+            ML_bool=self.ML_bool,
+            mdn=self.mdn,
+            resolution=self.resolution,
+            Luci_path=self.Luci_path,
+            bayes_bool=bayes_bool,
+            bayes_method=bayes_method,
+            uncertainty_bool=uncertainty_bool,
+            nii_cons=nii_cons,
+            initial_values=initial_values,
+            spec_min=spec_min,
+            spec_max=spec_max,
+            obj_redshift=obj_redshift,
+            n_stoch=n_stoch,
+        )
+        return axis, sky, fit_dict
+
+    def region_indices(self, region):
+        """
+        Resolve any supported region specification to (xs, ys) pixel index arrays.
+
+        Args:
+            region: A ds9 `.reg` path, a `.npy` path, a boolean mask array, or an (xs, ys) index pair
+
+        Return:
+            (xs, ys) index arrays in cube order
+        """
         if isinstance(region, tuple) and len(region) == 2:
             # An (xs, ys) index pair. A WVT bin is a dozen pixels out of four million, so handing the
             # indices over directly avoids materialising -- and, in `fit_wvt`, storing -- a
             # full-field mask per bin. See `luci.analysis.wvt.fit_wvt`.
-            xs = np.asarray(region[0], dtype=np.intp)
-            ys = np.asarray(region[1], dtype=np.intp)
-        else:
-            mask = None  # Initialize
-            if isinstance(region, str) and region.endswith(".reg"):  # If passed a .reg file
-                header = self.header
-                # From the cube, not the standard detector size (bug B10).
-                header.set("NAXIS1", self.cube_final.shape[1])  # Need this for astropy
-                header.set("NAXIS2", self.cube_final.shape[0])
-                mask = reg_to_mask(region, header)
-            elif isinstance(region, str) and region.endswith(".npy"):  # If passed numpy file
-                mask = np.load(region)
-            elif region is not None:  # If passed numpy array
-                mask = region
-            else:  # Not passed a mask in any of the correct formats
-                raise ValueError(
-                    "No region given. Pass a .reg path, a .npy path, a boolean array, or an (xs, ys) "
-                    "index pair. This used to log a message and carry on with mask unset, which then "
-                    "failed further down with an unrelated TypeError."
-                )
-            # Transposing makes `np.where` walk the pixels in the same y-then-x order the original
-            # double loop used, so the sum is accumulated in the same order.
-            ys, xs = np.where(np.asarray(mask).T)
+            return np.asarray(region[0], dtype=np.intp), np.asarray(region[1], dtype=np.intp)
+        if isinstance(region, str) and region.endswith(".reg"):  # If passed a .reg file
+            header = self.header
+            # From the cube, not the standard detector size (bug B10).
+            header.set("NAXIS1", self.cube_final.shape[1])  # Need this for astropy
+            header.set("NAXIS2", self.cube_final.shape[0])
+            mask = reg_to_mask(region, header)
+        elif isinstance(region, str) and region.endswith(".npy"):  # If passed numpy file
+            mask = np.load(region)
+        elif region is not None:  # If passed numpy array
+            mask = region
+        else:  # Not passed a mask in any of the correct formats
+            raise ValueError(
+                "No region given. Pass a .reg path, a .npy path, a boolean array, or an (xs, ys) "
+                "index pair. This used to log a message and carry on with mask unset, which then "
+                "failed further down with an unrelated TypeError."
+            )
+        # Transposing makes `np.where` walk the pixels in the same y-then-x order the original
+        # double loop used, so the sum is accumulated in the same order.
+        ys, xs = np.where(np.asarray(mask).T)
+        return xs, ys
+
+    def extract_region_for_fit(self, region, bkg=None, mean=False):
+        """
+        Everything a fit needs from a region, extracted from the cube.
+
+        Split out from `fit_spectrum_region` so the cube-dependent part can happen in the parent
+        process while the fitting fans out: the cube is ~8 GB, so a worker that touched it would
+        have to receive a copy, whereas the summed spectrum is a few kB. `fit_wvt` relies on this.
+
+        Args:
+            region: Anything `region_indices` accepts
+            bkg: Background spectrum to subtract, scaled by the pixel count (default None)
+            mean: Average over the region's pixels rather than summing (default False)
+
+        Return:
+            (sky, axis, trans_filter, theta), each already masked to the finite channels
+        """
+        xs, ys = self.region_indices(region)
         spec_ct = int(xs.size)
-        # Initialize initial conditions for velocity and broadening as False --> Assuming we don't have them
-        vel_init = False
-        broad_init = False
-        # TODO: ALLOW BINNING OF INITIAL CONDITIONS
-        if len(initial_values) == 2:
-            try:  # Obtain initial condition maps from files
-                vel_init = fits.open(initial_values[0])[0].data
-                broad_init = fits.open(initial_values[1])[0].data
-            except (OSError, TypeError, ValueError):  # arrays from a previous fit, not FITS paths
-                vel_init = initial_values[0]
-                broad_init = initial_values[1]
+        integrated_spectrum = np.zeros(self.cube_final.shape[2])
         # Sum the selected pixels by indexing them directly. This used to be a Python double loop over
         # every pixel of the cube, which costs the same 4.2 million iterations whether the selection
         # holds one pixel or a million: ~0.2 s per call, and `fit_wvt` makes one call per bin, so a
@@ -1184,37 +1229,87 @@ class SitelleCube:
         # representative pixel is what was meant; the mean over the region is the right one for a
         # spectrum that is itself a sum over those pixels.
         theta = float(np.mean(self.interferometer_theta[xs, ys])) if spec_ct else 0.0
-        # Call fit!
+        return sky, axis, trans_filter, theta
+
+    @staticmethod
+    def fit_extracted_spectrum(
+        sky,
+        axis,
+        trans_filter,
+        theta,
+        fit_function,
+        lines,
+        vel_rel,
+        sigma_rel,
+        wavenumbers_syn=None,
+        delta_x=None,
+        n_steps=None,
+        zpd_index=None,
+        filter_name=None,
+        ML_bool=True,
+        mdn=False,
+        resolution=None,
+        Luci_path=None,
+        bayes_bool=False,
+        bayes_method="emcee",
+        uncertainty_bool=False,
+        nii_cons=True,
+        initial_values=[False],
+        spec_min=None,
+        spec_max=None,
+        obj_redshift=0.0,
+        n_stoch=1,
+    ):
+        """
+        Fit one already-extracted spectrum.
+
+        A staticmethod taking only small, picklable arguments, for the same reason `fit_calc` is one:
+        `joblib` pickles what it is handed, so a bound method would drag the whole cube -- and its
+        ~8 GB of data -- into every worker. Everything here is a spectrum or a scalar.
+
+        Args:
+            sky: The extracted spectrum
+            axis: Spectral axis matching `sky`
+            trans_filter: Transmission, masked in step with `sky`
+            theta: Incidence angle of the region
+            fit_function: Fitting function to use (e.x. 'sincgauss')
+            lines: Lines to fit
+            vel_rel: Velocity constraints
+            sigma_rel: Broadening constraints
+            (remaining arguments are the cube-level constants `Fit` needs, and the fit options)
+
+        Return:
+            The fit dictionary from `Fit.fit()`
+        """
         fit = Fit(
             sky,
             axis,
-            self.wavenumbers_syn,
+            wavenumbers_syn,
             fit_function,
             lines,
             vel_rel,
             sigma_rel,
             trans_filter=trans_filter,
             theta=theta,
-            delta_x=self.hdr_dict["STEP"],
-            n_steps=self.step_nb,
-            zpd_index=self.zpd_index,
-            filter=self.hdr_dict["FILTER"],
-            ML_bool=self.ML_bool,
+            delta_x=delta_x,
+            n_steps=n_steps,
+            zpd_index=zpd_index,
+            filter=filter_name,
+            ML_bool=ML_bool,
             bayes_bool=bayes_bool,
             bayes_method=bayes_method,
             uncertainty_bool=uncertainty_bool,
             nii_cons=nii_cons,
-            mdn=self.mdn,
+            mdn=mdn,
             initial_values=initial_values,
             spec_min=spec_min,
             spec_max=spec_max,
             obj_redshift=obj_redshift,
             n_stoch=n_stoch,
-            resolution=self.resolution,
-            Luci_path=self.Luci_path,
+            resolution=resolution,
+            Luci_path=Luci_path,
         )
-        fit_dict = fit.fit()
-        return axis, sky, fit_dict
+        return fit.fit()
 
     def create_snr_map(self, *args, **kwargs):
         """See LUCI.analysis.snr.create_snr_map."""
