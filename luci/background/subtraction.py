@@ -28,8 +28,16 @@ def subtract_standard(sky, bkg, binning=None):
 
 
 def pca_background(coefficients, pca_vectors, pca_mean):
-    """Rebuild a background spectrum from its PCA coefficients."""
-    return pca_mean + np.sum([coefficients[i] * pca_vectors[i] for i in range(len(pca_vectors))], axis=0)
+    """
+    Rebuild a background spectrum from its PCA coefficients.
+
+    Only as many components are summed as the pixel has coefficients: `create_background_subspace`
+    keeps `n_components_keep` coefficients per pixel but the PCA object still carries all
+    `n_components` eigenspectra, so iterating over the eigenspectra (there can be more of them) ran
+    off the end of the coefficient vector.
+    """
+    n = min(len(coefficients), len(pca_vectors))
+    return pca_mean + np.sum([coefficients[i] * pca_vectors[i] for i in range(n)], axis=0)
 
 
 def subtract_pca(sky, background, spectrum_axis, filter_name):

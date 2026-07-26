@@ -3,6 +3,7 @@ import os
 import statistics as stats
 import sys
 
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits
@@ -22,9 +23,13 @@ def plot_Bins(Bins, x_min, x_max, y_min, y_max, StN_Target, file_dir, filename):
     StN_list = []
     SNR_list = []
     bin_nums = []
-    max_StN = max([bin.StN[0] for bin in Bins])
     StN_list = [bin.StN[0] for bin in Bins]
     StN_list = [v for v in StN_list if not (math.isinf(v) or math.isnan(v))]
+    if len(StN_list) < 2:
+        # Nothing to summarise -- fewer than two bins have a finite S/N. This is a diagnostic plot,
+        # so skip it rather than letting statistics.stdev raise and take the whole run down.
+        logger.warning("plot_Bins: only %d bin(s) with finite S/N; skipping the %s plots", len(StN_list), filename)
+        return None
     median_StN = np.median(StN_list)
     stand_dev = stats.stdev(StN_list)
     mini_pallete = [
@@ -39,39 +44,30 @@ def plot_Bins(Bins, x_min, x_max, y_min, y_max, StN_Target, file_dir, filename):
         "black",
         "white",
     ]
-    binNumber = 0
-    for bin in Bins:
+    # The bin mosaic used to be drawn as one matplotlib Rectangle per pixel, then saved. On a
+    # full-field run that is hundreds of thousands of patches (twice -- for bin_acc and final),
+    # minutes of pure plotting. Rasterise instead: paint each pixel's palette index into an array
+    # and imshow it once. Same picture -- ten cycling colours keyed on bin number -- in one draw.
+    mosaic = np.full((y_max - y_min, x_max - x_min), -1, dtype=int)
+    for binNumber, bin in enumerate(Bins):
         bin_nums.append(bin.bin_number)
-        SNR = bin.StN[0] / median_StN
-        SNR_list.append(SNR)
+        SNR_list.append(bin.StN[0] / median_StN)
         for pixel in bin.pixels:
-            x_coord = pixel.pix_x
-            y_coord = pixel.pix_y
-            # patches.append(Rectangle((x_coord,y_coord),1,1))
-            if binNumber % 10 == 0:
-                color = mini_pallete[0]
-            if binNumber % 10 == 1:
-                color = mini_pallete[1]
-            if binNumber % 10 == 2:
-                color = mini_pallete[2]
-            if binNumber % 10 == 3:
-                color = mini_pallete[3]
-            if binNumber % 10 == 4:
-                color = mini_pallete[4]
-            if binNumber % 10 == 5:
-                color = mini_pallete[5]
-            if binNumber % 10 == 6:
-                color = mini_pallete[6]
-            if binNumber % 10 == 7:
-                color = mini_pallete[7]
-            if binNumber % 10 == 8:
-                color = mini_pallete[8]
-            if binNumber % 10 == 9:
-                color = mini_pallete[9]
-            # Shift because x_coord,y_coord are the center points
-            rectangle = plt.Rectangle((x_coord, y_coord), 1, 1, fc=color)
-            ax.add_patch(rectangle)
-        binNumber += 1
+            xi = pixel.pix_x - x_min
+            yi = pixel.pix_y - y_min
+            if 0 <= yi < mosaic.shape[0] and 0 <= xi < mosaic.shape[1]:
+                mosaic[yi, xi] = binNumber % 10
+    cmap = mcolors.ListedColormap(mini_pallete)
+    ax.imshow(
+        np.ma.masked_less(mosaic, 0),
+        origin="lower",
+        extent=(x_min, x_max, y_min, y_max),
+        cmap=cmap,
+        vmin=0,
+        vmax=9,
+        interpolation="nearest",
+        aspect="auto",
+    )
     SNR_list = [v for v in SNR_list if not (math.isinf(v) or math.isnan(v))]
     centroids_x = [Bins[i].centroidx[0] for i in range(len(Bins))]
     centroids_y = [Bins[i].centroidy[0] for i in range(len(Bins))]
@@ -315,10 +311,75 @@ def dist(p1x, p1y, p2x, p2y):
     return math.sqrt((p1x - p2x) ** 2 + (p1y - p2y) ** 2)
 
 
-def closest_node(Bin_current, unassigned_pixels):
+def _linear_nearest_unassigned(p1x, p1y, all_pixels):
+    """Exact fallback: lowest-index unassigned pixel at the minimum distance, by a full scan."""
+    best, best_d, best_idx = None, math.inf, -1
+    for idx, p in enumerate(all_pixels):
+        if not p.assigned_to_bin:
+            d = (p.pix_x - p1x) ** 2 + (p.pix_y - p1y) ** 2
+            if d < best_d:
+                best_d, best, best_idx = d, p, idx
+    return best
+
+
+def _nearest_unassigned(p1x, p1y, all_pixels, tree, k_cap=8192):
+    """
+    The unassigned pixel nearest to (p1x, p1y), matching a full linear scan exactly.
+
+    This replaces a scan over every unassigned pixel. The tree holds *all* pixels -- it cannot have
+    points deleted -- so we ask for the k nearest, keep those still unassigned, and among them take
+    the one at the smallest distance, breaking ties by lowest pixel index. That tie rule is not
+    cosmetic: early bin centroids are simple fractions, so several grid pixels sit at *exactly* the
+    same distance, and the original scan (`min` then `list.index`) always took the lowest-indexed of
+    them. Breaking a tie differently reseeds a bin, and because seeds chain, one difference reshapes
+    the whole tessellation.
+
+    Distances are recomputed from the pixel coordinates -- identical arithmetic to the original -- so
+    the comparison and the tie test are bit-for-bit the same; the tree's own distances are used only
+    to prove the candidate set is complete (no unqueried pixel is as close), widening k until it is.
+
+    Args:
+        p1x, p1y: The point to search from (a bin centroid)
+        all_pixels: Pixel list, indexed the same as the tree's points
+        tree: cKDTree over every pixel's (x, y)
+        k_cap: Widen the query up to this many neighbours before falling back to a linear scan
+
+    Return:
+        The nearest unassigned Pixel, or None if every pixel is assigned
+    """
+    n = len(all_pixels)
+    k = min(32, n)
+    while True:
+        kk = min(k, n)
+        dists, idxs = tree.query([p1x, p1y], k=kk)
+        dists = np.atleast_1d(dists)
+        idxs = np.atleast_1d(idxs)
+        best, best_d, best_idx = None, math.inf, -1
+        for idx in idxs:
+            idx = int(idx)
+            if not all_pixels[idx].assigned_to_bin:
+                p = all_pixels[idx]
+                d = (p.pix_x - p1x) ** 2 + (p.pix_y - p1y) ** 2
+                # Nearest wins; equal distances go to the lower index, explicitly -- the tree does
+                # not return tied points in index order, so this cannot be left to encounter order.
+                if d < best_d or (d == best_d and idx < best_idx):
+                    best_d, best, best_idx = d, p, idx
+        # Complete only if the winner is strictly nearer than the farthest pixel we queried: then no
+        # unqueried pixel (all at >= dists[-1]) can match or beat it. Otherwise widen k.
+        if best is not None and (kk >= n or math.sqrt(best_d) < dists[-1]):
+            return best
+        if kk >= n or k >= k_cap:
+            break
+        k = min(k * 4, n)
+    # Neighbourhood exhausted or the cap hit; a single linear scan is exact and O(n).
+    return _linear_nearest_unassigned(p1x, p1y, all_pixels)
+
+
+def closest_node(Bin_current, all_pixels, tree):
     closest_val = 1e16  # just some big number
     p1x = Bin_current.centroidx[0]
     p1y = Bin_current.centroidy[0]
+    closest_pixel = None
     for pix_neigh in Bin_current.pixel_neighbors:
         if pix_neigh.assigned_to_bin == False:  # Dont bother with already assigned pixels!
             p2x = pix_neigh.pix_x
@@ -328,20 +389,10 @@ def closest_node(Bin_current, unassigned_pixels):
                 closest_val = new_dist
                 closest_pixel = pix_neigh
     if closest_val == 1e16:
-        # Every neighbour is taken, so fall back to the nearest unassigned pixel anywhere. This scan
-        # is O(unassigned) and happens roughly once per bin, so as a Python list comprehension it was
-        # half the cost of accretion. Done as array arithmetic it makes the same choice -- squaring is
-        # monotonic, and `np.argmin` and `list.index(min(...))` both take the first minimum -- for a
-        # fraction of the cost.
-        count = len(unassigned_pixels)
-        xs = np.fromiter((p.pix_x for p in unassigned_pixels), dtype=float, count=count)
-        ys = np.fromiter((p.pix_y for p in unassigned_pixels), dtype=float, count=count)
-        xs -= p1x
-        ys -= p1y
-        xs *= xs
-        ys *= ys
-        xs += ys
-        closest_pixel = unassigned_pixels[int(np.argmin(xs))]
+        # Every neighbour is taken, so fall back to the nearest unassigned pixel anywhere. A linear
+        # scan here was ~half the cost of accretion (it fires roughly once per bin, over all
+        # unassigned pixels); the tree turns it into a k-nearest query. See `_nearest_unassigned`.
+        closest_pixel = _nearest_unassigned(p1x, p1y, all_pixels, tree)
     return closest_pixel
 
 
@@ -473,7 +524,12 @@ def reassign_pixels(bin, bins_successful, sucessful_centroids):
 def Bin_Acc(Pixels, pixel_length, StN_Target, roundness_crit):
     # step 1:setup list of bin objects
     logger.info("Starting Bin Accretion Algorithm")
-    unassigned_pixels = Pixels[:]
+    # Membership is tracked by each pixel's `assigned_to_bin` flag plus a running count, not by
+    # removing from a list. The old `unassigned_pixels = Pixels[:]` with a `.remove()` per pixel was
+    # O(n) per removal -- O(n^2) over a full run, minutes on a 200k-pixel field. The k-d tree serves
+    # `closest_node`'s fallback (see `_nearest_unassigned`); it is built once here.
+    n_unassigned = len(Pixels)
+    tree = cKDTree(np.array([(p.pix_x, p.pix_y) for p in Pixels], dtype=float))
     binCount = 0
     Bin_list = []
     bins_successful = []
@@ -488,15 +544,15 @@ def Bin_Acc(Pixels, pixel_length, StN_Target, roundness_crit):
     Current_bin.add_pixel(max_StN_pix)
     Current_bin.CalcCentroid()
     max_StN_pix.add_to_bin(binCount)
-    unassigned_pixels.remove(max_StN_pix)
+    n_unassigned -= 1
     closest_pix = None
     closest_not_in_pix = None
-    while len(unassigned_pixels) != 0:
+    while n_unassigned != 0:
         criteria_a = True
         criteria_b = True
         criteria_c = True
-        while (criteria_a == True and criteria_b == True and criteria_c == True) and len(unassigned_pixels) != 0:
-            closest_pix = closest_node(Current_bin, unassigned_pixels)
+        while (criteria_a == True and criteria_b == True and criteria_c == True) and n_unassigned != 0:
+            closest_pix = closest_node(Current_bin, Pixels, tree)
             criteria_a = adjacency(Current_bin, closest_pix)
             criteria_b = True if (Roundness(Current_bin, closest_pix, pixel_length) < roundness_crit) else False
             criteria_c = True if (Potential_SN(Current_bin, closest_pix) < 0.75 * StN_Target) else False
@@ -504,7 +560,7 @@ def Bin_Acc(Pixels, pixel_length, StN_Target, roundness_crit):
                 Current_bin.add_pixel(closest_pix)
                 Current_bin.CalcCentroid()
                 closest_pix.add_to_bin(binCount)
-                unassigned_pixels.remove(closest_pix)
+                n_unassigned -= 1
             else:
                 closest_not_in_pix = closest_pix
         if Current_bin.StN[0] > 0.5 * StN_Target:
@@ -512,7 +568,7 @@ def Bin_Acc(Pixels, pixel_length, StN_Target, roundness_crit):
             bins_successful.append(Current_bin)
         # else:
         # print(Current_bin.StN[0])
-        if len(unassigned_pixels) == 0:
+        if n_unassigned == 0:
             break  # All pixels assigned so dont create a new bin. that would be silly
         else:
             binCount += 1
@@ -521,7 +577,7 @@ def Bin_Acc(Pixels, pixel_length, StN_Target, roundness_crit):
             Current_bin.add_pixel(closest_not_in_pix)
             Current_bin.CalcCentroid()
             closest_not_in_pix.add_to_bin(binCount)
-            unassigned_pixels.remove(closest_not_in_pix)
+            n_unassigned -= 1
     for bin in bins_successful:
         bin.CalcCentroid()
         bin.CalcArea(pixel_length)
@@ -858,6 +914,7 @@ def create_wvt(
     snr_floor=None,
     snr_method=1,
     snr_percentile=None,
+    snr_precomputed=False,
 ):
     """
     Written by Benjamin Vigneron.
@@ -892,9 +949,16 @@ def create_wvt(
         The int32 bin label map, as written to disk
     """
     logger.info("#----------------WVT Algorithm----------------#")
-    logger.info("#----------------Creating SNR Map--------------#")
     Pixels = []
-    cube.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=snr_method, n_threads=n_threads)
+    if snr_precomputed:
+        # Bin on an S/N map already written to SNR/<object>_SNR.fits by the caller -- e.g. a
+        # continuum-subtracted single-line tracer -- rather than one of create_snr_map's built-in
+        # estimators. Used when the built-in windows trace the wrong thing (on M86 the wide SN4
+        # window tracks the stellar continuum, not the Halpha/NII line).
+        logger.info("#----------------Using precomputed SNR Map--------------#")
+    else:
+        logger.info("#----------------Creating SNR Map--------------#")
+        cube.create_snr_map(x_min_init, x_max_init, y_min_init, y_max_init, method=snr_method, n_threads=n_threads)
     logger.info("#----------------Algorithm Part 1----------------#")
     start = time.time()
     snr_path = cube.output_dir + "/SNR/" + cube.object_name + "_SNR.fits"
@@ -1087,6 +1151,7 @@ def wvt_fit_region(
     snr_floor=None,
     snr_method=1,
     snr_percentile=None,
+    snr_precomputed=False,
 ):
     """
     Functionality to wrap-up the creation and fitting of weighted Voronoi bins.
@@ -1135,6 +1200,7 @@ def wvt_fit_region(
         snr_floor=snr_floor,
         snr_method=snr_method,
         snr_percentile=snr_percentile,
+        snr_precomputed=snr_precomputed,
     )
     logger.info("#----------------WVT Fitting--------------#")
     # Fit the bins

@@ -141,7 +141,11 @@ def create_background_subspace(
     bkg_spectra = [
         bkg_spectrum / np.nanmax(bkg_spectrum[min_spectral_scale:max_spectral_scale]) for bkg_spectrum in bkg_spectra
     ]
-    bkg_spectra = [bkg_spectrum / np.max(bkg_spectrum) for bkg_spectrum in bkg_spectra]
+    bkg_spectra = [bkg_spectrum / np.nanmax(bkg_spectrum) for bkg_spectrum in bkg_spectra]
+    # SN4 (and any ORB output) leaves a band of channels NaN per pixel; sklearn's PCA rejects NaN.
+    # Those channels are dropped from every fit anyway (fit_calc keeps only the finite ones), so the
+    # PCA only has to model the good channels -- fill the NaNs with 0 so it can run.
+    bkg_spectra = np.nan_to_num(np.asarray(bkg_spectra, dtype=float), nan=0.0)
     # Remove outliers
     # outlier_predictions = IsolationForest(random_state=0).fit_predict(bkg_spectra)  # Outliers have a value of -1 and inliers have a value of 1
     # outlier_predictions = np.where(outlier_predictions == 1)
@@ -231,7 +235,11 @@ def create_background_subspace(
         hiddenActivation = "tanh"  # activation function
         input_shape = (None, 2)
         num_hidden = [200, 300]  # number of nodes in the hidden layers
-        batch_size = 8  # number of data fed into model at once
+        # Scale the batch with the training-set size. The original fixed 8 means ~240k steps per
+        # epoch on a field with a couple million background pixels (M86 SN4), which is impractically
+        # slow; a batch proportional to the data keeps it to ~1k steps per epoch while learning the
+        # same smooth (x, y) -> coefficient mapping.
+        batch_size = int(np.clip(len(X_train) // 1000, 8, 2048))
         max_epochs = 100  # maximum number of interations
         lr = 1e-2  # 8e-5  # initial learning rate
         beta_1 = 0.9  # exponential decay rate  - 1st
