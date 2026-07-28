@@ -15,6 +15,9 @@ from luci.instrument.filters import PCABackgroundUnsupportedError, pca_scale_ind
 from luci.log import get_logger
 
 logger = get_logger(__name__)
+from luci.log import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_background_subspace(
@@ -30,6 +33,7 @@ def create_background_subspace(
     npixels=10,
     bkg_algo="detect_source",
     interpolation="nn",
+    exclude_mask=None,
 ):
     """
     This function will create a subspace of principal components describing the background emission. It will then interpolate
@@ -76,6 +80,21 @@ def create_background_subspace(
         bkg_algo=bkg_algo,
         filter_=cube.filter,
     )  # Get IDs of background and source pixels
+    if exclude_mask is not None:
+        # Drop pixels flagged as line emission from the background sample. Source detection runs on
+        # the *continuum* image and is blind to line-only emission (e.g. an Halpha/NII filament),
+        # which it then mislabels as background; without this its line emission enters the PCA
+        # subspace and gets self-subtracted from the very lines the fit measures. Excluded pixels
+        # move to the source set, so their background is interpolated from real background nearby.
+        em = np.asarray(exclude_mask, dtype=bool)
+        abs_bkg = idx_bkg + np.array([x_min, y_min])
+        on_emission = em[abs_bkg[:, 0], abs_bkg[:, 1]]
+        n_dropped = int(on_emission.sum())
+        if n_dropped:
+            idx_src = np.vstack([idx_src, idx_bkg[on_emission]]) if len(idx_src) else idx_bkg[on_emission]
+            idx_bkg = idx_bkg[~on_emission]
+        logger.info("exclude_mask removed %d line-emitting pixels from the %d-pixel background sample",
+                    n_dropped, n_dropped + len(idx_bkg))
     max_spectral = None  # Initialize
     min_spectral = None  # Initialize
     if cube.filter == "SN3":
