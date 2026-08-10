@@ -87,7 +87,9 @@ class FitMaps:
         self.continuum[i] = continuum
         self.continuum_error[i] = continuum_errs
 
-    def save(self, output_dir, object_name, lines, header, binning, fit_function=None, suffix="") -> None:
+    def save(
+        self, output_dir, object_name, lines, header, binning, fit_function=None, suffix="", output_name=None
+    ) -> None:
         save_fits(
             output_dir,
             object_name,
@@ -106,4 +108,5 @@ class FitMaps:
             binning,
             suffix=suffix,
             fit_function=fit_function,
+            output_name=output_name,
         )

@@ -23,6 +23,7 @@ def save_fits(
     binning=1,
     suffix="",
     fit_function=None,
+    output_name=None,
 ):
     """
     Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
@@ -42,9 +43,13 @@ def save_fits(
         continuum_fits: 2D Numpy array of continuum value
         continuum_error_fits: 2D numpy array of continuum errors
         header: Header object (either binned or unbinned)
-        output_name: Output directory and naming convention
         binning: Value by which to bin (default None)
         suffix: Additional suffix to add (e.x. '_wvt')
+        fit_function: Fit function, appended to every filename (default None)
+        output_name: Base name for the products, replacing `object_name` (default None). A name,
+            not a path: the products still go in the `Amplitudes`/`Fluxes`/`Velocity`/`Broadening`
+            subdirectories of `output_dir`. Use it to keep a region fit's maps from overwriting a
+            whole-cube fit's, since both otherwise derive their names from `object_name` alone.
 
     """
     # Make sure output dirs exist for amps, flux, vel, and broad
@@ -56,7 +61,9 @@ def save_fits(
         os.mkdir(output_dir + "/Velocity")
     if not os.path.exists(output_dir + "/Broadening"):
         os.mkdir(output_dir + "/Broadening")
-    output_name = object_name + suffix
+    # `output_name` overrides the object name as the base; the decorations still apply, so a
+    # caller-named run is still distinguishable by binning and fit function.
+    output_name = (output_name if output_name else object_name) + suffix
     if binning is not None:
         output_name += "_" + str(binning)
     if fit_function is not None:

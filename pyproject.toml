@@ -77,9 +77,9 @@ dev = [
 # ---------------------------------------------------------------------------
 # Packaging
 # ---------------------------------------------------------------------------
-# We ship the luci package plus the top-level LuciBase / LuciAbsorp
-# modules, which is what every notebook imports today.  The lowercase `luci`
-# package from the later refactor phases will replace this once it exists.
+# We ship the luci package plus the top-level LuciBase module, which is what
+# every notebook imports today.  The lowercase `luci` package from the later
+# refactor phases will replace this once it exists.
 [tool.hatch.build.targets.wheel]
 packages = ["luci"]
 # Puts the project root on sys.path for editable installs, so the top-level
@@ -90,14 +90,12 @@ dev-mode-dirs = ["."]
 [tool.hatch.build.targets.wheel.force-include]
 "LUCI.py" = "LUCI.py"
 "LuciBase.py" = "LuciBase.py"
-"LuciAbsorp.py" = "LuciAbsorp.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
     "luci/",
     "LUCI.py",
     "LuciBase.py",
-    "LuciAbsorp.py",
     "Data/*.dat",
     "README.md",
     "LICENSE.txt",
@@ -126,8 +124,6 @@ extend-exclude = [
     # excludes luci/LuciFit.py, LuciFunctions.py, etc. but NOT new subpackages
     # like luci/instrument/, so freshly written code is held to the rules.
     "luci/Luci*.py",
-    "LuciAbsorp.py",
-    "luci_absorption_fit_outline.py",
 ]
 
 [tool.ruff.lint]

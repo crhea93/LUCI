@@ -334,7 +334,9 @@ class SitelleCube:
                 `build_absorption_template` (1D numpy array; default None)
             binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
-            output_name: User defined output path/name (default None)
+            output_name: Base name for the output maps, replacing the object name (default None,
+                i.e. the object name). Forwarded to `fit_cube`, which until now did not accept it --
+                so passing it, or anything after it, raised TypeError here (B28).
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
 
@@ -598,6 +600,7 @@ class SitelleCube:
         pca_coefficient_array=None,
         pca_vectors=None,
         pca_mean=None,
+        output_name=None,
     ):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
@@ -633,6 +636,9 @@ class SitelleCube:
             pca_coefficient_array: Array of PCA Coefficients (default None)
             pca_vectors: Vectors corresponding to principal components (default None)
             pca_mean: Mean vector from PCA analysis (default None)
+            output_name: Base name for the output maps, replacing the object name (default None,
+                i.e. the object name). A name, not a path -- the maps still go in the output
+                directory's subfolders.
 
 
         Return:
@@ -689,7 +695,15 @@ class SitelleCube:
             pca_vectors=pca_vectors,
             pca_mean=pca_mean,
         )
-        maps.save(self.output_dir, self.object_name, lines, cutout.wcs.to_header(), binning, fit_function=fit_function)
+        maps.save(
+            self.output_dir,
+            self.object_name,
+            lines,
+            cutout.wcs.to_header(),
+            binning,
+            fit_function=fit_function,
+            output_name=output_name,
+        )
         return maps.velocities, maps.broadenings, maps.fluxes, maps.amplitudes
 
     def fit_region(
@@ -737,7 +751,10 @@ class SitelleCube:
             binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
-            output_name: User defined output path/name
+            output_name: Base name for the output maps, replacing the object name (default None,
+                i.e. the object name). A name, not a path -- the maps still go in the output
+                directory's subfolders. Useful so a region fit's maps do not overwrite a whole-cube
+                fit's, since both otherwise derive their filenames from the object name alone.
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
@@ -786,15 +803,11 @@ class SitelleCube:
 
         if binning != None and binning > 1:
             mask = bin_mask(mask, binning, x_min, self.cube_final.shape[0], y_min, self.cube_final.shape[1])  # Bin Mask
-        # Clean up output name
-        if isinstance(region, str):
-            if len(region.split("/")) > 1:  # If region file is a path, just keep the name for output purposes
-                region = region.split("/")[-1]
-            if output_name is None:
-                output_name = self.output_dir + "/" + self.object_name + "_" + region.split(".")[0]
-        else:  # Passed mask not region file
-            if output_name is None:
-                output_name = self.output_dir + "/" + self.object_name + "_mask"
+        # `output_name` used to be *computed* here -- object name plus the region's stem, as a full
+        # path -- and then never passed to anything, so it was dead either way: a caller's name was
+        # discarded, and the default it built could not have been used even if it were forwarded
+        # (`save_fits` joins the name onto `output_dir/<product>/`, so a path would nest). It is now
+        # forwarded as a base name, and left alone when not given, so default filenames are unchanged.
 
         # TODO: ALLOW BINNING OF INITIAL CONDITIONS
         vel_init, broad_init = resolve_initial_values(initial_values)
@@ -825,7 +838,15 @@ class SitelleCube:
             obj_redshift=obj_redshift,
             n_stoch=n_stoch,
         )
-        maps.save(self.output_dir, self.object_name, lines, cutout.wcs.to_header(), binning, fit_function=fit_function)
+        maps.save(
+            self.output_dir,
+            self.object_name,
+            lines,
+            cutout.wcs.to_header(),
+            binning,
+            fit_function=fit_function,
+            output_name=output_name,
+        )
         return maps.velocities, maps.broadenings, maps.fluxes, maps.chi2, mask
 
     def fit_pixel(
