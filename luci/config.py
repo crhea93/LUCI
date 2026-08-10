@@ -86,6 +86,12 @@ class FitConfig:
     bayes_bool: bool = False
     bayes_method: str = "emcee"
 
+    # Measure and remove the stellar absorption trough before fitting the lines, and the
+    # stellar velocity dispersion (km/s) to assume for it -- which is an input, not a fitted
+    # quantity; see luci.fitting.absorption.
+    absorption_bool: bool = False
+    absorption_broadening_kms: float | None = None
+
     def __post_init__(self) -> None:
         # 'gauss' was long accepted as an alias; normalise before validating.
         if self.model_type == "gauss":
@@ -94,6 +100,10 @@ class FitConfig:
             self.vel_rel = [1] * len(self.lines)
         if not self.sigma_rel:
             self.sigma_rel = [1] * len(self.lines)
+        if self.absorption_broadening_kms is None:
+            # None reaches here when nothing upstream determined a width -- either no template to
+            # measure one from, or a direct SpectrumFitter call. Fall back to an old population.
+            self.absorption_broadening_kms = 200.0
         self.validate()
 
     def validate(self) -> None:
@@ -112,6 +122,8 @@ class FitConfig:
             )
         if self.bayes_method not in ("emcee", "dynesty"):
             raise InvalidFitConfig(f"bayes_method must be 'emcee' or 'dynesty', got {self.bayes_method!r}.")
+        if self.absorption_broadening_kms <= 0:
+            raise InvalidFitConfig(f"absorption_broadening_kms must be > 0, got {self.absorption_broadening_kms}.")
         if self.n_stoch < 1:
             raise InvalidFitConfig(f"n_stoch must be >= 1, got {self.n_stoch}.")
 

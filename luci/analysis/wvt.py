@@ -269,9 +269,7 @@ def read_in(SNR_map, snr_floor=None):
             Pixels.append(Pixel(pixel_count, x_min + col, y_min + row, SNR))  # Bottom Left Corner!
             pixel_count += 1
     if snr_floor is not None:
-        logger.info(
-            "We have %d Pixels above S/N %.3g (of %d in the map).", pixel_count, snr_floor, x_len * y_len
-        )
+        logger.info("We have %d Pixels above S/N %.3g (of %d in the map).", pixel_count, snr_floor, x_len * y_len)
         if pixel_count == 0:
             raise ValueError(
                 "No pixel exceeds the S/N floor of %.3g, so there is nothing to bin. The S/N map "
@@ -650,9 +648,7 @@ def _best_of_candidates(metric, indices):
     return tied.min(axis=1), best_val[:, 0]
 
 
-def nearest_weighted_bin(
-    pix_x, pix_y, cent_x, cent_y, scale_length, chunk_bytes=128 << 20, max_candidates=64
-):
+def nearest_weighted_bin(pix_x, pix_y, cent_x, cent_y, scale_length, chunk_bytes=128 << 20, max_candidates=64):
     """
     For each pixel, the index of the bin minimising distance / scale_length.
 
@@ -725,9 +721,7 @@ def nearest_weighted_bin(
             if k >= max_candidates:
                 # Rare: widen no further, just do these few against every bin
                 idx = start + pending
-                best[idx] = _brute_force_nearest(
-                    pix_x[idx], pix_y[idx], cent_x, cent_y, scale_length, chunk_bytes
-                )
+                best[idx] = _brute_force_nearest(pix_x[idx], pix_y[idx], cent_x, cent_y, scale_length, chunk_bytes)
                 break
             k = min(k * 4, n_bins)
     return best
@@ -813,6 +807,7 @@ from tqdm import tqdm  # noqa: E402
 
 from luci.engine.maps import FitMaps  # noqa: E402
 from luci.engine.runner import deep_image_cutout  # noqa: E402
+from luci.fitting.absorption import resolve_absorption_width  # noqa: E402
 from luci.log import get_logger
 
 logger = get_logger(__name__)
@@ -895,9 +890,7 @@ def load_bin_regions(output_dir, cube_shape=None):
     positions, labels = positions[order], labels[order]
     n_bins = int(labels[-1]) + 1 if labels.size else 0
     edges = np.searchsorted(labels, np.arange(n_bins + 1))
-    return [
-        np.unravel_index(positions[edges[b] : edges[b + 1]], bin_map.shape) for b in range(n_bins)
-    ]
+    return [np.unravel_index(positions[edges[b] : edges[b + 1]], bin_map.shape) for b in range(n_bins)]
 
 
 def create_wvt(
@@ -967,9 +960,7 @@ def create_wvt(
             raise ValueError("Give either snr_floor or snr_percentile, not both.")
         snr_values = fits.open(snr_path)[0].data
         snr_floor = float(np.nanpercentile(snr_values, snr_percentile))
-        logger.info(
-            "S/N percentile %.4g of the map is %.4g; binning the pixels above it.", snr_percentile, snr_floor
-        )
+        logger.info("S/N percentile %.4g of the map is %.4g; binning the pixels above it.", snr_percentile, snr_floor)
     Pixels, x_min, x_max, y_min, y_max = read_in(snr_path, snr_floor=snr_floor)
     Nearest_Neighbors(Pixels)
     Init_bins = Bin_Acc(Pixels, pixel_size, stn_target, roundness_crit)
@@ -1003,6 +994,12 @@ def fit_wvt(
     sigma_rel,
     bkg=None,
     absorp=None,
+    bkgType=None,
+    pca_coefficient_array=None,
+    pca_vectors=None,
+    pca_mean=None,
+    absorption_bool=False,
+    absorption_broadening_kms=None,
     bayes_bool=False,
     uncertainty_bool=False,
     n_threads=1,
@@ -1022,6 +1019,11 @@ def fit_wvt(
         bkg: Background Spectrum (1D numpy array; default None)
         absorp: Stellar absorption template on the full spectral axis, as returned by
             `cube.build_absorption_template` (1D numpy array; default None)
+        bkgType: 'standard', 'pca', or None (default None -- 'standard' if `bkg` was given). The PCA
+            background of a bin is rebuilt from the mean of that bin's coefficients.
+        pca_coefficient_array: Per-pixel PCA coefficients, for `bkgType='pca'`
+        pca_vectors: PCA eigenspectra, for `bkgType='pca'`
+        pca_mean: PCA mean spectrum, for `bkgType='pca'`
         bayes_bool: Boolean to determine whether or not to run Bayesian analysis
         uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
         n_threads: Number of threads to use
@@ -1037,7 +1039,7 @@ def fit_wvt(
     x_max = cube.cube_final.shape[0]
     y_min = 0
     y_max = cube.cube_final.shape[1]
-    maps = FitMaps.allocate(x_max - x_min, y_max - y_min, len(lines))
+    maps = FitMaps.allocate(x_max - x_min, y_max - y_min, len(lines), absorption=absorption_bool)
     if len(initial_values) == 2:
         # Obtain initial condition maps from files
         vel_init = fits.open(initial_values[0])[0].data
@@ -1057,6 +1059,10 @@ def fit_wvt(
     # The cube-level constants every fit needs. Hoisted so they are pickled once per task rather than
     # read off `cube` inside the worker -- a worker that touched `cube` would be sent its ~8 GB of
     # data, which is why `fit_extracted_spectrum` is a staticmethod over plain arrays.
+    if absorption_bool:
+        # Once for the run: every bin assumes the same stellar width, measured from the template
+        # if one was given.
+        absorption_broadening_kms = resolve_absorption_width(cube.spectrum_axis, absorp, absorption_broadening_kms)
     fit_constants = dict(
         wavenumbers_syn=cube.wavenumbers_syn,
         delta_x=cube.hdr_dict["STEP"],
@@ -1070,6 +1076,8 @@ def fit_wvt(
         bayes_bool=bayes_bool,
         uncertainty_bool=uncertainty_bool,
         n_stoch=n_stoch,
+        absorption_bool=absorption_bool,
+        absorption_broadening_kms=absorption_broadening_kms,
     )
 
     def initial_conditions_for(xs, ys):
@@ -1087,7 +1095,18 @@ def fit_wvt(
     with Parallel(n_jobs=n_threads) as parallel:
         for start in tqdm(range(0, len(regions), chunk_size)):
             chunk = regions[start : start + chunk_size]
-            extracted = [cube.extract_region_for_fit(r, bkg=bkg, absorp=absorp) for r in chunk]
+            extracted = [
+                cube.extract_region_for_fit(
+                    r,
+                    bkg=bkg,
+                    absorp=absorp,
+                    bkgType=bkgType,
+                    pca_coefficient_array=pca_coefficient_array,
+                    pca_vectors=pca_vectors,
+                    pca_mean=pca_mean,
+                )
+                for r in chunk
+            ]
             results = parallel(
                 delayed(cube.fit_extracted_spectrum)(
                     sky,
@@ -1127,6 +1146,9 @@ def _scatter_bin(maps, xs, ys, bin_fit_dict):
     # Wrote continuum_error into continuum_fits, so the continuum map
     # held the error and the error map stayed zero (B19).
     maps.continuum_error[ys, xs] = bin_fit_dict["continuum_error"]
+    maps.absorption_depth[ys, xs] = bin_fit_dict["absorption_depth"]
+    maps.absorption_velocity[ys, xs] = bin_fit_dict["absorption_velocity"]
+    maps.absorption_broadening[ys, xs] = bin_fit_dict["absorption_broadening"]
     maps.velocities[ys, xs] = bin_fit_dict["velocities"]
     maps.velocities_errors[ys, xs] = bin_fit_dict["vels_errors"]
 
@@ -1147,6 +1169,12 @@ def wvt_fit_region(
     ToL=1e-2,
     bkg=None,
     absorp=None,
+    bkgType=None,
+    pca_coefficient_array=None,
+    pca_vectors=None,
+    pca_mean=None,
+    absorption_bool=False,
+    absorption_broadening_kms=None,
     bayes_bool=False,
     uncertainty_bool=False,
     n_threads=1,
@@ -1176,6 +1204,10 @@ def wvt_fit_region(
         bkg: Background Spectrum (1D numpy array; default None)
         absorp: Stellar absorption template on the full spectral axis, as returned by
             `cube.build_absorption_template` (1D numpy array; default None)
+        bkgType: 'standard', 'pca', or None (default None -- 'standard' if `bkg` was given)
+        pca_coefficient_array: Per-pixel PCA coefficients, for `bkgType='pca'`
+        pca_vectors: PCA eigenspectra, for `bkgType='pca'`
+        pca_mean: PCA mean spectrum, for `bkgType='pca'`
         bayes_bool: Boolean to determine whether or not to run Bayesian analysis
         uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
         n_threads: Number of threads to use
@@ -1217,6 +1249,12 @@ def wvt_fit_region(
         sigma_rel,
         bkg=bkg,
         absorp=absorp,
+        bkgType=bkgType,
+        pca_coefficient_array=pca_coefficient_array,
+        pca_vectors=pca_vectors,
+        pca_mean=pca_mean,
+        absorption_bool=absorption_bool,
+        absorption_broadening_kms=absorption_broadening_kms,
         bayes_bool=bayes_bool,
         uncertainty_bool=uncertainty_bool,
         n_threads=n_threads,

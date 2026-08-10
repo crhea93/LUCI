@@ -33,9 +33,16 @@ class FitMaps:
     step: np.ndarray
     continuum: np.ndarray
     continuum_error: np.ndarray
+    # Stellar absorption. Allocated always, written only when the fit measured it, so the
+    # dataclass does not change shape with the option; `absorption` gates the *output*
+    # files, which downstream scripts glob for.
+    absorption_depth: np.ndarray | None = None
+    absorption_velocity: np.ndarray | None = None
+    absorption_broadening: np.ndarray | None = None
+    absorption: bool = False
 
     @classmethod
-    def allocate(cls, n_x: int, n_y: int, n_lines: int) -> "FitMaps":
+    def allocate(cls, n_x: int, n_y: int, n_lines: int, absorption: bool = False) -> "FitMaps":
         def scalar():
             return np.zeros((n_x, n_y), dtype=np.float32).T
 
@@ -43,6 +50,10 @@ class FitMaps:
             return np.zeros((n_x, n_y, n_lines), dtype=np.float32).transpose(1, 0, 2)
 
         return cls(
+            absorption_depth=scalar(),
+            absorption_velocity=scalar(),
+            absorption_broadening=scalar(),
+            absorption=absorption,
             amplitudes=per_line(),
             fluxes=per_line(),
             flux_errors=per_line(),
@@ -73,6 +84,7 @@ class FitMaps:
             step,
             continuum,
             continuum_errs,
+            absorption,
         ) = result
         self.amplitudes[i] = ampls
         self.fluxes[i] = flux
@@ -86,6 +98,11 @@ class FitMaps:
         self.step[i] = step
         self.continuum[i] = continuum
         self.continuum_error[i] = continuum_errs
+        # (depth, velocity, broadening) per pixel; all zeros unless absorption was fitted.
+        absorption = np.asarray(absorption, dtype=np.float32)
+        self.absorption_depth[i] = absorption[:, 0]
+        self.absorption_velocity[i] = absorption[:, 1]
+        self.absorption_broadening[i] = absorption[:, 2]
 
     def save(
         self, output_dir, object_name, lines, header, binning, fit_function=None, suffix="", output_name=None
@@ -109,4 +126,13 @@ class FitMaps:
             suffix=suffix,
             fit_function=fit_function,
             output_name=output_name,
+            absorption_maps=(
+                {
+                    "absorption_depth": self.absorption_depth,
+                    "absorption_velocity": self.absorption_velocity,
+                    "absorption_broadening": self.absorption_broadening,
+                }
+                if self.absorption
+                else None
+            ),
         )

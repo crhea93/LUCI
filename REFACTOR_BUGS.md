@@ -94,6 +94,104 @@ nothing: `pixel_list=True` fitted **every pixel in the cube** instead of the han
 and silently wrong rather than an error. `resolve_mask` now handles all four region forms in one
 place, and an unrecognised value raises instead of printing a message and continuing with no mask.
 
+### B29. A group of pixels' PCA coefficients were combined by sum, not mean — FIXED
+**Where (was):** the binned branches of `fit_calc` and `fit_pixel`
+**Now:** [luci/background/subtraction.py](luci/background/subtraction.py)`::combine_pca_coefficients`,
+used by both and by the new region path
+**Tests:** `tests/test_background_and_regions.py::test_combined_coefficients_reproduce_the_summed_background_exactly`
+and `::test_combined_coefficients_are_a_no_op_for_a_single_pixel`
+
+A pixel's PCA background is `pca_mean + sum_i c_i v_i`. For a binned spectrum — which
+`bin_cube_function` builds by `nansum`, so it is a *sum* of `binning²` spaxels — the background is
+`N * pca_mean + sum_i (sum_p c_ip) v_i`. Both binned branches formed the coefficients with `nansum`
+and handed them to `pca_background`, which adds `pca_mean` exactly once: the mean term came out
+**under-weighted by N** relative to the components. That is an error in the background's *shape*, so
+`subtract_pca`'s rescaling onto the observed continuum cannot absorb it, and it grows with the bin —
+4× at `binning=2`, 16× at `binning=4`.
+
+Rebuilding from the *mean* coefficients reproduces the summed background's shape exactly (the test
+asserts `N * pca_background(mean(c)) == sum_p pca_background(c_p)` identically), and is a no-op for a
+single pixel, so unbinned fits are unchanged. No golden covers a binned PCA fit, so none moved —
+which is also why this survived.
+
+### B30. A mean region spectrum had its background subtracted N times — FIXED
+**Where:** `extract_region_for_fit`
+**Test:** `tests/test_background_and_regions.py::test_a_mean_region_spectrum_subtracts_the_background_once`
+
+`integrated_spectrum -= bkg * spec_ct` ran regardless of `mean`, so `fit_spectrum_region(mean=True,
+bkg=...)` over-subtracted the background by the region's pixel count. The same mistake as B2, fixed
+there in `extract_spectrum` and left standing here. Now goes through `subtract_standard` with a
+spaxel count of 1 when the mean was taken.
+
+### B28. `output_name` reached `save_fits` from nowhere — FIXED
+**Where (was):** `fit_entire_cube`, `fit_region`, and `save_fits`, which had no such parameter
+**Now:** [luci/io/outputs.py](luci/io/outputs.py) takes `output_name` as a base-name override;
+`fit_cube` and `fit_region` forward it
+**Tests:** `tests/test_background_and_regions.py::test_fit_entire_cube_forwards_only_what_fit_cube_accepts`
+and `::test_output_name_renames_the_products`
+
+Two halves of one hole, both in the B3/B9/B27 wrapper-drift family:
+
+* **`fit_entire_cube` was dead outright.** It passed `output_name=output_name` to `fit_cube`, which
+  had no such parameter, so *every* call raised `TypeError` — not just calls that supplied a name.
+  Nothing in the repo, tests or examples calls it, which is how a completely non-functional public
+  entry point survived. Now pinned by a signature comparison rather than a fit, so the next instance
+  of this class is caught in milliseconds.
+* **`fit_region` silently discarded it.** It accepted `output_name`, and if none was given built a
+  default from the object name and the region's stem — then never passed it anywhere, because
+  `save_fits` derived every filename from `object_name` alone. So a caller's name was ignored, and a
+  region fit's maps overwrote a whole-cube fit's. The default it computed was a full path and could
+  not have been used even if forwarded: `save_fits` joins the name onto `output_dir/<product>/`, so
+  it would have nested one path inside another.
+
+Default filenames are deliberately unchanged: `output_name` applies only when the caller passes one,
+so no existing script's globs break. The `binning`/`fit_function` decorations still apply on top.
+
+### B27. The absorption hook was unreachable from four of six fit entry points — FIXED
+**Where (was):** `absorp` existed on `fit_calc`, `fit_cube` and `fit_pixel` only
+**Now:** [luci/background/absorption.py](luci/background/absorption.py), reached from every entry point
+**Tests:** `tests/test_absorption.py` (16), notably
+`::test_fit_region_applies_the_absorption_template`
+
+Same family as B3 and B9 — an option threaded through one entry point by hand and never the others.
+`fit_region`, `fit_spectrum_region`, `fit_wvt` and `wvt_fit_region` had no `absorp` parameter at all,
+so a region or WVT fit could not have its stellar continuum removed while a rectangular fit could.
+Passing `absorp=` to any of them raised `TypeError`, so this one was loud rather than silently wrong.
+
+The subtraction itself was copy-pasted verbatim between `fit_calc` and `fit_pixel`; it now lives once
+in `subtract_absorption`, which also range-checks the template. That check is the point: a template on
+a *rebinned* axis of the right length would otherwise subtract the wrong wavelength from every
+channel and produce a plausible, wrong fit — the same failure mode as the transmission-curve
+misalignment in `fit_calc`.
+
+The other half had no home at all. `build_absorption_template` is the revived `LuciAbsorp.py`, whose
+module-level functions referenced `self` and so raised `NameError` however they were called — which is
+why the builder and the hook were never connected in the first place. Three things about the original
+were wrong and are not reproduced: it indexed `vel_map[x, y]` while every map LUCI writes is `[y, x]`
+(now validated, with the orientation named in the message), it concatenated `n_pixels x n_channels`
+arrays before averaging, and it returned a rebinned wavelength axis — which the hook it was written
+for cannot consume. The rewrite returns the template on `cube.spectrum_axis`.
+
+The one behaviour deliberately kept: the stack is left at the region's **mean velocity**, not at rest.
+That is what the original's `beta_avg` bin range did, and it is what `subtract_absorption` needs,
+since it works channel by channel against spectra observed at roughly that velocity.
+
+**Follow-up in the same branch — the template has to be built behind the same background as the fit.**
+`build_absorption_template` first stacked raw `cube_final` spectra, so the template carried the sky as
+well as the stellar continuum. The consumer then subtracted that sky a second time, from a spectrum
+`fit_calc` had already cleaned — and on the `bkgType='pca'` path there is no cancellation to hope for,
+since the doubled term is a *per-pixel* background averaged over a region. The builder now takes the
+same `bkg`/`bkgType`/`pca_*` arguments as the fit and removes the background per spaxel **before** the
+Doppler shift, because the sky sits at fixed observed wavenumbers. Pinned by
+`test_the_sky_is_removed_before_the_shift_not_after`, which is exact: a sky line common to spaxels of
+differing velocity cancels completely when removed in the observed frame, and survives as one spike
+per spaxel when removed after the shift.
+
+Still not covered: `extract_region_for_fit` — and so `fit_spectrum_region`, `fit_wvt` and
+`wvt_fit_region` — supports only a `standard` background, never `pca`. Those paths can therefore
+apply a template but cannot be run behind the PCA background it was built for. `fit_cube`, `fit_region`
+and `fit_pixel` are complete.
+
 ### B24. `reassign_pixels` looped forever instead of failing — FIXED (Phase 6)
 **Where:** `reassign_pixels` in [luci/analysis/wvt.py](luci/analysis/wvt.py)
 **Test:** `tests/test_errors_and_logging.py::TestWvtReassignTerminates`
@@ -407,7 +505,67 @@ imported it, which is why it went unnoticed. Found while bisecting the TensorFlo
 Moved to `scripts/` rather than deleted: it records how the background masking was explored, and is
 honest about being a script now instead of shipping inside the package.
 
-### B22. `fit_absorption` raised `NameError` on every call — FIXED (restructure)
+### B22. `fit_absorption` raised `NameError` on every call — NOW A REAL FEATURE
+**Where (was):** `Fit.fit_absorption`, now `luci/fitting/spectrum_fitter.py`
+**Now:** [luci/fitting/absorption.py](luci/fitting/absorption.py) does the measuring;
+`SpectrumFitter.fit_absorption` drives it behind `absorption_bool`
+**Tests:** `tests/test_absorption.py` — six unit tests plus three end-to-end, including
+`::test_fitted_absorption_recovers_an_injected_trough_end_to_end`
+
+The dead method is gone and stellar absorption is now a fitted component: `absorption_bool=True`
+measures the trough, fills it in, refits the lines on the corrected spectrum, and reports
+`absorption_depth` / `_velocity` / `_broadening` on the result and as three extra maps. The
+synthetic fixture can inject a trough (`write_cube(absorption_depth=...)`), which is what makes any
+of this checkable.
+
+**The width is an input, not a measurement, and this was the whole difficulty.** The trough is
+centred on the emission line, so the channels where it is deepest are exactly the ones the emission
+occupies and the mask removes. Its central depth is never observed — only extrapolated from the
+flanks — and there it trades off almost exactly against width. Four designs were tried against the
+fixture before this was clear:
+
+| Attempt | Injected 0.30 came back as |
+|---|---|
+| Constant continuum over the whole fit window | 0.12, sigma pinned at bound (fitting filter curvature) |
+| Local window, linear continuum, free sigma | 0.46, sigma at floor (wings absorbed into the slope) |
+| Emission model subtracted, iterated to convergence | 0.465 — the loop *amplifies*: filling an over-deep trough brightens the next emission fit, which deepens the next trough |
+| Sidebands for continuum, free sigma | 0.454 at every depth — a clean 1.5x, sigma pinned |
+| **Sidebands, sigma supplied** | **0.254** |
+
+So the stellar velocity dispersion is supplied (`absorption_broadening_kms`, default 200) and only
+depth and velocity are fitted. Continuum comes from sidebands beyond three sigmas rather than being
+fitted alongside the trough, because a Gaussian's wings over a finite window look like a slope.
+
+**What it is worth, measured — and a correction to my first reading of it.** I initially recorded a
+systematic shortfall (~15% at depth 0.3, ~45% at 0.1) and attributed it to emission filling the
+masked core. That was wrong on both counts. Every fixture cube uses the same noise seed, so the same
+noise realisation appeared at every depth and produced the same *absolute* error each time; I read
+that constancy as a bias. A Monte Carlo over 300 realisations shows the estimator is unbiased — mean
+recovered depth matches injected to within 0.005 from 0.1 to 1.0, and is exact with no noise. And
+emission brightness turns out to be irrelevant: the recovered depth does not move with lines from 0
+to 30× the continuum.
+
+The real limit is **precision, and it is set by depth over noise rather than depth**:
+`sigma_depth ≈ 0.7 × (continuum noise / continuum)`, measured to hold from 1% to 10% noise. A trough
+within ~1.5σ of that is both noisy and *biased high*, since a depth cannot be negative and the
+distribution piles against zero — injected 0.10 at continuum S/N 10 returns 0.125 ± 0.201. Clear of it,
+the bias vanishes: the same trough at S/N 20 returns 0.098, at S/N 50 returns 0.099 ± 0.015. So per
+spaxel, a 3σ detection of depth d needs continuum S/N ≳ 2/d and 20% precision needs ≳ 3.5/d, both
+relaxing as √N when averaged — a WVT bin of 100 spaxels turns S/N 10 into an effective 100.
+
+*(Corrected twice. I first read a constant absolute deficit as bias — it was one noise realisation seen
+at five depths, since every fixture cube shares a seed. Then I measured the scatter with an empty line
+list, i.e. no emission mask, which understated it by 2×. The numbers above are with the mask the
+pipeline actually applies.)*
+
+The supplied width is the one input that does bias the answer: a 310 km/s trough read at the 200 km/s
+default gives 0.41 for a true 0.30, against 0.26 with the width measured from a template.
+
+The four-design table above records single realisations, so its numbers carry that same ±0.03; the
+conclusions do not depend on them, since the failures that ruled those designs out were qualitative
+(sigma pinned at a bound, a loop that diverges).
+
+### B22-old. The original defect, for the record
 **Where (was):** `Fit.fit_absorption`, now `luci/fitting/spectrum_fitter.py`
 
 It built four initial-guess scalars (`ampl_init`, `pos_init`, `pos_sigma`, `cont_init`), never

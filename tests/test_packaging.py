@@ -12,7 +12,7 @@ could catch:
     functional tests, which pass either way.
 
   * **Stale top-level modules in an editable install (B18).** ``LUCI/`` is
-    linked, but ``LuciBase.py`` / ``LuciAbsorp.py`` are *copied* into
+    linked, but ``LuciBase.py`` is *copied* into
     site-packages by hatchling's ``force-include``. An editable install
     therefore serves a frozen snapshot of them. The rest of the suite cannot see
     this because ``conftest`` puts the repo root first on ``sys.path``, which
@@ -29,7 +29,10 @@ import sys
 import pytest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOP_LEVEL_MODULES = ["LuciBase.py", "LuciAbsorp.py"]
+# `LuciAbsorp.py` was here until its contents moved into
+# `luci/background/absorption.py`; it is no longer shipped, so there is nothing
+# for an install to serve a stale copy of.
+TOP_LEVEL_MODULES = ["LuciBase.py"]
 
 
 def _digest(path: str) -> str:

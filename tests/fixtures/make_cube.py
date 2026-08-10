@@ -196,9 +196,24 @@ def make_spectrum(
     model: str = "sincgauss",
     noise_sigma: float = 0.0,
     rng: np.random.Generator | None = None,
+    absorption_depth: float = 0.0,
+    absorption_broadening_kms: float = 200.0,
+    absorption_line: str = "Halpha",
 ) -> np.ndarray:
-    """Build a single synthetic spectrum with known line parameters."""
+    """
+    Build a single synthetic spectrum with known line parameters.
+
+    With ``absorption_depth`` > 0 a stellar absorption trough is added under
+    ``absorption_line``: a Gaussian eating that fraction of the continuum at its
+    centre, broad (``absorption_broadening_kms``) compared with the emission. It
+    shares the emission's velocity, which is the hard case -- a trough offset from
+    the line would be separable by position alone.
+    """
     spectrum = np.full_like(axis, continuum, dtype=np.float64)
+    if absorption_depth:
+        pos = line_position(absorption_line, velocity_kms)
+        sigma = pos * absorption_broadening_kms / SPEED_OF_LIGHT
+        spectrum -= absorption_depth * continuum * np.exp(-0.5 * ((axis - pos) / sigma) ** 2)
     for line in lines:
         amp = amplitude * profile.amplitude_ratios.get(line, 1.0)
         pos = line_position(line, velocity_kms)
@@ -309,6 +324,8 @@ def write_cube(
     max_theta_deg: float = 12.0,
     include_deep_frame: bool = False,
     seed: int = 20240101,
+    absorption_depth: float = 0.0,
+    absorption_broadening_kms: float = 200.0,
 ) -> dict:
     """
     Write a synthetic cube and return the ground truth used to build it.
@@ -369,6 +386,8 @@ def write_cube(
                 model=model,
                 noise_sigma=noise_sigma,
                 rng=rng,
+                absorption_depth=absorption_depth,
+                absorption_broadening_kms=absorption_broadening_kms,
             )
 
     with h5py.File(path, "w") as f:
@@ -405,6 +424,8 @@ def write_cube(
         "continuum": continuum,
         "model": model,
         "noise_sigma": noise_sigma,
+        "absorption_depth": absorption_depth,
+        "absorption_broadening_kms": absorption_broadening_kms,
         "axis_min": profile.axis_min,
         "axis_max": profile.axis_min + profile.step_nb * profile.cdelt3,
         "cdelt3": profile.cdelt3,

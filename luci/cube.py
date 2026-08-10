@@ -36,9 +36,16 @@ from luci.background.absorption import build_absorption_template as _build_absor
 from luci.background.absorption import subtract_absorption
 from luci.background.detection import find_background_pixels
 from luci.background.pca import create_background_subspace as _create_background_subspace
-from luci.background.subtraction import pca_background, subtract_pca, subtract_standard
+from luci.background.subtraction import (
+    combine_pca_coefficients,
+    pca_background,
+    subtract_pca,
+    subtract_standard,
+)
 from luci.engine import FitMaps, deep_image_cutout, resolve_initial_values, run_fit
 from luci.engine.selection import reg_to_mask, resolve_mask
+from luci.fitting.absorption import measure_absorption_width as _measure_absorption_width
+from luci.fitting.absorption import resolve_absorption_width
 from luci.fitting.spectrum_fitter import SpectrumFitter as Fit
 from luci.instrument.flux import flux_calibration_vector, is_flux_calibrated
 from luci.io.assets import resolve_luci_path
@@ -406,6 +413,8 @@ class SitelleCube:
         pca_coefficient_array=None,
         pca_vectors=None,
         pca_mean=None,
+        absorption_bool=False,
+        absorption_broadening_kms=None,
     ):
         """
         Function for calling fit for a given y coordinate.
@@ -446,6 +455,11 @@ class SitelleCube:
         # otherwise -- which is what Examples/BasicExample.ipynb does.
         if bkg is not None and bkgType is None:
             bkgType = "standard"
+        if absorption_bool:
+            # Measured from the template when one was passed, so the caller does not have to know
+            # the stellar width -- getting it wrong is the dominant systematic on the depth. Done
+            # here, once per slice, rather than per pixel.
+            absorption_broadening_kms = resolve_absorption_width(spectrum_axis, absorp, absorption_broadening_kms)
         y_pix = y_min + i  # Step y coordinate
         # Set up all the local lists for the current y_pixel step
         ampls_local = []
@@ -460,6 +474,7 @@ class SitelleCube:
         step_local = []
         continuum_local = []
         continuum_errs_local = []
+        absorption_local = []  # (depth, velocity, broadening) per pixel; zeros unless fitted
         bool_fit = True  # Boolean to fit
         # Step through x coordinates
         for j in range(x_max - x_min):
@@ -479,7 +494,9 @@ class SitelleCube:
                         y_min + int(i * binning) : y_min + int((i + 1) * binning),
                         :,
                     ]
-                    coefficients = np.nansum(np.nansum(coefficients, axis=0), axis=0)
+                    # Mean, not sum -- a binned spectrum is a sum of spaxels; see
+                    # `combine_pca_coefficients` (B29).
+                    coefficients = combine_pca_coefficients(coefficients)
                 else:
                     coefficients = pca_coefficient_array[x_pix, y_pix]
                 background = pca_background(coefficients, pca_vectors, pca_mean)
@@ -528,6 +545,8 @@ class SitelleCube:
                     n_stoch=n_stoch,
                     resolution=resolution,
                     Luci_path=Luci_path,
+                    absorption_bool=absorption_bool,
+                    absorption_broadening_kms=absorption_broadening_kms,
                 )
                 fit_dict = fit.fit()  # Collect fit dictionary
                 # Save local list of fit values
@@ -543,6 +562,13 @@ class SitelleCube:
                 step_local.append(fit_dict["axis_step"])
                 continuum_local.append(fit_dict["continuum"])
                 continuum_errs_local.append(fit_dict["continuum_error"])
+                absorption_local.append(
+                    [
+                        fit_dict["absorption_depth"],
+                        fit_dict["absorption_velocity"],
+                        fit_dict["absorption_broadening"],
+                    ]
+                )
             else:  # If the sky is empty (this rarely rarely rarely happens), then return zeros for everything
                 ampls_local.append([0] * len(lines))
                 flux_local.append([0] * len(lines))
@@ -556,6 +582,7 @@ class SitelleCube:
                 step_local.append(0)
                 continuum_local.append(0)
                 continuum_errs_local.append(0)
+                absorption_local.append([0, 0, 0])
         return (
             i,
             ampls_local,
@@ -570,6 +597,7 @@ class SitelleCube:
             step_local,
             continuum_local,
             continuum_errs_local,
+            absorption_local,
         )
 
     # @jit(nopython=False, parallel=True, nogil=True)
@@ -601,6 +629,8 @@ class SitelleCube:
         pca_vectors=None,
         pca_mean=None,
         output_name=None,
+        absorption_bool=False,
+        absorption_broadening_kms=None,
     ):
         """
         Primary fit call to fit rectangular regions in the data cube. This wraps the
@@ -639,6 +669,10 @@ class SitelleCube:
             output_name: Base name for the output maps, replacing the object name (default None,
                 i.e. the object name). A name, not a path -- the maps still go in the output
                 directory's subfolders.
+            absorption_bool: Measure the stellar absorption trough under the lines and remove it
+                before fitting them (default False). Writes three extra maps --
+                `_absorption_depth`, `_absorption_velocity`, `_absorption_broadening`. See
+                `luci.fitting.absorption` for what it can and cannot separate.
 
 
         Return:
@@ -694,6 +728,8 @@ class SitelleCube:
             pca_coefficient_array=pca_coefficient_array,
             pca_vectors=pca_vectors,
             pca_mean=pca_mean,
+            absorption_bool=absorption_bool,
+            absorption_broadening_kms=absorption_broadening_kms,
         )
         maps.save(
             self.output_dir,
@@ -729,6 +765,8 @@ class SitelleCube:
         initial_values=[False],
         n_stoch=1,
         pixel_list=False,
+        absorption_bool=False,
+        absorption_broadening_kms=None,
     ):
         """
         Fit the spectrum in a region. This is an extremely similar command to fit_cube except
@@ -837,6 +875,8 @@ class SitelleCube:
             initial_values=[vel_init, broad_init],
             obj_redshift=obj_redshift,
             n_stoch=n_stoch,
+            absorption_bool=absorption_bool,
+            absorption_broadening_kms=absorption_broadening_kms,
         )
         maps.save(
             self.output_dir,
@@ -872,6 +912,8 @@ class SitelleCube:
         pca_coefficient_array=None,
         pca_vectors=None,
         pca_mean=None,
+        absorption_bool=False,
+        absorption_broadening_kms=None,
     ):
         """
         Primary fit call to fit a single pixel in the data cube. This wraps the
@@ -922,7 +964,7 @@ class SitelleCube:
                 coefficients = pca_coefficient_array[
                     pixel_x - binning : pixel_x + binning, pixel_y - binning : pixel_y + binning, :
                 ]
-                coefficients = np.nansum(np.nansum(coefficients, axis=0), axis=0)
+                coefficients = combine_pca_coefficients(coefficients)  # Mean, not sum (B29)
             else:
                 coefficients = pca_coefficient_array[pixel_x, pixel_y]
             background = pca_background(coefficients, pca_vectors, pca_mean)
@@ -932,6 +974,8 @@ class SitelleCube:
 
         sky = subtract_absorption(sky, absorp)
 
+        if absorption_bool:
+            absorption_broadening_kms = resolve_absorption_width(self.spectrum_axis, absorp, absorption_broadening_kms)
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
         sky = sky[good_sky_inds]  # Apply clean to sky
         axis = self.spectrum_axis[good_sky_inds]  # Apply clean to axis
@@ -965,6 +1009,8 @@ class SitelleCube:
             n_stoch=n_stoch,
             resolution=self.resolution,
             Luci_path=self.Luci_path,
+            absorption_bool=absorption_bool,
+            absorption_broadening_kms=absorption_broadening_kms,
         )
         """fit = self.fit_calc(0, x_min, x_max, y_min, fit_function, lines, vel_rel, sigma_rel,
                             cube_slice=cube_to_slice[:, y_min + 0, :],
@@ -1102,6 +1148,12 @@ class SitelleCube:
         initial_values=[False],
         bkg=None,
         absorp=None,
+        bkgType=None,
+        pca_coefficient_array=None,
+        pca_vectors=None,
+        pca_mean=None,
+        absorption_bool=False,
+        absorption_broadening_kms=None,
         bayes_bool=False,
         bayes_method="emcee",
         uncertainty_bool=False,
@@ -1128,6 +1180,10 @@ class SitelleCube:
             bkg: Background Spectrum (1D numpy array; default None)
             absorp: Stellar absorption template on the full spectral axis, as returned by
                 `build_absorption_template` (1D numpy array; default None)
+            bkgType: 'standard', 'pca', or None (default None -- 'standard' if `bkg` was given)
+            pca_coefficient_array: Per-pixel PCA coefficients, for `bkgType='pca'`
+            pca_vectors: PCA eigenspectra, for `bkgType='pca'`
+            pca_mean: PCA mean spectrum, for `bkgType='pca'`
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
@@ -1142,7 +1198,18 @@ class SitelleCube:
             X-axis and spectral axis of region.
 
         """
-        sky, axis, trans_filter, theta = self.extract_region_for_fit(region, bkg=bkg, mean=mean, absorp=absorp)
+        if absorption_bool:
+            absorption_broadening_kms = resolve_absorption_width(self.spectrum_axis, absorp, absorption_broadening_kms)
+        sky, axis, trans_filter, theta = self.extract_region_for_fit(
+            region,
+            bkg=bkg,
+            mean=mean,
+            absorp=absorp,
+            bkgType=bkgType,
+            pca_coefficient_array=pca_coefficient_array,
+            pca_vectors=pca_vectors,
+            pca_mean=pca_mean,
+        )
         fit_dict = self.fit_extracted_spectrum(
             sky,
             axis,
@@ -1170,6 +1237,8 @@ class SitelleCube:
             spec_max=spec_max,
             obj_redshift=obj_redshift,
             n_stoch=n_stoch,
+            absorption_bool=absorption_bool,
+            absorption_broadening_kms=absorption_broadening_kms,
         )
         return axis, sky, fit_dict
 
@@ -1209,7 +1278,17 @@ class SitelleCube:
         ys, xs = np.where(np.asarray(mask).T)
         return xs, ys
 
-    def extract_region_for_fit(self, region, bkg=None, mean=False, absorp=None):
+    def extract_region_for_fit(
+        self,
+        region,
+        bkg=None,
+        mean=False,
+        absorp=None,
+        bkgType=None,
+        pca_coefficient_array=None,
+        pca_vectors=None,
+        pca_mean=None,
+    ):
         """
         Everything a fit needs from a region, extracted from the cube.
 
@@ -1224,10 +1303,19 @@ class SitelleCube:
             absorp: Stellar absorption template on the full spectral axis (default None). Applied
                 here rather than by the caller because it has to happen while the spectrum is still
                 at full length -- this is where the NaN channels are dropped.
+            bkgType: 'standard', 'pca', or None (default None -- 'standard' if `bkg` was given).
+                The PCA background is per pixel, so for a region it is rebuilt from the *mean* of
+                the region's coefficients; see the note at the subtraction below.
+            pca_coefficient_array: Per-pixel PCA coefficients, for `bkgType='pca'`
+            pca_vectors: PCA eigenspectra, for `bkgType='pca'`
+            pca_mean: PCA mean spectrum, for `bkgType='pca'`
 
         Return:
             (sky, axis, trans_filter, theta), each already masked to the finite channels
         """
+        # As in `fit_calc` (B26): a caller who passes bkg= means "subtract this".
+        if bkg is not None and bkgType is None:
+            bkgType = "standard"
         xs, ys = self.region_indices(region)
         spec_ct = int(xs.size)
         integrated_spectrum = np.zeros(self.cube_final.shape[2])
@@ -1242,8 +1330,22 @@ class SitelleCube:
             integrated_spectrum = self.cube_final[xs, ys, :].sum(axis=0, dtype=np.float64)
         if mean:
             integrated_spectrum /= spec_ct  # Take mean spectrum
-        if bkg is not None:
-            integrated_spectrum -= bkg * spec_ct  # Subtract background spectrum
+        if bkgType == "standard":
+            # Scaled by the number of spaxels the spectrum actually holds -- which is one when the
+            # mean was taken. This used to be `bkg * spec_ct` regardless, so `mean=True` with a
+            # background over-subtracted it by the pixel count (B30), the same mistake as B2.
+            integrated_spectrum = subtract_standard(integrated_spectrum, bkg, None if mean else spec_ct)
+        elif bkgType == "pca":
+            # The PCA background is per pixel and this spectrum is a sum over pixels, so the
+            # region's coefficients combine the same way a bin's do -- see
+            # `combine_pca_coefficients` (B29).
+            coefficients = combine_pca_coefficients(pca_coefficient_array[xs, ys, :])
+            background = pca_background(coefficients, pca_vectors, pca_mean)
+            integrated_spectrum = subtract_pca(
+                integrated_spectrum, background, self.spectrum_axis, self.hdr_dict["FILTER"]
+            )
+        elif bkgType is not None:
+            raise ValueError("bkgType must be 'standard', 'pca', or None; got %r" % (bkgType,))
         # After the background, as in `fit_calc`: the template is scaled onto whatever continuum is
         # left, so removing the sky first is what makes that continuum the stellar one.
         integrated_spectrum = subtract_absorption(integrated_spectrum, absorp)
@@ -1291,6 +1393,8 @@ class SitelleCube:
         spec_max=None,
         obj_redshift=0.0,
         n_stoch=1,
+        absorption_bool=False,
+        absorption_broadening_kms=None,
     ):
         """
         Fit one already-extracted spectrum.
@@ -1340,6 +1444,8 @@ class SitelleCube:
             n_stoch=n_stoch,
             resolution=resolution,
             Luci_path=Luci_path,
+            absorption_bool=absorption_bool,
+            absorption_broadening_kms=absorption_broadening_kms,
         )
         return fit.fit()
 
@@ -1466,6 +1572,36 @@ class SitelleCube:
     def build_absorption_template(self, *args, **kwargs):
         """See LUCI.background.absorption.build_absorption_template."""
         return _build_absorption_template(self, *args, **kwargs)
+
+    def measure_absorption_width(self, template, rest_wavelength_nm=None):
+        """
+        Stellar width of an absorption template, in km/s -- the number to hand to
+        `absorption_bool` fits as `absorption_broadening_kms`.
+
+        This is the measurement a per-spaxel fit cannot make for itself: there the trough's
+        centre is masked out with the emission line and the width is unconstrained at real
+        noise, so it has to be supplied, and getting it wrong is the dominant systematic on
+        the depth (roughly depth ~ 1/width). A template has no emission in it and stacks a
+        whole region, so the width comes back cleanly.
+
+        Args:
+            template: A template from `build_absorption_template`
+            rest_wavelength_nm: Rest wavelength of the absorbing line (default Halpha)
+
+        Return:
+            Width in km/s, or None if the template could not be fitted.
+
+        Examples:
+            >>> template = cube.build_absorption_template('stellar.reg', vel_map)
+            >>> width = cube.measure_absorption_width(template)
+            >>> cube.fit_cube(..., absorption_bool=True, absorption_broadening_kms=width)
+
+            Note that this does *not* pass `absorp=template`. The template path and the fitted
+            path are two ways to remove the same trough -- run both and you correct twice.
+            See `luci.fitting.absorption`.
+        """
+        measured = _measure_absorption_width(self.spectrum_axis, template, rest_wavelength_nm)
+        return measured.broadening if measured.success else None
 
 
 # ``Luci`` was this class's name for its whole published life; keep it working.

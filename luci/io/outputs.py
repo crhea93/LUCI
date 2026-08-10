@@ -24,6 +24,7 @@ def save_fits(
     suffix="",
     fit_function=None,
     output_name=None,
+    absorption_maps=None,
 ):
     """
     Function to save the fits files returned from the fitting routine. We save the velocity, broadening,
@@ -50,6 +51,10 @@ def save_fits(
             not a path: the products still go in the `Amplitudes`/`Fluxes`/`Velocity`/`Broadening`
             subdirectories of `output_dir`. Use it to keep a region fit's maps from overwriting a
             whole-cube fit's, since both otherwise derive their names from `object_name` alone.
+        absorption_maps: ``{name: 2D array}`` of stellar-absorption products to write alongside
+            the rest, or None to write none (default None). Passed only when the fit actually
+            measured absorption, so an ordinary fit's output layout is byte-for-byte unchanged --
+            downstream scripts glob these directories.
 
     """
     # Make sure output dirs exist for amps, flux, vel, and broad
@@ -118,6 +123,11 @@ def save_fits(
             header,
             overwrite=True,
         )
+    if absorption_maps:
+        # Alongside the continuum products rather than in their own directory: like the
+        # continuum, these are one scalar per pixel describing the light the lines sit on.
+        for name, data in absorption_maps.items():
+            fits.writeto(output_dir + "/" + output_name + "_" + name + ".fits", data, header, overwrite=True)
     fits.writeto(output_dir + "/" + output_name + "_Chi2.fits", chi2_fits, header, overwrite=True)
     fits.writeto(output_dir + "/" + output_name + "_continuum.fits", continuum_fits, header, overwrite=True)
     fits.writeto(output_dir + "/" + output_name + "_continuum_error.fits", continuum_error_fits, header, overwrite=True)

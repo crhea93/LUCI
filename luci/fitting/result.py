@@ -49,6 +49,13 @@ class FitResult:
     broad_ml_sigma: float
     fit_vector: Any
     fit_axis: Any
+    # Stellar absorption, measured only when `absorption_bool` was set; all three are
+    # 0.0 otherwise, so the schema does not change shape with the option. `depth` is the
+    # fraction of the continuum absorbed at the trough's centre. Appended at the end so
+    # `as_dict()` keeps its historical key order for everything before them.
+    absorption_depth: float = 0.0
+    absorption_velocity: float = 0.0
+    absorption_broadening: float = 0.0
 
     # -- dict compatibility (read-only) ------------------------------------
     # The old return value was a plain dict indexed like fit_dict['velocities'].

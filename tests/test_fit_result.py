@@ -40,6 +40,17 @@ LEGACY_KEYS = [
     "fit_axis",
 ]
 
+# Fields added since. The contract is *prefix* compatibility: a legacy consumer reads
+# by key or walks `as_dict()` in order, so new fields may only be appended -- never
+# inserted among the legacy ones, never renamed, never dropped. The tests below assert
+# that shape rather than an exact key list, so adding a field does not require editing
+# LEGACY_KEYS (which would defeat the point of pinning it).
+ADDED_KEYS = [
+    "absorption_depth",
+    "absorption_velocity",
+    "absorption_broadening",
+]
+
 
 def _sample() -> FitResult:
     return FitResult(
@@ -68,8 +79,21 @@ def _sample() -> FitResult:
     )
 
 
-def test_exposes_exactly_the_legacy_keys_in_order():
-    assert _sample().keys() == LEGACY_KEYS
+def test_exposes_the_legacy_keys_first_and_in_order():
+    """Every legacy key still present, still in order, still at the front."""
+    keys = _sample().keys()
+    assert keys[: len(LEGACY_KEYS)] == LEGACY_KEYS
+    assert keys == LEGACY_KEYS + ADDED_KEYS
+
+
+def test_added_fields_default_to_zero():
+    """
+    A fit that did not measure absorption still answers for those keys, so callers
+    and the map scatter need no conditional. `_sample()` sets none of them.
+    """
+    r = _sample()
+    for key in ADDED_KEYS:
+        assert r[key] == 0.0
 
 
 def test_dict_style_access_matches_attribute_access():
@@ -87,7 +111,7 @@ def test_typed_attribute_access():
 def test_as_dict_reproduces_the_legacy_mapping():
     r = _sample()
     d = r.as_dict()
-    assert list(d.keys()) == LEGACY_KEYS
+    assert list(d.keys())[: len(LEGACY_KEYS)] == LEGACY_KEYS
     assert d["velocities"] == [100.0]
     # A plain consumer that only reads by key cannot tell it isn't a dict.
     assert d["continuum"] == r["continuum"]
@@ -108,4 +132,4 @@ def test_contains_and_get_behave_like_a_dict():
 
 
 def test_iterates_over_keys_like_a_dict():
-    assert list(iter(_sample())) == LEGACY_KEYS
+    assert list(iter(_sample()))[: len(LEGACY_KEYS)] == LEGACY_KEYS

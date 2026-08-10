@@ -11,6 +11,9 @@ from scipy import interpolate
 from scipy.optimize import minimize
 
 from luci.config import AVAILABLE_MODELS, LINE_DICT, FitConfig
+from luci.fitting.absorption import DEFAULT_BROADENING_KMS as ABSORPTION_DEFAULT_BROADENING_KMS
+from luci.fitting.absorption import AbsorptionFit
+from luci.fitting.absorption import fit_absorption as fit_absorption_profile
 from luci.fitting.bayes import log_likelihood_bayes, log_probability, prior_transform
 from luci.fitting.constraints import (
     amplitude_constraints,
@@ -48,6 +51,10 @@ SPEED_OF_LIGHT = 299792  # km/s
 # initial sigma away from the singular zero point (see estimate_priors_data /
 # bug B1); the fit itself refines the value.
 DEFAULT_BROADENING_KMS = 50.0
+
+# Default stellar velocity dispersion assumed by the absorption fit, km/s. Re-exported from
+# `luci.fitting.absorption` so a caller reading this signature sees the value.
+ABSORPTION_BROADENING_KMS = ABSORPTION_DEFAULT_BROADENING_KMS
 
 
 class SpectrumFitter:
@@ -100,6 +107,8 @@ class SpectrumFitter:
         n_stoch=1,
         resolution=1000,
         Luci_path=None,
+        absorption_bool=False,
+        absorption_broadening_kms=ABSORPTION_BROADENING_KMS,
         config=None,
     ):
         """
@@ -133,6 +142,12 @@ class SpectrumFitter:
             n_stoch: The number of stochastic runs -- set to 50 for fitting double components (default 1)
             resolution: Nominal resolution of cube
             Luci_path: Path to LUCI repo
+            absorption_bool: Measure the stellar absorption trough under the lines and take it out
+                before fitting them (default False). See `luci.fitting.absorption`; the measurement
+                comes back on the result as `absorption_depth`/`_velocity`/`_broadening`.
+            absorption_broadening_kms: Stellar velocity dispersion to assume for that trough, km/s
+                (default 200). Held fixed -- it cannot be measured from the same spectrum, because
+                the trough's centre is where the emission line is. See `luci.fitting.absorption`.
         """
         # Options are grouped in a FitConfig. Callers may pass one, or keep using
         # the individual keywords -- they are collected into a config either way,
@@ -154,6 +169,8 @@ class SpectrumFitter:
                 uncertainty_bool=uncertainty_bool,
                 bayes_bool=bayes_bool,
                 bayes_method=bayes_method,
+                absorption_bool=absorption_bool,
+                absorption_broadening_kms=absorption_broadening_kms,
             )
         self.config = config
         # Unpack onto self so the rest of the class (and its public attributes)
@@ -166,6 +183,11 @@ class SpectrumFitter:
         obj_redshift, n_stoch = config.obj_redshift, config.n_stoch
         uncertainty_bool = config.uncertainty_bool
         bayes_bool, bayes_method = config.bayes_bool, config.bayes_method
+        self.absorption_bool = config.absorption_bool
+        self.absorption_broadening_kms = config.absorption_broadening_kms
+        # Zeros with success=False until `fit_absorption` runs, so the result fields exist
+        # whether or not the stage was enabled.
+        self.absorption = AbsorptionFit()
 
         self.line_dict = dict(LINE_DICT)
         self.available_functions = list(AVAILABLE_MODELS) + ["gauss"]
@@ -321,6 +343,8 @@ class SpectrumFitter:
             self.spec_max = default_max
         min_ = np.argmin(np.abs(np.array(self.axis) - self.spec_min))
         max_ = np.argmin(np.abs(np.array(self.axis) - self.spec_max))
+        # Kept so the absorption fit can take the same slice of other arrays.
+        self._restricted_slice = slice(min_, max_)
         self.spectrum_restricted = np.real(self.spectrum_normalized[min_:max_])
         self.spectrum_restricted_zeros = np.zeros_like(
             self.spectrum
@@ -792,6 +816,9 @@ class SpectrumFitter:
                 self.calculate_params()
                 self.ML_model = temp_ML
 
+            if self.absorption_bool:
+                self.fit_absorption()
+
             # Check if Bayesian approach is required
             if self.bayes_bool:
                 self.fit_Bayes()
@@ -852,6 +879,9 @@ class SpectrumFitter:
                 broad_ml_sigma=self.broad_ml_sigma,
                 fit_vector=self.fit_vector,
                 fit_axis=self.axis,
+                absorption_depth=self.absorption.depth,
+                absorption_velocity=self.absorption.velocity,
+                absorption_broadening=self.absorption.broadening,
             )
 
         else:  # Fit sky line
@@ -1086,33 +1116,66 @@ class SpectrumFitter:
             )
 
     def fit_absorption(self):
-        # Define log likelihood function
-        def log_likelihood(theta):
-            """
-            Calculate log likelihood function given a set of parameters theta.
-            Theta = [amplitude, position, sigma, continuum]
-            """
-            # Define model function
-            model = Gaussian(self.freeze).evaluate(self.axis_restricted, theta[0:3], "Halpha")
-            sigma2 = self.noise**2
-            return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+        """
+        Measure the stellar absorption trough, fill it in, and refit the lines once.
 
-        # Define negative log likelihood function
-        nll = lambda *args: -self.log_likelihood(*args)  # Negative Log Likelihood function
+        Runs after the emission fit, whose fitted line *positions* centre the mask that keeps
+        the line cores out of the trough measurement, and whose parameters are then recomputed
+        on the corrected spectrum -- so what gets reported comes from a spectrum with the
+        trough filled in.
 
-        # Define decent initial guess
-        ampl_init = -0.2  # Say 20% is absorbed
-        pos_init = 15350  # Position of non-shifted Halpha in cm^-1
-        pos_sigma = 1  # For a decently wide absorption line
-        cont_init = 1  # Assuming the continuum is the largest feature in the normalized spectrum.
-        # These four were built and then never used: the call below passed an
-        # undefined `initial`, so this method raised NameError however it was
-        # invoked, and it discarded its result instead of returning it (B22).
-        initial = [ampl_init, pos_init, pos_sigma, cont_init]
+        The measurement deliberately does **not** subtract the emission model, and does not
+        iterate. Both were tried on the synthetic fixture and both are worse. The emission fit
+        is itself biased by the very trough being measured -- a line sitting in a trough,
+        fitted against a flat continuum, comes out too bright on too low a continuum -- so
+        subtracting its model over-subtracts the line centre by about as much as the trough is
+        deep. Iterating does not damp that: filling in an over-deep trough makes the next
+        emission fit brighter, which deepens the next trough. On an injected depth of 0.30 the
+        loop settled at 0.465 while the plain masked fit gives 0.257. No feedback wins.
 
-        # Call minimization code
-        soln = minimize(nll, initial, method="SLSQP", options={"disp": False, "maxiter": 30}, tol=1e-2, args=())
-        return soln.x  # [ampl, pos, sigma, cont]
+        Only the *trough* is taken out of the spectrum, never the continuum the absorption fit
+        found alongside it: the emission fit measures its own continuum, and removing this one
+        would leave it nothing to measure.
+
+        This method used to raise ``NameError`` on every call and was reachable from nothing
+        (B22). What replaced it lives in `luci.fitting.absorption`; the four initial guesses it
+        built and discarded are superseded there, including ``pos_init = 15350``, which is not
+        where Halpha is (15237 cm^-1).
+
+        Return:
+            The ``AbsorptionFit``, also stored as ``self.absorption``.
+        """
+        # The *fitted* line positions, not the rest ones. A mask centred on rest positions is
+        # offset from the lines by the object's velocity, so it stops short on one side and lets
+        # the emission through exactly there -- which is where the trough fit then went.
+        line_positions = [self.fit_sol[3 * i + 1] for i in range(self.line_num)]
+        # The emission likelihood runs on `spectrum_restricted_norm` -- `spectrum_normalized`
+        # over its own restricted peak -- so `restricted_peak` is the factor between the scale
+        # carried on this object and the scale the fit works in. `noise` is measured in the
+        # former, hence the division.
+        restricted_peak = float(np.max(self.spectrum_restricted))
+        spectrum = np.real(self.spectrum_normalized) / restricted_peak
+        self.absorption = fit_absorption_profile(
+            self.axis_restricted,
+            spectrum[self._restricted_slice],
+            self.noise / restricted_peak,
+            self.line_dict.get("Halpha", LINE_DICT["Halpha"]),
+            line_positions,
+            self.broad_ml,
+            self.absorption_broadening_kms,
+        )
+        if not self.absorption.success:
+            return self.absorption
+        # Fill the trough in, in each scale carried on the object, then rebuild everything
+        # derived from them and refit. `depth` needs no conversion -- it is a fraction of the
+        # continuum, which is why it is the number reported.
+        trough = self.absorption.profile(self.axis)
+        self.spectrum_normalized = np.real(self.spectrum_normalized) - trough * restricted_peak
+        self.spectrum = np.real(self.spectrum) - trough * self.spectrum_scale
+        self.restrict_wavelength()
+        self.calculate_noise()
+        self.calculate_params()
+        return self.absorption
 
     def calc_chisquare(self, fit_vector, init_spectrum, init_errors, n_dof):
         """

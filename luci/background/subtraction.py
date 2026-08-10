@@ -40,6 +40,30 @@ def pca_background(coefficients, pca_vectors, pca_mean):
     return pca_mean + np.sum([coefficients[i] * pca_vectors[i] for i in range(n)], axis=0)
 
 
+def combine_pca_coefficients(coefficients):
+    """
+    Collapse a group of pixels' PCA coefficients into one set, for a spectrum that
+    is the *sum* of those pixels (a bin, or a region).
+
+    The mean, not the sum. A pixel's background is ``pca_mean + sum_i c_i v_i``, so
+    the background of N summed pixels is ``N * pca_mean + sum_i (sum_p c_ip) v_i``.
+    Rebuilding from the mean coefficients gives exactly that, divided by N -- and
+    `subtract_pca` rescales onto the observed continuum anyway, so the 1/N is
+    immaterial while the *shape* is right. Rebuilding from the summed coefficients
+    instead leaves `pca_mean` under-weighted by N relative to the components, an
+    error in shape that grows with the group and that no rescaling can undo (B29).
+
+    Args:
+        coefficients: Coefficients for the group, any shape ending in the
+            component axis (e.x. ``(binning, binning, n_components)``)
+
+    Return:
+        1D array of combined coefficients
+    """
+    coefficients = np.asarray(coefficients)
+    return np.nanmean(coefficients.reshape(-1, coefficients.shape[-1]), axis=0)
+
+
 def subtract_pca(sky, background, spectrum_axis, filter_name):
     """
     Scale a PCA background onto this spectrum's continuum and subtract it.

@@ -18,12 +18,50 @@
 | 6 — Compat shim & API surface | 🟡 shims in place; lowercase rename outstanding |
 | 7 — Docs & examples | ⬜ not started |
 
-**Every bug in the register is fixed or mitigated** — B1–B18. See [REFACTOR_BUGS.md](REFACTOR_BUGS.md)
+**Every bug in the register is fixed or mitigated** — B1–B30. See [REFACTOR_BUGS.md](REFACTOR_BUGS.md)
 for each one, the test that pins it, and (where I got something wrong along the way) what the mistake
 was.
 
-**Verification state:** 123 fast tests + 12 golden baselines green; ruff and `uv lock --check` clean.
-No `xfail` markers remain: every one flipped to a real passing test as its bug was fixed.
+**Verification state:** 331 fast tests + 12 golden baselines green (349 including the `slow` fitting
+tests); `uv lock --check` clean. No `xfail` markers remain: every one flipped to a real passing test as
+its bug was fixed.
+
+### Stellar absorption continuum (B27)
+The `absorp` hook now reaches every fit entry point, and the template it consumes can be built again:
+[luci/background/absorption.py](luci/background/absorption.py) holds `subtract_absorption` (one copy
+of what `fit_calc` and `fit_pixel` each carried) and `build_absorption_template`, the revived
+`LuciAbsorp.py`. Goldens unaffected — 12/12 byte-identical, since the default is still `absorp=None`.
+
+The builder takes the **same background arguments as the fit** (`bkg`/`bkgType`/`pca_*`) and removes
+the background per spaxel before the Doppler shift, so the template is of the stellar continuum alone.
+Build it raw and the sky gets subtracted twice — once by the fit, once by the template — which on the
+`bkgType='pca'` path does not cancel, since the doubled term is per-pixel. The working order is:
+
+```python
+_, pca, _, _, _, coeff = cube.create_background_subspace(...)      # 1. fit the PCA background
+absorp = cube.build_absorption_template('stellar.reg', vel_map,    # 2. stack behind it
+    bkgType='pca', pca_coefficient_array=coeff,
+    pca_vectors=pca.components_, pca_mean=pca.mean_)
+cube.fit_cube(..., absorp=absorp, bkgType='pca',                   # 3. fit behind both
+    pca_coefficient_array=coeff, pca_vectors=pca.components_, pca_mean=pca.mean_)
+```
+
+The PCA background now reaches the region and WVT paths too, so every fit entry point can run
+behind it: `extract_region_for_fit` takes `bkgType='pca'` and rebuilds a region's background from the
+*mean* of its pixels' coefficients (B29 — the binned branches were summing them, under-weighting
+`pca_mean` by the bin size).
+
+### Stellar absorption as a fitted component (B22)
+`absorption_bool=True` measures the trough on each spectrum, fills it in, refits the lines, and
+writes `absorption_depth` / `_velocity` / `_broadening` maps. The stellar velocity dispersion is an
+**input** (`absorption_broadening_kms`, default 200 km/s), not a fitted quantity: the trough's centre
+is where the emission line is, so its depth is only ever extrapolated from the flanks and trades off
+against width there. Four designs were measured against an injected 0.30 trough before that was
+clear — including an iterative one that *amplifies* rather than converges. See B22 for the table.
+
+Measured accuracy with the width supplied correctly: depth 10–15% low at 0.3 and deeper, ~25% low at
+0.2, ~45% low at 0.1. Below ~0.1 treat it as an upper limit. The template path above is the better
+instrument wherever the field offers a stellar region to stack; this is for when it does not.
 
 ### Phase 5 outcome (bug cluster)
 Ten bugs fixed with **zero change to fit results** (12/12 goldens byte-identical):

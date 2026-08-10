@@ -74,7 +74,9 @@ def run_fit(
     ``fit_kwargs`` are forwarded verbatim to ``Luci.fit_calc``, so a new fit
     option only has to be threaded through once.
     """
-    maps = FitMaps.allocate(x_max - x_min, y_max - y_min, len(lines))
+    maps = FitMaps.allocate(
+        x_max - x_min, y_max - y_min, len(lines), absorption=bool(fit_kwargs.get("absorption_bool"))
+    )
     results = Parallel(n_jobs=n_threads)(
         delayed(cube.fit_calc)(
             sl,
