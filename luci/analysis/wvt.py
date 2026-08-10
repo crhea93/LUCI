@@ -1002,6 +1002,7 @@ def fit_wvt(
     vel_rel,
     sigma_rel,
     bkg=None,
+    absorp=None,
     bayes_bool=False,
     uncertainty_bool=False,
     n_threads=1,
@@ -1019,6 +1020,8 @@ def fit_wvt(
         vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
         sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
         bkg: Background Spectrum (1D numpy array; default None)
+        absorp: Stellar absorption template on the full spectral axis, as returned by
+            `cube.build_absorption_template` (1D numpy array; default None)
         bayes_bool: Boolean to determine whether or not to run Bayesian analysis
         uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
         n_threads: Number of threads to use
@@ -1084,7 +1087,7 @@ def fit_wvt(
     with Parallel(n_jobs=n_threads) as parallel:
         for start in tqdm(range(0, len(regions), chunk_size)):
             chunk = regions[start : start + chunk_size]
-            extracted = [cube.extract_region_for_fit(r, bkg=bkg) for r in chunk]
+            extracted = [cube.extract_region_for_fit(r, bkg=bkg, absorp=absorp) for r in chunk]
             results = parallel(
                 delayed(cube.fit_extracted_spectrum)(
                     sky,
@@ -1143,6 +1146,7 @@ def wvt_fit_region(
     roundness_crit=0.3,
     ToL=1e-2,
     bkg=None,
+    absorp=None,
     bayes_bool=False,
     uncertainty_bool=False,
     n_threads=1,
@@ -1170,6 +1174,8 @@ def wvt_fit_region(
         roundness_crit: Roundness criteria for the pixel accretion into bins
         ToL: Convergence tolerance parameter for the SNR of the bins
         bkg: Background Spectrum (1D numpy array; default None)
+        absorp: Stellar absorption template on the full spectral axis, as returned by
+            `cube.build_absorption_template` (1D numpy array; default None)
         bayes_bool: Boolean to determine whether or not to run Bayesian analysis
         uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
         n_threads: Number of threads to use
@@ -1210,6 +1216,7 @@ def wvt_fit_region(
         vel_rel,
         sigma_rel,
         bkg=bkg,
+        absorp=absorp,
         bayes_bool=bayes_bool,
         uncertainty_bool=uncertainty_bool,
         n_threads=n_threads,

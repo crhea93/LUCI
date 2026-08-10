@@ -32,6 +32,8 @@ from luci.analysis.wvt import *
 from luci.analysis.wvt import create_wvt as _create_wvt
 from luci.analysis.wvt import fit_wvt as _fit_wvt
 from luci.analysis.wvt import wvt_fit_region as _wvt_fit_region
+from luci.background.absorption import build_absorption_template as _build_absorption_template
+from luci.background.absorption import subtract_absorption
 from luci.background.detection import find_background_pixels
 from luci.background.pca import create_background_subspace as _create_background_subspace
 from luci.background.subtraction import pca_background, subtract_pca, subtract_standard
@@ -312,6 +314,7 @@ class SitelleCube:
         sigma_rel,
         bkg=None,
         bkgType=None,
+        absorp=None,
         binning=None,
         bayes_bool=False,
         output_name=None,
@@ -327,6 +330,8 @@ class SitelleCube:
             vel_rel: Constraints on Velocity/Position (must be list; e.x. [1, 2, 1])
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2, 1])
             bkg: Background Spectrum (1D numpy array; default None)
+            absorp: Stellar absorption template on the full spectral axis, as returned by
+                `build_absorption_template` (1D numpy array; default None)
             binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             output_name: User defined output path/name (default None)
@@ -351,6 +356,7 @@ class SitelleCube:
             y_max,
             bkg=bkg,
             bkgType=bkgType,
+            absorp=absorp,
             binning=binning,
             bayes_bool=bayes_bool,
             output_name=output_name,
@@ -413,6 +419,8 @@ class SitelleCube:
             y_min: Lower bound in y
             bkg: Background Spectrum (1D numpy array; default None)
             bkgType: default None
+            absorp: Stellar absorption template on the full spectral axis, as returned by
+                `build_absorption_template` (1D numpy array; default None)
             binning:  Value by which to bin (default None)
             ML_bool: Boolean to determione whether or not we use ML priors
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
@@ -475,13 +483,7 @@ class SitelleCube:
                 background = pca_background(coefficients, pca_vectors, pca_mean)
                 sky = subtract_pca(sky, background, spectrum_axis, hdr_dict["FILTER"])
 
-            if absorp is not None:
-                spectralcut = int(len(sky) * 0.25)
-                sky = (
-                    sky
-                    - absorp / np.nanmedian(absorp) * np.nanmedian(sky[spectralcut:-spectralcut])
-                    + np.nanmedian(sky[spectralcut:-spectralcut])
-                )
+            sky = subtract_absorption(sky, absorp)
 
             good_sky_inds = ~np.isnan(sky)  # Find all NaNs in sky spectru
             sky = sky[good_sky_inds]  # Clean up spectrum by dropping any Nan values
@@ -618,6 +620,8 @@ class SitelleCube:
             binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             bayes_method = Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
+            absorp: Stellar absorption template on the full spectral axis, as returned by
+                `build_absorption_template` (1D numpy array; default None)
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
             n_threads: Number of threads to be passed to joblib for parallelization (default = 1)
             nii_cons: Boolean to turn on or off NII doublet ratio constraint (default True)
@@ -697,6 +701,7 @@ class SitelleCube:
         region,
         bkg=None,
         bkgType="standard",
+        absorp=None,
         binning=None,
         bayes_bool=False,
         bayes_method="emcee",
@@ -727,6 +732,8 @@ class SitelleCube:
             sigma_rel: Constraints on sigma (must be list; e.x. [1, 2])
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             bkg: Background Spectrum (1D numpy array; default None)
+            absorp: Stellar absorption template on the full spectral axis, as returned by
+                `build_absorption_template` (1D numpy array; default None)
             binning:  Value by which to bin (default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis (default False)
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
@@ -812,6 +819,7 @@ class SitelleCube:
             uncertainty_bool=uncertainty_bool,
             bkg=bkg,
             bkgType=bkgType,
+            absorp=absorp,
             nii_cons=nii_cons,
             initial_values=[vel_init, broad_init],
             obj_redshift=obj_redshift,
@@ -901,13 +909,7 @@ class SitelleCube:
         elif bkgType is not None:
             raise ValueError("bkgType must be 'standard', 'pca', or None; got %r" % (bkgType,))
 
-        if absorp is not None:
-            spectralcut = int(len(sky) * 0.25)
-            sky = (
-                sky
-                - absorp / np.nanmedian(absorp) * np.nanmedian(sky[spectralcut:-spectralcut])
-                + np.nanmedian(sky[spectralcut:-spectralcut])
-            )
+        sky = subtract_absorption(sky, absorp)
 
         good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
         sky = sky[good_sky_inds]  # Apply clean to sky
@@ -1078,6 +1080,7 @@ class SitelleCube:
         region,
         initial_values=[False],
         bkg=None,
+        absorp=None,
         bayes_bool=False,
         bayes_method="emcee",
         uncertainty_bool=False,
@@ -1102,6 +1105,8 @@ class SitelleCube:
             region: Name of ds9 region file (e.x. 'region.reg'). You can also pass a boolean mask array.
             initial_values:
             bkg: Background Spectrum (1D numpy array; default None)
+            absorp: Stellar absorption template on the full spectral axis, as returned by
+                `build_absorption_template` (1D numpy array; default None)
             bayes_bool: Boolean to determine whether or not to run Bayesian analysis
             bayes_method: Bayesian Inference method. Options are '[emcee', 'dynesty'] (default 'emcee')
             uncertainty_bool: Boolean to determine whether or not to run the uncertainty analysis (default False)
@@ -1116,7 +1121,7 @@ class SitelleCube:
             X-axis and spectral axis of region.
 
         """
-        sky, axis, trans_filter, theta = self.extract_region_for_fit(region, bkg=bkg, mean=mean)
+        sky, axis, trans_filter, theta = self.extract_region_for_fit(region, bkg=bkg, mean=mean, absorp=absorp)
         fit_dict = self.fit_extracted_spectrum(
             sky,
             axis,
@@ -1183,7 +1188,7 @@ class SitelleCube:
         ys, xs = np.where(np.asarray(mask).T)
         return xs, ys
 
-    def extract_region_for_fit(self, region, bkg=None, mean=False):
+    def extract_region_for_fit(self, region, bkg=None, mean=False, absorp=None):
         """
         Everything a fit needs from a region, extracted from the cube.
 
@@ -1195,6 +1200,9 @@ class SitelleCube:
             region: Anything `region_indices` accepts
             bkg: Background spectrum to subtract, scaled by the pixel count (default None)
             mean: Average over the region's pixels rather than summing (default False)
+            absorp: Stellar absorption template on the full spectral axis (default None). Applied
+                here rather than by the caller because it has to happen while the spectrum is still
+                at full length -- this is where the NaN channels are dropped.
 
         Return:
             (sky, axis, trans_filter, theta), each already masked to the finite channels
@@ -1215,6 +1223,9 @@ class SitelleCube:
             integrated_spectrum /= spec_ct  # Take mean spectrum
         if bkg is not None:
             integrated_spectrum -= bkg * spec_ct  # Subtract background spectrum
+        # After the background, as in `fit_calc`: the template is scaled onto whatever continuum is
+        # left, so removing the sky first is what makes that continuum the stellar one.
+        integrated_spectrum = subtract_absorption(integrated_spectrum, absorp)
         good_sky_inds = ~np.isnan(integrated_spectrum)  # Clean up spectrum
 
         sky = integrated_spectrum[good_sky_inds]
@@ -1430,6 +1441,10 @@ class SitelleCube:
     def create_background_subspace(self, *args, **kwargs):
         """See LUCI.background.pca.create_background_subspace."""
         return _create_background_subspace(self, *args, **kwargs)
+
+    def build_absorption_template(self, *args, **kwargs):
+        """See LUCI.background.absorption.build_absorption_template."""
+        return _build_absorption_template(self, *args, **kwargs)
 
 
 # ``Luci`` was this class's name for its whole published life; keep it working.
