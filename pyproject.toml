@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "luci-sitelle"
-version = "1.2.0"
+version = "2.0.1"
 description = "General-purpose emission-line fitting pipeline built for SITELLE IFU data cubes"
 readme = "README.md"
 license = "MIT"
