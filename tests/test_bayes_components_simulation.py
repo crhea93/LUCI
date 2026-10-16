@@ -111,9 +111,7 @@ def test_component_reconstruction_numbers_three_repeated_lines():
 
 @pytest.mark.parametrize("model", ["gaussian", "sinc", "sincgauss"])
 def test_simulated_spectra_are_finite_and_reproducible(model):
-    simulation = Spectrum(
-        ["Halpha", "NII6583"], model, [1.0, 0.4], [100.0, 120.0], [30.0, 40.0], "SN3", 5000, 50
-    )
+    simulation = Spectrum(["Halpha", "NII6583"], model, [1.0, 0.4], [100.0, 120.0], [30.0, 40.0], "SN3", 5000, 50)
     np.random.seed(12)
     axis, spectrum = simulation.create_spectrum()
     np.random.seed(12)

@@ -1089,9 +1089,7 @@ class SpectrumFitter:
             # Define model function
             model = Gaussian(self.freeze).evaluate(self.axis_restricted, theta[0:3], 1) + theta[-1]
             sigma2 = self.noise**2
-            return -0.5 * np.sum(
-                (self.spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2)
-            )
+            return -0.5 * np.sum((self.spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
         # Define negative log likelihood function
         nll = lambda *args: -log_likelihood(*args)  # Negative Log Likelihood function

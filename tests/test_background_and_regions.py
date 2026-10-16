@@ -134,9 +134,7 @@ def test_fit_pixel_masks_nan_channels_consistently(sn3_cube_noml, monkeypatch):
     monkeypatch.setattr("luci.cube.Fit", FakeFit)
     background = np.full(cube_data.shape[2], 2e-19)
 
-    axis, sky, result = sn3_cube_noml.fit_pixel(
-        ["Halpha"], "sincgauss", [1], [1], 10, 10, bkg=background
-    )
+    axis, sky, result = sn3_cube_noml.fit_pixel(["Halpha"], "sincgauss", [1], [1], 10, 10, bkg=background)
 
     good = ~np.isnan(cube_data[10, 10])
     np.testing.assert_allclose(sky, (cube_data[10, 10] - background)[good])

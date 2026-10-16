@@ -53,11 +53,14 @@ MPLBACKEND=Agg uv run pytest -m "not slow" \
     --cov=luci --cov-report=term-missing --cov-report=xml
 ```
 
-The initial combined baseline is 46%. Coverage may stay level when a change is
-unrelated to runtime behavior, but it must not fall below the threshold in
-``pyproject.toml``. Coverage-focused commits raise that threshold only after
-the new tests pass on the full Python matrix. Expensive golden fits remain in
-the nightly job and are not required to inflate the pull-request percentage.
+The initial combined baseline was 46.36%. The current pull-request suite
+measures 64.69% and enforces a 64% floor in ``pyproject.toml``. Treat the exact
+percentage as a snapshot: CI's Python matrix and uploaded XML report are the
+authoritative results. Coverage may stay level when a change is unrelated to
+runtime behavior, but it must not fall below the threshold. Coverage-focused
+commits raise that threshold only after the new tests pass on the full Python
+matrix. Expensive golden fits remain in the nightly job and are not required to
+inflate the pull-request percentage.
 
 Prefer assertions about numerical values, array shapes, units, state changes,
 and written files over tests that merely assert that a call does not raise.

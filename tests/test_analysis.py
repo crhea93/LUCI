@@ -45,9 +45,7 @@ def test_threshold_background_detection_partitions_pixels(tmp_path):
     image = np.full((60, 60), 100_000.0)
     image[10:20, 30:40] = 300_000.0
 
-    background, source = find_background_pixels(
-        image, str(tmp_path), bkg_algo="threshold", plot_mask=False
-    )
+    background, source = find_background_pixels(image, str(tmp_path), bkg_algo="threshold", plot_mask=False)
 
     assert len(background) == 3500
     assert len(source) == 100
@@ -57,9 +55,7 @@ def test_threshold_background_detection_partitions_pixels(tmp_path):
 def test_pca_background_subspace_handles_a_small_cube(sn3_cube_noml, monkeypatch):
     region_shape = (5, 5)
     source = np.array([[2, 2]])
-    background = np.array(
-        [(x, y) for x in range(region_shape[0]) for y in range(region_shape[1]) if (x, y) != (2, 2)]
-    )
+    background = np.array([(x, y) for x in range(region_shape[0]) for y in range(region_shape[1]) if (x, y) != (2, 2)])
     monkeypatch.setattr(
         "luci.background.pca.find_background_pixels",
         lambda *args, **kwargs: (background, source),
@@ -119,9 +115,7 @@ def test_snr_rejects_an_unsupported_filter(sn3_cube_noml, monkeypatch):
 
 
 def test_snr_method_two_supports_binning(sn3_cube_noml):
-    masks = sn3_cube_noml.create_snr_map(
-        x_min=0, x_max=8, y_min=0, y_max=8, method=2, binning=2, n_threads=1
-    )
+    masks = sn3_cube_noml.create_snr_map(x_min=0, x_max=8, y_min=0, y_max=8, method=2, binning=2, n_threads=1)
 
     assert len(masks) == 4
     assert all(mask.shape == (4, 4) for mask in masks)
