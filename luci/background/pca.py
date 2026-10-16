@@ -66,7 +66,7 @@ def create_background_subspace(
         cube.create_deep_image()
         background_image = cube.deep_image.T[x_min:x_max, y_min:y_max]
     else:
-        background_image = fits.open(bkg_image)[0].data[x_min:x_max, y_min:y_max]
+        background_image = fits.getdata(bkg_image)[x_min:x_max, y_min:y_max]
     # Find background pixels and save map in cube.output_dir
     idx_bkg, idx_src = find_background_pixels(
         background_image,
@@ -99,8 +99,9 @@ def create_background_subspace(
     else:
         raise PCABackgroundUnsupportedError(cube.filter)
     # Check if there are not enough components
-    if len(cube.cube_final[100, 100, min_spectral:max_spectral]) < n_components:
-        n_components = len(cube.cube_final[100, 100, min_spectral:max_spectral])
+    spectral_length = max_spectral - min_spectral
+    if spectral_length < n_components:
+        n_components = spectral_length
         if n_components_keep > n_components:
             n_components_keep = n_components
     bkg_spectra = [
@@ -159,7 +160,7 @@ def create_background_subspace(
     c = l[0].get_color()
     plt.text(670, -0.9, "mean emission", color=c, fontsize="xx-large")
     shift = 2
-    for i in range(10):  # Plot first 10 components
+    for i in range(min(10, n_components)):  # Plot up to the first 10 components
         l = plt.plot(spectral_axis_nm, pca.components_[i] / np.max(pca.components_[i]) + (i * shift), linewidth=3)
         c = l[0].get_color()
         plt.text(670, i * shift + 0.3, "component %i" % (i + 1), color=c, fontsize="xx-large")
@@ -174,7 +175,7 @@ def create_background_subspace(
     c = l[0].get_color()
     plt.text(670, -0.9, "mean emission", color=c, fontsize="xx-large")
     shift = 2
-    for i in range(10):  # Plot first 10 components
+    for i in range(min(10, n_components)):  # Plot up to the first 10 components
         l = plt.plot(spectral_axis_nm, pca.components_[i] + (i * shift), linewidth=3)
         c = l[0].get_color()
         plt.text(670, i * shift + 0.3, "component %i" % (i + 1), color=c, fontsize="xx-large")

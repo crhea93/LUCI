@@ -4,16 +4,22 @@ build-backend = "hatchling.build"
 
 [project]
 name = "luci-sitelle"
-version = "1.2.0"
+version = "2.0.1"
 description = "General-purpose emission-line fitting pipeline built for SITELLE IFU data cubes"
 readme = "README.md"
-license = { file = "LICENSE.txt" }
+license = "MIT"
+license-files = ["LICENSE.txt"]
 authors = [{ name = "Carter Rhea", email = "carterrhea93@gmail.com" }]
 keywords = ["astronomy", "spectroscopy", "SITELLE", "IFU", "emission lines"]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Astronomy",
-    "License :: OSI Approved :: MIT License",
 ]
 
 # Inference runs on ONNX Runtime; only the optional [ml-legacy] extra caps at 3.10.
@@ -55,6 +61,8 @@ ml-legacy = [
 Homepage = "https://github.com/crhea93/LUCI"
 Documentation = "https://crhea93.github.io/LUCI/index.html"
 Repository = "https://github.com/crhea93/LUCI"
+Issues = "https://github.com/crhea93/LUCI/issues"
+Paper = "https://doi.org/10.3847/2515-5172/ac2733"
 
 [dependency-groups]
 # Pinned so a theme release cannot silently restyle the published site: the built
@@ -67,6 +75,7 @@ docs = [
 dev = [
     "ipykernel>=7.3.0",
     "pytest>=7",
+    "pytest-cov",
     # Pinned to the exact version CI and .pre-commit-config.yaml use. ruff's lint
     # and format output changes between releases, so an unpinned floor let the dev
     # venv drift to a newer ruff that disagreed with CI's 0.6.9 -- green locally,
@@ -91,6 +100,57 @@ dev-mode-dirs = ["."]
 "LUCI.py" = "LUCI.py"
 "LuciBase.py" = "LuciBase.py"
 "LuciAbsorp.py" = "LuciAbsorp.py"
+# Runtime data lives inside the installed package. Keep this list explicit so
+# the legacy TensorFlow checkpoints in ML/ are not added to the wheel.
+"Data/C1_Transmission.dat" = "luci/_assets/Data/C1_Transmission.dat"
+"Data/C1_filter.dat" = "luci/_assets/Data/C1_filter.dat"
+"Data/C2_Transmission.dat" = "luci/_assets/Data/C2_Transmission.dat"
+"Data/C2_filter.dat" = "luci/_assets/Data/C2_filter.dat"
+"Data/C3_Transmission.dat" = "luci/_assets/Data/C3_Transmission.dat"
+"Data/C3_filter.dat" = "luci/_assets/Data/C3_filter.dat"
+"Data/C4_Transmission.dat" = "luci/_assets/Data/C4_Transmission.dat"
+"Data/C4_filter.dat" = "luci/_assets/Data/C4_filter.dat"
+"Data/SN1_Transmission.dat" = "luci/_assets/Data/SN1_Transmission.dat"
+"Data/SN1_filter.dat" = "luci/_assets/Data/SN1_filter.dat"
+"Data/SN2_Transmission.dat" = "luci/_assets/Data/SN2_Transmission.dat"
+"Data/SN2_filter.dat" = "luci/_assets/Data/SN2_filter.dat"
+"Data/SN3_Transmission.dat" = "luci/_assets/Data/SN3_Transmission.dat"
+"Data/SN3_filter.dat" = "luci/_assets/Data/SN3_filter.dat"
+"Data/SN4_Transmission.dat" = "luci/_assets/Data/SN4_Transmission.dat"
+"Data/SN4_filter.dat" = "luci/_assets/Data/SN4_filter.dat"
+"Data/sky_lines.dat" = "luci/_assets/Data/sky_lines.dat"
+"ML/onnx" = "luci/_assets/ML/onnx"
+"ML/R5000-COMPONENTS-SN3.h5" = "luci/_assets/ML/R5000-COMPONENTS-SN3.h5"
+"ML/Reference-Spectrum-R1000-C3.fits" = "luci/_assets/ML/Reference-Spectrum-R1000-C3.fits"
+"ML/Reference-Spectrum-R1000-C4.fits" = "luci/_assets/ML/Reference-Spectrum-R1000-C4.fits"
+"ML/Reference-Spectrum-R1000-SN1.fits" = "luci/_assets/ML/Reference-Spectrum-R1000-SN1.fits"
+"ML/Reference-Spectrum-R1000-SN2.fits" = "luci/_assets/ML/Reference-Spectrum-R1000-SN2.fits"
+"ML/Reference-Spectrum-R1000-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R1000-SN3.fits"
+"ML/Reference-Spectrum-R1000-SN4.fits" = "luci/_assets/ML/Reference-Spectrum-R1000-SN4.fits"
+"ML/Reference-Spectrum-R1100-C2.fits" = "luci/_assets/ML/Reference-Spectrum-R1100-C2.fits"
+"ML/Reference-Spectrum-R1300-C4.fits" = "luci/_assets/ML/Reference-Spectrum-R1300-C4.fits"
+"ML/Reference-Spectrum-R1800-C4.fits" = "luci/_assets/ML/Reference-Spectrum-R1800-C4.fits"
+"ML/Reference-Spectrum-R1800-SN1.fits" = "luci/_assets/ML/Reference-Spectrum-R1800-SN1.fits"
+"ML/Reference-Spectrum-R1800-SN2.fits" = "luci/_assets/ML/Reference-Spectrum-R1800-SN2.fits"
+"ML/Reference-Spectrum-R1800-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R1800-SN3.fits"
+"ML/Reference-Spectrum-R2000-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R2000-SN3.fits"
+"ML/Reference-Spectrum-R2500-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R2500-SN3.fits"
+"ML/Reference-Spectrum-R3000-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R3000-SN3.fits"
+"ML/Reference-Spectrum-R3500-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R3500-SN3.fits"
+"ML/Reference-Spectrum-R4000-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R4000-SN3.fits"
+"ML/Reference-Spectrum-R4500-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R4500-SN3.fits"
+"ML/Reference-Spectrum-R4800-SN4.fits" = "luci/_assets/ML/Reference-Spectrum-R4800-SN4.fits"
+"ML/Reference-Spectrum-R5000-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R5000-SN3.fits"
+"ML/Reference-Spectrum-R600-C1.fits" = "luci/_assets/ML/Reference-Spectrum-R600-C1.fits"
+"ML/Reference-Spectrum-R600-SN1.fits" = "luci/_assets/ML/Reference-Spectrum-R600-SN1.fits"
+"ML/Reference-Spectrum-R600-SN2.fits" = "luci/_assets/ML/Reference-Spectrum-R600-SN2.fits"
+"ML/Reference-Spectrum-R700-SN1.fits" = "luci/_assets/ML/Reference-Spectrum-R700-SN1.fits"
+"ML/Reference-Spectrum-R700-SN2.fits" = "luci/_assets/ML/Reference-Spectrum-R700-SN2.fits"
+"ML/Reference-Spectrum-R7000-SN3.fits" = "luci/_assets/ML/Reference-Spectrum-R7000-SN3.fits"
+"ML/Reference-Spectrum-R800-SN1.fits" = "luci/_assets/ML/Reference-Spectrum-R800-SN1.fits"
+"ML/Reference-Spectrum-R800-SN2.fits" = "luci/_assets/ML/Reference-Spectrum-R800-SN2.fits"
+"ML/Reference-Spectrum-R900-SN1.fits" = "luci/_assets/ML/Reference-Spectrum-R900-SN1.fits"
+"ML/Reference-Spectrum-R900-SN2.fits" = "luci/_assets/ML/Reference-Spectrum-R900-SN2.fits"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -99,6 +159,9 @@ include = [
     "LuciBase.py",
     "LuciAbsorp.py",
     "Data/*.dat",
+    "ML/onnx/",
+    "ML/Reference-Spectrum-*.fits",
+    "ML/*-COMPONENTS-*.h5",
     "README.md",
     "LICENSE.txt",
     "tests/",
@@ -170,3 +233,13 @@ markers = [
     "slow: fitting tests that run the optimiser over pixels (minutes)",
     "ml: requires the Keras/TensorFlow predictors",
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["luci"]
+
+[tool.coverage.report]
+fail_under = 64
+precision = 2
+show_missing = true
+skip_covered = true

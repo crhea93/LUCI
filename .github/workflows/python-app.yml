@@ -55,7 +55,16 @@ jobs:
         # per-spectrum path (B12) that otherwise needs a display.
         env:
           MPLBACKEND: Agg
-        run: uv run --no-sync pytest -m "not slow" -q
+        run: >-
+          uv run --no-sync pytest -m "not slow" -q
+          --cov=luci --cov-report=term-missing --cov-report=xml
+      - name: Upload coverage report
+        if: always() && matrix.python-version == '3.10'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-python-${{ matrix.python-version }}
+          path: coverage.xml
+          if-no-files-found: error
 
   golden:
     name: Golden fits (nightly)
@@ -74,3 +83,32 @@ jobs:
         env:
           MPLBACKEND: Agg
         run: uv run --no-sync pytest -q
+
+  package:
+    name: Built wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install test environment
+        run: uv sync --locked --dev --python 3.10
+      - name: Build wheel and source distribution
+        run: uv build
+      - name: Validate publication metadata and artifact sizes
+        run: |
+          uvx twine check dist/*
+          python - <<'PY'
+          from pathlib import Path
+
+          limit = 100 * 1024 * 1024
+          oversized = [path for path in Path("dist").iterdir() if path.is_file() and path.stat().st_size > limit]
+          if oversized:
+              details = ", ".join(f"{path.name} ({path.stat().st_size} bytes)" for path in oversized)
+              raise SystemExit(f"Artifacts exceed PyPI's 100 MiB per-file limit: {details}")
+          PY
+      - name: Test the wheel outside the checkout
+        run: |
+          wheel=$(find dist -maxdepth 1 -name '*.whl' -print -quit)
+          LUCI_WHEEL="$wheel" uv run --no-sync pytest tests/test_wheel_artifact.py -q

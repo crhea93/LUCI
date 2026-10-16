@@ -34,21 +34,17 @@ def get_individual_components(fit_dictionary):
     fit_vectors = {}  # {line_name: fit_vector}
     # Step through each line in fit lines and create fit vector
     for ct, fit_line in enumerate(fit_lines):
-        if (
-            fit_line in fit_vectors.keys()
-        ):  # Line has already been in fit_vectors so we need to append a number to its name -- # TODO: Only works for 2 components -- must generalize
-            name = fit_line + "_2"
-        else:
-            name = fit_line
+        occurrence = sum(key == fit_line or key.startswith(fit_line + "_") for key in fit_vectors)
+        name = fit_line if occurrence == 0 else f"{fit_line}_{occurrence + 1}"
         fit_solution_ = fit_solution[3 * ct : 3 * (ct + 1)]  # Get correct solutions
         # Based on fit function create appropriate fit vector
         if fit_function == "gaussian":
-            fit_vector = Gaussian().plot(fit_axis, fit_solution_[:-1])
+            fit_vector = Gaussian().plot(fit_axis, fit_solution_, 1)
         elif fit_function == "sinc":
-            fit_vector = Sinc().plot(fit_axis, fit_solution_[:-1], sinc_width)
+            fit_vector = Sinc().plot(fit_axis, fit_solution_, 1, sinc_width)
         elif fit_function == "sincgauss":
-            fit_vector = SincGauss().plot(fit_axis, fit_solution_[:-1], sinc_width)
+            fit_vector = SincGauss().plot(fit_axis, fit_solution_, 1, sinc_width)
         fit_vectors[name] = fit_vector
     # Add continuum
-    fit_vectors["continuum"] = fit_solution[:-1] * np.ones(len(fit_axis))
+    fit_vectors["continuum"] = fit_solution[-1] * np.ones(len(fit_axis))
     return fit_vectors

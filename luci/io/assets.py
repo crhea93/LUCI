@@ -20,6 +20,12 @@ logger = get_logger(__name__)
 #: Subdirectories that must exist for a directory to be a usable LUCI root.
 REQUIRED = ("ML", "Data")
 
+# Wheels keep data inside the Python package rather than installing generic
+# top-level ``ML`` and ``Data`` directories into site-packages.  A source or
+# editable checkout does not have this directory; it continues to use the
+# repository root below.
+PACKAGED_ASSET_ROOT = Path(__file__).resolve().parent.parent / "_assets"
+
 
 class LuciAssetsNotFound(FileNotFoundError):
     """Raised when the ML/ and Data/ directories cannot be located."""
@@ -44,8 +50,8 @@ def default_luci_path() -> str:
     """
     Locate the directory holding ``ML/`` and ``Data/``.
 
-    Order: ``$LUCI_DATA_DIR``, then the directory containing the installed
-    package -- which is the repository root for a clone or editable install.
+    Order: ``$LUCI_DATA_DIR``, packaged wheel assets, then the repository root
+    for a clone or editable install.
     """
     env = os.environ.get("LUCI_DATA_DIR")
     if env:
@@ -54,12 +60,16 @@ def default_luci_path() -> str:
             raise LuciAssetsNotFound(f"$LUCI_DATA_DIR is {env!r} but it does not contain {' and '.join(REQUIRED)}/.")
         return check_luci_path(str(candidate))
 
-    root = Path(__file__).resolve().parent.parent.parent
-    if _looks_like_luci_root(root):
-        return check_luci_path(str(root))
+    if _looks_like_luci_root(PACKAGED_ASSET_ROOT):
+        return check_luci_path(str(PACKAGED_ASSET_ROOT))
+
+    checkout_root = Path(__file__).resolve().parent.parent.parent
+    if _looks_like_luci_root(checkout_root):
+        return check_luci_path(str(checkout_root))
 
     raise LuciAssetsNotFound(
-        f"Could not locate LUCI's {'/, '.join(REQUIRED)}/ directories (looked in {root}). "
+        f"Could not locate LUCI's {'/, '.join(REQUIRED)}/ directories "
+        f"(looked in {PACKAGED_ASSET_ROOT} and {checkout_root}). "
         "Set $LUCI_DATA_DIR or pass Luci_path explicitly."
     )
 

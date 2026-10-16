@@ -78,11 +78,11 @@ def create_component_map_function(
         preds_local = np.zeros(x_size)
         for j in range(x_max - x_min):
             x_pix = x_min + j
-            if mask and mask[x_pix, y_pix] == False:  # If there is a mask and we are not in the mask break
-                break
+            if mask is not None and mask[x_pix, y_pix] == False:
+                continue
             # Calculate how many components are present in SN3 using a convolutional neural network
             sky = cube_final[x_pix, y_pix, :]
-            good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
+            good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
             if bkg is not None:
                 sky = sky[good_sky_inds] - bkg[good_sky_inds]
             else:
@@ -96,17 +96,17 @@ def create_component_map_function(
             predictions = comps_model(Spectrum, training=False)
             max_ind = np.argmax(predictions[0])  # ID of outcome (0 -> single; 1 -> double)
             comp = max_ind + 1  # 1 -> single; 2 -> double
-            comps_local[x_pix] = comp
+            comps_local[j] = comp
             # print(predictions)
-            preds_local[x_pix] = predictions[0][comp - 1]
+            preds_local[j] = predictions[0][comp - 1]
         return comps_local, preds_local, i
 
     res = Parallel(n_jobs=n_threads, backend="threading")(delayed(component_calc)(i) for i in tqdm(range(y_size)))
     # Save
     for comp_ind in res:
         comp_vals, preds_vals, step_i = comp_ind
-        Comps[y_min + step_i] = comp_vals
-        Preds[y_min + step_i] = preds_vals
+        Comps[y_min + step_i, x_min:x_max] = comp_vals
+        Preds[y_min + step_i, x_min:x_max] = preds_vals
 
     fits.writeto(output_dir + "/" + object_name + "_comps.fits", Comps, header, overwrite=True)
     fits.writeto(output_dir + "/" + object_name + "_comps_probs.fits", Preds, header, overwrite=True)
@@ -154,14 +154,13 @@ def calculate_components_in_region_function(
                 spec_ct += 1
             else:
                 pass
+    if spec_ct == 0:
+        raise ValueError("The selected region does not contain any pixels.")
+    sky = integrated_spectrum / spec_ct
     if bkg is not None:
-        integrated_spectrum -= bkg  # Subtract background spectrum
-    sky = cube_final[x_pix, y_pix, :]
-    good_sky_inds = [~np.isnan(sky)]  # Clean up spectrum
-    if bkg is not None:
-        sky = sky[good_sky_inds] - bkg[good_sky_inds]
-    else:
-        sky = sky[good_sky_inds]
+        sky = sky - bkg
+    good_sky_inds = ~np.isnan(sky)  # Clean up spectrum
+    sky = sky[good_sky_inds]
     axis = spectrum_axis[good_sky_inds]
     # Interpolate
     f = interpolate.interp1d(axis, sky, kind="slinear", fill_value="extrapolate")

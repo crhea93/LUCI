@@ -58,9 +58,13 @@ class Spectrum:
         if not isinstance(velocity, list):
             # List not passed -- set all velocities equal
             self.velocity = [velocity for i in range(len(lines))]
+        else:
+            self.velocity = velocity
         if not isinstance(broadening, list):
             # List not passed -- set all broadening equal
             self.broadening = [broadening for i in range(len(lines))]
+        else:
+            self.broadening = broadening
         self.filter = filter_
         if self.filter == "SN3":
             self.delta_x = 2943

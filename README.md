@@ -1,12 +1,14 @@
 # Welcome to LUCI
-In this document, you will find a brief description of what `LUCI` is, how to install it (her), where to go to find examples, documentation, and more!
+
+LUCI is a general-purpose emission-line fitting pipeline for SITELLE IFU data
+cubes and one-dimensional spectra.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5385351.svg)](https://doi.org/10.5281/zenodo.5385351)
 
 You can find the RNAAS article here:
 [Arxiv Paper: 2108.12428](https://arxiv.org/abs/2108.12428)
 
-![LuciLogo.jpg](LuciLogo.jpg)
+![LUCI logo](https://raw.githubusercontent.com/crhea93/LUCI/main/LuciLogo.jpg)
 
 
 ## What is LUCI
@@ -19,34 +21,29 @@ a Bayesian Inference algorithm using MCMC (using `emcee`) to derive uncertainty 
 
 
 ## Installing `LUCI`
-We have tried to make the installation of `LUCI` as smooth and painless as possible; however, if you have suggestions, please reach out to us.
 
-Below are instructions for installing on a linux distribution (only tested on Ubuntu and Pop-OS!).
+LUCI requires Python 3.10 or newer. Install the published package with pip:
 
-`LUCI` uses [uv](https://docs.astral.sh/uv/) to manage its environment. The exact dependency set is
-pinned in `uv.lock`, so everyone gets an identical, reproducible install on every platform.
-
-1. **Install uv** (once, if you do not already have it):
-    ```
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    ```
-2. **Clone** this repository and enter it:
-    ```
-    git clone https://github.com/crhea93/LUCI.git
-    cd LUCI
-    ```
-3. **Create the environment** — this reads `uv.lock` and installs `LUCI` itself in editable mode:
-    ```
-    uv sync
-    ```
-
-That's it. There is no conda environment to activate: prefix commands with `uv run` and they use the
-project environment automatically.
-
+```bash
+python -m pip install luci-sitelle
 ```
-uv run python my_script.py
-uv run jupyter lab          # for the notebooks in Examples/
-uv run pytest               # run the test suite
+
+The distribution is named `luci-sitelle`; the Python package you import is
+`luci`. The legacy machine-learning training and component-counting tools are
+available as an optional extra on Python 3.10:
+
+```bash
+python -m pip install "luci-sitelle[ml-legacy]"
+```
+
+To contribute or run the examples from a checkout, use
+[uv](https://docs.astral.sh/uv/) and the committed lockfile:
+
+```bash
+git clone https://github.com/crhea93/LUCI.git
+cd LUCI
+uv sync
+uv run pytest -m "not slow"
 ```
 
 `LUCI` is now a proper installed package, so **no `sys.path` juggling is required**. Load it with:
@@ -57,7 +54,7 @@ from luci import SitelleCube
 
 The older spellings all still work — `from LuciBase import Luci`, `from LUCI.LuciFit import Fit`,
 and so on — so existing notebooks and scripts run unchanged. See the
-[migration guide](docs/source/migration.rst) for the full old-to-new mapping, and for the list of
+[migration guide](https://crhea93.github.io/LUCI/migration.html) for the full old-to-new mapping, and for the list of
 bug fixes that **changed numerical results**.
 
 (Older documentation and notebooks may still show `sys.path.insert(0, '/the/path/to/LUCI/')` before
@@ -74,11 +71,11 @@ You can also access the fitting directly by circumventing the `LUCI` wrappers an
 ### Where to find examples
 Examples are paramount to the success of any open source code. Therefore, we have tried to make our examples as complete as possible. That said, we surely have forgotten something! If you wish to see an example that does not exist (or for an example to be better explained), please shoot us an email or open up an issue!
 
-All examples can be found in two locations. Read-through examples can be found on our [read the docs (https://crhea93.github.io/LUCI/index.html)](https://crhea93.github.io/LUCI/index.html) page while jupyter notebooks can be found in the **Examples** folder.
+All examples can be found in two locations. Read-through examples can be found in our [online documentation](https://crhea93.github.io/LUCI/index.html) while jupyter notebooks can be found in the **Examples** folder.
 I suggest starting with [https://crhea93.github.io/LUCI/example_basic_lite.html](https://crhea93.github.io/LUCI/example_basic_lite.html).
 
 ### Where to find documentation
-Documentation can also be found on our [read the docs (https://crhea93.github.io/LUCI/index.html)](https://crhea93.github.io/LUCI/index.html) page. In addition to documentation on each function in `LUCI`, you can also find a description of what `LUCI` calculates and how she does what she does!
+Documentation can also be found on the [LUCI documentation site](https://crhea93.github.io/LUCI/index.html). In addition to documentation on each function in `LUCI`, you can also find a description of what `LUCI` calculates and how she does what she does!
 
 
 ## Contributing
@@ -89,13 +86,10 @@ The easiest way to get involved is to make an issue or fork the repo, make your 
 If you have any questions about how to install, use, or modify `LUCI`, please send an email to [Carter Rhea](mailto:carterrhea93@gmail.com).
 
 ## Copyright & License
-2021 Carter Rhea ([carter.rhea@umontreal.ca](mailto:carterrhea93@gmail.com))
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+Copyright (c) 2021-2026 Carter Rhea and LUCI contributors.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with this program. If not, see [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/).
+LUCI is distributed under the [MIT License](https://github.com/crhea93/LUCI/blob/main/LICENSE.txt).
 
 
 ## Citing LUCI

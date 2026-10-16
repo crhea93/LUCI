@@ -46,9 +46,9 @@ def log_likelihood_bayes(
         model = Sinc().evaluate_bayes(axis_restricted, theta[:-1], line_num, sinc_width)
     elif model_type == "sincgauss":
         model = SincGauss().evaluate_bayes(axis_restricted, theta[:-1], line_num, sinc_width)
-    # model += theta[-1]  # Add continuum
+    model += theta[-1]
     sigma2 = yerr**2
-    val = 0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2) + np.log(2 * np.pi * sigma2)
+    val = -0.5 * np.sum((spectrum_restricted - model) ** 2 / sigma2 + np.log(2 * np.pi * sigma2))
 
     if np.isnan(val):
         return -np.inf
@@ -155,65 +155,32 @@ def log_prior_uniform(theta, line_num, lines, line_dict):
     sigma_max = 2
     continuum_min = -1e-8
     continuum_max = 0.8
-    val_prior = 0
-    within_bounds = True  # Boolean to determine if parameters are within bounds
-    ## Note that we tied together all velocities and broadenings!
-    for ct, param in enumerate(theta):
-        if ct < line_num:  # Amplitude parameter
-            if A_min < param < A_max:
-                val_prior -= np.log(A_max - A_min)
-            else:
-                within_bounds = False  # Value not in bounds
-                break
-        elif ct == line_num + 1:  # velocity parameter
-            if x_min < param < x_max:
-                val_prior -= np.log(x_max - x_min)
-            else:
-                within_bounds = False  # Value not in bounds
-                break
-        elif ct == line_num + 2:  # sigma parameter
-            if sigma_min < param < sigma_max:
-                val_prior -= np.log(sigma_max - sigma_min)
-            else:
-                within_bounds = False  # Value not in bounds
-                break
-        elif ct == line_num + 3:  # continuum parameter
-            if continuum_min < param < continuum_max:
-                val_prior -= np.log(continuum_max - continuum_min)
-            else:
-                within_bounds = False  # Value not in bounds
-                break
-    if within_bounds:
-        return -val_prior
-    else:
+    amplitudes = theta[:line_num]
+    shift, sigma, continuum = theta[line_num : line_num + 3]
+    within_bounds = (
+        np.all((A_min < amplitudes) & (amplitudes < A_max))
+        and x_min < shift < x_max
+        and sigma_min < sigma < sigma_max
+        and continuum_min < continuum < continuum_max
+    )
+    if not within_bounds:
         return -np.inf
+    return -(
+        line_num * np.log(A_max - A_min)
+        + np.log(x_max - x_min)
+        + np.log(sigma_max - sigma_min)
+        + np.log(continuum_max - continuum_min)
+    )
 
 
 def prior_transform(u):
-    A_min = 0.001
-    A_max = 1.1
-    x_min = 1e4
-    x_max = 1e7
-    sigma_min = 0.01
-    sigma_max = 10
-    continuum_min = 0.001
-    continuum_max = 0.01
-    prior_list = []
-    for ct, param in enumerate(u[:-1]):  # Don't include continuum
-        if ct % 3 == 0:  # Amplitude parameter
-            prior_list.append(u[ct])
-        if ct % 3 == 1:  # velocity parameter
-            prior_list.append(1000 * u[ct] + 15000)
-        if ct % 3 == 2:  # sigma parameter
-            prior_list.append(u[ct])
-    # uA, ux0, usigma, ucont = u
-    # A = 1*uA
-    # sigma = usigma
-    # x0 = 1000*ux0+15000
-    # cont = 0.01*ucont
-    # return A, x0, sigma, cont
-    prior_list.append((continuum_max) * u[-1])  # Include continuum
-    return prior_list
+    """Map a unit cube onto amplitudes, shared shift/sigma, and continuum."""
+    line_num = len(u) - 3
+    amplitudes = 0.99 * np.asarray(u[:line_num])
+    shift = -10 + 20 * u[-3]
+    sigma = 2 * u[-2]
+    continuum = 0.8 * u[-1]
+    return [*amplitudes, shift, sigma, continuum]
 
 
 def log_probability(

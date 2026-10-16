@@ -17,6 +17,11 @@ a synthetic cube generated at test time.
 | `conftest.py` | Session-scoped fixtures: build a cube, construct a `Luci` over it, cache both. `--record` flag lives here. |
 | `test_pure_functions.py` | Side-effect-free maths: velocity/flux conversions, line models, quadrant geometry, binning, numerical Hessian. Fast, no cube, no ML. |
 | `test_cube.py` | Cube reading, WCS/geometry, deep image, binning, spectrum extraction. |
+| `test_engine.py` | Shared fit orchestration: initial-condition maps and WCS cutouts. |
+| `test_analysis.py` | PCA/standard backgrounds, SNR maps, and narrow-band slicing products. |
+| `test_bayes_components_simulation.py` | Bayesian probability math, component maps/reconstruction, and synthetic spectra. |
+| `test_visualization.py` | Spectrum, fit, map, line-marker, and interactive-figure construction. |
+| `test_wvt_roundness.py` | WVT pixel/bin primitives, neighborhood logic, boundary files, and roundness regressions. |
 | `test_output_contract.py` | The exact filesystem layout and FITS headers `save_fits` writes. |
 | `test_ml_priors.py` | How initial estimates reach the optimiser — home of the ML-off defect (B1). |
 | `test_golden.py` | Characterization: fit values must match `golden/*.json` bit-for-bit (rtol 1e-6). |
@@ -37,6 +42,36 @@ uv run pytest -m "not slow"
 # Everything, including the golden fits (~5 min, needs the Keras predictors):
 uv run pytest
 ```
+
+## Coverage
+
+The pull-request suite measures both line and branch coverage for the runtime
+``luci`` package. Run the same report locally with:
+
+```bash
+MPLBACKEND=Agg uv run pytest -m "not slow" \
+    --cov=luci --cov-report=term-missing --cov-report=xml
+```
+
+The initial combined baseline was 46.36%. The current pull-request suite
+measures 64.69% and enforces a 64% floor in ``pyproject.toml``. Treat the exact
+percentage as a snapshot: CI's Python matrix and uploaded XML report are the
+authoritative results. Coverage may stay level when a change is unrelated to
+runtime behavior, but it must not fall below the threshold. Coverage-focused
+commits raise that threshold only after the new tests pass on the full Python
+matrix. Expensive golden fits remain in the nightly job and are not required to
+inflate the pull-request percentage.
+
+Prefer assertions about numerical values, array shapes, units, state changes,
+and written files over tests that merely assert that a call does not raise.
+Use small deterministic fixtures, and mock an optimizer or sampler when its
+internals are not the behavior under test.
+
+The pull-request WVT boundary is its deterministic pixel/bin mathematics,
+neighbor selection, state transitions, and input/output formats. Full WVT
+accretion and iterative reassignment are large end-to-end workflows and belong
+in the slower integration suite; PR coverage must not be inflated by running a
+full tessellation on every Python version.
 
 `conftest.py` sets `MPLBACKEND=Agg` as a fallback (needed because of B12,
 `plt.clf()` in the per-spectrum path). Export it yourself if you invoke pytest

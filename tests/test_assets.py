@@ -11,9 +11,11 @@ the argument is optional.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
+import luci.io.assets as assets
 from luci.io.assets import (
     LuciAssetsNotFound,
     check_luci_path,
@@ -43,6 +45,15 @@ class TestResolution:
         assert check_luci_path("/a/b") == "/a/b/"
         assert check_luci_path("/a/b/") == "/a/b/"
 
+    def test_packaged_assets_are_preferred_over_checkout(self, tmp_path, monkeypatch):
+        """An installed wheel must resolve its package-internal data root."""
+        packaged = tmp_path / "luci" / "_assets"
+        (packaged / "ML").mkdir(parents=True)
+        (packaged / "Data").mkdir()
+        monkeypatch.setattr(assets, "PACKAGED_ASSET_ROOT", packaged)
+
+        assert Path(default_luci_path()) == packaged
+
 
 class TestEnvironmentOverride:
     def test_env_var_takes_precedence(self, tmp_path, monkeypatch, repo_root):
@@ -60,6 +71,18 @@ class TestEnvironmentOverride:
     def test_empty_env_var_is_ignored(self, monkeypatch, repo_root):
         monkeypatch.setenv("LUCI_DATA_DIR", "")
         assert default_luci_path().rstrip("/") == repo_root.rstrip("/")
+
+    def test_env_var_overrides_packaged_assets(self, tmp_path, monkeypatch):
+        packaged = tmp_path / "package" / "_assets"
+        override = tmp_path / "override"
+        for root in (packaged, override):
+            (root / "ML").mkdir(parents=True)
+            (root / "Data").mkdir()
+
+        monkeypatch.setattr(assets, "PACKAGED_ASSET_ROOT", packaged)
+        monkeypatch.setenv("LUCI_DATA_DIR", str(override))
+
+        assert Path(default_luci_path()) == override
 
 
 class TestCubeConstruction:

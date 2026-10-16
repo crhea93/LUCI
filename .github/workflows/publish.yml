@@ -1,0 +1,73 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: pypi-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and validate distributions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Require the release tag to match the package version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          package_version=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          if [[ "$RELEASE_TAG" != "v$package_version" ]]; then
+            echo "Release tag $RELEASE_TAG does not match package version $package_version" >&2
+            exit 1
+          fi
+
+      - name: Install the locked test environment
+        run: uv sync --locked --dev --python 3.10
+
+      - name: Build wheel and source distribution
+        run: uv build
+
+      - name: Validate package metadata and README
+        run: uvx twine check dist/*
+
+      - name: Test the built wheel
+        run: |
+          wheel=$(find dist -maxdepth 1 -name '*.whl' -print -quit)
+          LUCI_WHEEL="$wheel" uv run --no-sync pytest tests/test_wheel_artifact.py -q
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish distributions
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/luci-sitelle
+    permissions:
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
