@@ -19,6 +19,7 @@ a synthetic cube generated at test time.
 | `test_cube.py` | Cube reading, WCS/geometry, deep image, binning, spectrum extraction. |
 | `test_engine.py` | Shared fit orchestration: initial-condition maps and WCS cutouts. |
 | `test_analysis.py` | PCA/standard backgrounds, SNR maps, and narrow-band slicing products. |
+| `test_bayes_components_simulation.py` | Bayesian probability math, component maps/reconstruction, and synthetic spectra. |
 | `test_output_contract.py` | The exact filesystem layout and FITS headers `save_fits` writes. |
 | `test_ml_priors.py` | How initial estimates reach the optimiser — home of the ML-off defect (B1). |
 | `test_golden.py` | Characterization: fit values must match `golden/*.json` bit-for-bit (rtol 1e-6). |
