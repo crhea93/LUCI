@@ -11,9 +11,25 @@ ever accrete a second pixel -- fatal for any cube whose per-pixel S/N is below t
 
 from __future__ import annotations
 
-import pytest
+import os
 
-from luci.analysis.wvt import Roundness
+import numpy as np
+import pytest
+from astropy.io import fits
+
+from luci.analysis.wvt import (
+    Bin,
+    Bin_data,
+    Nearest_Neighbors,
+    Pixel,
+    Potential_SN,
+    Roundness,
+    adjacency,
+    bin_num_pixel,
+    closest_node,
+    dist,
+    read_in,
+)
 
 ROUNDNESS_CRIT = 0.3  # wvt_fit_region default
 
@@ -56,3 +72,70 @@ def test_compact_bin_beats_a_straggly_one():
 def test_a_long_line_of_pixels_is_rejected():
     bin_ = FakeBin([(i, 0) for i in range(8)])
     assert Roundness(bin_, FakePixel(8, 0), 1.0) > ROUNDNESS_CRIT
+
+
+def test_bin_tracks_signal_to_noise_centroid_area_and_membership():
+    pixels = [Pixel(0, 0, 0, 3.0), Pixel(1, 1, 0, 4.0)]
+    bin_ = Bin(7)
+    bin_.add_pixel(pixels[0])
+    bin_.add_pixel(pixels[1])
+    bin_.CalcCentroid()
+    bin_.CalcArea(0.5)
+
+    assert bin_.StN[0] == pytest.approx(7 / np.sqrt(2))
+    assert bin_.centroidx[0] == pytest.approx(0.5)
+    assert bin_.centroidy[0] == pytest.approx(0.0)
+    assert bin_.Area[0] == pytest.approx(0.5)
+    assert bin_num_pixel([bin_], pixels[1]) == 0
+
+    bin_.remove_pixel(pixels[0])
+    assert bin_.StN[0] == pytest.approx(4.0)
+    bin_.clear_pixels()
+    assert bin_.pixels == [] and bin_.StN[0] == 0
+
+
+def test_pixel_state_and_nearest_neighbors_on_a_three_by_three_grid():
+    pixels = [Pixel(i, x, y, 1.0) for i, (x, y) in enumerate((x, y) for x in range(3) for y in range(3))]
+    Nearest_Neighbors(pixels)
+    center = pixels[4]
+    assert {(pixel.pix_x, pixel.pix_y) for pixel in center.neighbors} == {(0, 1), (1, 0), (1, 2), (2, 1)}
+
+    bin_ = Bin(1)
+    center.add_to_bin(bin_)
+    assert center.assigned_to_bin and center.assigned_bin is bin_
+    center.clear_bin()
+    assert not center.assigned_to_bin and center.assigned_bin is None
+
+
+def test_wvt_distance_adjacency_closest_node_and_potential_snr():
+    origin = Pixel(0, 0, 0, 3.0)
+    neighbor = Pixel(1, 1, 0, 4.0)
+    farther = Pixel(2, 3, 0, 5.0)
+    origin.add_neighbor(neighbor, 1, 0)
+    bin_ = Bin(0)
+    bin_.add_pixel(origin)
+    bin_.CalcCentroid()
+
+    assert dist(0, 0, 3, 4) == pytest.approx(5.0)
+    assert closest_node(bin_, [neighbor, farther]) is neighbor
+    assert adjacency(bin_, neighbor)
+    assert not adjacency(bin_, farther)
+    assert Potential_SN(bin_, neighbor) == pytest.approx(7 / np.sqrt(2))
+    assert bin_.pixels == [origin]
+
+
+def test_read_and_write_wvt_boundary_files(tmp_path):
+    snr_path = tmp_path / "snr.fits"
+    fits.writeto(snr_path, np.arange(9, dtype=float).reshape(3, 3))
+    pixels, x_min, x_max, y_min, y_max = read_in(snr_path)
+    assert (x_min, x_max, y_min, y_max) == (0, 3, 0, 3)
+    assert len(pixels) == 9
+    assert pixels[-1].StN == 8
+
+    bin_ = Bin(0)
+    bin_.add_pixel(pixels[0])
+    bin_.CalcCentroid()
+    bin_.scale_length[0] = 1.25
+    Bin_data([bin_], [], 0, 0, str(tmp_path), "bins")
+    assert os.path.exists(tmp_path / "bins.txt")
+    assert os.path.exists(tmp_path / "bins_bins.txt")

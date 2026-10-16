@@ -231,7 +231,7 @@ branch = true
 source = ["luci"]
 
 [tool.coverage.report]
-fail_under = 57
+fail_under = 64
 precision = 2
 show_missing = true
 skip_covered = true

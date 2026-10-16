@@ -20,6 +20,8 @@ a synthetic cube generated at test time.
 | `test_engine.py` | Shared fit orchestration: initial-condition maps and WCS cutouts. |
 | `test_analysis.py` | PCA/standard backgrounds, SNR maps, and narrow-band slicing products. |
 | `test_bayes_components_simulation.py` | Bayesian probability math, component maps/reconstruction, and synthetic spectra. |
+| `test_visualization.py` | Spectrum, fit, map, line-marker, and interactive-figure construction. |
+| `test_wvt_roundness.py` | WVT pixel/bin primitives, neighborhood logic, boundary files, and roundness regressions. |
 | `test_output_contract.py` | The exact filesystem layout and FITS headers `save_fits` writes. |
 | `test_ml_priors.py` | How initial estimates reach the optimiser — home of the ML-off defect (B1). |
 | `test_golden.py` | Characterization: fit values must match `golden/*.json` bit-for-bit (rtol 1e-6). |
@@ -61,6 +63,12 @@ Prefer assertions about numerical values, array shapes, units, state changes,
 and written files over tests that merely assert that a call does not raise.
 Use small deterministic fixtures, and mock an optimizer or sampler when its
 internals are not the behavior under test.
+
+The pull-request WVT boundary is its deterministic pixel/bin mathematics,
+neighbor selection, state transitions, and input/output formats. Full WVT
+accretion and iterative reassignment are large end-to-end workflows and belong
+in the slower integration suite; PR coverage must not be inflated by running a
+full tessellation on every Python version.
 
 `conftest.py` sets `MPLBACKEND=Agg` as a fallback (needed because of B12,
 `plt.clf()` in the per-spectrum path). Export it yourself if you invoke pytest
