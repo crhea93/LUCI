@@ -7,13 +7,13 @@ name = "luci-sitelle"
 version = "1.2.0"
 description = "General-purpose emission-line fitting pipeline built for SITELLE IFU data cubes"
 readme = "README.md"
-license = { file = "LICENSE.txt" }
+license = "MIT"
+license-files = ["LICENSE.txt"]
 authors = [{ name = "Carter Rhea", email = "carterrhea93@gmail.com" }]
 keywords = ["astronomy", "spectroscopy", "SITELLE", "IFU", "emission lines"]
 classifiers = [
     "Programming Language :: Python :: 3.10",
     "Topic :: Scientific/Engineering :: Astronomy",
-    "License :: OSI Approved :: MIT License",
 ]
 
 # Inference runs on ONNX Runtime; only the optional [ml-legacy] extra caps at 3.10.
