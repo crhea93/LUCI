@@ -85,7 +85,7 @@ def slicing(cube, lines, bkg=None):
 
     spectral_axis = 1e7 / cube.spectrum_axis  # Convert wavenumber in cm-1 to nm
     # If a background is provided then we need to update the cube to be background subtracted
-    if bkg != None:
+    if bkg is not None:
         # Reshape the background to (1, 1, lambda) so it can be broadcasted
         bkg_reshaped = bkg.reshape(1, 1, -1)
         # Subtract the vector from the matrix using broadcasting
@@ -102,9 +102,9 @@ def slicing(cube, lines, bkg=None):
             indices = np.abs(np.subtract.outer(spectral_axis, line_lambda)).argmin(0)
             return indices
 
-        slice_sum = np.zeros_like(cube.cube_final[:, :, 0])
         # Loop for every emission line
         for i in range(len(wavelength_redshift)):
+            slice_sum = np.zeros_like(cube.cube_final[:, :, 0])
             delta_lambda = (
                 200 * wavelength_redshift[i] / 299792
             )  # In units of nm. The 200km/s is a reasonable maximum value for the velocity dispersion of galaxies
