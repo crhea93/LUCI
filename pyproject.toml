@@ -12,7 +12,13 @@ license-files = ["LICENSE.txt"]
 authors = [{ name = "Carter Rhea", email = "carterrhea93@gmail.com" }]
 keywords = ["astronomy", "spectroscopy", "SITELLE", "IFU", "emission lines"]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 
@@ -55,6 +61,8 @@ ml-legacy = [
 Homepage = "https://github.com/crhea93/LUCI"
 Documentation = "https://crhea93.github.io/LUCI/index.html"
 Repository = "https://github.com/crhea93/LUCI"
+Issues = "https://github.com/crhea93/LUCI/issues"
+Paper = "https://doi.org/10.3847/2515-5172/ac2733"
 
 [dependency-groups]
 # Pinned so a theme release cannot silently restyle the published site: the built
