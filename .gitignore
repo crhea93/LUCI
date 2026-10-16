@@ -26,6 +26,9 @@ Data/ExampleData/*_map.png
 
 # Test artifacts (fixture cubes are built at test time; *.hdf5 already ignored)
 .pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # Sphinx build output.  GitHub Pages serves the FLATTENED html at the docs/
 # root (docs/index.html + docs/*.html + docs/_static); the build trees below

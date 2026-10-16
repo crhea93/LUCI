@@ -51,7 +51,6 @@ def test_submodule_is_the_same_object_under_both_names(sub):
 
 def test_from_import_yields_identical_classes():
     from LUCI.cube import SitelleCube as Upper
-
     from luci.cube import SitelleCube as Lower
 
     assert Upper is Lower
@@ -63,7 +62,6 @@ def test_module_level_state_is_shared_not_duplicated():
     of its globals, so a registry mutated through one name is invisible via the other.
     """
     import LUCI.instrument.filters as upper
-
     import luci.instrument.filters as lower
 
     sentinel = object()
@@ -81,9 +79,8 @@ def test_unknown_submodule_still_raises():
 
 def test_legacy_module_shims_work_through_the_alias():
     """The oldest documented spelling: `from LUCI.LuciFit import Fit`."""
-    from LUCI.LuciFit import Fit
-
     from luci.fitting.spectrum_fitter import SpectrumFitter
+    from LUCI.LuciFit import Fit
 
     assert Fit is SpectrumFitter
 

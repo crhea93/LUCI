@@ -66,9 +66,9 @@ def test_fit_region_subtracts_the_background(sn3_cube_noml, sn3_truth):
 
     # atol=0 matters: fluxes are ~1e-16, so numpy's default atol=1e-8 would call
     # any two of these arrays "close" and the assertion would never fire.
-    assert not np.allclose(plain_flux, subtracted_flux, rtol=1e-6, atol=0.0), (
-        "passing bkg made no difference -- background was ignored (B3)"
-    )
+    assert not np.allclose(
+        plain_flux, subtracted_flux, rtol=1e-6, atol=0.0
+    ), "passing bkg made no difference -- background was ignored (B3)"
     # Concretely: subtracting a background that contains the lines themselves
     # must strip most of the fitted flux at a fitted pixel.
     assert subtracted_flux[9, 9, 0] < 0.5 * plain_flux[9, 9, 0]
@@ -80,9 +80,9 @@ def test_fit_region_names_outputs_like_fit_cube(sn3_cube_noml, sn3_truth):
     mask = _small_mask(sn3_truth)
     sn3_cube_noml.fit_region(SN3_LINES, "sincgauss", [1] * 5, [1] * 5, mask, n_threads=1)
     written = os.listdir(os.path.join(sn3_cube_noml.output_dir, "Velocity"))
-    assert any("sincgauss" in name for name in written), (
-        f"fit_function missing from fit_region output names: {written[:5]}"
-    )
+    assert any(
+        "sincgauss" in name for name in written
+    ), f"fit_function missing from fit_region output names: {written[:5]}"
 
 
 # --------------------------------------------------------------------------
@@ -242,9 +242,9 @@ def test_fit_cube_subtracts_a_background_given_without_bkgtype(sn3_cube_noml, sn
         SN3_LINES, "sincgauss", [1] * 5, [1] * 5, 5, 8, 5, 8, bkg=background, n_threads=1
     )
     # flux maps are index 2 of the returned tuple
-    assert not np.allclose(plain[2], subtracted[2], rtol=1e-9, atol=0.0), (
-        "passing bkg to fit_cube made no difference -- background was ignored (B26)"
-    )
+    assert not np.allclose(
+        plain[2], subtracted[2], rtol=1e-9, atol=0.0
+    ), "passing bkg to fit_cube made no difference -- background was ignored (B26)"
 
 
 def test_fit_entire_cube_forwards_its_arguments(sn3_cube_noml, monkeypatch):
