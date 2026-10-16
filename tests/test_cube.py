@@ -232,3 +232,28 @@ def test_heliocentric_correction_returns_a_velocity(sn3_cube_noml):
     correction = sn3_cube_noml.heliocentric_correction()
     assert np.isfinite(correction.value)
     assert abs(correction.value) < 50.0  # Earth's orbital speed bounds this
+
+
+def test_export_fits_preserves_cube_values_and_axis_metadata(sn3_cube_noml):
+    sn3_cube_noml.export_fits()
+    path = os.path.join(sn3_cube_noml.output_dir, sn3_cube_noml.object_name + ".fits")
+
+    with fits.open(path) as hdul:
+        exported = hdul[0]
+        np.testing.assert_allclose(exported.data, sn3_cube_noml.cube_final.transpose(2, 1, 0))
+        assert exported.header["CTYPE3"] == "FREQ"
+        assert exported.header["CRVAL3"] == pytest.approx(sn3_cube_noml.hdr_dict["CRVAL3"])
+        assert exported.header["CDELT3"] == pytest.approx(sn3_cube_noml.hdr_dict["CDELT3"])
+
+
+def test_close_releases_a_binned_cube(luci_factory, sn3_truth):
+    # A distinct redshift gives this destructive lifecycle test its own cached
+    # instance instead of closing the session-wide ``sn3_cube_noml`` fixture.
+    cube = luci_factory(sn3_truth, ML_bool=False, redshift=1e-6)
+    cube.bin_cube(cube.cube_final, cube.header, 2, 0, sn3_truth["dimx"], 0, sn3_truth["dimy"])
+
+    cube.close()
+
+    assert not hasattr(cube, "cube_final")
+    assert not hasattr(cube, "cube_binned")
+    assert not hasattr(cube, "header")

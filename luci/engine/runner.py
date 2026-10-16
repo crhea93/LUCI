@@ -30,7 +30,7 @@ def resolve_initial_values(initial_values):
     if len(initial_values) != 2:
         return False, False
     try:
-        return fits.open(initial_values[0])[0].data, fits.open(initial_values[1])[0].data
+        return fits.getdata(initial_values[0]), fits.getdata(initial_values[1])
     except (OSError, TypeError, ValueError):
         # Already arrays rather than file paths.
         return initial_values[0], initial_values[1]
@@ -46,9 +46,9 @@ def deep_image_cutout(cube, x_min, x_max, y_min, y_max, binning):
     else:
         wcs = WCS(cube.header, naxis=2)
     return Cutout2D(
-        fits.open(deep_path)[0].data,
+        fits.getdata(deep_path),
         position=((x_max + x_min) / 2, (y_max + y_min) / 2),
-        size=(x_max - x_min, y_max - y_min),
+        size=(y_max - y_min, x_max - x_min),
         wcs=wcs,
     )
 

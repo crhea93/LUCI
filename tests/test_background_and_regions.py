@@ -117,6 +117,74 @@ def test_fit_pixel_rejects_an_unknown_background_type(sn3_cube_noml):
         sn3_cube_noml.fit_pixel(["Halpha"], "sincgauss", [1], [1], 10, 10, bkgType="nonsense")
 
 
+def test_fit_pixel_masks_nan_channels_consistently(sn3_cube_noml, monkeypatch):
+    """Spectrum, axis, and transmission must lose the same invalid channels."""
+    captured = {}
+    cube_data = np.array(sn3_cube_noml.cube_final, copy=True)
+    cube_data[10, 10, 3] = np.nan
+    monkeypatch.setattr(sn3_cube_noml, "cube_final", cube_data)
+
+    class FakeFit:
+        def __init__(self, spectrum, axis, *args, **kwargs):
+            captured.update(spectrum=spectrum, axis=axis, kwargs=kwargs)
+
+        def fit(self):
+            return {"result": "sentinel"}
+
+    monkeypatch.setattr("luci.cube.Fit", FakeFit)
+    background = np.full(cube_data.shape[2], 2e-19)
+
+    axis, sky, result = sn3_cube_noml.fit_pixel(
+        ["Halpha"], "sincgauss", [1], [1], 10, 10, bkg=background
+    )
+
+    good = ~np.isnan(cube_data[10, 10])
+    np.testing.assert_allclose(sky, (cube_data[10, 10] - background)[good])
+    np.testing.assert_array_equal(axis, sn3_cube_noml.spectrum_axis[good])
+    np.testing.assert_array_equal(captured["kwargs"]["trans_filter"], sn3_cube_noml.transmission_interpolated[good])
+    assert result == {"result": "sentinel"}
+
+
+def test_fit_pixel_sums_binned_pca_coefficients(sn3_cube_noml, monkeypatch):
+    """A binned PCA fit must use the same spatial footprint for data and coefficients."""
+    observed = {}
+
+    class FakeFit:
+        def __init__(self, spectrum, axis, *args, **kwargs):
+            observed["spectrum"] = spectrum
+
+        def fit(self):
+            return {"result": "sentinel"}
+
+    def fake_pca_background(coefficients, vectors, mean):
+        observed["coefficients"] = coefficients
+        return np.zeros(sn3_cube_noml.cube_final.shape[2])
+
+    monkeypatch.setattr("luci.cube.Fit", FakeFit)
+    monkeypatch.setattr("luci.cube.pca_background", fake_pca_background)
+    monkeypatch.setattr("luci.cube.subtract_pca", lambda spectrum, *args: spectrum)
+    coefficients = np.ones((*sn3_cube_noml.cube_final.shape[:2], 3))
+
+    _, sky, result = sn3_cube_noml.fit_pixel(
+        ["Halpha"],
+        "sincgauss",
+        [1],
+        [1],
+        10,
+        10,
+        binning=2,
+        bkgType="pca",
+        pca_coefficient_array=coefficients,
+        pca_vectors=np.empty((0, 0)),
+        pca_mean=np.empty(0),
+    )
+
+    expected_sky = np.nansum(sn3_cube_noml.cube_final[8:12, 8:12], axis=(0, 1))
+    np.testing.assert_allclose(sky, expected_sky)
+    np.testing.assert_array_equal(observed["coefficients"], np.full(3, 16.0))
+    assert result == {"result": "sentinel"}
+
+
 # --------------------------------------------------------------------------
 # The PCA scaling window, now shared instead of copy-pasted three times
 # --------------------------------------------------------------------------
@@ -214,6 +282,19 @@ def test_resolve_mask_passes_through_a_boolean_array():
     given[1, 1] = True
     out = resolve_mask(given, header=None, cube_shape=(6, 6))
     np.testing.assert_array_equal(out, given)
+
+
+def test_resolve_mask_loads_a_numpy_mask(tmp_path):
+    from luci.engine.selection import resolve_mask
+
+    expected = np.zeros((6, 6), dtype=bool)
+    expected[2:4, 1:5] = True
+    path = tmp_path / "region.npy"
+    np.save(path, expected)
+
+    result = resolve_mask(str(path), header=None, cube_shape=expected.shape)
+
+    np.testing.assert_array_equal(result, expected)
 
 
 def test_resolve_mask_rejects_an_unknown_region_type():

@@ -1273,7 +1273,7 @@ class SitelleCube:
         """
         del self.cube_final
         del self.header
-        if self.cube_binned:
+        if self.cube_binned is not None:
             del self.cube_binned
 
     def create_wvt(self, *args, **kwargs):
@@ -1298,8 +1298,8 @@ class SitelleCube:
         # header3D['CUNIT3'] = 'WAVN'
         header3D["CTYPE3"] = "FREQ"
         header3D["CRPIX3"] = 1
-        header3D["CRVAL3"] = self.hdr_dict["axis_min"]
-        header3D["CDELT3"] = self.hdr_dict["axis_step"]
+        header3D["CRVAL3"] = self.hdr_dict["CRVAL3"]
+        header3D["CDELT3"] = self.hdr_dict["CDELT3"]
         # header3D['CUNIT3'] = '/cm'
         header3D["NAXIS4"] = 1
         header3D["CRPIX4"] = 1

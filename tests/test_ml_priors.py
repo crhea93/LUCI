@@ -10,9 +10,12 @@ xfails that will flip to passing when the fallback is fixed.
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 
+from luci.fitting.models import Gaussian
 from luci.LuciFit import DEFAULT_BROADENING_KMS, Fit
 
 
@@ -149,3 +152,24 @@ def test_freezing_supplies_priors_without_the_ml_model(sn3_cube_noml, sn3_truth)
     # Velocity and broadening are held at the supplied values, not refit.
     assert result["velocities"][0] == pytest.approx(sn3_truth["velocity_kms"], abs=1.0)
     assert result["sigmas"][0] == pytest.approx(sn3_truth["broadening_kms"], abs=5.0)
+
+
+def test_absorption_fit_uses_its_absorption_likelihood(sn3_cube_noml, monkeypatch):
+    """The absorption path must model a negative Gaussian plus continuum."""
+    fit = _make_fit(sn3_cube_noml, model="gaussian", ml_bool=False)
+    expected = np.array([-0.2, 15350.0, 1.0, 1.0])
+    fit.axis_restricted = np.linspace(15340.0, 15360.0, 101)
+    fit.spectrum_restricted = Gaussian().evaluate(fit.axis_restricted, expected[:3], 1) + expected[-1]
+    fit.noise = 0.01
+    observed = {}
+
+    def fake_minimize(objective, initial, **kwargs):
+        observed["expected"] = objective(expected)
+        observed["no_absorption"] = objective(np.array([0.0, 15350.0, 1.0, 1.0]))
+        return SimpleNamespace(x=expected)
+
+    monkeypatch.setattr("luci.fitting.spectrum_fitter.minimize", fake_minimize)
+    result = fit.fit_absorption()
+
+    np.testing.assert_array_equal(result, expected)
+    assert observed["expected"] < observed["no_absorption"]

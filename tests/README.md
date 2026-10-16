@@ -17,6 +17,7 @@ a synthetic cube generated at test time.
 | `conftest.py` | Session-scoped fixtures: build a cube, construct a `Luci` over it, cache both. `--record` flag lives here. |
 | `test_pure_functions.py` | Side-effect-free maths: velocity/flux conversions, line models, quadrant geometry, binning, numerical Hessian. Fast, no cube, no ML. |
 | `test_cube.py` | Cube reading, WCS/geometry, deep image, binning, spectrum extraction. |
+| `test_engine.py` | Shared fit orchestration: initial-condition maps and WCS cutouts. |
 | `test_output_contract.py` | The exact filesystem layout and FITS headers `save_fits` writes. |
 | `test_ml_priors.py` | How initial estimates reach the optimiser — home of the ML-off defect (B1). |
 | `test_golden.py` | Characterization: fit values must match `golden/*.json` bit-for-bit (rtol 1e-6). |
