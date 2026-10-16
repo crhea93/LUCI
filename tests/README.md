@@ -38,6 +38,27 @@ uv run pytest -m "not slow"
 uv run pytest
 ```
 
+## Coverage
+
+The pull-request suite measures both line and branch coverage for the runtime
+``luci`` package. Run the same report locally with:
+
+```bash
+MPLBACKEND=Agg uv run pytest -m "not slow" \
+    --cov=luci --cov-report=term-missing --cov-report=xml
+```
+
+The initial combined baseline is 46%. Coverage may stay level when a change is
+unrelated to runtime behavior, but it must not fall below the threshold in
+``pyproject.toml``. Coverage-focused commits raise that threshold only after
+the new tests pass on the full Python matrix. Expensive golden fits remain in
+the nightly job and are not required to inflate the pull-request percentage.
+
+Prefer assertions about numerical values, array shapes, units, state changes,
+and written files over tests that merely assert that a call does not raise.
+Use small deterministic fixtures, and mock an optimizer or sampler when its
+internals are not the behavior under test.
+
 `conftest.py` sets `MPLBACKEND=Agg` as a fallback (needed because of B12,
 `plt.clf()` in the per-spectrum path). Export it yourself if you invoke pytest
 in some way that bypasses conftest early.
